@@ -101,7 +101,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(ImpersonationTokenParser, "generate").resolves(impersonationTokenRequestBodyModel);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
-            this.sandbox.stub(Utils, "getUserIdFromUserToken").returns(req.params.userId);
+            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             await Handler.handler(req, res, op);
@@ -125,7 +125,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(ImpersonationTokenParser, "generate").resolves(impersonationTokenRequestBodyModel);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
-            this.sandbox.stub(Utils, "getUserIdFromUserToken").returns(req.params.userId);
+            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(Promise, "all").resolves([false]);
@@ -153,7 +153,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             this.sandbox.stub(ImpersonationTokenParser, "generate").resolves(impersonationTokenRequestBodyModel);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
-            this.sandbox.stub(Utils, "getUserIdFromUserToken").returns(req.params.userId);
+            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             await Handler.handler(req, res, op);
@@ -179,7 +179,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             this.sandbox.stub(ImpersonationTokenParser, "generate").resolves(impersonationTokenRequestBodyModel);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
-            this.sandbox.stub(Utils, "getUserIdFromUserToken").returns(req.params.userId);
+            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             await Handler.handler(req, res, op);
@@ -204,7 +204,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             this.sandbox.stub(ImpersonationTokenParser, "generate").resolves(impersonationTokenRequestBodyModel);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
-            this.sandbox.stub(Utils, "getUserIdFromUserToken").returns(req.params.userId);
+            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(FeatureFlags, "isEnabled").returns(false);

@@ -24,9 +24,11 @@ Config.FEATURE_FLAG_STACKDRIVER_EXPORTER = false;
 import { Tx } from '../utils';
 import { TestGoogleCredentials } from './google/credentials';
 import { TestGoogleDatastoreDAO, TestGoogleDatastoreTransactionDAO } from './google/datastore';
+import { TestGCDatastoreDAO, TestGCDatastoreTransactionDAO } from './gc/datastore';
 import { TestAzureCosmosDbDAO } from './azure/cosmosdb';
 import { TestAzureCosmosDbTransactionDAO } from './azure/cosmosdb-transactions';
 import { TestGCSCore } from './google/gcs';
+import { TestGCSOSDUCore } from './gc/gcs';
 import { TestAzureKeyVault } from './azure/keyvault';
 import { TestAzureStorage } from './azure/cloudstorage';
 import { TestDataEcoSystem } from './google/dataecosystem';
@@ -39,6 +41,8 @@ export class TestCloud {
         describe(Tx.title('utest seismic store - cloud core'), () => {
             TestGoogleCredentials.run();
             TestGCSCore.run();
+            TestGCDatastoreDAO.run();
+            TestGCDatastoreTransactionDAO.run()
             TestGoogleDatastoreDAO.run();
             TestGoogleDatastoreTransactionDAO.run();
             TestAzureCosmosDbDAO.run();

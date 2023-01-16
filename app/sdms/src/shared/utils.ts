@@ -17,7 +17,8 @@
 import * as crypto from 'crypto';
 import * as JsYaml from 'js-yaml';
 import * as JsonRefs from 'json-refs';
-import { Config } from '../cloud';
+import { Config, CredentialsFactory } from '../cloud';
+import { DESEntitlement } from '../dataecosystem';
 
 export class Utils {
 
@@ -38,13 +39,23 @@ export class Utils {
     }
 
     public static getPropertyFromTokenPayload(base64JwtPayload: string, property: string): string {
+        if (Config.USER_ID_FROM_PROVIDER_API) {
+            // TODO: Fix it later.
+            return undefined;
+        }
         const payload = this.getPayloadFromStringToken(base64JwtPayload);
         return property in payload ? payload[property] : undefined;
     }
 
-    public static getUserIdFromUserToken(token: string): string {
-        return Utils.getPropertyFromTokenPayload(
-            token, Config.USER_ID_CLAIM_FOR_SDMS) || Utils.getSubFromPayload(token);
+    public static async getUserId(authorization: string): Promise<string> {
+        if (Config.USER_ID_FROM_PROVIDER_API) {
+            const cloudProvider = Config.CLOUDPROVIDER;
+            const credClient = CredentialsFactory.build(cloudProvider);
+            return await credClient.getUserId(authorization);
+        } else {
+            return Utils.getPropertyFromTokenPayload(
+                authorization, Config.USER_ID_CLAIM_FOR_SDMS) || Utils.getSubFromPayload(authorization);
+        }
     }
 
     // This method is temporary required by slb during the migration of sauth from v1 to v2

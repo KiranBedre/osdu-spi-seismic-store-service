@@ -50,27 +50,38 @@ export class DESEntitlement {
         return { members, nextCursor };
     }
 
+    private static async getGroups(
+        userToken: string, dataPartitionID: string, appkey: string): Promise<any> {
+            const dataecosystem = DataEcosystemCoreFactory.build(Config.CLOUDPROVIDER);
+
+            const options = {
+                headers: {
+                    'Accept': 'application/json',
+                    'AppKey': appkey || Config.DES_SERVICE_APPKEY,
+                    'Authorization': userToken.startsWith('Bearer') ? userToken : 'Bearer ' + userToken,
+                    'Content-Type': 'application/json'
+                }
+            };
+            const url = Config.DES_SERVICE_HOST_ENTITLEMENT + dataecosystem.getEntitlementBaseUrlPath() + '/groups';
+
+            options.headers[dataecosystem.getDataPartitionIDRestHeaderName()] = dataPartitionID;
+
+            const results = await axios.get(url, options).catch((error) => {
+                throw (Error.makeForHTTPRequest(error, '[entitlement-service]'));
+            });
+            return results.data;
+    }
+
     public static async getUserGroups(
-
         userToken: string, dataPartitionID: string, appkey: string): Promise<IDESEntitlementGroupModel[]> {
-        const dataecosystem = DataEcosystemCoreFactory.build(Config.CLOUDPROVIDER);
 
-        const options = {
-            headers: {
-                'Accept': 'application/json',
-                'AppKey': appkey || Config.DES_SERVICE_APPKEY,
-                'Authorization': userToken.startsWith('Bearer') ? userToken : 'Bearer ' + userToken,
-                'Content-Type': 'application/json'
-            }
-        };
-        const url = Config.DES_SERVICE_HOST_ENTITLEMENT + dataecosystem.getEntitlementBaseUrlPath() + '/groups';
+        return (await DESEntitlement.getGroups(userToken, dataPartitionID, appkey)).groups;
+    }
 
-        options.headers[dataecosystem.getDataPartitionIDRestHeaderName()] = dataPartitionID;
+    public static async getUserId(
+        userToken: string, dataPartitionID: string, appkey: string): Promise<string> {
 
-        const results = await axios.get(url, options).catch((error) => {
-            throw (Error.makeForHTTPRequest(error, '[entitlement-service]'));
-        });
-        return results.data.groups;
+        return (await DESEntitlement.getGroups(userToken, dataPartitionID, appkey)).memberEmail;
     }
 
     // ensure strong consistency on cascade operation createGroup -> addMEmber

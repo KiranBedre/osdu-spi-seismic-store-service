@@ -16,6 +16,7 @@
 
 import { createHash } from 'crypto';
 import { Config } from '../cloud';
+import { LoggerFactory } from '../cloud';
 import { DESCompliance, DESUtils } from '../dataecosystem';
 import { ImpersonationTokenContextModel, ImpersonationTokenModel } from '../services/impersonation_token/model';
 import { ImpTokenDAO } from '../services/imptoken';
@@ -123,7 +124,14 @@ export class Auth {
         appkey: string, impersonationTokenContext: string,
         mustThrow: boolean = true): Promise<boolean> {
 
-        if (Auth.isObsoleteImpersonationToken(authToken)) {
+        // TODO: Think about this
+        // 1. Do we really need IMP tokens
+        // 2. If we do need, why do we need to check the issuer?
+        //
+        if (Config.USER_ID_FROM_PROVIDER_API) {
+            return await Auth.isUserAuthorized(authToken, authGroupsName, tenant.esd, appkey, mustThrow);
+        }
+        else if (Auth.isObsoleteImpersonationToken(authToken)) {
             return Auth.isImpersonationTokenWriteAuthorized(authToken,
                 tenant.name, subprojectName, mustThrow);
         } else if (Auth.isNewImpersonationToken(authToken)) {
@@ -140,7 +148,15 @@ export class Auth {
         appkey: string, impersonationTokenContext: string,
         mustThrow: boolean = true): Promise<boolean> {
 
-        if (Auth.isObsoleteImpersonationToken(authToken)) {
+        // TODO: Think about this
+        // 1. Do we really need IMP tokens
+        // 2. If we do need, why do we need to check the issuer?
+        // 3. What does the impersonation means for us at all?
+        //
+        if (Config.USER_ID_FROM_PROVIDER_API) {
+            return await Auth.isUserAuthorized(authToken, authGroupsName, tenant.esd, appkey, mustThrow);
+        }
+        else if (Auth.isObsoleteImpersonationToken(authToken)) {
             return Auth.isImpersonationTokenReadAuthorized(authToken,
                 tenant.name, subprojectName, mustThrow);
         } else if (Auth.isNewImpersonationToken(authToken)) {

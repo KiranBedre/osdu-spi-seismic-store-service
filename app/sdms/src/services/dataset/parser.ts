@@ -53,7 +53,7 @@ export class DatasetParser {
             const context = req.get('impersonation-token-context');
             if (context === undefined) {
                 dataset.created_by = req.get(Config.USER_ID_HEADER_KEY_NAME) ||
-                Utils.getUserIdFromUserToken(req.headers.authorization);
+                await Utils.getUserId(req.headers.authorization);
             }
             else {
                 const tokenContext = ImpersonationTokenHandler.decodeContext(context);
@@ -62,7 +62,7 @@ export class DatasetParser {
         }
         else {
             dataset.created_by = req.get(Config.USER_ID_HEADER_KEY_NAME) ||
-            Utils.getUserIdFromUserToken(req.headers.authorization);
+            await Utils.getUserId(req.headers.authorization);
         }
 
         dataset.created_date = dataset.last_modified_date = new Date().toString();

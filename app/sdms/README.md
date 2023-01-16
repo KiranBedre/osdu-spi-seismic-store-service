@@ -52,3 +52,7 @@ Environment variables can be provided with a `.env` file in the root of the proj
 by [dotenv](https://github.com/motdotla/dotenv). Environment variables are [preloaded](https://github.com/motdotla/dotenv#preload)
 by the `npm start` command with the argument `-r dotenv/config`. A template `.env` file can be found
 in `/docs/templates/.env-sample`.
+
+### Google Cloud configuration (GC)
+
+[Environment configuration](src/cloud/providers/gc/README.md)
