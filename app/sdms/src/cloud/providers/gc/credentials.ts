@@ -51,7 +51,7 @@ export class Credentials extends AbstractCredentials {
         return serviceAccessTokenDownscoped;
     }
 
-    private getFullObjectPrefix(folder?: string, objectPrefix?: string): string | undefined {
+    private getFullObjectPrefix(folder?: string, objectPrefix?: string): string | null {
         if (folder && !objectPrefix) { // I miss a pattern-matching here
             return folder;
         } else if (!folder && objectPrefix) {
@@ -59,7 +59,7 @@ export class Credentials extends AbstractCredentials {
         } else if (folder && objectPrefix) {
             return folder + '/' + objectPrefix;
         } else {
-            return undefined;
+            return null;
         }
     }
 

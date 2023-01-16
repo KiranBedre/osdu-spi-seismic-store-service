@@ -16,13 +16,14 @@
 // limitations under the License.
 // ============================================================================
 
-import { Datastore, Query, Transaction } from '@google-cloud/datastore';
+import { Datastore, DatastoreClient, Query, Transaction, Key} from '@google-cloud/datastore';
 import { TenantModel } from '../../../services/tenant';
 import {
     AbstractJournal, AbstractJournalTransaction,
     IJournalQueryModel, IJournalTransaction, JournalFactory
 } from '../../journal';
-import { ConfigGoogle } from './config';
+import { DataPartitionInfo } from './partition';
+
 
 // a wrapper class for google datastore
 @JournalFactory.register('gc')
@@ -35,39 +36,48 @@ export class DatastoreDAO extends AbstractJournal {
 
     public constructor(tenant: TenantModel) {
         super();
-        this.projectID = ConfigGoogle.SERVICE_CLOUD_PROJECT;
+        this.projectID = tenant.gcpid;
     }
 
-    private getDataStoreClient() {
+    private async getDataStoreClient(): Promise<Datastore> {
         if (DatastoreDAO.clientsCache[this.projectID]) {
             return DatastoreDAO.clientsCache[this.projectID];
         } else {
+            const dataPartitionInfo = await DataPartitionInfo.fromDataPartitionId(this.projectID);
+            const projectId = dataPartitionInfo.gcProjectId;
             DatastoreDAO.clientsCache[this.projectID] = new Datastore({
-                projectId: this.projectID,
+                projectId
             });
             return DatastoreDAO.clientsCache[this.projectID];
         }
     }
 
-
     public async save(datasetEntity: any): Promise<void> {
-        await this.getDataStoreClient().save(datasetEntity);
+        const client = await this.getDataStoreClient();
+        await client.save(datasetEntity);
     }
 
     public async get(key: any): Promise<[any | any[]]> {
-        return await this.getDataStoreClient().get(key);
+        const client = await this.getDataStoreClient();
+        return await client.get(key);
     }
 
     public async delete(key: any): Promise<void> {
-        await this.getDataStoreClient().delete(key);
+        const client = await this.getDataStoreClient();
+        await client.delete(key);
     }
 
     public createQuery(namespace: string, kind: string): IJournalQueryModel {
-        return this.getDataStoreClient().createQuery(namespace, kind);
+        const query = new Query();
+        query.kinds = [kind];
+        query.namespace = namespace;
+        return query;
     }
 
     public async runQuery(query: IJournalQueryModel): Promise<[any[], { endCursor?: string; }]> {
-        const results = await this.getDataStoreClient().runQuery(query as Query);
+        const client = await this.getDataStoreClient();
+        (query as Query).scope = client;
+        const results = await client.runQuery(query as Query);
         const info = results[1];
 
         if (info.moreResults === Datastore.NO_MORE_RESULTS) {
@@ -85,11 +95,17 @@ export class DatastoreDAO extends AbstractJournal {
         if (specs.enforcedKey) {
             specs.path.push(specs.enforcedKey);
         }
-        return this.getDataStoreClient().key(specs);
+        const key = new Key(specs);
+        return key;
     }
 
+    /**
+     * It seems to be obsolete and not used anywhere
+     *
+     * @returns null
+     */
     public getTransaction(): IJournalTransaction {
-        return new DatastoreTransactionDAO(this.getDataStoreClient().transaction());
+        return null;
     }
 
     public getQueryFilterSymbolContains(): string {

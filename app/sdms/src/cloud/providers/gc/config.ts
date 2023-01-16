@@ -83,7 +83,7 @@ export class ConfigGoogle extends Config {
     public async init(): Promise<void> {
 
         try {
-            Config.USER_ID_FROM_PROVIDER_API = process.env.USER_ID_FROM_ENTITLEMENTS === 'true';
+            Config.USER_ID_FROM_PROVIDER_API = process.env.USER_ID_FROM_PROVIDER_API === 'true';
             ConfigGoogle.GCS_BUCKET = process.env.GCS_BUCKET;
             // load des target audience for service to service communication
             ConfigGoogle.DES_SERVICE_TARGET_AUDIENCE = process.env.SEISTORE_DES_TARGET_AUDIENCE;
@@ -147,7 +147,7 @@ export class ConfigGoogle extends Config {
                 ENABLE_DE_TOKEN_EXCHANGE: process.env.ENABLE_DE_TOKEN_EXCHANGE !== undefined ?
                     process.env.ENABLE_DE_TOKEN_EXCHANGE === 'true' : false,
                 DES_TARGET_AUDIENCE: process.env.DES_TARGET_AUDIENCE,
-                TENANT_JOURNAL_ON_DATA_PARTITION: false,
+                TENANT_JOURNAL_ON_DATA_PARTITION: true,
                 FEATURE_FLAG_SEISMICMETA_STORAGE: process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== undefined ?
                     process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== 'false' : true,
                 FEATURE_FLAG_IMPTOKEN: process.env.FEATURE_FLAG_IMPTOKEN !== undefined ?
