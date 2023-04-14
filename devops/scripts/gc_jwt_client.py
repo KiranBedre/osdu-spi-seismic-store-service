@@ -1,14 +1,14 @@
 import json
 import os
-import google.oauth2.id_token
+import google.auth.credentials
 
 from google.auth.transport.requests import Request
 
 def get_id_token():
-    audience = os.environ.get("GC_AUDIENCE")
-    id_token = google.oauth2.id_token.fetch_id_token(Request(), audience)
-    print(id_token)
-    return id_token
+    credentials, _ = google.auth.default()
+    credentials.refresh(Request())
+    print(credentials.token)
+    return credentials.token
 
 def get_invalid_token():
     """
