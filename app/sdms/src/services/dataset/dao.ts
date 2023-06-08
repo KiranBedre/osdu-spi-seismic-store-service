@@ -40,25 +40,39 @@ export class DatasetDAO {
         return entity ? await this.fixOldModel(entity, dataset.tenant, dataset.subproject) : entity;
     }
 
-    public static async exists(journalClient: IJournal, datasets: DatasetModel[]): Promise<boolean[]> {
+    private static async getKeys(journalClient: IJournal, datasets: DatasetModel[]): Promise<any> {
         const keys = [];
-        const bools = [] as boolean[];
 
-        for(const dataset of datasets)
-        {
+        for (const dataset of datasets) {
             keys.push(journalClient.createKey({
                 namespace: Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject,
                 path: [Config.DATASETS_KIND],
-                enforcedKey: dataset.path.slice(0, -1) + '/' + dataset.name
+                enforcedKey: dataset.path.slice(0, -1) + '/' + dataset.name,
             }));
         }
+        return keys;
+    }
+
+    public static async exists(journalClient: IJournal, datasets: DatasetModel[]): Promise<boolean[]> {
+        const keys = await this.getKeys(journalClient, datasets);
+        const bools = [] as boolean[];
         const results = await journalClient.getIdByKeys(keys);
 
         for(const key of keys) {
             bools.push(results.includes(key.partitionKey));
         }
-
         return bools;
+    }
+
+    public static async sizes(journalClient: IJournal, datasets: DatasetModel[]): Promise<number[]> {
+        const keys = await this.getKeys(journalClient, datasets);
+        const sizes = [] as number[];
+        const results =  await journalClient.getMetaDataSizesByKeys(keys);
+
+        for (const key of keys) {
+            sizes.push(results.has(key.partitionKey) ? results.get(key.partitionKey) : -1);
+        }
+        return sizes;
     }
 
     public static async get(
