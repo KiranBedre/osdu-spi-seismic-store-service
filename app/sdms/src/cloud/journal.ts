@@ -35,6 +35,7 @@ export interface IJournalQueryModel {
 export interface IJournal {
     get(key: any): Promise<[any | any[]]>;
     getIdByKeys(keys: any[]): Promise<string[]>;
+    getMetaDataSizesByKeys(keys: any[]): Promise<Map<string, number>>
     save(entity: any): Promise<void>;
     delete(key: any): Promise<void>;
     createQuery(namespace: string, kind: string): IJournalQueryModel;
@@ -78,6 +79,9 @@ export abstract class AbstractJournal implements IJournal {
         return res;
     }
     public getIdByKeys(keys: any[]): Promise<string[]> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    }
+    public getMetaDataSizesByKeys(keys: any[]): Promise<Map<string, number>> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
 }

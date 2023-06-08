@@ -92,6 +92,9 @@ export class TestAzureCosmosDbDAO {
                 getIdByKeys: function (key: any): Promise<[any]> {
                     return Promise.resolve(["exit getMulti"]);
                 },
+                getMetaDataSizesByKeys: function (key: any): Promise<Map<any, any>> {
+                    return Promise.resolve(new Map<any, any>());
+                },
                 save: function (entity: any): Promise<any> {
                     return Promise.resolve("exit saved");
                 },

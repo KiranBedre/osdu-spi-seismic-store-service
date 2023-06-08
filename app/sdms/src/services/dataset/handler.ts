@@ -870,17 +870,21 @@ export class DatasetHandler {
             req.headers['impersonation-token-context'] as string);
 
 
-        // Check if the required datasets exist
+        // get size from each datasets
         Config.disableStrongConsistencyEmulation();
-        const results: number[] = [];
+        let results: number[] = [];
         if (subproject.enforce_key) {
-            for (let dataset of datasets) {
-                dataset = await DatasetDAO.getByKey(journalClient, dataset);
-                if (dataset === undefined) {
-                    results.push(-1);
-                    continue;
+            if(Config.CLOUDPROVIDER !== 'azure') {
+                for (let dataset of datasets) {
+                    dataset = await DatasetDAO.getByKey(journalClient, dataset);
+                    if (dataset === undefined) {
+                        results.push(-1);
+                        continue;
+                    }
+                    results.push(!dataset.filemetadata || !dataset.filemetadata.size ? -1 : dataset.filemetadata.size);
                 }
-                results.push(!dataset.filemetadata || !dataset.filemetadata.size ? -1 : dataset.filemetadata.size);
+            } else {
+                results = await DatasetDAO.sizes(journalClient, datasets);
             }
         } else {
             for (let dataset of datasets) {
