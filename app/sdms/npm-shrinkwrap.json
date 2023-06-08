@@ -321,7 +321,7 @@
         "@aws-sdk/util-utf8": "3.254.0",
         "@aws-sdk/util-waiter": "3.257.0",
         "@aws-sdk/xml-builder": "3.201.0",
-        "fast-xml-parser": "4.0.11",
+        "fast-xml-parser": "4.2.4",
         "tslib": "^2.3.1"
       },
       "engines": {
@@ -451,7 +451,7 @@
         "@aws-sdk/util-user-agent-browser": "3.257.0",
         "@aws-sdk/util-user-agent-node": "3.259.0",
         "@aws-sdk/util-utf8": "3.254.0",
-        "fast-xml-parser": "4.0.11",
+        "fast-xml-parser": "4.2.4",
         "tslib": "^2.3.1"
       },
       "engines": {
@@ -7900,8 +7900,8 @@
       "integrity": "sha512-VhXlQgj9ioXCqGstD37E/HBeqEGV/qOD/kmbVG8h5xKBYvM1L3lR1Zn4555cQ8GkYbJa8aJSipLPndE1k6zK2w=="
     },
     "node_modules/fast-xml-parser": {
-      "version": "4.0.11",
-      "resolved": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-4.0.11.tgz",
+      "version": "4.2.4",
+      "resolved": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-4.2.4.tgz",
       "integrity": "sha512-4aUg3aNRR/WjQAcpceODG1C3x3lFANXRo8+1biqfieHmg9pyMt7qB4lQV/Ta6sJCTbA5vfD8fnA8S54JATiFUA==",
       "dependencies": {
         "strnum": "^1.0.5"
@@ -16777,7 +16777,7 @@
         "@aws-sdk/util-utf8": "3.254.0",
         "@aws-sdk/util-waiter": "3.257.0",
         "@aws-sdk/xml-builder": "3.201.0",
-        "fast-xml-parser": "4.0.11",
+        "fast-xml-parser": "4.2.4",
         "tslib": "^2.3.1"
       }
     },
@@ -16898,7 +16898,7 @@
         "@aws-sdk/util-user-agent-browser": "3.257.0",
         "@aws-sdk/util-user-agent-node": "3.259.0",
         "@aws-sdk/util-utf8": "3.254.0",
-        "fast-xml-parser": "4.0.11",
+        "fast-xml-parser": "4.2.4",
         "tslib": "^2.3.1"
       }
     },
@@ -22745,8 +22745,8 @@
       "integrity": "sha512-VhXlQgj9ioXCqGstD37E/HBeqEGV/qOD/kmbVG8h5xKBYvM1L3lR1Zn4555cQ8GkYbJa8aJSipLPndE1k6zK2w=="
     },
     "fast-xml-parser": {
-      "version": "4.0.11",
-      "resolved": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-4.0.11.tgz",
+      "version": "4.2.4",
+      "resolved": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-4.2.4.tgz",
       "integrity": "sha512-4aUg3aNRR/WjQAcpceODG1C3x3lFANXRo8+1biqfieHmg9pyMt7qB4lQV/Ta6sJCTbA5vfD8fnA8S54JATiFUA==",
       "requires": {
         "strnum": "^1.0.5"
