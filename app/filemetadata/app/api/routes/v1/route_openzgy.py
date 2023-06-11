@@ -6,14 +6,17 @@ import math
 import json
 import vector
 
+from ..shared.description import Role, api_description
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.api_key import APIKey
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from api.dependencies.authentication import get_bearer, get_api_key, configure_remote_access
 from core.config import settings
+VERSION = 1
 
 router = APIRouter()
+PATH = settings.API_PATH + 'v' + str(VERSION) + '/'
 
 def internal_server_error(e: Exception): 
     return HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -144,7 +147,7 @@ class ZGYToBinGrid:
         return json.dumps(m, indent=2)
 
 
-@router.get(settings.API_PATH + "openzgy/headers", tags=["OPENZGY"])
+@router.get(PATH + "openzgy/headers", tags=["OPENZGY (DEPRECATED)"], description=api_description("headers", Role.viewer))
 async def get_headers(
         sdpath: str,
         bearer: APIKey = Depends(get_bearer),
@@ -185,7 +188,7 @@ async def get_headers(
         raise internal_server_error(e)
 
 
-@router.get(settings.API_PATH + "openzgy/bingrid", tags=["OPENZGY"])
+@router.get(PATH + "openzgy/bingrid", tags=["OPENZGY (DEPRECATED)"], description=api_description("bingrid", Role.viewer))
 async def get_bingrid(
         sdpath: str,
         bearer: APIKey = Depends(get_bearer),
