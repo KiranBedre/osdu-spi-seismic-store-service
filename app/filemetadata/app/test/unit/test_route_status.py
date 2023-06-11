@@ -1,7 +1,7 @@
 import unittest
 
 from fastapi.testclient import TestClient
-from api.routes.route_status import router
+from api.routes.shared.route_status_v1 import router
 from core.config import Settings
 from unit.util import apply_test_settings
 

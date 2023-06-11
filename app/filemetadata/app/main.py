@@ -50,7 +50,7 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
 
     response.headers[
-        "Content-Security-Policy"] = "script-src 'sha256-QuAs+CqphLwAzmCp9+wglAmhBrnrCtBV2EsorI3eY2U=' 'self'"
+        "Content-Security-Policy"] = "script-src 'unsafe-inline' 'self'"
     return response
 
 
