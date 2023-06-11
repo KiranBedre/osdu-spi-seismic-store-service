@@ -37,7 +37,7 @@ There are 3 ways to build and test this service: local, docker and GitLab.
 
 2. `python main.py`
 
-3. Open `http://localhost:8000/seismic-file-metadata/api/v1/swagger-ui.html` in web browser
+3. Open `http://localhost:8000/seismic-file-metadata/api/swagger-ui.html` in web browser
     - Enter bearer token (you can get it from Delfi Portal) and appkey for authorization 
     - Enter sdpath i.e. `sd://opendes/dchentest/test.sgy`
 
@@ -49,7 +49,7 @@ There are 3 ways to build and test this service: local, docker and GitLab.
 1. Run the docker image. `docker run --env SDMS_SERVICE_HOST=<SDMS_SERVICE_HOST> -d -it --rm --name seismic-metadata-container -p 8080:8000 seismic-metadata-image`
 Replace environment variable `<SDMS_SERVICE_HOST>` with the url of [seismic store service]
 
-2. Open `http://localhost:8080/seismic-file-metadata/api/v1/swagger-ui.html` in web browser
+2. Open `http://localhost:8080/seismic-file-metadata/api/swagger-ui.html` in web browser
     - Enter bearer token (you can get it from Delfi Portal) and appkey for authorization 
     - Enter sdpath i.e. `sd://opendes/dchentest/test.sgy`
 
@@ -59,7 +59,7 @@ Replace environment variable `<SDMS_SERVICE_HOST>` with the url of [seismic stor
 
 2. `SDMS_SERVICE_HOST` is defined in `devops\azure\chart\templates\configmap.yaml`
 
-3. [Test web url](https://osdu-glab.msft-osdu-test.org/seismic-file-metadata/api/v1/swagger-ui.html)
+3. [Test web url](https://osdu-glab.msft-osdu-test.org/seismic-file-metadata/api/swagger-ui.html)
 
 # Run Unit Tests
 

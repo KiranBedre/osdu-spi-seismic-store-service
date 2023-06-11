@@ -5,3 +5,4 @@ __pycache__
 /app/node_modules/
 /app/openzgy-bundle/
 /app/venv/
+install.sh
