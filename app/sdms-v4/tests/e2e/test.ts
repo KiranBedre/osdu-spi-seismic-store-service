@@ -58,11 +58,13 @@ const testSchemasArgs = [
         tag: 'Line Geometry',
         model: 'SeismicLineGeometry.1.0.0.json',
     },
+
     {
         endpoint: '2dinterpretationset',
         tag: '2D Interpretation Set',
         model: 'Seismic2DInterpretationSet.1.1.0.json',
     },
+
     {
         endpoint: '3dinterpretationset',
         tag: '3D Interpretation Set',
@@ -77,6 +79,11 @@ const testSchemasArgs = [
         endpoint: 'processingproject',
         tag: 'Processing Project',
         model: 'SeismicProcessingProject.1.2.0.json',
+    },
+    {
+        endpoint: 'seismichorizon',
+        tag: 'Seismic Horizon',
+        model: 'SeismicHorizon.1.2.0.json',
     },
 ] as TestSchemaArgs[];
 

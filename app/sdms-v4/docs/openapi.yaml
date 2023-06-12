@@ -1146,7 +1146,123 @@ paths:
       responses:
         200:
           $ref: "#/components/responses/linegeometry.1.0.0"
+### ==============================================================================
+### SEISMIC HORIZON PATHS
+### ==============================================================================
 
+  /seismichorizon/v1:
+    put:
+      operationId: seismichorizon-v1-insert
+      summary: register or update a seismic horizon component
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This API registers or update a list of seismic horizon components. When a component is updated, a new version of it will be created.
+        The [seismic horizon 1.2.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicHorizon.1.2.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
+        References to datasets, as record id, can be specified in the
+        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
+
+        The API returns a list of versioned records ID for the registered or updated datasets.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/seismichorizon.1.2.0.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /seismichorizon/v1/list:
+    get:
+      operationId: seismichorizon-v1-list
+      summary: get the list of seismic horizon datasets
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        Return a list of seismic horizon datasets. 
+
+        Pagination is supported.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/pagination.limit"
+        - $ref: "#/components/parameters/pagination.token"
+      responses:
+        200:
+          $ref: "#/components/responses/seismichorizon.1.2.0.list.paginated"
+
+  /seismichorizon/v1/record/{id}:
+    get:
+      operationId: seismichorizon-v1-get
+      summary: get a seismic horizon component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a seismic horizon dataset. Previous schema version will be automatically converted.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/seismichorizon.1.2.0"
+          
+    delete:
+      operationId: seismichorizon-v1-delete
+      summary: delete a seismic horizon component
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given seismic horizon component.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
+  /seismichorizon/v1/record/{id}/versions:
+    get:
+      operationId: seismichorizon-v1-get-versions
+      summary: get the versions of a seismic horizon component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the list of versions for a seismic horizon component.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/version.list"
+
+  /seismichorizon/v1/record/{id}/version/{version}:
+    get:
+      operationId: seismichorizon-v1-get-version
+      summary: get a version of the seismic horizon dataset
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns a specific version of the seismic horizon component
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/version"
+      responses:
+        200:
+          $ref: "#/components/responses/seismichorizon.1.2.0"
+          
   ### ==============================================================================
   ### SEISMIC 2D INTERPRETATION SET PATHS
   ### ==============================================================================
@@ -1798,6 +1914,13 @@ components:
       type: array
       items:
         $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json"
+    seismichorizon.1.2.0.list:
+        title: Seismic Horizon 1.2.0 components
+        description: The list of seismic horizon 1.2.0 components
+        type: array
+        items: 
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json"
+          
     3dinterpretationset.1.1.0.list:
       title: Seismic 3D Interpretation Set 1.1.0 data
       description: The list of seismic 3D interpretation set 1.1.0 data
@@ -1897,6 +2020,17 @@ components:
           type: array
           items:
             $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json"
+        next-page-token:
+          type: string
+    seismichorizon.1.2.0.list.paginated:
+      title: Seismic Horizon 1.2.0 components paginated list
+      description: The paginated list of seismic horizon 1.2.0 components
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json"
         next-page-token:
           type: string
     3dinterpretationset.1.1.0.list.paginated:
@@ -2018,6 +2152,12 @@ components:
         [
           $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json",
         ]
+    seismichorizon.1.2.0.list:
+      summary: Seismic Horizon 1.2.0 components
+      value:
+        [ 
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json"
+        ]
     3dinterpretationset.1.1.0.list:
       summary: Seismic 3D Interpretation Set 1.1.0 data
       value:
@@ -2092,6 +2232,14 @@ components:
         datasets:
           [
             $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json",
+          ]
+        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
+    seismichorizon.1.2.0.list.paginated:
+      summary: Seismic Horizon 1.2.0 components (paginated)
+      value:
+        datasets:
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json",
           ]
         next-page-token: f446733b-154f-d134-8a54-6ab612a48217
     3dinterpretationset.1.1.0.list.paginated:
@@ -2206,6 +2354,16 @@ components:
           examples:
             linegeometry.1.0.0.list:
               $ref: "#/components/examples/linegeometry.1.0.0.list"
+    seismichorizon.1.2.0.list:
+      description: The list of seismic horizon 1.2.0 components.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/seismichorizon.1.2.0.list"
+          examples:
+            seismichorizon.1.2.0.list:
+              $ref: "#/components/examples/seismichorizon.1.2.0.list"
     3dinterpretationset.1.1.0.list:
       description: The list of seismic 3D interpretation set 1.1.0 data
       required: true
@@ -2357,6 +2515,15 @@ components:
           examples:
             Line Geometry 1.0.0 dataset:
               $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json"
+    seismichorizon.1.2.0:
+      description: The seismic horizon 1.2.0 component
+      content:
+        application/json:
+          schema:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json"
+          examples:
+            Seismic Horizon 1.2.0 dataset:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json"
     3dinterpretationset.1.1.0:
       description: The seismic 3D interpretation set 1.1.0 data
       content:
@@ -2456,6 +2623,15 @@ components:
           examples:
             linegeometry.1.0.0.list:
               $ref: "#/components/examples/linegeometry.1.0.0.list.paginated"
+    seismichorizon.1.2.0.list.paginated:
+      description: The list of seismic horizon 1.2.0 component
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/seismichorizon.1.2.0.list.paginated"
+          examples:
+            seismichorizon.1.2.0.list:
+              $ref: "#/components/examples/seismichorizon.1.2.0.list.paginated"
     3dinterpretationset.1.1.0.list.paginated:
       description: The list of seismic 3D interpretation set 1.1.0 data
       content:
