@@ -7,7 +7,7 @@ import unittest
 from unittest import mock
 
 from fastapi.testclient import TestClient
-from api.routes.route_segy import router
+from api.routes.v1.route_segy import router
 from core.config import Settings
 from unit.util import apply_test_settings
 
@@ -60,7 +60,7 @@ class MockSegySession:
 apply_test_settings()
 
 
-@mock.patch('api.routes.route_segy.__create_segy_session')
+@mock.patch('api.routes.v1.route_segy.__create_segy_session')
 class RouteSegyTest(unittest.TestCase):
 
     def test_segy_revision(self, mock_create_segy_session):
