@@ -22,21 +22,22 @@ export class UserParser {
 
     public static removeUser(req: expRequest): { email: string, sdPath: SDPathModel } {
 
-        Params.checkBody(req.body);
-        Params.checkString(req.body.email, 'email');
-        Params.checkString(req.body.path, 'path');
+        const email = req.query?.email || req.body?.email;
+        const path = req.query?.path  || req.body?.path;
 
-        const email = req.body.email;
+        Params.checkString(email, 'email');
+        Params.checkString(path, 'path');
 
-        const sdPath = SDPath.getFromString(req.body.path);
+        const sdPath = SDPath.getFromString(path);
+
         if (!sdPath) {
             throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'path\' body parameter is not a valid seismic store path.'));
+                'The \'path\' parameter is not a valid seismic store path.'));
         }
 
         if (!sdPath.tenant && !sdPath.subproject) {
             throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'path\' body parameter is neither a valid tenant or a valid subproject resource path.'));
+                'The \'path\' parameter is neither a valid tenant or a valid subproject resource path.'));
         }
 
         return { email, sdPath };

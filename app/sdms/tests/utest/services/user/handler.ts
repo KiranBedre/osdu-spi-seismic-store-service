@@ -237,10 +237,9 @@ export class TestServicesUserHandler {
             
             op = UserOP.Remove;
 
-            req.body = {};
-            req.body.path = "sd://tenant/subproject/path/mydata.txt";
-            req.body.email = "test@123.com";
-            req.body.group = "admin";
+            req.query = {};
+            req.query.path = "sd://tenant/subproject/path/mydata.txt";
+            req.query.email = "test@123.com";
 
             //
             //
@@ -260,10 +259,9 @@ export class TestServicesUserHandler {
             
             op = UserOP.Remove;
 
-            req.body = {};
-            req.body.path = "sd://tenant/subproject/path/mydata.txt";
-            req.body.email = "test@123.com";
-            req.body.group = "admin";
+            req.query = {};
+            req.query.path = "sd://tenant/subproject/path/mydata.txt";
+            req.query.email = "test@123.com";
 
             //
             datasetModel.acls = undefined;
@@ -284,10 +282,9 @@ export class TestServicesUserHandler {
             
             op = UserOP.Remove;
 
-            req.body = {};
-            req.body.path = "sd://tenant/subproject/path/mydata.txt";
-            req.body.email = "test@123.com";
-            req.body.group = "admin";
+            req.query = {};
+            req.query.path = "sd://tenant/subproject/path/mydata.txt";
+            req.query.email = "test@123.com";
 
             //
             subProjectModel.enforce_key = true;

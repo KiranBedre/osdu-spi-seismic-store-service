@@ -1,9 +1,8 @@
 {
 	"info": {
-		"_postman_id": "dc543ba0-a8d1-422c-9291-0dd7584df3f0",
+		"_postman_id": "66a13272-4b59-4e52-95db-57a68a6d0e5e",
 		"name": "SDMS-E2E ver.M19 - Release 0.22",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "11702291"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -14337,15 +14336,25 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"email\": \"{{newuser}}\",\n\t\"path\": \"sd://{{tenant}}/{{subproject}}\"\n}"
+							"raw": ""
 						},
 						"url": {
-							"raw": "{{SVC_URL}}/user",
+							"raw": "{{SVC_URL}}/user?email={{newuser}}&path=sd://{{tenant}}/{{subproject}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
 							"path": [
 								"user"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "{{newuser}}"
+								},
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}"
+								}
 							]
 						}
 					},
