@@ -53,6 +53,7 @@ configuration:
         - "/seistore-svc/api/v3/swagger-ui.html*"
         - "/seistore-svc/api/v3/svcstatus"
         - "/seistore-svc/api/v3/svcstatus/readiness"
+        - "/seistore-svc/api/v3/api-doc"
     config:
       DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
       REDIS_INSTANCE_PORT: "6380"

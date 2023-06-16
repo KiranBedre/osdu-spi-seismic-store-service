@@ -83,8 +83,12 @@ export class Server {
             SwaggerManager.swaggerDocument, {
             customCss: '.swagger-ui .topbar { display: none }'
         }));
+        this.app.get(Config.SDMS_PREFIX + '/api-doc', (req: express.Request, res: express.Response) => {
+            res.setHeader('Content-Type','application/json');
+            res.send(SwaggerManager.swaggerDocument);
+        });
         this.app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-
+    
             try {
 
                 // disable silent error logs
