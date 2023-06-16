@@ -220,6 +220,8 @@ export abstract class Config implements IConfig {
     // OSDU x-user-id header
     public static USER_ID_HEADER_KEY_NAME: string;
 
+    public static USER_ID_FROM_PROVIDER_API: boolean;
+
     public static setCloudProvider(cloudProvider: string) {
         Config.CLOUDPROVIDER = cloudProvider;
         if (Config.CLOUDPROVIDER === undefined) {

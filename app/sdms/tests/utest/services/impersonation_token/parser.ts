@@ -125,7 +125,7 @@ export class TestParser {
             // this.sandbox.stub(ImpersonationTokenParser, "generate").resolves(impersonationTokenRequestBodyModel);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
             this.sandbox.stub(Utils, "getExpTimeFromPayload").resolves(100);
-            this.sandbox.stub(Utils, "getUserIdFromUserToken").returns(req.params.userId);
+            this.sandbox.stub(Utils, "getUserId").returns(new Promise(()=>req.params.userId));
             this.sandbox.stub(Params, "checkArray").resolves();
             this.sandbox.stub(Params, "checkObject").resolves(true);
             this.sandbox.stub(Params, "checkString").resolves(true);
@@ -158,7 +158,7 @@ export class TestParser {
             // this.sandbox.stub(ImpersonationTokenParser, "generate").resolves(impersonationTokenRequestBodyModel);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
             this.sandbox.stub(Utils, "getExpTimeFromPayload").resolves(100);
-            this.sandbox.stub(Utils, "getUserIdFromUserToken").returns(req.params.userId);
+            this.sandbox.stub(Utils, "getUserId").returns(new Promise(()=>req.params.userId));
             this.sandbox.stub(Params, "checkArray").resolves();
             this.sandbox.stub(Params, "checkObject").resolves(true);
             this.sandbox.stub(Params, "checkString").resolves(true);

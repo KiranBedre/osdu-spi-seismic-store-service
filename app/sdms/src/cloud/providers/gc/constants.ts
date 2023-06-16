@@ -1,5 +1,7 @@
 // ============================================================================
 // Copyright 2017-2019, Schlumberger
+// Copyright 2023 Google LLC
+// Copyright 2023 EPAM Systems
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,9 +16,6 @@
 // limitations under the License.
 // ============================================================================
 
-export * as google from './google';
-export * as gc from './gc';
-export * as azure from './azure';
-export * as ibm from './ibm';
-export * as aws from './aws';
-export * as anthos from './anthos';
+
+export const KEEP_FILE_NAME = '.keep';
+export const GCS_URL_SEPARATOR = '$$';

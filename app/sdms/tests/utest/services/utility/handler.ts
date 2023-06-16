@@ -89,7 +89,10 @@ export class TestServicesUtilityHandler {
                 },
                 getPublicKeyCertificatesUrl: function (): string {
                     throw new Error();
-                }
+                },
+                getUserId: function(userToken: string): Promise<string> {
+                    throw new Error();
+                } 
             };
             beforeEach(() => { 
                 subProjectModel.access_policy = "dataset";
