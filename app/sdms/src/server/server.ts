@@ -88,7 +88,7 @@ export class Server {
             res.send(SwaggerManager.swaggerDocument);
         });
         this.app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    
+
             try {
 
                 // disable silent error logs
