@@ -24,6 +24,7 @@ sdms_ibm-deploy:
 sdms_ibm-deploy-devpri:
   extends: .ibm-deploy-devpri
   needs: ['sdms_compile-and-unit-test']
+  allow_failure: true
   script:
     - cd app/$SDMS_SERVICE
     - echo "In IBM deploy"
