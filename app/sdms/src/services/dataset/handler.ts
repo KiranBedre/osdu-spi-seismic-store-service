@@ -881,7 +881,8 @@ export class DatasetHandler {
                         results.push(-1);
                         continue;
                     }
-                    results.push(!dataset.filemetadata || !dataset.filemetadata.size ? -1 : dataset.filemetadata.size);
+                    results.push(dataset.filemetadata === undefined || dataset.filemetadata.size === undefined ?
+                        -1 : dataset.filemetadata.size);
                 }
             } else {
                 results = await DatasetDAO.sizes(journalClient, datasets);
@@ -893,7 +894,8 @@ export class DatasetHandler {
                     results.push(-1);
                     continue;
                 }
-                results.push(!dataset.filemetadata || !dataset.filemetadata.size ? -1 : dataset.filemetadata.size);
+                results.push(dataset.filemetadata === undefined || dataset.filemetadata.size === undefined ?
+                    -1 : dataset.filemetadata.size);
             }
         }
         Config.enableStrongConsistencyEmulation();
