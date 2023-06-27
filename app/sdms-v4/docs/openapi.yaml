@@ -1,5 +1,3 @@
-
-
 #  ***************************************************************************
 #  Copyright 2017 - 2023, Schlumberger
 #
@@ -16,8 +14,6 @@
 #  limitations under the License.
 #  ***************************************************************************
 
-
-
 openapi: 3.0.2
 
 info:
@@ -30,8 +26,6 @@ info:
 
 servers:
   - url: "#{servers.url}#"
-  
-
 
 paths:
   ### ==============================================================================
@@ -60,42 +54,47 @@ paths:
         200:
           $ref: "#/components/responses/service.status.ready"
 
-
- 
   ### ==============================================================================
   ### SEGY PATHS
   ### ==============================================================================
-  
+
   /segy/v1:
     put:
       operationId: segy-v1-insert
-      summary: register or update SEGY seismic datasets
+      summary: register or update segy seismic datasets
       description: |
         Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of SEGY seismic dataset. When a dataset is updated, a new version of it will be created.
-        The [SEGY 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.SEGY.1.0.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        
-        Reference to bulk files, composing the dataset, can be specified in the 
+
+        This API registers or updates a list of segy seismic datasets. When a dataset is updated, a new version of it will be created.
+        The [segy 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.SEGY.1.0.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request.
+
+        Reference to bulk files, composing the dataset, can be specified in the
         *DatasetProperties* property of the model.
-        
-        **example: dataset collection and files** 
-        ```   
+
+
+        **example: dataset collection and files**
+        ```
         "data": {
-            "DatasetProperties": {
+          "DatasetProperties": {
               "FileCollectionPath": "segy-dataset"
               "FileSourceInfos": [
                 { "FileSource": "data.01.sgy" },
                 { "FileSource": "data.02.sgy" } 
               ]
-            }
           }
+        }
         ```
+
         The Access Control is applied at the dataset level and regulates access to bulks/files resources. 
         It is performed by checking if the caller is a member of an authorization group. 
         A user in SDMS can be either owner or viewer
+
         -  owner with read/write access if a member of an owner authorization group
         -  viewer with read-only access if a member of a viewer authorization group.
-        The owner and viewer authorization groups are required to be specified in the *acl* property of the model.
+
+        The owner and viewer authorization groups are required to be specified in the *acl* property
+        of the model.
 
         **example: access control list definition**
         ```
@@ -107,25 +106,25 @@ paths:
             "someone.viewer@comany.com"
           ]
         }
-        ```     
-          
+        ```
+
         Each seismic dataset has associated legal tag information. 
         The legal tag is always checked by SDDMS before it releases any sensitive information of a dataset.
         The legal tag is required to be specified in the *legal* property of the model.
-          
+
         **example: legal tag definition**
         ```
-          "legal": {
-            "legaltags": [
-              "an.example.legal.tag"
-            ],
-            "otherRelevantDataCountries": [
-              "US"
-            ]
-            "status": "compliant"
-          }
-        ```      
-        
+        "legal": {
+          "legaltags": [
+            "an.example.legal.tag"
+          ],
+          "otherRelevantDataCountries": [
+            "US"
+          ]
+          "status": "compliant"
+        }
+        ```
+
         The API returns a list of versioned records ID for the registered or updated datasets.
       tags:
         - File Collection SEGY
@@ -135,16 +134,17 @@ paths:
         $ref: "#/components/requestBodies/segy.1.0.0.list"
       responses:
         200:
-          $ref: "#/components/responses/record.id.version.list"  
+          $ref: "#/components/responses/record.id.version.list"
+
   /segy/v1/list:
     get:
       operationId: segy-v1-list
-      summary: get the list of SEGY seismic datasets
+      summary: get the list of segy seismic dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of SEGY seismic datasets
-              
+
+        Return a list of segy seismic
+
         Pagination is supported.
       tags:
         - File Collection SEGY
@@ -154,31 +154,31 @@ paths:
         - $ref: "#/components/parameters/pagination.token"
       responses:
         200:
-          $ref: "#/components/responses/segy.1.0.0.list.paginated"  
+          $ref: "#/components/responses/segy.1.0.0.list.paginated"
+
   /segy/v1/record/{id}:
     get:
       operationId: segy-v1-get
-      summary: get a SEGY seismic dataset
+      summary: get a segy seismic dataset
       description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
 
-        This API returns the latest version of a SEGY seismic dataset
+        This api returns the last version of a seismic dataset.
       tags:
         - File Collection SEGY
       parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/segy.1.0.0"  
-  
+          $ref: "#/components/responses/segy.1.0.0"
     delete:
       operationId: segy-v1-delete
-      summary: delete a SEGY dataset
+      summary: delete a segy seismic dataset
       description: |
         Required role: users.datalake.admin
 
-        The API performs a deletion of the given SEGY seismic dataset.
+        The API performs a deletion of the given segy dataset record.
       tags:
         - File Collection SEGY
       parameters:
@@ -186,14 +186,16 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          description: The resource was deleted successfully.  
+          description: The resource was deleted successfully.
+
   /segy/v1/record/{id}/versions:
     get:
       operationId: segy-v1-get-versions
-      summary: get the versions of a SEGY dataset
+      summary: get the versions of a segy dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a SEGY dataset
+
+        This api returns the list of versions for a segy seismic dataset.
       tags:
         - File Collection SEGY
       parameters:
@@ -201,14 +203,16 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/version.list"  
+          $ref: "#/components/responses/version.list"
+
   /segy/v1/record/{id}/version/{version}:
     get:
       operationId: segy-v1-get-version
-      summary: get a version of the SEGY dataset
+      summary: get a version of the segy dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the SEGY seismic dataset.
+
+        This api returns a specific version of the segy seismic dataset
       tags:
         - File Collection SEGY
       parameters:
@@ -217,41 +221,66 @@ paths:
         - $ref: "#/components/parameters/version"
       responses:
         200:
-          $ref: "#/components/responses/segy.1.0.0" 
+          $ref: "#/components/responses/segy.1.0.0"
+
+  /segy/v1/reindex:
+    put:
+      operationId: segy-v1-reindex
+      summary: reindex a segy seismic dataset (not implemented)
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This api re-index a list of dataset ingested via sdms V3.
+      tags:
+        - File Collection SEGY
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/sdms.v3.dataset.path.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.list"
+
   ### ==============================================================================
   ### OPENZGY PATHS
   ### ==============================================================================
-  
+
   /openzgy/v1:
     put:
       operationId: openzgy-v1-insert
-      summary: register or update OpenZGY seismic datasets
+      summary: register or update openzgy seismic datasets
       description: |
         Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of OpenZGY seismic dataset. When a dataset is updated, a new version of it will be created.
-        The [OpenZGY 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        
-        Reference to bulk files, composing the dataset, can be specified in the 
+
+        This API registers or updates a list of openzgy seismic datasets. When a dataset is updated, a new version of it will be created.
+        The [openzgy 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request.
+
+        Reference to bulk files, composing the dataset, can be specified in the
         *DatasetProperties* property of the model.
-        
-        **example: dataset collection and files** 
-        ```   
+
+        **example: dataset collection and files**
+        ```
         "data": {
-            "DatasetProperties": {
-              "FileCollectionPath": "openzgy-dataset"
+          "DatasetProperties": {
+              "FileCollectionPath": "zgy-dataset"
               "FileSourceInfos": [
                 { "FileSource": "data.01.zgy" },
                 { "FileSource": "data.02.zgy" } 
               ]
-            }
           }
+        }
         ```
+
         The Access Control is applied at the dataset level and regulates access to bulks/files resources. 
         It is performed by checking if the caller is a member of an authorization group. 
         A user in SDMS can be either owner or viewer
+
         -  owner with read/write access if a member of an owner authorization group
         -  viewer with read-only access if a member of a viewer authorization group.
-        The owner and viewer authorization groups are required to be specified in the *acl* property of the model.
+
+        The owner and viewer authorization groups are required to be specified in the *acl* property
+        of the model.
 
         **example: access control list definition**
         ```
@@ -263,25 +292,25 @@ paths:
             "someone.viewer@comany.com"
           ]
         }
-        ```     
-          
+        ```
+
         Each seismic dataset has associated legal tag information. 
         The legal tag is always checked by SDDMS before it releases any sensitive information of a dataset.
         The legal tag is required to be specified in the *legal* property of the model.
-          
+
         **example: legal tag definition**
         ```
-          "legal": {
-            "legaltags": [
-              "an.example.legal.tag"
-            ],
-            "otherRelevantDataCountries": [
-              "US"
-            ]
-            "status": "compliant"
-          }
-        ```      
-        
+        "legal": {
+          "legaltags": [
+            "an.example.legal.tag"
+          ],
+          "otherRelevantDataCountries": [
+            "US"
+          ]
+          "status": "compliant"
+        }
+        ```
+
         The API returns a list of versioned records ID for the registered or updated datasets.
       tags:
         - File Collection OpenZGY
@@ -291,16 +320,17 @@ paths:
         $ref: "#/components/requestBodies/openzgy.1.0.0.list"
       responses:
         200:
-          $ref: "#/components/responses/record.id.version.list"  
+          $ref: "#/components/responses/record.id.version.list"
+
   /openzgy/v1/list:
     get:
       operationId: openzgy-v1-list
-      summary: get the list of OpenZGY seismic datasets
+      summary: get the list of openzgy seismic datasets
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of OpenZGY seismic datasets
-              
+
+        Return a list of openzgy seismic datasets.
+
         Pagination is supported.
       tags:
         - File Collection OpenZGY
@@ -310,31 +340,31 @@ paths:
         - $ref: "#/components/parameters/pagination.token"
       responses:
         200:
-          $ref: "#/components/responses/openzgy.1.0.0.list.paginated"  
+          $ref: "#/components/responses/openzgy.1.0.0.list.paginated"
+
   /openzgy/v1/record/{id}:
     get:
       operationId: openzgy-v1-get
-      summary: get a OpenZGY seismic dataset
+      summary: get an openzgy seismic dataset
       description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
 
-        This API returns the latest version of a OpenZGY seismic dataset
+        This api returns the last version of an openzgy seismic dataset.
       tags:
         - File Collection OpenZGY
       parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/openzgy.1.0.0"  
-  
+          $ref: "#/components/responses/openzgy.1.0.0"
     delete:
       operationId: openzgy-v1-delete
-      summary: delete a OpenZGY dataset
+      summary: delete a openzgy seismic dataset
       description: |
         Required role: users.datalake.admin
 
-        The API performs a deletion of the given OpenZGY seismic dataset.
+        The API performs a deletion of the given openzgy dataset record.
       tags:
         - File Collection OpenZGY
       parameters:
@@ -342,14 +372,16 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          description: The resource was deleted successfully.  
+          description: The resource was deleted successfully.
+
   /openzgy/v1/record/{id}/versions:
     get:
       operationId: openzgy-v1-get-versions
-      summary: get the versions of a OpenZGY dataset
+      summary: get the versions of an openzgy dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a OpenZGY dataset
+
+        This api returns the list of versions for an openzgy seismic dataset.
       tags:
         - File Collection OpenZGY
       parameters:
@@ -357,14 +389,16 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/version.list"  
+          $ref: "#/components/responses/version.list"
+
   /openzgy/v1/record/{id}/version/{version}:
     get:
       operationId: openzgy-v1-get-version
-      summary: get a version of the OpenZGY dataset
+      summary: get a version of the openzgy dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the OpenZGY seismic dataset.
+
+        This api returns a specific version of the openzgy seismic dataset
       tags:
         - File Collection OpenZGY
       parameters:
@@ -373,41 +407,66 @@ paths:
         - $ref: "#/components/parameters/version"
       responses:
         200:
-          $ref: "#/components/responses/openzgy.1.0.0" 
+          $ref: "#/components/responses/openzgy.1.0.0"
+
+  /openzgy/v1/reindex:
+    put:
+      operationId: openzgy-v1-reindex
+      summary: reindex a openzgy seismic dataset (not implemented)
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This api re-index a list of dataset ingested via sdms V3.
+      tags:
+        - File Collection OpenZGY
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/sdms.v3.dataset.path.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.list"
+
   ### ==============================================================================
   ### OPENVDS PATHS
   ### ==============================================================================
-  
+
   /openvds/v1:
     put:
       operationId: openvds-v1-insert
-      summary: register or update OpenVDS seismic datasets
+      summary: register or update openvds seismic datasets
       description: |
         Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of OpenVDS seismic dataset. When a dataset is updated, a new version of it will be created.
-        The [OpenVDS 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        
-        Reference to bulk files, composing the dataset, can be specified in the 
+
+        This API registers or updates a list of openvds seismic datasets. When a dataset is updated, a new version of it will be created.
+        The [openvds 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request.
+
+        Reference to bulk files, composing the dataset, can be specified in the
         *DatasetProperties* property of the model.
-        
-        **example: dataset collection and files** 
-        ```   
+
+        **example: dataset collection and files**
+        ```
         "data": {
-            "DatasetProperties": {
-              "FileCollectionPath": "openvds-dataset"
+          "DatasetProperties": {
+              "FileCollectionPath": "vds-dataset"
               "FileSourceInfos": [
                 { "FileSource": "data.01.vds" },
                 { "FileSource": "data.02.vds" } 
               ]
-            }
           }
+        }
         ```
+
         The Access Control is applied at the dataset level and regulates access to bulks/files resources. 
         It is performed by checking if the caller is a member of an authorization group. 
         A user in SDMS can be either owner or viewer
+
         -  owner with read/write access if a member of an owner authorization group
         -  viewer with read-only access if a member of a viewer authorization group.
-        The owner and viewer authorization groups are required to be specified in the *acl* property of the model.
+
+        The owner and viewer authorization groups are required to be specified in the *acl* property
+        of the model.
 
         **example: access control list definition**
         ```
@@ -419,25 +478,25 @@ paths:
             "someone.viewer@comany.com"
           ]
         }
-        ```     
-          
+        ```
+
         Each seismic dataset has associated legal tag information. 
         The legal tag is always checked by SDDMS before it releases any sensitive information of a dataset.
         The legal tag is required to be specified in the *legal* property of the model.
-          
+
         **example: legal tag definition**
         ```
-          "legal": {
-            "legaltags": [
-              "an.example.legal.tag"
-            ],
-            "otherRelevantDataCountries": [
-              "US"
-            ]
-            "status": "compliant"
-          }
-        ```      
-        
+        "legal": {
+          "legaltags": [
+            "an.example.legal.tag"
+          ],
+          "otherRelevantDataCountries": [
+            "US"
+          ]
+          "status": "compliant"
+        }
+        ```
+
         The API returns a list of versioned records ID for the registered or updated datasets.
       tags:
         - File Collection OpenVDS
@@ -447,16 +506,17 @@ paths:
         $ref: "#/components/requestBodies/openvds.1.0.0.list"
       responses:
         200:
-          $ref: "#/components/responses/record.id.version.list"  
+          $ref: "#/components/responses/record.id.version.list"
+
   /openvds/v1/list:
     get:
       operationId: openvds-v1-list
-      summary: get the list of OpenVDS seismic datasets
+      summary: get the list of openvds seismic datasets
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of OpenVDS seismic datasets
-              
+
+        Returns a list of openvds seismic datasets. 
+
         Pagination is supported.
       tags:
         - File Collection OpenVDS
@@ -466,31 +526,31 @@ paths:
         - $ref: "#/components/parameters/pagination.token"
       responses:
         200:
-          $ref: "#/components/responses/openvds.1.0.0.list.paginated"  
+          $ref: "#/components/responses/openvds.1.0.0.list.paginated"
+
   /openvds/v1/record/{id}:
     get:
       operationId: openvds-v1-get
-      summary: get a OpenVDS seismic dataset
+      summary: get an openvds seismic dataset
       description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
 
-        This API returns the latest version of a OpenVDS seismic dataset
+        This api returns the last version of an openvds seismic dataset.
       tags:
         - File Collection OpenVDS
       parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/openvds.1.0.0"  
-  
+          $ref: "#/components/responses/openvds.1.0.0"
     delete:
       operationId: openvds-v1-delete
-      summary: delete a OpenVDS dataset
+      summary: delete a openvds seismic dataset
       description: |
         Required role: users.datalake.admin
 
-        The API performs a deletion of the given OpenVDS seismic dataset.
+        The API performs a deletion of the given openvds dataset record
       tags:
         - File Collection OpenVDS
       parameters:
@@ -498,14 +558,16 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          description: The resource was deleted successfully.  
+          description: The resource was deleted successfully.
+
   /openvds/v1/record/{id}/versions:
     get:
       operationId: openvds-v1-get-versions
-      summary: get the versions of a OpenVDS dataset
+      summary: get the versions of an openvds dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a OpenVDS dataset
+
+        This api returns the list of versions for an openvds seismic dataset.
       tags:
         - File Collection OpenVDS
       parameters:
@@ -513,14 +575,16 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/version.list"  
+          $ref: "#/components/responses/version.list"
+
   /openvds/v1/record/{id}/version/{version}:
     get:
       operationId: openvds-v1-get-version
-      summary: get a version of the OpenVDS dataset
+      summary: get a version of the openvds dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the OpenVDS seismic dataset.
+
+        This api returns a specific version of the openvds seismic dataset
       tags:
         - File Collection OpenVDS
       parameters:
@@ -529,41 +593,66 @@ paths:
         - $ref: "#/components/parameters/version"
       responses:
         200:
-          $ref: "#/components/responses/openvds.1.0.0" 
+          $ref: "#/components/responses/openvds.1.0.0"
+
+  /openvds/v1/reindex:
+    put:
+      operationId: openvds-v1-reindex
+      summary: reindex a openvds seismic dataset (not implemented)
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This api re-index a list of dataset ingested via sdms V3.
+      tags:
+        - File Collection OpenVDS
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/sdms.v3.dataset.path.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.list"
+
   ### ==============================================================================
   ### GENERIC PATHS
   ### ==============================================================================
-  
+
   /generic/v1:
     put:
       operationId: generic-v1-insert
-      summary: register or update Generic seismic datasets
+      summary: register or update generic seismic datasets
       description: |
         Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Generic seismic dataset. When a dataset is updated, a new version of it will be created.
-        The [Generic 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Generic.1.0.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        
-        Reference to bulk files, composing the dataset, can be specified in the 
+
+        This API registers or updates a list of generic seismic datasets. When a dataset is updated, a new version of it will be created.
+        The [generic 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Generic.1.0.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request.
+
+        Reference to bulk files, composing the dataset, can be specified in the
         *DatasetProperties* property of the model.
-        
-        **example: dataset collection and files** 
-        ```   
+
+        **example: dataset collection and files**
+        ```
         "data": {
-            "DatasetProperties": {
+          "DatasetProperties": {
               "FileCollectionPath": "vds-dataset"
               "FileSourceInfos": [
                 { "FileSource": "data.01" },
                 { "FileSource": "data.02" } 
               ]
-            }
           }
+        }
         ```
+
         The Access Control is applied at the dataset level and regulates access to bulks/files resources. 
         It is performed by checking if the caller is a member of an authorization group. 
         A user in SDMS can be either owner or viewer
+
         -  owner with read/write access if a member of an owner authorization group
         -  viewer with read-only access if a member of a viewer authorization group.
-        The owner and viewer authorization groups are required to be specified in the *acl* property of the model.
+
+        The owner and viewer authorization groups are required to be specified in the *acl* property
+        of the model.
 
         **example: access control list definition**
         ```
@@ -575,25 +664,25 @@ paths:
             "someone.viewer@comany.com"
           ]
         }
-        ```     
-          
+        ```
+
         Each seismic dataset has associated legal tag information. 
         The legal tag is always checked by SDDMS before it releases any sensitive information of a dataset.
         The legal tag is required to be specified in the *legal* property of the model.
-          
+
         **example: legal tag definition**
         ```
-          "legal": {
-            "legaltags": [
-              "an.example.legal.tag"
-            ],
-            "otherRelevantDataCountries": [
-              "US"
-            ]
-            "status": "compliant"
-          }
-        ```      
-        
+        "legal": {
+          "legaltags": [
+            "an.example.legal.tag"
+          ],
+          "otherRelevantDataCountries": [
+            "US"
+          ]
+          "status": "compliant"
+        }
+        ```
+
         The API returns a list of versioned records ID for the registered or updated datasets.
       tags:
         - File Collection Generic
@@ -603,16 +692,17 @@ paths:
         $ref: "#/components/requestBodies/generic.1.0.0.list"
       responses:
         200:
-          $ref: "#/components/responses/record.id.version.list"  
+          $ref: "#/components/responses/record.id.version.list"
+
   /generic/v1/list:
     get:
       operationId: generic-v1-list
-      summary: get the list of Generic seismic datasets
+      summary: get the list of generic seismic datasets
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Generic seismic datasets
-              
+
+        Returns a list of generic seismic datasets. 
+
         Pagination is supported.
       tags:
         - File Collection Generic
@@ -622,31 +712,16 @@ paths:
         - $ref: "#/components/parameters/pagination.token"
       responses:
         200:
-          $ref: "#/components/responses/generic.1.0.0.list.paginated"  
+          $ref: "#/components/responses/generic.1.0.0.list.paginated"
+
   /generic/v1/record/{id}:
     get:
       operationId: generic-v1-get
-      summary: get a Generic seismic dataset
+      summary: get an generic seismic dataset
       description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
 
-        This API returns the latest version of a Generic seismic dataset
-      tags:
-        - File Collection Generic
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/generic.1.0.0"  
-  
-    delete:
-      operationId: generic-v1-delete
-      summary: delete a Generic dataset
-      description: |
-        Required role: users.datalake.admin
-
-        The API performs a deletion of the given Generic seismic dataset.
+        This api returns the last version of an generic seismic dataset.
       tags:
         - File Collection Generic
       parameters:
@@ -654,14 +729,31 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          description: The resource was deleted successfully.  
+          $ref: "#/components/responses/generic.1.0.0"
+    delete:
+      operationId: generic-v1-delete
+      summary: delete a generic seismic dataset
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given generic dataset record.
+      tags:
+        - File Collection Generic
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
   /generic/v1/record/{id}/versions:
     get:
       operationId: generic-v1-get-versions
-      summary: get the versions of a Generic dataset
+      summary: get the versions of an generic dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Generic dataset
+
+        This api returns the list of versions for an generic seismic dataset.
       tags:
         - File Collection Generic
       parameters:
@@ -669,14 +761,16 @@ paths:
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/version.list"  
+          $ref: "#/components/responses/version.list"
+
   /generic/v1/record/{id}/version/{version}:
     get:
       operationId: generic-v1-get-version
-      summary: get a version of the Generic dataset
+      summary: get a version of the generic dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Generic seismic dataset.
+
+        This api returns a specific version of the generic seismic dataset
       tags:
         - File Collection Generic
       parameters:
@@ -685,972 +779,956 @@ paths:
         - $ref: "#/components/parameters/version"
       responses:
         200:
-          $ref: "#/components/responses/generic.1.0.0" 
-  ### ==============================================================================
-  ### 2D INTERPRETATION SET PATHS
-  ### ==============================================================================
-  
-  /2dinterpretationset/v1:
+          $ref: "#/components/responses/generic.1.0.0"
+
+  /generic/v1/reindex:
     put:
-      operationId: 2dinterpretationset-v1-insert
-      summary: register or update 2D Interpretation Set seismic components
+      operationId: generic-v1-reindex
+      summary: reindex a generic seismic dataset (not implemented)
       description: |
         Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of 2D Interpretation Set seismic component. When a component is updated, a new version of it will be created.
-        The [2D Interpretation Set 1.1.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        References to datasets, as record id, can be specified in the
-        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
-        The API returns a list of versioned records ID for the registered or updated datasets.
+
+        This api re-index a list of dataset ingested via sdms V3.
       tags:
-        - master data 2D Interpretation Set
+        - File Collection Generic
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
       requestBody:
-        $ref: "#/components/requestBodies/2dinterpretationset.1.1.0.list"
+        $ref: "#/components/requestBodies/sdms.v3.dataset.path.list"
       responses:
         200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /2dinterpretationset/v1/list:
-    get:
-      operationId: 2dinterpretationset-v1-list
-      summary: get the list of 2D Interpretation Set seismic components
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of 2D Interpretation Set seismic components
-              
-        Pagination is supported.
-      tags:
-        - master data 2D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/pagination.limit"
-        - $ref: "#/components/parameters/pagination.token"
-      responses:
-        200:
-          $ref: "#/components/responses/2dinterpretationset.1.1.0.list.paginated"  
-  /2dinterpretationset/v1/record/{id}:
-    get:
-      operationId: 2dinterpretationset-v1-get
-      summary: get a 2D Interpretation Set seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
+          $ref: "#/components/responses/record.id.list"
 
-        This API returns the latest version of a 2D Interpretation Set seismic component
-      tags:
-        - master data 2D Interpretation Set
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/2dinterpretationset.1.1.0"  
-  
-    delete:
-      operationId: 2dinterpretationset-v1-delete
-      summary: delete a 2D Interpretation Set component
-      description: |
-        Required role: users.datalake.admin
+  ### ==============================================================================
+  ### SEISMIC TRACEDATA PATHS
+  ### ==============================================================================
 
-        The API performs a deletion of the given 2D Interpretation Set seismic component.
-      tags:
-        - master data 2D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          description: The resource was deleted successfully.  
-  /2dinterpretationset/v1/record/{id}/versions:
-    get:
-      operationId: 2dinterpretationset-v1-get-versions
-      summary: get the versions of a 2D Interpretation Set component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a 2D Interpretation Set component
-      tags:
-        - master data 2D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/version.list"  
-  /2dinterpretationset/v1/record/{id}/version/{version}:
-    get:
-      operationId: 2dinterpretationset-v1-get-version
-      summary: get a version of the 2D Interpretation Set component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the 2D Interpretation Set seismic component.
-      tags:
-        - master data 2D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/version"
-      responses:
-        200:
-          $ref: "#/components/responses/2dinterpretationset.1.1.0" 
-  ### ==============================================================================
-  ### 3D INTERPRETATION SET PATHS
-  ### ==============================================================================
-  
-  /3dinterpretationset/v1:
-    put:
-      operationId: 3dinterpretationset-v1-insert
-      summary: register or update 3D Interpretation Set seismic components
-      description: |
-        Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of 3D Interpretation Set seismic component. When a component is updated, a new version of it will be created.
-        The [3D Interpretation Set 1.1.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        References to datasets, as record id, can be specified in the
-        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
-        The API returns a list of versioned records ID for the registered or updated datasets.
-      tags:
-        - master data 3D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-      requestBody:
-        $ref: "#/components/requestBodies/3dinterpretationset.1.1.0.list"
-      responses:
-        200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /3dinterpretationset/v1/list:
-    get:
-      operationId: 3dinterpretationset-v1-list
-      summary: get the list of 3D Interpretation Set seismic components
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of 3D Interpretation Set seismic components
-              
-        Pagination is supported.
-      tags:
-        - master data 3D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/pagination.limit"
-        - $ref: "#/components/parameters/pagination.token"
-      responses:
-        200:
-          $ref: "#/components/responses/3dinterpretationset.1.1.0.list.paginated"  
-  /3dinterpretationset/v1/record/{id}:
-    get:
-      operationId: 3dinterpretationset-v1-get
-      summary: get a 3D Interpretation Set seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
-
-        This API returns the latest version of a 3D Interpretation Set seismic component
-      tags:
-        - master data 3D Interpretation Set
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/3dinterpretationset.1.1.0"  
-  
-    delete:
-      operationId: 3dinterpretationset-v1-delete
-      summary: delete a 3D Interpretation Set component
-      description: |
-        Required role: users.datalake.admin
-
-        The API performs a deletion of the given 3D Interpretation Set seismic component.
-      tags:
-        - master data 3D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          description: The resource was deleted successfully.  
-  /3dinterpretationset/v1/record/{id}/versions:
-    get:
-      operationId: 3dinterpretationset-v1-get-versions
-      summary: get the versions of a 3D Interpretation Set component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a 3D Interpretation Set component
-      tags:
-        - master data 3D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/version.list"  
-  /3dinterpretationset/v1/record/{id}/version/{version}:
-    get:
-      operationId: 3dinterpretationset-v1-get-version
-      summary: get a version of the 3D Interpretation Set component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the 3D Interpretation Set seismic component.
-      tags:
-        - master data 3D Interpretation Set
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/version"
-      responses:
-        200:
-          $ref: "#/components/responses/3dinterpretationset.1.1.0" 
-  ### ==============================================================================
-  ### ACQUISITION SURVERY PATHS
-  ### ==============================================================================
-  
-  /acquisitionsurvey/v1:
-    put:
-      operationId: acquisitionsurvey-v1-insert
-      summary: register or update Acquisition Survery seismic components
-      description: |
-        Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Acquisition Survery seismic component. When a component is updated, a new version of it will be created.
-        The [Acquisition Survery 1.2.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        References to datasets, as record id, can be specified in the
-        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
-        The API returns a list of versioned records ID for the registered or updated datasets.
-      tags:
-        - master data Acquisition Survery
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-      requestBody:
-        $ref: "#/components/requestBodies/acquisitionsurvey.1.2.0.list"
-      responses:
-        200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /acquisitionsurvey/v1/list:
-    get:
-      operationId: acquisitionsurvey-v1-list
-      summary: get the list of Acquisition Survery seismic components
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Acquisition Survery seismic components
-              
-        Pagination is supported.
-      tags:
-        - master data Acquisition Survery
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/pagination.limit"
-        - $ref: "#/components/parameters/pagination.token"
-      responses:
-        200:
-          $ref: "#/components/responses/acquisitionsurvey.1.2.0.list.paginated"  
-  /acquisitionsurvey/v1/record/{id}:
-    get:
-      operationId: acquisitionsurvey-v1-get
-      summary: get a Acquisition Survery seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
-
-        This API returns the latest version of a Acquisition Survery seismic component
-      tags:
-        - master data Acquisition Survery
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/acquisitionsurvey.1.2.0"  
-  
-    delete:
-      operationId: acquisitionsurvey-v1-delete
-      summary: delete a Acquisition Survery component
-      description: |
-        Required role: users.datalake.admin
-
-        The API performs a deletion of the given Acquisition Survery seismic component.
-      tags:
-        - master data Acquisition Survery
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          description: The resource was deleted successfully.  
-  /acquisitionsurvey/v1/record/{id}/versions:
-    get:
-      operationId: acquisitionsurvey-v1-get-versions
-      summary: get the versions of a Acquisition Survery component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Acquisition Survery component
-      tags:
-        - master data Acquisition Survery
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/version.list"  
-  /acquisitionsurvey/v1/record/{id}/version/{version}:
-    get:
-      operationId: acquisitionsurvey-v1-get-version
-      summary: get a version of the Acquisition Survery component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Acquisition Survery seismic component.
-      tags:
-        - master data Acquisition Survery
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/version"
-      responses:
-        200:
-          $ref: "#/components/responses/acquisitionsurvey.1.2.0" 
-  ### ==============================================================================
-  ### PROCESSING PROJECT PATHS
-  ### ==============================================================================
-  
-  /processingproject/v1:
-    put:
-      operationId: processingproject-v1-insert
-      summary: register or update Processing Project seismic components
-      description: |
-        Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Processing Project seismic component. When a component is updated, a new version of it will be created.
-        The [Processing Project 1.2.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/SeismicProcessingProject.1.2.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        References to datasets, as record id, can be specified in the
-        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
-        The API returns a list of versioned records ID for the registered or updated datasets.
-      tags:
-        - master data Processing Project
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-      requestBody:
-        $ref: "#/components/requestBodies/processingproject.1.2.0.list"
-      responses:
-        200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /processingproject/v1/list:
-    get:
-      operationId: processingproject-v1-list
-      summary: get the list of Processing Project seismic components
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Processing Project seismic components
-              
-        Pagination is supported.
-      tags:
-        - master data Processing Project
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/pagination.limit"
-        - $ref: "#/components/parameters/pagination.token"
-      responses:
-        200:
-          $ref: "#/components/responses/processingproject.1.2.0.list.paginated"  
-  /processingproject/v1/record/{id}:
-    get:
-      operationId: processingproject-v1-get
-      summary: get a Processing Project seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
-
-        This API returns the latest version of a Processing Project seismic component
-      tags:
-        - master data Processing Project
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/processingproject.1.2.0"  
-  
-    delete:
-      operationId: processingproject-v1-delete
-      summary: delete a Processing Project component
-      description: |
-        Required role: users.datalake.admin
-
-        The API performs a deletion of the given Processing Project seismic component.
-      tags:
-        - master data Processing Project
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          description: The resource was deleted successfully.  
-  /processingproject/v1/record/{id}/versions:
-    get:
-      operationId: processingproject-v1-get-versions
-      summary: get the versions of a Processing Project component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Processing Project component
-      tags:
-        - master data Processing Project
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/version.list"  
-  /processingproject/v1/record/{id}/version/{version}:
-    get:
-      operationId: processingproject-v1-get-version
-      summary: get a version of the Processing Project component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Processing Project seismic component.
-      tags:
-        - master data Processing Project
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/version"
-      responses:
-        200:
-          $ref: "#/components/responses/processingproject.1.2.0" 
-  ### ==============================================================================
-  ### BIN GRID PATHS
-  ### ==============================================================================
-  
-  /bingrid/v1:
-    put:
-      operationId: bingrid-v1-insert
-      summary: register or update Bin Grid seismic components
-      description: |
-        Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Bin Grid seismic component. When a component is updated, a new version of it will be created.
-        The [Bin Grid 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        References to datasets, as record id, can be specified in the
-        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
-        The API returns a list of versioned records ID for the registered or updated datasets.
-      tags:
-        - work product component Bin Grid
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-      requestBody:
-        $ref: "#/components/requestBodies/bingrid.1.0.0.list"
-      responses:
-        200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /bingrid/v1/list:
-    get:
-      operationId: bingrid-v1-list
-      summary: get the list of Bin Grid seismic components
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Bin Grid seismic components
-              
-        Pagination is supported.
-      tags:
-        - work product component Bin Grid
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/pagination.limit"
-        - $ref: "#/components/parameters/pagination.token"
-      responses:
-        200:
-          $ref: "#/components/responses/bingrid.1.0.0.list.paginated"  
-  /bingrid/v1/record/{id}:
-    get:
-      operationId: bingrid-v1-get
-      summary: get a Bin Grid seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
-
-        This API returns the latest version of a Bin Grid seismic component
-      tags:
-        - work product component Bin Grid
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/bingrid.1.0.0"  
-  
-    delete:
-      operationId: bingrid-v1-delete
-      summary: delete a Bin Grid component
-      description: |
-        Required role: users.datalake.admin
-
-        The API performs a deletion of the given Bin Grid seismic component.
-      tags:
-        - work product component Bin Grid
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          description: The resource was deleted successfully.  
-  /bingrid/v1/record/{id}/versions:
-    get:
-      operationId: bingrid-v1-get-versions
-      summary: get the versions of a Bin Grid component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Bin Grid component
-      tags:
-        - work product component Bin Grid
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/version.list"  
-  /bingrid/v1/record/{id}/version/{version}:
-    get:
-      operationId: bingrid-v1-get-version
-      summary: get a version of the Bin Grid component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Bin Grid seismic component.
-      tags:
-        - work product component Bin Grid
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/version"
-      responses:
-        200:
-          $ref: "#/components/responses/bingrid.1.0.0" 
-  ### ==============================================================================
-  ### LINE GEOMETRY PATHS
-  ### ==============================================================================
-  
-  /linegeometry/v1:
-    put:
-      operationId: linegeometry-v1-insert
-      summary: register or update Line Geometry seismic components
-      description: |
-        Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Line Geometry seismic component. When a component is updated, a new version of it will be created.
-        The [Line Geometry 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        References to datasets, as record id, can be specified in the
-        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
-        The API returns a list of versioned records ID for the registered or updated datasets.
-      tags:
-        - work product component Line Geometry
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-      requestBody:
-        $ref: "#/components/requestBodies/linegeometry.1.0.0.list"
-      responses:
-        200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /linegeometry/v1/list:
-    get:
-      operationId: linegeometry-v1-list
-      summary: get the list of Line Geometry seismic components
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Line Geometry seismic components
-              
-        Pagination is supported.
-      tags:
-        - work product component Line Geometry
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/pagination.limit"
-        - $ref: "#/components/parameters/pagination.token"
-      responses:
-        200:
-          $ref: "#/components/responses/linegeometry.1.0.0.list.paginated"  
-  /linegeometry/v1/record/{id}:
-    get:
-      operationId: linegeometry-v1-get
-      summary: get a Line Geometry seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
-
-        This API returns the latest version of a Line Geometry seismic component
-      tags:
-        - work product component Line Geometry
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/linegeometry.1.0.0"  
-  
-    delete:
-      operationId: linegeometry-v1-delete
-      summary: delete a Line Geometry component
-      description: |
-        Required role: users.datalake.admin
-
-        The API performs a deletion of the given Line Geometry seismic component.
-      tags:
-        - work product component Line Geometry
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          description: The resource was deleted successfully.  
-  /linegeometry/v1/record/{id}/versions:
-    get:
-      operationId: linegeometry-v1-get-versions
-      summary: get the versions of a Line Geometry component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Line Geometry component
-      tags:
-        - work product component Line Geometry
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/version.list"  
-  /linegeometry/v1/record/{id}/version/{version}:
-    get:
-      operationId: linegeometry-v1-get-version
-      summary: get a version of the Line Geometry component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Line Geometry seismic component.
-      tags:
-        - work product component Line Geometry
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/version"
-      responses:
-        200:
-          $ref: "#/components/responses/linegeometry.1.0.0" 
-  ### ==============================================================================
-  ### HORIZON PATHS
-  ### ==============================================================================
-  
-  /horizon/v1:
-    put:
-      operationId: horizon-v1-insert
-      summary: register or update Horizon seismic components
-      description: |
-        Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Horizon seismic component. When a component is updated, a new version of it will be created.
-        The [Horizon 1.2.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicHorizon.1.2.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
-        References to datasets, as record id, can be specified in the
-        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
-        The API returns a list of versioned records ID for the registered or updated datasets.
-      tags:
-        - work product component Horizon
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-      requestBody:
-        $ref: "#/components/requestBodies/horizon.1.2.0.list"
-      responses:
-        200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /horizon/v1/list:
-    get:
-      operationId: horizon-v1-list
-      summary: get the list of Horizon seismic components
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Horizon seismic components
-              
-        Pagination is supported.
-      tags:
-        - work product component Horizon
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/pagination.limit"
-        - $ref: "#/components/parameters/pagination.token"
-      responses:
-        200:
-          $ref: "#/components/responses/horizon.1.2.0.list.paginated"  
-  /horizon/v1/record/{id}:
-    get:
-      operationId: horizon-v1-get
-      summary: get a Horizon seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
-
-        This API returns the latest version of a Horizon seismic component
-      tags:
-        - work product component Horizon
-      parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/horizon.1.2.0"  
-  
-    delete:
-      operationId: horizon-v1-delete
-      summary: delete a Horizon component
-      description: |
-        Required role: users.datalake.admin
-
-        The API performs a deletion of the given Horizon seismic component.
-      tags:
-        - work product component Horizon
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          description: The resource was deleted successfully.  
-  /horizon/v1/record/{id}/versions:
-    get:
-      operationId: horizon-v1-get-versions
-      summary: get the versions of a Horizon component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Horizon component
-      tags:
-        - work product component Horizon
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-      responses:
-        200:
-          $ref: "#/components/responses/version.list"  
-  /horizon/v1/record/{id}/version/{version}:
-    get:
-      operationId: horizon-v1-get-version
-      summary: get a version of the Horizon component
-      description: |
-        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Horizon seismic component.
-      tags:
-        - work product component Horizon
-      parameters:
-        - $ref: "#/components/parameters/data.partition.id"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/version"
-      responses:
-        200:
-          $ref: "#/components/responses/horizon.1.2.0" 
-  ### ==============================================================================
-  ### TRACE DATA PATHS
-  ### ==============================================================================
-  
   /tracedata/v1:
     put:
       operationId: tracedata-v1-insert
-      summary: register or update Trace Data seismic components
+      summary: register or update a trace data seismic component
       description: |
         Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Trace Data seismic component. When a component is updated, a new version of it will be created.
-        The [Trace Data 1.3.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicTraceData.1.3.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
+
+        This API registers or update a list of trace data seismic component. When a component is updated, a new version of it will be created.
+        The [TraceData 1.3.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicTraceData.1.3.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
         References to datasets, as record id, can be specified in the
         *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
+
         The API returns a list of versioned records ID for the registered or updated datasets.
       tags:
-        - work product component Trace Data
+        - Work Product Component Seismic Trace Data
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
       requestBody:
         $ref: "#/components/requestBodies/tracedata.1.3.0.list"
       responses:
         200:
-          $ref: "#/components/responses/record.id.version.list"  
+          $ref: "#/components/responses/record.id.version.list"
+
   /tracedata/v1/list:
     get:
       operationId: tracedata-v1-list
-      summary: get the list of Trace Data seismic components
+      summary: get the list of trace data seismic datasets
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Trace Data seismic components
-              
+
+        Return a list of trace data seismic datasets. 
+
         Pagination is supported.
       tags:
-        - work product component Trace Data
+        - Work Product Component Seismic Trace Data
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/pagination.limit"
         - $ref: "#/components/parameters/pagination.token"
       responses:
         200:
-          $ref: "#/components/responses/tracedata.1.3.0.list.paginated"  
+          $ref: "#/components/responses/tracedata.1.3.0.list.paginated"
+
   /tracedata/v1/record/{id}:
     get:
       operationId: tracedata-v1-get
-      summary: get a Trace Data seismic component
+      summary: get a trace data seismic component
       description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
 
-        This API returns the latest version of a Trace Data seismic component
+        This api returns the last version of a trace data seismic dataset. Previous schema version will be automatically converted.
       tags:
-        - work product component Trace Data
+        - Work Product Component Seismic Trace Data
       parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/tracedata.1.3.0"  
-  
+          $ref: "#/components/responses/tracedata.1.3.0"
     delete:
       operationId: tracedata-v1-delete
-      summary: delete a Trace Data component
+      summary: delete a trace data seismic component
       description: |
         Required role: users.datalake.admin
 
-        The API performs a deletion of the given Trace Data seismic component.
+        The API performs a deletion of the given trace data seismic component.
       tags:
-        - work product component Trace Data
+        - Work Product Component Seismic Trace Data
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          description: The resource was deleted successfully.  
+          description: The resource was deleted successfully.
+
   /tracedata/v1/record/{id}/versions:
     get:
       operationId: tracedata-v1-get-versions
-      summary: get the versions of a Trace Data component
+      summary: get the versions of a trace data component
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Trace Data component
+
+        This api returns the list of versions for a trace data seismic component.
       tags:
-        - work product component Trace Data
+        - Work Product Component Seismic Trace Data
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/version.list"  
+          $ref: "#/components/responses/version.list"
+
   /tracedata/v1/record/{id}/version/{version}:
     get:
       operationId: tracedata-v1-get-version
-      summary: get a version of the Trace Data component
+      summary: get a version of the trace data dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Trace Data seismic component.
+
+        This api returns a specific version of the trace data component
       tags:
-        - work product component Trace Data
+        - Work Product Component Seismic Trace Data
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/id"
         - $ref: "#/components/parameters/version"
       responses:
         200:
-          $ref: "#/components/responses/tracedata.1.3.0" 
+          $ref: "#/components/responses/tracedata.1.3.0"
+
   ### ==============================================================================
-  ### NOTIONAL SEISMIC LINE PATHS
+  ### SEISMIC BINGRID PATHS
   ### ==============================================================================
-  
-  /notionalseismicline/v1:
+
+  /bingrid/v1:
     put:
-      operationId: notionalseismicline-v1-insert
-      summary: register or update Notional Seismic Line seismic components
+      operationId: bingrid-v1-insert
+      summary: register or update a bin grid seismic component
       description: |
         Required role: users.datalake.editors or users.datalake.admin
-        This API registers or updates a list of Notional Seismic Line seismic component. When a component is updated, a new version of it will be created.
-        The [Notional Seismic Line 1.1.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/NotionalSeismicLine.1.1.0.json) data representation is defined by the OSDU authority and is required as a body parameter in this request.
+
+        This API registers or update a list of bin grid seismic component. When a component is updated, a new version of it will be created.
+        The [bin grid 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
         References to datasets, as record id, can be specified in the
         *Dataset* property of the model. These referenced datasets must exist in SDDMS.
-        
+
         The API returns a list of versioned records ID for the registered or updated datasets.
       tags:
-        - work product component Notional Seismic Line
+        - Work Product Component Seismic Bin Grid
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
       requestBody:
-        $ref: "#/components/requestBodies/notionalseismicline.1.1.0.list"
+        $ref: "#/components/requestBodies/bingrid.1.0.0.list"
       responses:
         200:
-          $ref: "#/components/responses/record.id.version.list"  
-  /notionalseismicline/v1/list:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /bingrid/v1/list:
     get:
-      operationId: notionalseismicline-v1-list
-      summary: get the list of Notional Seismic Line seismic components
+      operationId: bingrid-v1-list
+      summary: get the list of bin grid seismic datasets
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-              
-        Returns a list of Notional Seismic Line seismic components
-              
+
+        Return a list of bin grid seismic datasets. 
+
         Pagination is supported.
       tags:
-        - work product component Notional Seismic Line
+        - Work Product Component Seismic Bin Grid
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/pagination.limit"
         - $ref: "#/components/parameters/pagination.token"
       responses:
         200:
-          $ref: "#/components/responses/notionalseismicline.1.1.0.list.paginated"  
-  /notionalseismicline/v1/record/{id}:
-    get:
-      operationId: notionalseismicline-v1-get
-      summary: get a Notional Seismic Line seismic component
-      description: |
-        users.datalake.viewers or users.datalake.editors or users.datalake.admin
+          $ref: "#/components/responses/bingrid.1.0.0.list.paginated"
 
-        This API returns the latest version of a Notional Seismic Line seismic component
+  /bingrid/v1/record/{id}:
+    get:
+      operationId: bingrid-v1-get
+      summary: get a bin grid seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a bin grid seismic dataset. Previous schema version will be automatically converted.
       tags:
-        - work product component Notional Seismic Line
+        - Work Product Component Seismic Bin Grid
       parameters:
-      - $ref: "#/components/parameters/data.partition.id"
-      - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/notionalseismicline.1.1.0"  
-  
+          $ref: "#/components/responses/bingrid.1.0.0"
     delete:
-      operationId: notionalseismicline-v1-delete
-      summary: delete a Notional Seismic Line component
+      operationId: bingrid-v1-delete
+      summary: delete a bin grid seismic component
       description: |
         Required role: users.datalake.admin
 
-        The API performs a deletion of the given Notional Seismic Line seismic component.
+        The API performs a deletion of the given bin grid seismic component.
       tags:
-        - work product component Notional Seismic Line
+        - Work Product Component Seismic Bin Grid
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          description: The resource was deleted successfully.  
-  /notionalseismicline/v1/record/{id}/versions:
+          description: The resource was deleted successfully.
+
+  /bingrid/v1/record/{id}/versions:
     get:
-      operationId: notionalseismicline-v1-get-versions
-      summary: get the versions of a Notional Seismic Line component
+      operationId: bingrid-v1-get-versions
+      summary: get the versions of a bin grid component
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns the list of versions for a Notional Seismic Line component
+
+        This api returns the list of versions for a bin grid seismic component.
       tags:
-        - work product component Notional Seismic Line
+        - Work Product Component Seismic Bin Grid
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/id"
       responses:
         200:
-          $ref: "#/components/responses/version.list"  
-  /notionalseismicline/v1/record/{id}/version/{version}:
+          $ref: "#/components/responses/version.list"
+
+  /bingrid/v1/record/{id}/version/{version}:
     get:
-      operationId: notionalseismicline-v1-get-version
-      summary: get a version of the Notional Seismic Line component
+      operationId: bingrid-v1-get-version
+      summary: get a version of the bin grid dataset
       description: |
         Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
-        This API returns a specific version of the Notional Seismic Line seismic component.
+
+        This api returns a specific version of the bin grid component
       tags:
-        - work product component Notional Seismic Line
+        - Work Product Component Seismic Bin Grid
       parameters:
         - $ref: "#/components/parameters/data.partition.id"
         - $ref: "#/components/parameters/id"
         - $ref: "#/components/parameters/version"
       responses:
         200:
-          $ref: "#/components/responses/notionalseismicline.1.1.0"
+          $ref: "#/components/responses/bingrid.1.0.0"
 
- 
+  ### ==============================================================================
+  ### SEISMIC LINE GEOMETRY PATHS
+  ### ==============================================================================
+
+  /linegeometry/v1:
+    put:
+      operationId: linegeometry-v1-insert
+      summary: register or update a line geometry seismic component
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This API registers or update a list of line geometry seismic component. When a component is updated, a new version of it will be created.
+        The [line geometry 1.0.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
+        References to datasets, as record id, can be specified in the
+        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
+
+        The API returns a list of versioned records ID for the registered or updated datasets.
+      tags:
+        - Work Product Component Seismic Line Geometry
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/linegeometry.1.0.0.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /linegeometry/v1/list:
+    get:
+      operationId: linegeometry-v1-list
+      summary: get the list of line geometry seismic datasets
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        Return a list of line geometry seismic datasets. 
+
+        Pagination is supported.
+      tags:
+        - Work Product Component Seismic Line Geometry
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/pagination.limit"
+        - $ref: "#/components/parameters/pagination.token"
+      responses:
+        200:
+          $ref: "#/components/responses/linegeometry.1.0.0.list.paginated"
+
+  /linegeometry/v1/record/{id}:
+    get:
+      operationId: linegeometry-v1-get
+      summary: get a line geometry seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a line geometry seismic dataset. Previous schema version will be automatically converted.
+      tags:
+        - Work Product Component Seismic Line Geometry
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/linegeometry.1.0.0"
+    delete:
+      operationId: linegeometry-v1-delete
+      summary: delete a line geometry seismic component
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given line geometry seismic component.
+      tags:
+        - Work Product Component Seismic Line Geometry
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
+  /linegeometry/v1/record/{id}/versions:
+    get:
+      operationId: linegeometry-v1-get-versions
+      summary: get the versions of a line geometry component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the list of versions for a line geometry seismic component.
+      tags:
+        - Work Product Component Seismic Line Geometry
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/version.list"
+
+  /linegeometry/v1/record/{id}/version/{version}:
+    get:
+      operationId: linegeometry-v1-get-version
+      summary: get a version of the line geometry dataset
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns a specific version of the line geometry component
+      tags:
+        - Work Product Component Seismic Line Geometry
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/version"
+      responses:
+        200:
+          $ref: "#/components/responses/linegeometry.1.0.0"
+### ==============================================================================
+### SEISMIC HORIZON PATHS
+### ==============================================================================
+
+  /seismichorizon/v1:
+    put:
+      operationId: seismichorizon-v1-insert
+      summary: register or update a seismic horizon component
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This API registers or update a list of seismic horizon components. When a component is updated, a new version of it will be created.
+        The [seismic horizon 1.2.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicHorizon.1.2.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
+        References to datasets, as record id, can be specified in the
+        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
+
+        The API returns a list of versioned records ID for the registered or updated datasets.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/seismichorizon.1.2.0.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /seismichorizon/v1/list:
+    get:
+      operationId: seismichorizon-v1-list
+      summary: get the list of seismic horizon datasets
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        Return a list of seismic horizon datasets. 
+
+        Pagination is supported.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/pagination.limit"
+        - $ref: "#/components/parameters/pagination.token"
+      responses:
+        200:
+          $ref: "#/components/responses/seismichorizon.1.2.0.list.paginated"
+
+  /seismichorizon/v1/record/{id}:
+    get:
+      operationId: seismichorizon-v1-get
+      summary: get a seismic horizon component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a seismic horizon dataset. Previous schema version will be automatically converted.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/seismichorizon.1.2.0"
+          
+    delete:
+      operationId: seismichorizon-v1-delete
+      summary: delete a seismic horizon component
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given seismic horizon component.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
+  /seismichorizon/v1/record/{id}/versions:
+    get:
+      operationId: seismichorizon-v1-get-versions
+      summary: get the versions of a seismic horizon component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the list of versions for a seismic horizon component.
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/version.list"
+
+  /seismichorizon/v1/record/{id}/version/{version}:
+    get:
+      operationId: seismichorizon-v1-get-version
+      summary: get a version of the seismic horizon dataset
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns a specific version of the seismic horizon component
+      tags:
+        - Work Product Component Seismic Horizon
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/version"
+      responses:
+        200:
+          $ref: "#/components/responses/seismichorizon.1.2.0"
+          
+  ### ==============================================================================
+  ### SEISMIC 2D INTERPRETATION SET PATHS
+  ### ==============================================================================
+
+  /2dinterpretationset/v1:
+    put:
+      operationId: 2dinterpretationset-v1-insert
+      summary: register or update a 2D interpretation set seismic component
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This API registers or update a list of 2D interpretation set seismic component. When a component is updated, a new version of it will be created.
+        The [2D interpretation set 1.1.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
+        References to datasets, as record id, can be specified in the
+        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
+
+        The API returns a list of versioned records ID for the registered or updated datasets.
+      tags:
+        - Master Data Seismic 2D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/2dinterpretationset.1.1.0.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /2dinterpretationset/v1/list:
+    get:
+      operationId: 2dinterpretationset-v1-list
+      summary: get the list of 2D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        Returns a list of 2D interpretation set seismic components. 
+
+        Pagination is supported.
+      tags:
+        - Master Data Seismic 2D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/pagination.limit"
+        - $ref: "#/components/parameters/pagination.token"
+      responses:
+        200:
+          $ref: "#/components/responses/2dinterpretationset.1.1.0.list.paginated"
+
+  /2dinterpretationset/v1/record/{id}:
+    get:
+      operationId: 2dinterpretationset-v1-get
+      summary: get a 2D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a 2D interpretation set seismic component. Previous schema version will be automatically converted.
+      tags:
+        - Master Data Seismic 2D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/2dinterpretationset.1.1.0"
+    delete:
+      operationId: 2dinterpretationset-v1-delete
+      summary: delete a 2D interpretation set seismic component
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given 2D interpretation set seismic component.
+      tags:
+        - Master Data Seismic 2D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
+  /2dinterpretationset/v1/record/{id}/versions:
+    get:
+      operationId: 2dinterpretationset-v1-get-versions
+      summary: get the versions of a 2D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the list of versions for a 2D interpretation set seismic component.
+      tags:
+        - Master Data Seismic 2D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/version.list"
+
+  /2dinterpretationset/v1/record/{id}/version/{version}:
+    get:
+      operationId: 2dinterpretationset-v1-get-version
+      summary: get a version of the 2D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns a specific version of the 2D interpretation set seismic component
+      tags:
+        - Master Data Seismic 2D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/version"
+      responses:
+        200:
+          $ref: "#/components/responses/2dinterpretationset.1.1.0"
+
+  ### ==============================================================================
+  ### SEISMIC 3D INTERPRETATION SET PATHS
+  ### ==============================================================================
+
+  /3dinterpretationset/v1:
+    put:
+      operationId: 3dinterpretationset-v1-insert
+      summary: register or update a 3D interpretation set seismic component
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This API registers or update a list of 3D interpretation set seismic component. When a component is updated, a new version of it will be created.
+        The [3D interpretation set 1.1.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
+        References to datasets, as record id, can be specified in the
+        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
+
+        The API returns a list of versioned records ID for the registered or updated datasets.
+      tags:
+        - Master Data Seismic 3D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/3dinterpretationset.1.1.0.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /3dinterpretationset/v1/list:
+    get:
+      operationId: 3dinterpretationset-v1-list
+      summary: get the list of 3D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        Returns a list of 3D interpretation set seismic components. 
+
+        Pagination is supported.
+      tags:
+        - Master Data Seismic 3D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/pagination.limit"
+        - $ref: "#/components/parameters/pagination.token"
+      responses:
+        200:
+          $ref: "#/components/responses/3dinterpretationset.1.1.0.list.paginated"
+
+  /3dinterpretationset/v1/record/{id}:
+    get:
+      operationId: 3dinterpretationset-v1-get
+      summary: get a 3D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a 3D interpretation set seismic component. Previous schema version will be automatically converted.
+      tags:
+        - Master Data Seismic 3D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/3dinterpretationset.1.1.0"
+    delete:
+      operationId: 3dinterpretationset-v1-delete
+      summary: delete a 3D interpretation set seismic component
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given 3D interpretation set seismic component.
+      tags:
+        - Master Data Seismic 3D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
+  /3dinterpretationset/v1/record/{id}/versions:
+    get:
+      operationId: 3dinterpretationset-v1-get-versions
+      summary: get the versions of a 3D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the list of versions for a 3D interpretation set seismic component.
+      tags:
+        - Master Data Seismic 3D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/version.list"
+
+  /3dinterpretationset/v1/record/{id}/version/{version}:
+    get:
+      operationId: 3dinterpretationset-v1-get-version
+      summary: get a version of the 3D interpretation set seismic component
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns a specific version of the 3D interpretation set seismic component
+      tags:
+        - Master Data Seismic 3D Interpretation Set
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/version"
+      responses:
+        200:
+          $ref: "#/components/responses/3dinterpretationset.1.1.0"
+
+
+  ### ==============================================================================
+  ### SEISMIC ACQUISITION SURVEY PATHS
+  ### ==============================================================================
+
+  /acquisitionsurvey/v1:
+    put:
+      operationId: acquisitionsurvey-v1-insert
+      summary: register or update a acquisition survey seismic data
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This API registers or update a list of acquisition survey seismic component. When a component is updated, a new version of it will be created.
+        The [acquisition survey 1.2.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json)
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
+        References to datasets, as record id, can be specified in the
+        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
+
+        The API returns a list of versioned records ID for the registered or updated datasets.
+      tags:
+        - Master Data Seismic Acquisition Survey
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/acquisitionsurvey.1.2.0.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /acquisitionsurvey/v1/list:
+    get:
+      operationId: acquisitionsurvey-v1-list
+      summary: get the list of acquisition survey seismic datasets
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        Returns a list of acquisition survey seismic datasets. 
+
+        Pagination is supported.
+      tags:
+        - Master Data Seismic Acquisition Survey
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/pagination.limit"
+        - $ref: "#/components/parameters/pagination.token"
+      responses:
+        200:
+          $ref: "#/components/responses/acquisitionsurvey.1.2.0.list.paginated"
+
+  /acquisitionsurvey/v1/record/{id}:
+    get:
+      operationId: acquisitionsurvey-v1-get
+      summary: get a acquisition survey seismic data
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a acquisition survey seismic dataset. Previous schema version will be automatically converted.
+      tags:
+        - Master Data Seismic Acquisition Survey
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/acquisitionsurvey.1.2.0"
+    delete:
+      operationId: acquisitionsurvey-v1-delete
+      summary: delete an acquisition survey component
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given line acquisition survey component.
+      tags:
+        - Master Data Seismic Acquisition Survey
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
+  /acquisitionsurvey/v1/record/{id}/versions:
+    get:
+      operationId: acquisition survey-v1-get-versions
+      summary: get the versions of a acquisition survey data
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the list of versions for a acquisition survey seismic data.
+      tags:
+        - Master Data Seismic Acquisition Survey
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/version.list"
+
+  /acquisitionsurvey/v1/record/{id}/version/{version}:
+    get:
+      operationId: acquisition survey-v1-get-version
+      summary: get a version of the acquisition survey dataset
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns a specific version of the acquisition survey data
+      tags:
+        - Master Data Seismic Acquisition Survey
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/version"
+      responses:
+        200:
+          $ref: "#/components/responses/acquisitionsurvey.1.2.0"
+
+  ### ==============================================================================
+  ### SEISMIC PROCESSING PROJECT PATHS
+  ### ==============================================================================
+
+  /processingproject/v1:
+    put:
+      operationId: processingproject-v1-insert
+      summary: register or update a processing project seismic data
+      description: |
+        Required role: users.datalake.editors or users.datalake.admin
+
+        This API registers or update a list of processing project seismic component. When a component is updated, a new version of it will be created.
+        The [processing project 1.2.0](https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/SeismicProcessingProject.1.2.0.json)
+
+        data representation is defined by the OSDU authority and is required as a body parameter in this request. 
+
+        References to datasets, as record id, can be specified in the
+        *Dataset* property of the model. These referenced datasets must exist in SDDMS.
+
+        The API returns a list of versioned records ID for the registered or updated datasets.
+      tags:
+        - Master Data Seismic Processing Project
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+      requestBody:
+        $ref: "#/components/requestBodies/processingproject.1.2.0.list"
+      responses:
+        200:
+          $ref: "#/components/responses/record.id.version.list"
+
+  /processingproject/v1/list:
+    get:
+      operationId: processingproject-v1-list
+      summary: get the list of processing project seismic datasets
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        Returns a list of processing project seismic datasets. 
+
+        Pagination is supported.
+      tags:
+        - Master Data Seismic Processing Project
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/pagination.limit"
+        - $ref: "#/components/parameters/pagination.token"
+      responses:
+        200:
+          $ref: "#/components/responses/processingproject.1.2.0.list.paginated"
+
+  /processingproject/v1/record/{id}:
+    get:
+      operationId: processingproject-v1-get
+      summary: get a processing project seismic data
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the last version of a processing project seismic dataset. Previous schema version will be automatically converted.
+      tags:
+        - Master Data Seismic Processing Project
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/processingproject.1.2.0"
+    delete:
+      operationId: processingproject-v1-delete
+      summary: delete a processing project component
+      description: |
+        Required role: users.datalake.admin
+
+        The API performs a deletion of the given line processing project component.
+      tags:
+        - Master Data Seismic Processing Project
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: The resource was deleted successfully.
+
+  /processingproject/v1/record/{id}/versions:
+    get:
+      operationId: processingproject-v1-get-versions
+      summary: get the versions of a processing project data
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns the list of versions for a processing project seismic data.
+      tags:
+        - Master Data Seismic Processing Project
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/version.list"
+
+  /processingproject/v1/record/{id}/version/{version}:
+    get:
+      operationId: processingproject-v1-get-version
+      summary: get a version of the processing project dataset
+      description: |
+        Required role: users.datalake.viewers or users.datalake.editors or users.datalake.admin
+
+        This api returns a specific version of the processing project data
+      tags:
+        - Master Data Seismic Processing Project
+      parameters:
+        - $ref: "#/components/parameters/data.partition.id"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/version"
+      responses:
+        200:
+          $ref: "#/components/responses/processingproject.1.2.0"
+
   ### ==============================================================================
   ### CONNECTION STRINGS
   ### ==============================================================================
@@ -1689,9 +1767,8 @@ paths:
         200:
           $ref: "#/components/responses/connection.string"
 
-
 components:
-  parameters: 
+  parameters:
     data.partition.id:
       in: header
       name: data-partition-id
@@ -1721,22 +1798,22 @@ components:
         description: The next page token returned from the previous page request. If not set, the first page will be returned.
         type: string
         minLength: 1
-        example: 
+        example:
     id:
       in: path
-      name: id
       description: The seismic dataset record ID
+      name: id
       required: true
       schema:
         title: The seismic dataset record ID
-        description: THe seismic dataset record ID
+        description: The seismic dataset record ID
         type: string
         minLength: 1
         example: "osdu:dataset:b47f793a-dc9c-5d11-8d59-6cc611a98926"
     version:
       in: path
-      name: version
       description: The seismic dataset version
+      name: version
       required: true
       schema:
         title: The seismic dataset version
@@ -1744,20 +1821,21 @@ components:
         type: string
         minLength: 1
         example: "1562066009929332"
-  schemas: 
+
+  schemas:
     service.status:
       title: The service status
       description: The service status
       type: object
-      properties: 
-        status: 
+      properties:
+        status:
           type: string
     service.status.ready:
       title: The service readiness status
       description: The service readiness status
       type: object
-      properties: 
-        ready: 
+      properties:
+        ready:
           type: boolean
     record.id.list:
       title: The list of datasets record ID
@@ -1775,16 +1853,16 @@ components:
       title: The dataset files connection string
       description: The dataset files connection string
       type: object
-      properties: 
+      properties:
         access_token:
-          type: string 
+          type: string
         expire_in:
-          type: number 
+          type: number
         token_type:
           type: string
     sdms.v3.dataset.path.list:
-      title: The list of sdms v3 dataset paths
-      description: The list of sdms v3 dataset paths
+      title: The list of sdms v3 dataset paths.
+      description: The list of sdms v3 dataset paths.
       type: array
       items:
         type: string
@@ -1796,242 +1874,225 @@ components:
         type: string
     segy.1.0.0.list:
       title: SEGY 1.0.0 datasets
-      description: The list of SEGY 1.0.0 datasets
+      description: The list of segy 1.0.0 datasets
       type: array
       items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.SEGY.1.0.0.json
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.SEGY.1.0.0.json"
     openzgy.1.0.0.list:
       title: OpenZGY 1.0.0 datasets
-      description: The list of OpenZGY 1.0.0 datasets
+      description: The list of openzgy 1.0.0 datasets
       type: array
       items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json"
     openvds.1.0.0.list:
       title: OpenVDS 1.0.0 datasets
-      description: The list of OpenVDS 1.0.0 datasets
+      description: The list of openvds 1.0.0 datasets
       type: array
       items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json"
     generic.1.0.0.list:
       title: Generic 1.0.0 datasets
-      description: The list of Generic 1.0.0 datasets
+      description: The list of generic 1.0.0 datasets
       type: array
       items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Generic.1.0.0.json
-    2dinterpretationset.1.1.0.list:
-      title: 2D Interpretation Set 1.1.0 components
-      description: The list of 2D Interpretation Set 1.1.0 components
-      type: array
-      items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json
-    3dinterpretationset.1.1.0.list:
-      title: 3D Interpretation Set 1.1.0 components
-      description: The list of 3D Interpretation Set 1.1.0 components
-      type: array
-      items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json
-    acquisitionsurvey.1.2.0.list:
-      title: Acquisition Survery 1.2.0 components
-      description: The list of Acquisition Survery 1.2.0 components
-      type: array
-      items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json
-    processingproject.1.2.0.list:
-      title: Processing Project 1.2.0 components
-      description: The list of Processing Project 1.2.0 components
-      type: array
-      items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicProcessingProject.1.2.0.json
-    bingrid.1.0.0.list:
-      title: Bin Grid 1.0.0 components
-      description: The list of Bin Grid 1.0.0 components
-      type: array
-      items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json
-    linegeometry.1.0.0.list:
-      title: Line Geometry 1.0.0 components
-      description: The list of Line Geometry 1.0.0 components
-      type: array
-      items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json
-    horizon.1.2.0.list:
-      title: Horizon 1.2.0 components
-      description: The list of Horizon 1.2.0 components
-      type: array
-      items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Generic.1.0.0.json"
     tracedata.1.3.0.list:
-      title: Trace Data 1.3.0 components
-      description: The list of Trace Data 1.3.0 components
+      title: Seismic Trace Data 1.3.0 components
+      description: The list of trace data 1.3.0 components
       type: array
       items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicTraceData.1.3.0.json
-    notionalseismicline.1.1.0.list:
-      title: Notional Seismic Line 1.1.0 components
-      description: The list of Notional Seismic Line 1.1.0 components
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicTraceData.1.3.0.json"
+    bingrid.1.0.0.list:
+      title: Seismic Bin Grid 1.0.0 components
+      description: The list of bin grid 1.0.0 components
       type: array
       items:
-        $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/NotionalSeismicLine.1.1.0.json
-    
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json"
+    linegeometry.1.0.0.list:
+      title: Seismic Line Geometry 1.0.0 components
+      description: The list of line geometry 1.0.0 components
+      type: array
+      items:
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json"
+    seismichorizon.1.2.0.list:
+        title: Seismic Horizon 1.2.0 components
+        description: The list of seismic horizon 1.2.0 components
+        type: array
+        items: 
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json"
+          
+    3dinterpretationset.1.1.0.list:
+      title: Seismic 3D Interpretation Set 1.1.0 data
+      description: The list of seismic 3D interpretation set 1.1.0 data
+      type: array
+      items:
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json"
+    2dinterpretationset.1.1.0.list:
+      title: Seismic 2D Interpretation Set 1.1.0 data
+      description: The list of seismic 2D interpretation set 1.1.0 data
+      type: array
+      items:
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json"
+    acquisitionsurvey.1.2.0.list:
+      title: Seismic Acquisition Survey 1.2.0 data
+      description: The list of acquisition survey 1.2.0 data
+      type: array
+      items:
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json"
+    processingproject.1.2.0.list:
+      title: Seismic Processing Project 1.2.0 data
+      description: The list of processing project 1.2.0 data
+      type: array
+      items:
+        $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicProcessingProject.1.2.0.json"
     segy.1.0.0.list.paginated:
       title: SEGY 1.0.0 datasets paginated list
-      description: The paginated list of SEGY 1.0.0 datasets
+      description: The paginated list of segy 1.0.0 datasets
       type: object
       properties:
         datasets:
           type: array
           items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.SEGY.1.0.0.json
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.SEGY.1.0.0.json"
         next-page-token:
           type: string
     openzgy.1.0.0.list.paginated:
       title: OpenZGY 1.0.0 datasets paginated list
-      description: The paginated list of OpenZGY 1.0.0 datasets
+      description: The paginated list of openzgy 1.0.0 datasets
       type: object
       properties:
         datasets:
           type: array
           items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json"
         next-page-token:
           type: string
     openvds.1.0.0.list.paginated:
       title: OpenVDS 1.0.0 datasets paginated list
-      description: The paginated list of OpenVDS 1.0.0 datasets
+      description: The paginated list of openvds 1.0.0 datasets
       type: object
       properties:
         datasets:
           type: array
           items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json"
         next-page-token:
           type: string
     generic.1.0.0.list.paginated:
       title: Generic 1.0.0 datasets paginated list
-      description: The paginated list of Generic 1.0.0 datasets
+      description: The paginated list of generic 1.0.0 datasets
       type: object
       properties:
         datasets:
           type: array
           items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Generic.1.0.0.json
-        next-page-token:
-          type: string
-    2dinterpretationset.1.1.0.list.paginated:
-      title: 2D Interpretation Set 1.1.0 components paginated list
-      description: The paginated list of 2D Interpretation Set 1.1.0 components
-      type: object
-      properties:
-        datasets:
-          type: array
-          items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json
-        next-page-token:
-          type: string
-    3dinterpretationset.1.1.0.list.paginated:
-      title: 3D Interpretation Set 1.1.0 components paginated list
-      description: The paginated list of 3D Interpretation Set 1.1.0 components
-      type: object
-      properties:
-        datasets:
-          type: array
-          items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json
-        next-page-token:
-          type: string
-    acquisitionsurvey.1.2.0.list.paginated:
-      title: Acquisition Survery 1.2.0 components paginated list
-      description: The paginated list of Acquisition Survery 1.2.0 components
-      type: object
-      properties:
-        datasets:
-          type: array
-          items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json
-        next-page-token:
-          type: string
-    processingproject.1.2.0.list.paginated:
-      title: Processing Project 1.2.0 components paginated list
-      description: The paginated list of Processing Project 1.2.0 components
-      type: object
-      properties:
-        datasets:
-          type: array
-          items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicProcessingProject.1.2.0.json
-        next-page-token:
-          type: string
-    bingrid.1.0.0.list.paginated:
-      title: Bin Grid 1.0.0 components paginated list
-      description: The paginated list of Bin Grid 1.0.0 components
-      type: object
-      properties:
-        datasets:
-          type: array
-          items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json
-        next-page-token:
-          type: string
-    linegeometry.1.0.0.list.paginated:
-      title: Line Geometry 1.0.0 components paginated list
-      description: The paginated list of Line Geometry 1.0.0 components
-      type: object
-      properties:
-        datasets:
-          type: array
-          items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json
-        next-page-token:
-          type: string
-    horizon.1.2.0.list.paginated:
-      title: Horizon 1.2.0 components paginated list
-      description: The paginated list of Horizon 1.2.0 components
-      type: object
-      properties:
-        datasets:
-          type: array
-          items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Generic.1.0.0.json"
         next-page-token:
           type: string
     tracedata.1.3.0.list.paginated:
       title: Trace Data 1.3.0 components paginated list
-      description: The paginated list of Trace Data 1.3.0 components
+      description: The paginated list of trace data 1.3.0 components
       type: object
       properties:
         datasets:
           type: array
           items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicTraceData.1.3.0.json
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicTraceData.1.3.0.json"
         next-page-token:
           type: string
-    notionalseismicline.1.1.0.list.paginated:
-      title: Notional Seismic Line 1.1.0 components paginated list
-      description: The paginated list of Notional Seismic Line 1.1.0 components
+    bingrid.1.0.0.list.paginated:
+      title: Bin Grid 1.0.0 components paginated list
+      description: The paginated list of bin grid 1.0.0 components
       type: object
       properties:
         datasets:
           type: array
           items:
-            $ref: https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/NotionalSeismicLine.1.1.0.json
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json"
         next-page-token:
           type: string
-  examples: 
+    linegeometry.1.0.0.list.paginated:
+      title: Line Geometry 1.0.0 components paginated list
+      description: The paginated list of line geometry 1.0.0 components
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json"
+        next-page-token:
+          type: string
+    seismichorizon.1.2.0.list.paginated:
+      title: Seismic Horizon 1.2.0 components paginated list
+      description: The paginated list of seismic horizon 1.2.0 components
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json"
+        next-page-token:
+          type: string
+    3dinterpretationset.1.1.0.list.paginated:
+      title: Seismic 3D Interpretation Set paginated list
+      description: The paginated list of seismic 3D interpretation set 1.1.0 data
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json"
+        next-page-token:
+          type: string
+    2dinterpretationset.1.1.0.list.paginated:
+      title: Seismic 2D Interpretation Set paginated list
+      description: The paginated list of seismic 2D interpretation set 1.1.0 data
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json"
+        next-page-token:
+          type: string
+    acquisitionsurvey.1.2.0.list.paginated:
+      title: Acquisition Survey 1.2.0 data paginated list
+      description: The paginated list of acquisition survey 1.2.0 data
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json"
+        next-page-token:
+          type: string
+    processingproject.1.2.0.list.paginated:
+      title: Processing Project 1.2.0 data paginated list
+      description: The paginated list of processing project 1.2.0 data
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicProcessingProject.1.2.0.json"
+        next-page-token:
+          type: string
+
+  examples:
     service.status:
       summary: service status
-      value: 
+      value:
         status: "running"
     service.status.ready:
       summary: service readiness status
-      value: 
+      value:
         ready: true
     record.id.version.list:
       summary: record id versioned
-      value: 
-        ["osdu:dataset:record-version-id"]
+      value: ["osdu:dataset:record-id-version"]
     record.id.list:
       summary: records id
-      value: 
+      value:
         [
           "osdu:dataset:record-id",
           "osdu:dataset:record-id",
@@ -2039,15 +2100,15 @@ components:
         ]
     sdms.v3.dataset.path.list:
       summary: sdms v3 dataset path list
-      value: 
-        [        
+      value:
+        [
           "sd://tenant/subproject/dataset-01.segy",
           "sd://tenant/subproject/dataset-02.segy",
           "sd://tenant/subproject/dataset-03.segy",
         ]
     version.list:
       summary: dataset versions
-      value: 
+      value:
         [
           "1562066009929332",
           "4533963683653593",
@@ -2055,126 +2116,167 @@ components:
           "5356498744226145",
         ]
     segy.1.0.0.list:
-      summary: Seismic SEGY 1.0.0 datasets
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.SEGY.1.0.0.json",]
+      summary: SEGY 1.0.0 datasets
+      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.SEGY.1.0.0.json"]
     openzgy.1.0.0.list:
-      summary: Seismic OpenZGY 1.0.0 datasets
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Slb.OpenZGY.1.0.0.json",]
+      summary: OpenZGY 1.0.0 datasets
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Slb.OpenZGY.1.0.0.json",
+        ]
     openvds.1.0.0.list:
-      summary: Seismic OpenVDS 1.0.0 datasets
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json",]
+      summary: OpenVDS 1.0.0 datasets
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json",
+        ]
     generic.1.0.0.list:
-      summary: Seismic Generic 1.0.0 datasets
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Generic.1.0.0.json",]
-    2dinterpretationset.1.1.0.list:
-      summary: Seismic 2D Interpretation Set 1.1.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic2DInterpretationSet.1.1.0.json",]
-    3dinterpretationset.1.1.0.list:
-      summary: Seismic 3D Interpretation Set 1.1.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic3DInterpretationSet.1.1.0.json",]
-    acquisitionsurvey.1.2.0.list:
-      summary: Seismic Acquisition Survery 1.2.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicAcquisitionSurvey.1.2.0.json",]
-    processingproject.1.2.0.list:
-      summary: Seismic Processing Project 1.2.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicProcessingProject.1.2.0.json",]
-    bingrid.1.0.0.list:
-      summary: Seismic Bin Grid 1.0.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicBinGrid.1.0.0.json",]
-    linegeometry.1.0.0.list:
-      summary: Seismic Line Geometry 1.0.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json",]
-    horizon.1.2.0.list:
-      summary: Seismic Horizon 1.2.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json",]
+      summary: Generic 1.0.0 datasets
+      value:
+        [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Generic.1.0.0.json"]
     tracedata.1.3.0.list:
       summary: Seismic Trace Data 1.3.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicTraceData.1.3.0.json",]
-    notionalseismicline.1.1.0.list:
-      summary: Seismic Notional Seismic Line 1.1.0 components
-      value: [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/NotionalSeismicLine.1.1.0.json",]
-    
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicTraceData.1.3.0.json",
+        ]
+    bingrid.1.0.0.list:
+      summary: Seismic Bin Grid 1.0.0 components
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicBinGrid.1.0.0.json",
+        ]
+    linegeometry.1.0.0.list:
+      summary: Seismic LineGeometry 1.0.0 components
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json",
+        ]
+    seismichorizon.1.2.0.list:
+      summary: Seismic Horizon 1.2.0 components
+      value:
+        [ 
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json"
+        ]
+    3dinterpretationset.1.1.0.list:
+      summary: Seismic 3D Interpretation Set 1.1.0 data
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic3DInterpretationSet.1.1.0.json",
+        ]
+    2dinterpretationset.1.1.0.list:
+      summary: Seismic 2D Interpretation Set 1.1.0 data
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic2DInterpretationSet.1.1.0.json",
+        ]
+    acquisitionsurvey.1.2.0.list:
+      summary: Acquisition Survey 1.2.0 data
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicAcquisitionSurvey.1.2.0.json",
+        ]
+    processingproject.1.2.0.list:
+      summary: Processing Project 1.2.0 data
+      value:
+        [
+          $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicProcessingProject.1.2.0.json",
+        ]
     segy.1.0.0.list.paginated:
-      summary: Seismic SEGY 1.0.0 datasets (paginated)
-      value: 
+      summary: SEGY 1.0.0 datasets (paginated)
+      value:
         datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.SEGY.1.0.0.json",]
+          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.SEGY.1.0.0.json"]
         next-page-token: f446733b-154f-d134-8a54-6ab612a48217
     openzgy.1.0.0.list.paginated:
-      summary: Seismic OpenZGY 1.0.0 datasets (paginated)
-      value: 
+      summary: OpenZGY 1.0.0 datasets (paginated)
+      value:
         datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Slb.OpenZGY.1.0.0.json",]
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Slb.OpenZGY.1.0.0.json",
+          ]
         next-page-token: f446733b-154f-d134-8a54-6ab612a48217
     openvds.1.0.0.list.paginated:
-      summary: Seismic OpenVDS 1.0.0 datasets (paginated)
-      value: 
+      summary: OpenVDS 1.0.0 datasets (paginated)
+      value:
         datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json",]
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json",
+          ]
         next-page-token: f446733b-154f-d134-8a54-6ab612a48217
     generic.1.0.0.list.paginated:
-      summary: Seismic Generic 1.0.0 datasets (paginated)
-      value: 
+      summary: Generic 1.0.0 datasets (paginated)
+      value:
         datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Generic.1.0.0.json",]
-        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    2dinterpretationset.1.1.0.list.paginated:
-      summary: Seismic 2D Interpretation Set 1.1.0 components (paginated)
-      value: 
-        datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic2DInterpretationSet.1.1.0.json",]
-        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    3dinterpretationset.1.1.0.list.paginated:
-      summary: Seismic 3D Interpretation Set 1.1.0 components (paginated)
-      value: 
-        datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic3DInterpretationSet.1.1.0.json",]
-        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    acquisitionsurvey.1.2.0.list.paginated:
-      summary: Seismic Acquisition Survery 1.2.0 components (paginated)
-      value: 
-        datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicAcquisitionSurvey.1.2.0.json",]
-        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    processingproject.1.2.0.list.paginated:
-      summary: Seismic Processing Project 1.2.0 components (paginated)
-      value: 
-        datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicProcessingProject.1.2.0.json",]
-        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    bingrid.1.0.0.list.paginated:
-      summary: Seismic Bin Grid 1.0.0 components (paginated)
-      value: 
-        datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicBinGrid.1.0.0.json",]
-        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    linegeometry.1.0.0.list.paginated:
-      summary: Seismic Line Geometry 1.0.0 components (paginated)
-      value: 
-        datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json",]
-        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    horizon.1.2.0.list.paginated:
-      summary: Seismic Horizon 1.2.0 components (paginated)
-      value: 
-        datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json",]
+          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Generic.1.0.0.json"]
         next-page-token: f446733b-154f-d134-8a54-6ab612a48217
     tracedata.1.3.0.list.paginated:
-      summary: Seismic Trace Data 1.3.0 components (paginated)
-      value: 
+      summary: Trace Data 1.3.0 components (paginated)
+      value:
         datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicTraceData.1.3.0.json",]
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicTraceData.1.3.0.json",
+          ]
         next-page-token: f446733b-154f-d134-8a54-6ab612a48217
-    notionalseismicline.1.1.0.list.paginated:
-      summary: Seismic Notional Seismic Line 1.1.0 components (paginated)
-      value: 
+    bingrid.1.0.0.list.paginated:
+      summary: Bin Grid 1.0.0 components (paginated)
+      value:
         datasets:
-          [$ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/NotionalSeismicLine.1.1.0.json",]
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicBinGrid.1.0.0.json",
+          ]
+        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
+    linegeometry.1.0.0.list.paginated:
+      summary: Line Geometry 1.0.0 components (paginated)
+      value:
+        datasets:
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json",
+          ]
+        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
+    seismichorizon.1.2.0.list.paginated:
+      summary: Seismic Horizon 1.2.0 components (paginated)
+      value:
+        datasets:
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json",
+          ]
+        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
+    3dinterpretationset.1.1.0.list.paginated:
+      summary: Seismic 3D Interpretation Set 1.1.0 data (paginated)
+      value:
+        datasets:
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic3DInterpretationSet.1.1.0.json",
+          ]
+        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
+    2dinterpretationset.1.1.0.list.paginated:
+      summary: Seismic 2D Interpretation Set 1.1.0 data (paginated)
+      value:
+        datasets:
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic2DInterpretationSet.1.1.0.json",
+          ]
+        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
+    acquisitionsurvey.1.2.0.list.paginated:
+      summary: Acquisition Survey 1.2.0 data (paginated)
+      value:
+        datasets:
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicAcquisitionSurvey.1.2.0.json",
+          ]
+        next-page-token: f446733b-154f-d134-8a54-6ab612a48217
+    processingproject.1.2.0.list.paginated:
+      summary: Processing Project 1.2.0 data (paginated)
+      value:
+        datasets:
+          [
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicProcessingProject.1.2.0.json",
+          ]
         next-page-token: f446733b-154f-d134-8a54-6ab612a48217
     connection.string:
-        summary: connection string
-        value:
+      summary: connection string
+      value:
           {
             access_token: string,
             expire_in: 3600,
@@ -2182,9 +2284,8 @@ components:
           }
 
   requestBodies:
-    
     segy.1.0.0.list:
-      description: The list of SEGY 1.0.0 datasets.
+      description: The list of segy 1.0.0 datasets.
       required: true
       content:
         application/json:
@@ -2194,7 +2295,7 @@ components:
             segy.1.0.0.list:
               $ref: "#/components/examples/segy.1.0.0.list"
     openzgy.1.0.0.list:
-      description: The list of OpenZGY 1.0.0 datasets.
+      description: The list of openzgy 1.0.0 datasets.
       required: true
       content:
         application/json:
@@ -2204,7 +2305,7 @@ components:
             openzgy.1.0.0.list:
               $ref: "#/components/examples/openzgy.1.0.0.list"
     openvds.1.0.0.list:
-      description: The list of OpenVDS 1.0.0 datasets.
+      description: The list of openvds 1.0.0 datasets.
       required: true
       content:
         application/json:
@@ -2214,7 +2315,7 @@ components:
             openvds.1.0.0.list:
               $ref: "#/components/examples/openvds.1.0.0.list"
     generic.1.0.0.list:
-      description: The list of Generic 1.0.0 datasets.
+      description: The list of generic 1.0.0 datasets.
       required: true
       content:
         application/json:
@@ -2223,48 +2324,18 @@ components:
           examples:
             generic.1.0.0.list:
               $ref: "#/components/examples/generic.1.0.0.list"
-    2dinterpretationset.1.1.0.list:
-      description: The list of 2D Interpretation Set 1.1.0 components.
+    tracedata.1.3.0.list:
+      description: The list of trace data 1.3.0 components.
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/2dinterpretationset.1.1.0.list"
+            $ref: "#/components/schemas/tracedata.1.3.0.list"
           examples:
-            2dinterpretationset.1.1.0.list:
-              $ref: "#/components/examples/2dinterpretationset.1.1.0.list"
-    3dinterpretationset.1.1.0.list:
-      description: The list of 3D Interpretation Set 1.1.0 components.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/3dinterpretationset.1.1.0.list"
-          examples:
-            3dinterpretationset.1.1.0.list:
-              $ref: "#/components/examples/3dinterpretationset.1.1.0.list"
-    acquisitionsurvey.1.2.0.list:
-      description: The list of Acquisition Survery 1.2.0 components.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/acquisitionsurvey.1.2.0.list"
-          examples:
-            acquisitionsurvey.1.2.0.list:
-              $ref: "#/components/examples/acquisitionsurvey.1.2.0.list"
-    processingproject.1.2.0.list:
-      description: The list of Processing Project 1.2.0 components.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/processingproject.1.2.0.list"
-          examples:
-            processingproject.1.2.0.list:
-              $ref: "#/components/examples/processingproject.1.2.0.list"
+            tracedata.1.3.0.list:
+              $ref: "#/components/examples/tracedata.1.3.0.list"
     bingrid.1.0.0.list:
-      description: The list of Bin Grid 1.0.0 components.
+      description: The list of bin grid 1.1.0 components.
       required: true
       content:
         application/json:
@@ -2274,7 +2345,7 @@ components:
             bingrid.1.0.0.list:
               $ref: "#/components/examples/bingrid.1.0.0.list"
     linegeometry.1.0.0.list:
-      description: The list of Line Geometry 1.0.0 components.
+      description: The list of line geometry 1.0.0 components.
       required: true
       content:
         application/json:
@@ -2283,37 +2354,58 @@ components:
           examples:
             linegeometry.1.0.0.list:
               $ref: "#/components/examples/linegeometry.1.0.0.list"
-    horizon.1.2.0.list:
-      description: The list of Horizon 1.2.0 components.
+    seismichorizon.1.2.0.list:
+      description: The list of seismic horizon 1.2.0 components.
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/horizon.1.2.0.list"
+            $ref: "#/components/schemas/seismichorizon.1.2.0.list"
           examples:
-            horizon.1.2.0.list:
-              $ref: "#/components/examples/horizon.1.2.0.list"
-    tracedata.1.3.0.list:
-      description: The list of Trace Data 1.3.0 components.
+            seismichorizon.1.2.0.list:
+              $ref: "#/components/examples/seismichorizon.1.2.0.list"
+    3dinterpretationset.1.1.0.list:
+      description: The list of seismic 3D interpretation set 1.1.0 data
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/tracedata.1.3.0.list"
+            $ref: "#/components/schemas/3dinterpretationset.1.1.0.list"
           examples:
-            tracedata.1.3.0.list:
-              $ref: "#/components/examples/tracedata.1.3.0.list"
-    notionalseismicline.1.1.0.list:
-      description: The list of Notional Seismic Line 1.1.0 components.
+            3dinterpretationset.1.1.0.list:
+              $ref: "#/components/examples/3dinterpretationset.1.1.0.list"
+    2dinterpretationset.1.1.0.list:
+      description: The list of seismic 2D interpretation set 1.1.0 data
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/notionalseismicline.1.1.0.list"
+            $ref: "#/components/schemas/2dinterpretationset.1.1.0.list"
           examples:
-            notionalseismicline.1.1.0.list:
-              $ref: "#/components/examples/notionalseismicline.1.1.0.list"
+            2dinterpretationset.1.1.0.list:
+              $ref: "#/components/examples/2dinterpretationset.1.1.0.list"
+    acquisitionsurvey.1.2.0.list:
+      description: The list of acquisition survey 1.2.0 components.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/acquisitionsurvey.1.2.0.list"
+          examples:
+            acquisitionsurvey.1.2.0.list:
+              $ref: "#/components/examples/acquisitionsurvey.1.2.0.list"
+    processingproject.1.2.0.list:
+      description: The list of processing project 1.2.0 components.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/processingproject.1.2.0.list"
+          examples:
+            processingproject.1.2.0.list:
+              $ref: "#/components/examples/processingproject.1.2.0.list"
     sdms.v3.dataset.path.list:
+      description: The list of sdms v3 dataset path (sdpath).
       required: true
       content:
         application/json:
@@ -2321,9 +2413,9 @@ components:
             $ref: "#/components/schemas/sdms.v3.dataset.path.list"
           examples:
             sdms.v3.dataset.path.list:
-              $ref: "#/components/examples/sdms.v3.dataset.path.list" 
+              $ref: "#/components/examples/sdms.v3.dataset.path.list"
+
   responses:
-    
     service.status:
       description: The service status
       content:
@@ -2360,127 +2452,116 @@ components:
           examples:
             record.id.version.list:
               $ref: "#/components/examples/record.id.version.list"
-    
     segy.1.0.0:
-      description: The SEGY 1.0.0 dataset
+      description: The segy 1.0.0 dataset
       content:
         application/json:
           schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.SEGY.1.0.0.json"
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.SEGY.1.0.0.json"
           examples:
             SEGY 1.0.0 dataset:
               $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.SEGY.1.0.0.json"
     openzgy.1.0.0:
-      description: The OpenZGY 1.0.0 dataset
+      description: The openzgy 1.0.0 dataset
       content:
         application/json:
           schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json"
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Slb.OpenZGY.1.0.0.json"
           examples:
             OpenZGY 1.0.0 dataset:
               $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Slb.OpenZGY.1.0.0.json"
     openvds.1.0.0:
-      description: The OpenVDS 1.0.0 dataset
+      description: The openvds 1.0.0 dataset
       content:
         application/json:
           schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json"
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json"
           examples:
             OpenVDS 1.0.0 dataset:
               $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Bluware.OpenVDS.1.0.0.json"
     generic.1.0.0:
-      description: The Generic 1.0.0 dataset
+      description: The generic 1.0.0 dataset
       content:
         application/json:
           schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/dataset/FileCollection.Generic.1.0.0.json"
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/dataset/FileCollection.Generic.1.0.0.json"
           examples:
             Generic 1.0.0 dataset:
               $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/dataset/FileCollection.Generic.1.0.0.json"
-    2dinterpretationset.1.1.0:
-      description: The 2D Interpretation Set 1.1.0 component
-      content:
-        application/json:
-          schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json"
-          examples:
-            2D Interpretation Set 1.1.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic2DInterpretationSet.1.1.0.json"
-    3dinterpretationset.1.1.0:
-      description: The 3D Interpretation Set 1.1.0 component
-      content:
-        application/json:
-          schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json"
-          examples:
-            3D Interpretation Set 1.1.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic3DInterpretationSet.1.1.0.json"
-    acquisitionsurvey.1.2.0:
-      description: The Acquisition Survery 1.2.0 component
-      content:
-        application/json:
-          schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json"
-          examples:
-            Acquisition Survery 1.2.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicAcquisitionSurvey.1.2.0.json"
-    processingproject.1.2.0:
-      description: The Processing Project 1.2.0 component
-      content:
-        application/json:
-          schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/master-data/SeismicProcessingProject.1.2.0.json"
-          examples:
-            Processing Project 1.2.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicProcessingProject.1.2.0.json"
-    bingrid.1.0.0:
-      description: The Bin Grid 1.0.0 component
-      content:
-        application/json:
-          schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json"
-          examples:
-            Bin Grid 1.0.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicBinGrid.1.0.0.json"
-    linegeometry.1.0.0:
-      description: The Line Geometry 1.0.0 component
-      content:
-        application/json:
-          schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json"
-          examples:
-            Line Geometry 1.0.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json"
-    horizon.1.2.0:
-      description: The Horizon 1.2.0 component
-      content:
-        application/json:
-          schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicHorizon.1.2.0.json"
-          examples:
-            Horizon 1.2.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json"
     tracedata.1.3.0:
-      description: The Trace Data 1.3.0 component
+      description: The trace data 1.3.0 component
       content:
         application/json:
           schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/SeismicTraceData.1.3.0.json"
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicTraceData.1.3.0.json"
           examples:
             Trace Data 1.3.0 dataset:
               $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicTraceData.1.3.0.json"
-    notionalseismicline.1.1.0:
-      description: The Notional Seismic Line 1.1.0 component
+    bingrid.1.0.0:
+      description: The bin grid 1.0.0 component
       content:
         application/json:
           schema:
-            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/work-product-component/NotionalSeismicLine.1.1.0.json"
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicBinGrid.1.0.0.json"
           examples:
-            Notional Seismic Line 1.1.0 dataset:
-              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/NotionalSeismicLine.1.1.0.json"
-    
+            BinGrid 1.0.0 dataset:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicBinGrid.1.0.0.json"
+    linegeometry.1.0.0:
+      description: The line geometry 1.0.0 component
+      content:
+        application/json:
+          schema:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicLineGeometry.1.0.0.json"
+          examples:
+            Line Geometry 1.0.0 dataset:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicLineGeometry.1.0.0.json"
+    seismichorizon.1.2.0:
+      description: The seismic horizon 1.2.0 component
+      content:
+        application/json:
+          schema:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/work-product-component/SeismicHorizon.1.2.0.json"
+          examples:
+            Seismic Horizon 1.2.0 dataset:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/work-product-component/SeismicHorizon.1.2.0.json"
+    3dinterpretationset.1.1.0:
+      description: The seismic 3D interpretation set 1.1.0 data
+      content:
+        application/json:
+          schema:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic3DInterpretationSet.1.1.0.json"
+          examples:
+            Seismic 3D Interpretation Set 1.1.0:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic3DInterpretationSet.1.1.0.json"
+    2dinterpretationset.1.1.0:
+      description: The seismic 2D interpretation set 1.1.0 data
+      content:
+        application/json:
+          schema:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/Seismic2DInterpretationSet.1.1.0.json"
+          examples:
+            Seismic 2D Interpretation Set 1.1.0:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/Seismic2DInterpretationSet.1.1.0.json"
+    acquisitionsurvey.1.2.0:
+      description: The acquisition survey 1.2.0 data
+      content:
+        application/json:
+          schema:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicAcquisitionSurvey.1.2.0.json"
+          examples:
+            Acquisition Survey 1.2.0 dataset:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicAcquisitionSurvey.1.2.0.json"
+    processingproject.1.2.0:
+      description: The processing project 1.2.0 data
+      content:
+        application/json:
+          schema:
+            $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/master-data/SeismicProcessingProject.1.2.0.json"
+          examples:
+            Processing Project 1.2.0 dataset:
+              $ref: "https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/master-data/SeismicProcessingProject.1.2.0.json"
     segy.1.0.0.list.paginated:
-      description: The SEGY 1.0.0 dataset list
+      description: The list of segy 1.0.0 datasets
       content:
         application/json:
           schema:
@@ -2489,7 +2570,7 @@ components:
             segy.1.0.0.list:
               $ref: "#/components/examples/segy.1.0.0.list.paginated"
     openzgy.1.0.0.list.paginated:
-      description: The OpenZGY 1.0.0 dataset list
+      description: The list of openzgy 1.0.0 datasets
       content:
         application/json:
           schema:
@@ -2498,7 +2579,7 @@ components:
             openzgy.1.0.0.list:
               $ref: "#/components/examples/openzgy.1.0.0.list.paginated"
     openvds.1.0.0.list.paginated:
-      description: The OpenVDS 1.0.0 dataset list
+      description: The list of openvds 1.0.0 datasets
       content:
         application/json:
           schema:
@@ -2507,7 +2588,7 @@ components:
             openvds.1.0.0.list:
               $ref: "#/components/examples/openvds.1.0.0.list.paginated"
     generic.1.0.0.list.paginated:
-      description: The Generic 1.0.0 dataset list
+      description: The list of generic 1.0.0 datasets
       content:
         application/json:
           schema:
@@ -2515,44 +2596,17 @@ components:
           examples:
             generic.1.0.0.list:
               $ref: "#/components/examples/generic.1.0.0.list.paginated"
-    2dinterpretationset.1.1.0.list.paginated:
-      description: The 2D Interpretation Set 1.1.0 component list
+    tracedata.1.3.0.list.paginated:
+      description: The list of trace data 1.3.0 component
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/2dinterpretationset.1.1.0.list.paginated"
+            $ref: "#/components/schemas/tracedata.1.3.0.list.paginated"
           examples:
-            2dinterpretationset.1.1.0.list:
-              $ref: "#/components/examples/2dinterpretationset.1.1.0.list.paginated"
-    3dinterpretationset.1.1.0.list.paginated:
-      description: The 3D Interpretation Set 1.1.0 component list
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/3dinterpretationset.1.1.0.list.paginated"
-          examples:
-            3dinterpretationset.1.1.0.list:
-              $ref: "#/components/examples/3dinterpretationset.1.1.0.list.paginated"
-    acquisitionsurvey.1.2.0.list.paginated:
-      description: The Acquisition Survery 1.2.0 component list
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/acquisitionsurvey.1.2.0.list.paginated"
-          examples:
-            acquisitionsurvey.1.2.0.list:
-              $ref: "#/components/examples/acquisitionsurvey.1.2.0.list.paginated"
-    processingproject.1.2.0.list.paginated:
-      description: The Processing Project 1.2.0 component list
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/processingproject.1.2.0.list.paginated"
-          examples:
-            processingproject.1.2.0.list:
-              $ref: "#/components/examples/processingproject.1.2.0.list.paginated"
+            tracedata.1.3.0.list:
+              $ref: "#/components/examples/tracedata.1.3.0.list.paginated"
     bingrid.1.0.0.list.paginated:
-      description: The Bin Grid 1.0.0 component list
+      description: The list of bin grid 1.0.0 component
       content:
         application/json:
           schema:
@@ -2561,7 +2615,7 @@ components:
             bingrid.1.0.0.list:
               $ref: "#/components/examples/bingrid.1.0.0.list.paginated"
     linegeometry.1.0.0.list.paginated:
-      description: The Line Geometry 1.0.0 component list
+      description: The list of line geometry 1.0.0 component
       content:
         application/json:
           schema:
@@ -2569,34 +2623,51 @@ components:
           examples:
             linegeometry.1.0.0.list:
               $ref: "#/components/examples/linegeometry.1.0.0.list.paginated"
-    horizon.1.2.0.list.paginated:
-      description: The Horizon 1.2.0 component list
+    seismichorizon.1.2.0.list.paginated:
+      description: The list of seismic horizon 1.2.0 component
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/horizon.1.2.0.list.paginated"
+            $ref: "#/components/schemas/seismichorizon.1.2.0.list.paginated"
           examples:
-            horizon.1.2.0.list:
-              $ref: "#/components/examples/horizon.1.2.0.list.paginated"
-    tracedata.1.3.0.list.paginated:
-      description: The Trace Data 1.3.0 component list
+            seismichorizon.1.2.0.list:
+              $ref: "#/components/examples/seismichorizon.1.2.0.list.paginated"
+    3dinterpretationset.1.1.0.list.paginated:
+      description: The list of seismic 3D interpretation set 1.1.0 data
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/tracedata.1.3.0.list.paginated"
+            $ref: "#/components/schemas/3dinterpretationset.1.1.0.list.paginated"
           examples:
-            tracedata.1.3.0.list:
-              $ref: "#/components/examples/tracedata.1.3.0.list.paginated"
-    notionalseismicline.1.1.0.list.paginated:
-      description: The Notional Seismic Line 1.1.0 component list
+            3dinterpretationset.1.1.0.list:
+              $ref: "#/components/examples/3dinterpretationset.1.1.0.list.paginated"
+    2dinterpretationset.1.1.0.list.paginated:
+      description: The list of seismic 2D interpretation set 1.1.0 data
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/notionalseismicline.1.1.0.list.paginated"
+            $ref: "#/components/schemas/2dinterpretationset.1.1.0.list.paginated"
           examples:
-            notionalseismicline.1.1.0.list:
-              $ref: "#/components/examples/notionalseismicline.1.1.0.list.paginated"
-     
+            2dinterpretationset.1.1.0.list:
+              $ref: "#/components/examples/2dinterpretationset.1.1.0.list.paginated"
+    acquisitionsurvey.1.2.0.list.paginated:
+      description: The list of acquisition survey 1.2.0 data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/acquisitionsurvey.1.2.0.list.paginated"
+          examples:
+            acquisitionsurvey.1.2.0.list:
+              $ref: "#/components/examples/acquisitionsurvey.1.2.0.list.paginated"
+    processingproject.1.2.0.list.paginated:
+      description: The list of processing project 1.2.0 data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/processingproject.1.2.0.list.paginated"
+          examples:
+            processingproject.1.2.0.list:
+              $ref: "#/components/examples/processingproject.1.2.0.list.paginated"
     version.list:
       description: The list of dataset versions
       content:
@@ -2605,7 +2676,7 @@ components:
             $ref: "#/components/schemas/version.list"
           examples:
             version.list:
-              $ref: "#/components/examples/version.list"              
+              $ref: "#/components/examples/version.list"
     connection.string:
       description: The dataset files connection string
       content:
@@ -2624,4 +2695,3 @@ components:
 
 security: #  apply the security globally to all operations
   - bearerAuth: []
-
