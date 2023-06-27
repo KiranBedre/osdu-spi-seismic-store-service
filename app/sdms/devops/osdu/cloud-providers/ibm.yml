@@ -5,6 +5,7 @@ variables:
 sdms_ibm-deploy:
   extends: .ibm-deploy
   needs: ['sdms_compile-and-unit-test']
+  allow_failure: true
   script:
     - cd app/$SDMS_SERVICE
     - echo "In IBM deploy"

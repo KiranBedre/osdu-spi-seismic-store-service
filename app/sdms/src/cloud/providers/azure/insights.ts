@@ -41,6 +41,8 @@ export class AzureInsightsLogger extends AbstractLogger {
 
         if (httpRequest && appinsights.Contracts.domainSupportsProperties(envelope.data.baseData)) {
 
+            let isSuccess:boolean = true
+
             // Log the correlation-id
             if (AzureConfig.CORRELATION_ID in httpRequest.headers) {
                 envelope.data.baseData.properties[AzureConfig.CORRELATION_ID] =
@@ -52,21 +54,34 @@ export class AzureInsightsLogger extends AbstractLogger {
                 envelope.data.baseData.properties['data-partition-id'] = Config.DATA_PARTITION_ID;
             }
 
+            // Log the caller's id
+            if ('authorization' in httpRequest.headers) {
+                try {
+                    envelope.data.baseData.properties['user-id'] = httpRequest.get(Config.USER_ID_HEADER_KEY_NAME) ||
+                    Utils.getUserId(httpRequest.headers.authorization);
+                } catch (e) {
+                    console.error('Telemetry process error - unrecognized header format');
+                    console.error(httpRequest.headers);
+                    console.error(e);
+                    isSuccess = false;
+                }
+            }
+
             // Log party to which the JWT was originally issued
             if ('authorization' in httpRequest.headers) {
                 try {
                     const azp = Utils.getAzpFromPayload(httpRequest.headers.authorization);
                     if (azp) {
-                        envelope.data.baseData.properties['user-id'] = azp;
+                        envelope.data.baseData.properties['azp'] = azp;
                     }
                 } catch (e) {
                     console.error('Telemetry process error - unrecognized header format');
                     console.error(httpRequest.headers);
                     console.error(e);
-                    return false;
+                    isSuccess = false;
                 }
             }
-
+            return isSuccess;
         }
         return true;
     }
