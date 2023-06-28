@@ -2,7 +2,7 @@ variables:
   GC_GCR_REGISTRY: "gcr.io/osdu-anthos"
   APP_VERSION: "$GC_HELM_PACKAGE_VERSION-SNAPSHOT"
 
-.common:
+.gc_common:
   script:
     - gcloud auth activate-service-account --key-file $GC_DEPLOY_FILE
     - gcloud config set project $GC_PROJECT
@@ -18,7 +18,7 @@ variables:
         if [[ ! -z "$HELM_REVISION" ]]; then kubectl delete secret sh.helm.release.v1.$SEISMIC_GC_HELM_DEPLOYMENT_SERVICE.v$HELM_REVISION; fi
       fi
 
-.common-dev2:
+.gc_common-dev2:
   script:
     - gcloud auth activate-service-account --key-file $GC_DEV2_DEPLOY_FILE
     - gcloud config set project $GC_PROJECT
@@ -34,7 +34,7 @@ variables:
         if [[ ! -z "$HELM_REVISION" ]]; then kubectl delete secret sh.helm.release.v1.$SEISMIC_GC_HELM_DEPLOYMENT_SERVICE.v$HELM_REVISION; fi
       fi
 
-.common-preship:
+.gc_common-preship:
   script:
     - gcloud auth activate-service-account --key-file $GC_PRESHIP_DEPLOY_FILE
     - gcloud config set project $GC_PROJECT
@@ -50,7 +50,7 @@ variables:
         if [[ ! -z "$HELM_REVISION" ]]; then kubectl delete secret sh.helm.release.v1.$SEISMIC_GC_HELM_DEPLOYMENT_SERVICE.v$HELM_REVISION; fi
       fi
 
-.common-baremetal:
+.gc_common-baremetal:
   script:
     - gcloud auth activate-service-account --key-file $GC_BAREMETAL_DEPLOY_FILE
     - gcloud config set project $GC_PROJECT
@@ -66,7 +66,7 @@ variables:
         if [[ ! -z "$HELM_REVISION" ]]; then kubectl delete secret sh.helm.release.v1.$SEISMIC_GC_HELM_DEPLOYMENT_SERVICE.v$HELM_REVISION; fi
       fi
 
-.define_version:
+.gc_define_version:
   script:
     - >
       if [[ -z $CI_COMMIT_TAG ]] && [[ $CI_COMMIT_BRANCH =~ ^release\/[0-9]{1,2}.[0-9]{1,2}$ ]];
@@ -80,7 +80,7 @@ variables:
         VERSION="0.0.0-invalid";
       fi
 
-.define_app_version:
+.gc_define_app_version:
   script:
     - >
       if [[ "$CI_COMMIT_TAG" != "" ]];
@@ -88,14 +88,14 @@ variables:
       fi
 
 # Requires variables: IMAGE_TAG, IMAGE_NAME
-.substitute_image_in_helm:
+.gc_substitute_image_in_helm:
   script:
     - wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
     - IMAGE="$CI_REGISTRY_IMAGE/$IMAGE_NAME:$IMAGE_TAG" yq -i '.data.image = env(IMAGE)' $SEISMIC_GC_HELM_DEPLOYMENT_DIR/values.yaml
     - yq -e '.data | has("bootstrapImage")' $SEISMIC_GC_HELM_DEPLOYMENT_DIR/values.yaml &>/dev/null && BOOTSTRAP_IMAGE="$CI_REGISTRY_IMAGE/$IMAGE_BOOTSTRAP_NAME:$IMAGE_TAG" yq -i '.data.bootstrapImage = env(BOOTSTRAP_IMAGE)' $SEISMIC_GC_HELM_DEPLOYMENT_DIR/values.yaml
     - cat $SEISMIC_GC_HELM_DEPLOYMENT_DIR/values.yaml | grep -i image
 
-.set_image_name:
+.gc_set_image_name:
   script:
     - >
       if echo $CI_COMMIT_REF_NAME | grep -Eq "^release\/[0-9]{1,2}.[0-9]{1,2}$";
@@ -106,14 +106,19 @@ variables:
       if [[ "$CI_COMMIT_TAG" != "" ]];
       then
         IMAGE_TAG="$CI_COMMIT_TAG";
+        EXTRA_TAG="-t $CI_REGISTRY_IMAGE/$IMAGE_NAME:$CI_COMMIT_TAG";
       elif [[ "$CI_COMMIT_REF_NAME" == "$CI_DEFAULT_BRANCH" ]];
       then
-        IMAGE_TAG="latest";
+        IMAGE_TAG="$CI_COMMIT_SHORT_SHA";
+        HELM_TAG="latest"
+        EXTRA_TAG="-t $CI_REGISTRY_IMAGE/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA";
       else
         IMAGE_TAG="$CI_COMMIT_SHORT_SHA";
+        HELM_TAG="$CI_COMMIT_SHORT_SHA"
+        EXTRA_TAG="-t $CI_REGISTRY_IMAGE/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA";
       fi
 
-.verify_deploy:
+.gc_verify_deploy:
   script:
     - echo ----- Verify Deployment -----
     - kubectl rollout status deployment.v1.apps/$SEISMIC_GC_SERVICE -n $GC_HELM_NAMESPACE --timeout=900s
@@ -128,20 +133,20 @@ variables:
   stage: containerize
   tags: ["osdu-small"]
   image:
-    name: alpine/helm:3.9.0
+    name: alpine/helm:3.11.2
     entrypoint: [""]
   before_script:
     - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - !reference [.set_image_name, script]
-    - !reference [.substitute_image_in_helm, script]
+    - !reference [.gc_set_image_name, script]
+    - !reference [.gc_substitute_image_in_helm, script]
   script:
-    - !reference [.define_app_version, script]
-    - helm package $SEISMIC_GC_HELM_DEPLOYMENT_DIR -u --version $GC_HELM_PACKAGE_VERSION-$IMAGE_TAG --app-version $APP_VERSION
-    - helm push gc-$SEISMIC_GC_SERVICE-deploy-$GC_HELM_PACKAGE_VERSION-$IMAGE_TAG.tgz oci://$CI_REGISTRY_IMAGE/gc-helm
+    - !reference [.gc_define_app_version, script]
+    - helm package $SEISMIC_GC_HELM_DEPLOYMENT_DIR -u --version $GC_HELM_PACKAGE_VERSION-$HELM_TAG --app-version $APP_VERSION
+    - helm push gc-$SEISMIC_GC_SERVICE-deploy-$GC_HELM_PACKAGE_VERSION-$HELM_TAG.tgz oci://$CI_REGISTRY_IMAGE/gc-helm
   rules:
-    - if: "$CI_COMMIT_BRANCH =~ /^release/"
+    - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
       when: never
-    - if: "$CI_COMMIT_TAG"
+    - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: never
     - if: '$GC == "1"'
       when: on_success
@@ -150,14 +155,14 @@ variables:
   stage: containerize
   tags: ["osdu-small"]
   image:
-    name: alpine/helm:3.9.0
+    name: alpine/helm:3.11.2
     entrypoint: [""]
   before_script:
     - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - !reference [.set_image_name, script]
-    - !reference [.substitute_image_in_helm, script]
+    - !reference [.gc_set_image_name, script]
+    - !reference [.gc_substitute_image_in_helm, script]
   script:
-    - !reference [.define_version, script]
+    - !reference [.gc_define_version, script]
     - helm package $SEISMIC_GC_HELM_DEPLOYMENT_DIR -u --version $VERSION --app-version $VERSION
     - helm push gc-$SEISMIC_GC_SERVICE-deploy-$VERSION.tgz oci://$CI_REGISTRY_IMAGE/gc-helm
   rules:
@@ -170,13 +175,17 @@ variables:
   stage: containerize
   tags: ["osdu-small"]
   image:
-    name: alpine/helm:3.9.0
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: [""]
   before_script:
-    - cat $GC_DEPLOY_FILE | helm registry login -u _json_key --password-stdin https://gcr.io
-    - !reference [.substitute_image_in_helm, script]
+    - apk add --no-cache curl bash
+    - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | VERIFY_CHECKSUM=false bash
+    - gcloud auth activate-service-account --key-file=${GC_BAREMETAL_DEPLOY_FILE}
+    - gcloud auth configure-docker gcr.io
+    - !reference [.gc_set_image_name, script]
+    - !reference [.gc_substitute_image_in_helm, script]
   script:
-    - !reference [.define_version, script]
+    - !reference [.gc_define_version, script]
     - helm package $SEISMIC_GC_HELM_DEPLOYMENT_DIR -u --version $VERSION --app-version $VERSION
     - helm push gc-$SEISMIC_GC_SERVICE-deploy-$VERSION.tgz oci://$GC_GCR_REGISTRY/helm
   rules:
@@ -192,14 +201,8 @@ variables:
   image: docker:19.03
   cache: {}
   script:
-    - export EXTRA_DOCKER_TAG=""
-    - !reference [.set_image_name, script]
-    - >
-      if [[ "$CI_COMMIT_TAG" != "" ]];
-      then EXTRA_DOCKER_TAG="-t $CI_REGISTRY_IMAGE/$IMAGE_NAME:$CI_COMMIT_TAG";
-      elif [[ "$CI_COMMIT_REF_NAME" = "$CI_DEFAULT_BRANCH" ]];
-      then EXTRA_DOCKER_TAG="-t $CI_REGISTRY_IMAGE/$IMAGE_NAME:latest"; fi
-    - docker build -t $CI_REGISTRY_IMAGE/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA $EXTRA_DOCKER_TAG --file $SEISMIC_GC_DOCKERFILE_NAME .
+    - !reference [.gc_set_image_name, script]
+    - docker build $EXTRA_TAG --file $SEISMIC_GC_DOCKERFILE_NAME .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker push $CI_REGISTRY_IMAGE/$IMAGE_NAME
   rules:
@@ -210,13 +213,18 @@ variables:
   stage: containerize
   tags: ["osdu-medium"]
   extends: .gc-variables
-  image: docker:19.03
+  image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   cache: {}
+  services:
+    - docker:dind
+  before_script:
+    - gcloud auth activate-service-account --key-file=${GC_BAREMETAL_DEPLOY_FILE}
+    - gcloud auth configure-docker gcr.io
   script:
     - docker build -t $GC_GCR_REGISTRY/$SEISMIC_GC_SERVICE/$IMAGE_NAME:$CI_COMMIT_TAG -f $SEISMIC_GC_DOCKERFILE_NAME .
-    - docker push $GC_GCR_REGISTRY/$SEISMIC_GC_SERVICE/$IMAGE_NAME
+    - docker push $GC_GCR_REGISTRY/$SEISMIC_GC_SERVICE/$IMAGE_NAME:$CI_COMMIT_TAG
   rules:
-    - if: "$GC == '1' && $CI_COMMIT_TAG"
+    - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
 
 .gc-deploy:
@@ -227,24 +235,23 @@ variables:
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   cache: {}
   script:
-    - !reference [.common, script]
-    - !reference [.define_version, script]
-    - !reference [.set_image_name, script]
+    - !reference [.gc_common, script]
+    - !reference [.gc_define_version, script]
+    - !reference [.gc_set_image_name, script]
     - >
       helm upgrade $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE oci://$CI_REGISTRY_IMAGE/gc-helm/gc-$SEISMIC_GC_SERVICE-deploy
-      --version $GC_HELM_PACKAGE_VERSION-$IMAGE_TAG
+      --version $GC_HELM_PACKAGE_VERSION-$HELM_TAG
       --install
       --create-namespace
       --namespace=$GC_HELM_NAMESPACE
       --wait
       --timeout=1200s
       --history-max=3
-      --set data.image=$CI_REGISTRY_IMAGE/gc-$SEISMIC_GC_SERVICE:$CI_COMMIT_SHORT_SHA
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE-k8s
       --set global.domain=$GC_DOMAIN
       --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
-    - !reference [.verify_deploy, script]
+    - !reference [.gc_verify_deploy, script]
   rules:
     - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
       when: on_success
@@ -258,9 +265,9 @@ variables:
   extends: .gc-dev2-variables
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   script:
-    - !reference [.common-dev2, script]
-    - !reference [.define_version, script]
-    - !reference [.set_image_name, script]
+    - !reference [.gc_common-dev2, script]
+    - !reference [.gc_define_version, script]
+    - !reference [.gc_set_image_name, script]
     - >
       helm upgrade $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE oci://$CI_REGISTRY_IMAGE/gc-helm/gc-$SEISMIC_GC_SERVICE-deploy
       --version $VERSION
@@ -269,14 +276,13 @@ variables:
       --namespace=$GC_HELM_NAMESPACE
       --wait
       --history-max=3
-      --set data.image=$CI_REGISTRY_IMAGE/$IMAGE_NAME:${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}
       --set data.imagePullPolicy=Always
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE-k8s
       --set global.domain=$GC_DOMAIN
       --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
       --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
-    - !reference [.verify_deploy, script]
+    - !reference [.gc_verify_deploy, script]
   rules:
     - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
       when: on_success
@@ -290,9 +296,9 @@ variables:
   extends: .gc-preship-variables
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   script:
-    - !reference [.common-preship, script]
-    - !reference [.define_version, script]
-    - !reference [.set_image_name, script]
+    - !reference [.gc_common-preship, script]
+    - !reference [.gc_define_version, script]
+    - !reference [.gc_set_image_name, script]
     - >
       helm upgrade $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE oci://$CI_REGISTRY_IMAGE/gc-helm/gc-$SEISMIC_GC_SERVICE-deploy 
       --version $VERSION
@@ -301,14 +307,13 @@ variables:
       --namespace=$GC_HELM_NAMESPACE
       --wait
       --history-max=3
-      --set data.image=$CI_REGISTRY_IMAGE/$IMAGE_NAME:${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}
       --set data.imagePullPolicy=Always
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE-k8s
       --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
       --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
       --set global.domain=$GC_DOMAIN
-    - !reference [.verify_deploy, script]
+    - !reference [.gc_verify_deploy, script]
   rules:
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: manual
@@ -325,23 +330,22 @@ variables:
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   script:
     - gcloud auth activate-service-account --key-file $GC_BAREMETAL_DEPLOY_FILE
-    - !reference [.common-baremetal, script]
-    - !reference [.define_version, script]
-    - !reference [.set_image_name, script]
+    - !reference [.gc_common-baremetal, script]
+    - !reference [.gc_define_version, script]
+    - !reference [.gc_set_image_name, script]
     - >
       helm upgrade $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE oci://$CI_REGISTRY_IMAGE/gc-helm/gc-$SEISMIC_GC_SERVICE-deploy
-      --version $GC_HELM_PACKAGE_VERSION-$IMAGE_TAG
+      --version $GC_HELM_PACKAGE_VERSION-$HELM_TAG
       --install
       --create-namespace
       --namespace=$GC_HELM_NAMESPACE
       --wait
       --history-max=3
       --set data.cloudProvider=anthos
-      --set data.image=$CI_REGISTRY_IMAGE/gc-$SEISMIC_GC_SERVICE:$CI_COMMIT_SHORT_SHA
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE
       --set global.domain=$GC_DOMAIN
       --set global.onPremEnabled=true
-    - !reference [.verify_deploy, script]
+    - !reference [.gc_verify_deploy, script]
   rules:
     - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
       when: on_success

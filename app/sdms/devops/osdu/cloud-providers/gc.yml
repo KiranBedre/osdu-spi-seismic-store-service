@@ -12,12 +12,12 @@ sdms-gc-helm-charts-gitlab:
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
   rules:
     - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
-      when: on_success
+      when: never
       changes:
         - devops/**/*
         - app/sdms/**/*
     - if: '$GC == "1" && $CI_COMMIT_TAG'
-      when: on_success
+      when: never
       changes:
         - devops/**/*
         - app/sdms/**/*
