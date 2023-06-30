@@ -108,7 +108,10 @@ export class DatasetParser {
     }
 
     public static get(req: expRequest): [DatasetModel, boolean, boolean, string] {
-        const userInfo = req.query['translate-user-info'] !== 'false' || req.query['subid-to-email'] !== 'false';
+        let userInfo = true;
+        if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+            userInfo = false;
+        }
         const seismicMetaRecordVersion = req.query['record-version'] ?
             req.query['record-version'] as string : undefined;
         return [this.createDatasetModelFromRequest(req),
@@ -121,11 +124,15 @@ export class DatasetParser {
     }
 
     public static listGet(req: expRequest): DatasetListRequest {
+        let userInfo = true;
+        if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+            userInfo = false;
+        }
 
         const input = {
             dataset: this.createDatasetModelFromRequest(req),
             pagination: null,
-            userInfo: req.query['translate-user-info'] !== 'false' || req.query['subid-to-email'] !== 'false'
+            userInfo: userInfo.valueOf()
         } as DatasetListRequest;
 
         if (req.query.gtag) {
@@ -157,11 +164,15 @@ export class DatasetParser {
     }
 
     public static listPost(req: expRequest): DatasetListRequest {
+        let userInfo = true;
+        if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+            userInfo = false;
+        }
 
         const input = {
             dataset: this.createDatasetModelFromRequest(req),
             pagination: null,
-            userInfo: req.query['translate-user-info'] !== 'false' || req.query['subid-to-email'] !== 'false'
+            userInfo: userInfo.valueOf()
         } as DatasetListRequest;
 
         if (!req.body) return input;

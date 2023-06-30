@@ -177,7 +177,11 @@ export class SubProjectHandler {
         // init journalClient client
         const journalClient = JournalFactoryTenantClient.get(tenant);
         // [NOTE OF DEPRECATION] subid-to-email to deprecated in favor of translate-user-info
-        const convertSubIdToEmail = req.query['translate-user-info'] !== 'false' && req.query['subid-to-email'] !== 'false';
+        let userInfo = true;
+        if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+            userInfo = false;
+        }
+        const convertSubIdToEmail = userInfo;
 
         // get subproject
         const subproject = await SubProjectDAO.get(journalClient, tenant.name, req.params.subprojectid);
