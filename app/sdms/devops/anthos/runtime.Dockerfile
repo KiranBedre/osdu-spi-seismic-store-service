@@ -47,8 +47,8 @@ WORKDIR /seistore-service
 RUN ls
 
 RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
-    && addgroup appgroup \
-    && adduser --disabled-password --gecos --shell appuser --ingroup appgroup \
+    && addgroup --gid 10001 appgroup \
+    && adduser --disabled-password --gecos --shell --uid 10001 appuser --ingroup appgroup \
     && chown -R appuser:appgroup /seistore-service \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/npm' >> /etc/sudoers \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/node' >> /etc/sudoers \
@@ -57,5 +57,6 @@ RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-head
     && apk add --update --no-cache openssl1.1-compat \
     && npx prisma generate --schema=/seistore-service/src/cloud/providers/anthos/schema.prisma
 
+USER 10001:10001
 
 ENTRYPOINT ["node", "--trace-warnings", "--trace-uncaught", "./dist/server/server-start.js"]
