@@ -2089,14 +2089,14 @@ components:
         ready: true
     record.id.version.list:
       summary: record id versioned
-      value: ["osdu:dataset:record-id-version"]
+      value: ["osdu:dataset:b47f793a-dc9c-5d11-8d59-6cc611a98926:1653406745040912"]
     record.id.list:
       summary: records id
       value:
         [
-          "osdu:dataset:record-id",
-          "osdu:dataset:record-id",
-          "osdu:dataset:record-id",
+          "osdu:dataset:b47f793a-c19c-5d11-8d59-6aa151a935326",
+          "osdu:dataset:b47f793a-ac1d-5d11-2a11-2cc4241a12496",
+          "osdu:dataset:b47f793a-ab42-5d11-5f19-3bb615a942536",
         ]
     sdms.v3.dataset.path.list:
       summary: sdms v3 dataset path list
