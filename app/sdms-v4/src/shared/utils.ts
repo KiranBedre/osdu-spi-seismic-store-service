@@ -1,4 +1,3 @@
-/* eslint-disable capitalized-comments */
 // ============================================================================
 // Copyright 2017-2023, Schlumberger
 //

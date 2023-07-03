@@ -58,6 +58,8 @@ export abstract class Config implements IConfig {
     public static REDIS_PORT: number;
     public static REDIS_HOST: string;
     public static REDIS_KEY: string;
+    public static REDIS_TLS_DISABLE: boolean;
+    public static REDIS_PWD_DISABLE: boolean;
 
     // Initialization methods
     public static setCloudProvider(cloudProvider: string | undefined) {
@@ -96,9 +98,11 @@ export abstract class Config implements IConfig {
             'ENABLE_SCHEMA_PROPERTIES_FORMAT_VALIDATION',
             false
         );
-        Config.REDIS_HOST = this.getEnvString(process.env.REDIS_HOST);
-        Config.REDIS_PORT = this.getEnvNumber(process.env.REDIS_PORT, 6380);
-        Config.REDIS_KEY = this.getEnvString(process.env.REDIS_KEY);
+        Config.REDIS_HOST = this.getEnvString('REDIS_HOST');
+        Config.REDIS_PORT = this.getEnvNumber('REDIS_PORT', 6380);
+        Config.REDIS_KEY = this.getEnvString('REDIS_KEY');
+        Config.REDIS_TLS_DISABLE = this.getEnvBoolean('REDIS_TLS_DISABLE', false);
+        Config.REDIS_PWD_DISABLE = this.getEnvBoolean('REDIS_PWD_DISABLE', false);
 
         // Initialize the CSP specific configuration
         await ConfigFactory.build(Config.CLOUD_PROVIDER).init();
