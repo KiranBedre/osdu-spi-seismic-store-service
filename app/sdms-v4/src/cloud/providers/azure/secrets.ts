@@ -49,8 +49,8 @@ export class AzureSecrets extends AbstractSecrets {
         AzureConfig.SP_CLIENT_SECRET = (await client.getSecret(this.SP_CLIENT_SECRET_KEY)).value!;
         AzureConfig.SP_APP_RESOURCE_ID = (await client.getSecret(this.SP_APP_RESOURCE_ID_KEY)).value!;
         AzureConfig.AI_INSTRUMENTATION_KEY = (await client.getSecret(this.AI_INSTRUMENTATION_KEY)).value!;
-        Config.REDIS_KEY = (await client.getSecret(this.REDIS_KEY)).value!;
-        Config.REDIS_HOST = (await client.getSecret(this.REDIS_HOST)).value!;
+        Config.REDIS_KEY = (Config.REDIS_KEY || (await client.getSecret(this.REDIS_KEY)).value)!;
+        Config.REDIS_HOST = (Config.REDIS_HOST || (await client.getSecret(this.REDIS_HOST)).value)!;
     }
 
     public async getSecret(key: string): Promise<string> {

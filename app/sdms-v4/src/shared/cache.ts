@@ -14,24 +14,29 @@
 // Limitations under the License.
 // ============================================================================
 
+import Redis, { RedisOptions } from 'ioredis';
 import { Config } from '../cloud';
-import Redis from 'ioredis';
 
 export class SharedCache {
     private static redisClient: Redis;
     public static async init(): Promise<void> {
         if (!this.redisClient) {
-            this.redisClient = new Redis({
+            const redisOptions = {
                 host: Config.REDIS_HOST,
                 port: Config.REDIS_PORT,
-                password: Config.REDIS_KEY,
-                tls: { servername: Config.REDIS_HOST },
                 retryStrategy: (times: number) => {
                     return Math.pow(2, times) + Math.random() * 100;
                 },
                 maxRetriesPerRequest: 5,
                 commandTimeout: 5000,
-            });
+            } as RedisOptions;
+            if (!Config.REDIS_PWD_DISABLE) {
+                redisOptions.password = Config.REDIS_KEY;
+            }
+            if (!Config.REDIS_TLS_DISABLE) {
+                redisOptions.tls = { servername: Config.REDIS_HOST };
+            }
+            this.redisClient = new Redis(redisOptions);
             while (this.redisClient.status === 'connecting') {
                 await new Promise((resolve) => setTimeout(resolve, 500));
             }

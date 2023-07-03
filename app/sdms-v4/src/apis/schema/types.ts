@@ -71,10 +71,9 @@ export const SchemaEndpoints = [
         kind: 'osdu:wks:work-product-component--SeismicLineGeometry:1.0.0',
         hasBulks: false,
     },
-    
     {
         name: 'seismichorizon',
-        kind:'osdu:wks:work-product-component--SeismicHorizon:1.2.0',
+        kind: 'osdu:wks:work-product-component--SeismicHorizon:1.2.0',
         hasBulks: false,
     },
     {
@@ -82,5 +81,4 @@ export const SchemaEndpoints = [
         kind: 'osdu:wks:work-product-component--SeismicTraceData:1.3.0',
         hasBulks: false,
     },
-
 ] as SchemaEndpoint[];
