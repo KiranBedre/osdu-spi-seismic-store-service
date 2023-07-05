@@ -2583,10 +2583,10 @@ components:
           type: string
           description: the Impersonation token context.
       example:
-        impersonation_token: ya29.fgdgsdngevrjbinb0exdnberoibnerbnerber-fdsfwefwe_cece.rfd43f3
+        impersonation_token: string
         token_type: Bearer
         expires_in: 3600
-        context: xf420cvrv303fm4vksvdkvnejvrjbinb0exdnberonswc2mvmalksdvdeakvwrmk
+        context: string
     Resource:
       required:
         - resource
@@ -2633,7 +2633,7 @@ components:
           description: A web service endpoint that the seismic store service will invoke to
             check if the impersonation token can be refreshed.
       example:
-        token: ya29.fgdgsdngevrjbinb0exdnberoibnerbnerber-fdsfwefwe_cece.rfd43f3
+        token: string
         resources:
           - resource: sd://tnx01/spx01
             readonly: true
@@ -2654,7 +2654,7 @@ components:
           description: New endpoint that the seismic store service will invoke to check if
             the impersonation token can be refreshed.
       example:
-        token: ya29.fgdgsdngevrjbinb0exdnberoibnerbnerber-fdsfwefwe_cece.rfd43f3
+        token: string
         refresh-url: https://httpstat.us/200
     RefreshTokenRequest:
       required:
@@ -2664,7 +2664,7 @@ components:
           type: string
           description: Impersonation token
       example:
-        token: ya29.fgdgsdngevrjbinb0exdnberoibnerbnerber-fdsfwefwe_cece.rfd43f3
+        token: string
     SubProjectCreateBody:
       properties:
         admin:

@@ -2102,9 +2102,9 @@ components:
       summary: sdms v3 dataset path list
       value:
         [
-          "sd://opendes/sandbox/dataset-01.segy",
-          "sd://opendes/sandbox/dataset-02.segy",
-          "sd://opendes/sandbox/dataset-03.segy",
+          "sd://tenant/subproject/dataset-01.segy",
+          "sd://tenant/subproject/dataset-02.segy",
+          "sd://tenant/subproject/dataset-03.segy",
         ]
     version.list:
       summary: dataset versions
@@ -2278,7 +2278,7 @@ components:
       summary: connection string
       value:
           {
-            access_token: eyJ0eXAiImFsZy3T1E9PSJ9.eyJqdGkiOiAIzNTIyY2U0OTQyZTQ0ZGRkOTM3OThlNTQ5ZDgzZyIsICJkZS1zYXV0aC12Mi1zY29wZS1zZXJ2aWNlLWRhdGFsYWtlLnNsYY2UuY29tIl19.AwVp3YwxGa81sRzm5Uc3uebTTXcZvxY01ymzUIJd-91aJALGdOmIK2fHpnSUDt0bNyh3SM1-i6TV9xJqp2jpOk7Ms6SjX6yziEi_V4rii_1T6B94oai0qBLAyU4JbWuDZt4u9c-eKLPxU3YL2oN64Id6OdeRb6SaaBEW7m0VPZ1KJiQJ1-trPGVQscUwIZS-KEyxV12rZqsFR_2E1cOlm0LGD2C6dDsPKcVLaBUHZeTCJn9GGb4b5p_43nID3Zky1yAkFg,
+            access_token: string,
             expire_in: 3600,
             token_type: Bearer,
           }
