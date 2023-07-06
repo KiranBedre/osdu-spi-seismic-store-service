@@ -1,4 +1,4 @@
-Environment variables
+## Environment variables
 
 |Variable|Example|Comments|
 |-----|-----|------|
@@ -22,3 +22,10 @@ Environment variables
 |SERVICE_CLOUD_PROJECT|project_gcp_id||
 |GCS_BUCKET|bucket-to-save-data|It will be deleted later|
 |USER_ID_FROM_PROVIDER_API|"true"|It is for using Google API service for getting information from the token|
+
+## Partition Service values 
+
+GC implementation expects values in Partition service with the following names:
+1. projectId - Google project id
+1. dataPartitionId - Data partition ID
+1. seismicBucket - a bucket for the Seismic
