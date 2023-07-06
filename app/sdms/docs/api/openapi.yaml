@@ -1903,7 +1903,7 @@ paths:
   /user:
     put:
       summary: Add a user to a seismic store subproject authorization group.
-      description: "<ul><li>Add a user to a subproject default authorization group if it exists, otherwise, add the user to the first group.</li><li>Required roles: subproject.admin</li></ul>"
+      description: "<ul><li>Add a user to a subproject default authorization group if it exists, otherwise, add the user to the first group.</li><li>Required roles: subproject.admin</li><li>Required entitlement role: OWNER</li></ul>"
       operationId: user-add
       tags:
         - Users
@@ -1927,7 +1927,7 @@ paths:
           description: Not found.
     get:
       summary: List users in a subproject's role-based authorization groups.
-      description: "List users in subproject's role-based authorization groups Required roles: subproject.admin"
+      description: "<ul><li>List users in subproject's role-based authorization groups.</li><li>Required roles: subproject.admin</li><li>Required entitlement role: OWNER</li></ul>"
       operationId: user-list
       tags:
         - Users
@@ -1968,7 +1968,7 @@ paths:
           description: Not found.
     delete:
       summary: Remove a user from a subproject.
-      description: "<ul><li>Remove a user from subproject default authorization groups if exists, otherwise, remove it from the first authorization group.</li><li>Required roles: subproject.admin</li></ul>"
+      description: "<ul><li>Remove a user from subproject default authorization groups if exists, otherwise, remove it from the first authorization group.</li><li>Required roles: subproject.admin</li><li>Required entitlement role: OWNER</li></ul>"
       operationId: user-rm
       tags:
         - Users
@@ -1999,7 +1999,7 @@ paths:
   /user/roles:
     get:
       summary: Retrieve user role in all subprojects of the tenant.
-      description: "<ul><li>Retrieve user role in all subprojects of the tenant.</li><li>Required roles: none/li></ul>"
+      description: "<ul><li>Retrieve user role in all subprojects of the tenant.</li></ul>"
       operationId: user-roles
       tags:
         - Users
