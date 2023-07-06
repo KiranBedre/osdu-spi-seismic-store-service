@@ -23,6 +23,7 @@ import { Config } from '../../config';
 import { KEEP_FILE_NAME, GCS_URL_SEPARATOR } from './constants'
 import { LoggerFactory } from '../../logger';
 import { AbstractStorage, StorageFactory } from '../../storage';
+import { DataPartitionInfo } from './partition';
 import { ConfigGoogle } from './config';
 import { v4 as uuidv4 } from 'uuid';
 import { join as path_join } from 'path';
@@ -85,7 +86,7 @@ export class GCS extends AbstractStorage {
     private dataPartitionId: string;
 
     private static clientsCache: { [key: string]: Storage; } = {};
-    private static dataPartitionCache: { [key: string]: Storage; } = {};
+    private static dataPartitionCache: { [key: string]: DataPartitionInfo; } = {};
 
     public constructor(tenant: TenantModel) {
         super();
@@ -112,8 +113,11 @@ export class GCS extends AbstractStorage {
          * We use the data-partition-id to acquire the information about the bucker from Partition service
          */
         const randomFolderName = uuidv4();
+        const bucket = (
+            await DataPartitionInfo.fromDataPartitionId(this.dataPartitionId)
+        ).bucket;
 
-        return ConfigGoogle.GCS_BUCKET + GCS_URL_SEPARATOR + randomFolderName;
+        return bucket + GCS_URL_SEPARATOR + randomFolderName;
     }
 
     // Create a new folder for the subproject, not a bucket.
@@ -139,7 +143,7 @@ export class GCS extends AbstractStorage {
         const bucket = this.getStorageClient().bucket(subprojectPath.bucketname);
         await bucket.deleteFiles({ prefix: subprojectPath.subprojectFolder + '/', });
         const subprojectFolderDummyObj = path_join(subprojectPath.subprojectFolder, KEEP_FILE_NAME);
-        await bucket.file(subprojectFolderDummyObj).save(''); // add the dummy file back to reserve subproject's folder
+        await bucket.file(subprojectFolderDummyObj).save(''); // add the dummy file back to reserve subproject folder
     }
 
     // save an object/file to a bucket
