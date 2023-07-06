@@ -160,10 +160,16 @@ export class Credentials extends AbstractCredentials {
 
     /// TODO: Think about returning not only the sub field.
     public async getUserId(userToken: string): Promise<string> {
+        let token: string;
+        if (userToken.startsWith('Bearer ')) {
+            token = userToken.replace('Bearer ', '');
+        } else {
+            token = userToken;
+        };
         const client = new OAuth2Client();
 
-        const userSub = await this.parseAsAccessToken(client, userToken)
-            || await this.parseAsIdToken(client, userToken);
+        const userSub = await this.parseAsAccessToken(client, token)
+            || await this.parseAsIdToken(client, token);
 
         if (!userSub) {
             const error = Error.make(
