@@ -24,7 +24,7 @@ import { DatasetDAO } from '../../../src/services/dataset';
 import { SubProjectDAO, SubprojectGroups, SubProjectModel } from '../../../src/services/subproject';
 import { SubProjectHandler } from '../../../src/services/subproject/handler';
 import { SubProjectOP } from '../../../src/services/subproject/optype';
-import { TenantDAO, TenantModel } from '../../../src/services/tenant';
+import { TenantAuth, TenantDAO, TenantModel } from '../../../src/services/tenant';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
 
@@ -117,6 +117,7 @@ export class TestSubProjectSVC {
             expReq.body.storage_location = 'US-CENTRAL1';
             expReq.headers.ltag = 'ltag';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
+            this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves();
             this.sandbox.stub(SubProjectDAO, 'exist').resolves(false);
@@ -188,6 +189,7 @@ export class TestSubProjectSVC {
 
         Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
+            this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(Auth, 'isUserAuthorized');
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ ltag: 'ltag' }, {}] as any);
             this.sandbox.stub(Auth, 'isLegalTagValid');
@@ -198,6 +200,7 @@ export class TestSubProjectSVC {
 
         Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
+            this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(Auth, 'isUserAuthorized');
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ ltag: 'ltag' }, {}] as any);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves({} as any);
@@ -268,6 +271,7 @@ export class TestSubProjectSVC {
             Config.CLOUDPROVIDER = 'google';
             this.sandbox.stub(SubProjectDAO, 'delete').resolves();
             this.sandbox.stub(DatasetDAO, 'deleteAll').resolves();
+            this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             const storage: IStorage = {

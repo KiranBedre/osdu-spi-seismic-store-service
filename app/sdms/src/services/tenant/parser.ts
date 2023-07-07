@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
 // ============================================================================
 
 import { Request as expRequest } from 'express';
-import { TenantGroups, TenantModel } from '.';
-import { AuthGroups } from '../../auth';
+import { TenantAuth, TenantModel } from '.';
 import { Config, DataEcosystemCoreFactory } from '../../cloud';
 import { DESUtils } from '../../dataecosystem';
 import { Error, Params } from '../../shared';
@@ -32,12 +31,14 @@ export class TenantParser {
         tenant.name = req.params.tenantid;
         tenant.esd = req.body.esd;
         tenant.gcpid = req.body.gcpid;
-        tenant.default_acls = req.body.default_acls || TenantGroups.datalakeUserAdminGroupEmail(tenant.esd);
+        tenant.default_acls = req.body.default_acls;
 
         // check user input params
         Params.checkString(tenant.esd, 'esd');
         Params.checkString(tenant.gcpid, 'gcpid');
-        Params.checkString(tenant.default_acls, 'default_acls');
+        Params.checkString(tenant.default_acls, 'default_acls', false);
+
+        tenant.default_acls = tenant.default_acls || TenantAuth.datalakeAdminGroups(tenant).join(',')
 
         // check if the tenant name should match the data partition id
         if(DataEcosystemCoreFactory.build(Config.CLOUDPROVIDER).tenantNameAndDataPartitionIDShouldMatch() &&

@@ -16,12 +16,11 @@
 
 import { Datastore } from '@google-cloud/datastore';
 import { Request as expRequest, Response as expResponse } from 'express';
-import { DataEcosystemCoreFactory } from '../../../src/cloud/dataecosystem';
 import sinon from 'sinon';
 import { Auth, AuthGroups } from '../../../src/auth';
 import { Config, google, JournalFactoryServiceClient } from '../../../src/cloud';
 import { SubProjectDAO } from '../../../src/services/subproject';
-import { TenantDAO, TenantGroups, TenantModel } from '../../../src/services/tenant';
+import { TenantDAO, TenantModel } from '../../../src/services/tenant';
 import { TenantHandler } from '../../../src/services/tenant/handler';
 import { TenantOP } from '../../../src/services/tenant/optype';
 import { TenantParser } from '../../../src/services/tenant/parser';
@@ -61,8 +60,6 @@ export class TestTenantSVC {
             this.getTenant();
             this.deleteTenant();
             this.parseParams();
-            this.getAdminGroup();
-            this.adminGroupName();
 
         });
 
@@ -248,34 +245,6 @@ export class TestTenantSVC {
             TenantParser.create(expReq);
             done();
         });
-    }
-
-    private static getAdminGroup() {
-
-        Tx.sectionInit('get admin group');
-
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
-            expReq.query.datapartition = 'datapartition';
-            this.tenant.default_acls = 'authgroup@dp.com';
-            const result = TenantGroups.adminGroup(this.tenant);
-            Tx.checkTrue(result === 'authgroup@dp.com', done);
-
-        });
-
-    }
-
-    private static adminGroupName() {
-
-        Tx.sectionInit('admin Group Name');
-
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
-            expReq.query.datapartition = 'datapartition';
-            this.tenant.default_acls = 'authgroup@dp.com';
-            const result = TenantGroups.adminGroupName(this.tenant);
-            Tx.checkTrue(result === 'authgroup', done);
-
-        });
-
     }
 
 }

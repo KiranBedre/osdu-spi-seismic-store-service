@@ -21,7 +21,7 @@ import { Auth } from '../../../src/auth';
 import { AppHandler } from '../../../src/services/svcapp/handler';
 import { AppOp } from '../../../src/services/svcapp/optype';
 import { AppParser } from '../../../src/services/svcapp/parser';
-import { TenantDAO } from '../../../src/services/tenant';
+import { TenantAuth, TenantDAO } from '../../../src/services/tenant';
 import { AppsDAO } from '../../../src/services/svcapp/dao';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
@@ -57,6 +57,7 @@ export class TestAppSVC {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
+            this.spy.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.spy.stub(Auth, 'isUserAuthorized');
             this.spy.stub(AppsDAO, 'get').resolves(undefined);
             this.spy.stub(AppsDAO, 'register').resolves(undefined);
@@ -91,6 +92,7 @@ export class TestAppSVC {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
+            this.spy.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.spy.stub(Auth, 'isUserAuthorized');
             this.spy.stub(Auth, 'isAppAuthorized');
             this.spy.stub(AppsDAO, 'get').resolves({ email: 'x', trusted: false });
@@ -104,6 +106,7 @@ export class TestAppSVC {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
+            this.spy.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.spy.stub(Auth, 'isUserAuthorized');
             this.spy.stub(Auth, 'isAppAuthorized');
             this.spy.stub(AppsDAO, 'get').resolves();
@@ -122,6 +125,7 @@ export class TestAppSVC {
         Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
+            this.spy.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.spy.stub(Auth, 'isUserAuthorized');
             this.spy.stub(AppsDAO, 'list').resolves([]);
             this.spy.stub(Auth, 'isImpersonationToken').returns(false);
@@ -152,6 +156,7 @@ export class TestAppSVC {
         Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
+            this.spy.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.spy.stub(Auth, 'isUserAuthorized');
             this.spy.stub(AppsDAO, 'list').resolves([]);
             this.spy.stub(Auth, 'isImpersonationToken').returns(false);

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 
 import { Request as expRequest, Response as expResponse } from 'express';
 import { TenantAuth, TenantModel } from '.';
-import { Auth, AuthGroups } from '../../auth';
+import { Auth } from '../../auth';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
-import { Error, ErrorModel, Feature, FeatureFlags, Response } from '../../shared';
+import { Error, ErrorModel, Response } from '../../shared';
 import { SubProjectDAO } from '../subproject';
 import { TenantDAO } from './dao';
-import { TenantGroups } from './groups';
 import { TenantOP } from './optype';
 import { TenantParser } from './parser';
 
@@ -67,11 +66,6 @@ export class TenantHandler {
 
         // Parse input parameters
         const tenant = TenantParser.create(req);
-
-        if (!tenant.default_acls) {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'Default ACL for ' + tenant.name + ' was not provided'));
-        }
 
         await Auth.isUserAuthorized(
             req.headers.authorization, TenantAuth.datalakeAdminGroups(tenant),
@@ -131,11 +125,7 @@ export class TenantHandler {
                 'it is not empty (contains subprojects).'));
         }
 
-        // clear groups and delete the mapping entry
-        await Promise.all([
-            // need to keep it for the old ones that have tenant group
-            TenantDAO.delete(tenant.name), !tenant.default_acls ? AuthGroups.deleteGroup(req.headers.authorization,
-                TenantGroups.adminGroup(tenant), tenant.esd, req[Config.DE_FORWARD_APPKEY]) : undefined]);
+        await TenantDAO.delete(tenant.name);
     }
 
     // [DEPRECATED]

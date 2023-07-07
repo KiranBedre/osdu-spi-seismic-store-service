@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ import { Request as expRequest, Response as expResponse } from 'express';
 
 import { Auth } from '../../auth';
 import { Config } from '../../cloud';
-import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
-import { TenantAuth, TenantDAO, TenantGroups } from '../tenant';
+import { Error, Response, Utils } from '../../shared';
+import { TenantAuth, TenantDAO } from '../tenant';
 import { AppsDAO } from './dao';
 import { IAppModel } from './model';
 import { AppOp } from './optype';
@@ -70,7 +70,7 @@ export class AppHandler {
 
         // check if user is a tenant admin
         await Auth.isUserAuthorized(
-            req.headers.authorization, [TenantGroups.adminGroup(tenant)],
+            req.headers.authorization, TenantAuth.getAuthGroups(tenant),
             tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
         // check if application already exists
