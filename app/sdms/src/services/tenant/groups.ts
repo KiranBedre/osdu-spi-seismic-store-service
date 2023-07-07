@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,20 +27,20 @@ export class TenantGroups {
         return Config.DATAGROUPS_PREFIX + '.' + tenantName;
     }
 
-    public static adminGroupName(tenant: TenantModel): string {
-        return tenant.default_acls.split('@')[0];
-    }
-
-    public static adminGroup(tenant: TenantModel): string {
-        return tenant.default_acls;
-    }
-
     public static datalakeUserAdminGroupEmail(esd: string): string {
         return TenantGroups.datalakeUserAdminGroupName() + '@' + esd;
     }
 
     public static datalakeUserAdminGroupName(): string {
         return 'users.datalake.admins';
+    }
+
+    public static datalakeUserOpGroupEmail(esd: string): string {
+        return TenantGroups.datalakeUserOpGroupName() + '@' + esd;
+    }
+
+    public static datalakeUserOpGroupName(): string {
+        return 'users.datalake.ops';
     }
 
     public static userGroup(esd: string): string {
