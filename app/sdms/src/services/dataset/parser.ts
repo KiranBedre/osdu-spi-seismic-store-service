@@ -54,6 +54,12 @@ export class DatasetParser {
             if (context === undefined) {
                 dataset.created_by = req.get(Config.USER_ID_HEADER_KEY_NAME) ||
                 await Utils.getUserId(req.headers.authorization);
+
+                /* FIXME: This is a workaround to use impersonation tokens without having to provide the context.
+                Should add back this "throw" code change once impersonation-Token-Context is properly enforced
+                */
+                // throw (Error.make(Error.Status.BAD_REQUEST,
+                //     'The request impersonation-token-context header has not been specified.'));
             }
             else {
                 const tokenContext = ImpersonationTokenHandler.decodeContext(context);
