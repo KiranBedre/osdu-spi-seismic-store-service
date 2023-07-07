@@ -139,7 +139,7 @@ export class Auth {
             Should remove this "mustThrow" code change once impersonation-Token-Context is properly enforced
             */
             mustThrow = false;
-            
+
             return await Auth.isNewImpersonationTokenWriteAuthorized(
                 impersonationTokenContext, tenant, subprojectName, mustThrow);
         } else {
