@@ -14,11 +14,11 @@
 // limitations under the License.
 // ============================================================================
 import * as appinsights from 'applicationinsights';
-import { DependencyTelemetry } from 'applicationinsights/out/Declarations/Contracts';
 import { Utils } from '../../../shared';
 import { Config } from '../../config';
 import { AbstractLogger, LoggerFactory } from '../../logger';
 import { AzureConfig } from './config';
+import { Request } from 'express';
 
 @LoggerFactory.register('azure')
 export class AzureInsightsLogger extends AbstractLogger {
@@ -113,7 +113,7 @@ export class AzureInsightsLogger extends AbstractLogger {
     public info(data: any): void {
         if (!Config.UTEST && AzureConfig.ENABLE_LOGGING_INFO) {
             if (AzureConfig.AI_INSTRUMENTATION_KEY) {
-                appinsights.defaultClient.trackTrace({ message: JSON.stringify(data) });
+                appinsights.defaultClient.trackTrace(data);
             }
             // tslint:disable-next-line
             console.log(data);
@@ -138,6 +138,20 @@ export class AzureInsightsLogger extends AbstractLogger {
             // tslint:disable-next-line
             console.log(data);
         }
+    }
+
+    public buildTraceInfo(req: Request): any {
+        const key = req.headers['x-api-key'] as string;
+        const customDimensions = {
+            correlation_id: req.headers[Config.CORRELATION_ID]
+        };
+
+        const telemetry = {
+            message: (((key && key.length > 5) ? ('[***' + key.substr(key.length - 5) + '] ') : '')
+            + '[' + req.method + '] ' + req.url),
+            properties: customDimensions,
+        };
+        return telemetry;
     }
 
 }
