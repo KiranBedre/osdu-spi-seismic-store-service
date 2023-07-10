@@ -17,68 +17,92 @@
 export interface SchemaEndpoint {
     name: string;
     kind: string;
+    docDataType: string;
     hasBulks?: boolean;
+    docBulkExtention?: string;
 }
 
 export const SchemaEndpoints = [
     {
         name: 'segy',
         kind: 'osdu:wks:dataset--FileCollection.SEGY:1.0.0',
+        docDataType: 'SEGY',
         hasBulks: true,
+        docBulkExtention: 'sgy',
     },
     {
         name: 'openzgy',
         kind: 'osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0',
+        docDataType: 'OpenZGY',
         hasBulks: true,
+        docBulkExtention: 'zgy',
     },
     {
         name: 'openvds',
         kind: 'osdu:wks:dataset--FileCollection.Bluware.OpenVDS:1.0.0',
+        docDataType: 'OpenVDS',
         hasBulks: true,
+        docBulkExtention: 'vds',
     },
     {
         name: 'generic',
         kind: 'osdu:wks:dataset--FileCollection.Generic:1.0.0',
+        docDataType: 'Generic',
         hasBulks: true,
     },
     {
         name: '2dinterpretationset',
         kind: 'osdu:wks:master-data--Seismic2DInterpretationSet:1.1.0',
+        docDataType: '2D Interpretation Set',
         hasBulks: false,
     },
     {
         name: '3dinterpretationset',
         kind: 'osdu:wks:master-data--Seismic3DInterpretationSet:1.1.0',
+        docDataType: '3D Interpretation Set',
         hasBulks: false,
     },
     {
         name: 'acquisitionsurvey',
         kind: 'osdu:wks:master-data--SeismicAcquisitionSurvey:1.2.0',
+        docDataType: 'Acquisition Survery',
         hasBulks: false,
     },
     {
         name: 'processingproject',
         kind: 'osdu:wks:master-data--SeismicProcessingProject:1.2.0',
+        docDataType: 'Processing Project',
         hasBulks: false,
     },
     {
         name: 'bingrid',
         kind: 'osdu:wks:work-product-component--SeismicBinGrid:1.0.0',
+        docDataType: 'Bin Grid',
         hasBulks: false,
     },
     {
         name: 'linegeometry',
         kind: 'osdu:wks:work-product-component--SeismicLineGeometry:1.0.0',
+        docDataType: 'Line Geometry',
         hasBulks: false,
     },
+
     {
-        name: 'seismichorizon',
+        name: 'horizon',
         kind: 'osdu:wks:work-product-component--SeismicHorizon:1.2.0',
+        docDataType: 'Horizon',
         hasBulks: false,
     },
     {
         name: 'tracedata',
         kind: 'osdu:wks:work-product-component--SeismicTraceData:1.3.0',
+        docDataType: 'Trace Data',
+        hasBulks: false,
+    },
+    {
+        name: 'notionalseismicline',
+        kind: 'osdu:wks:work-product-component--NotionalSeismicLine:1.1.0',
+        docDataType: 'Notional Seismic Line',
         hasBulks: false,
     },
 ] as SchemaEndpoint[];

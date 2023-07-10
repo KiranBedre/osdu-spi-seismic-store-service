@@ -8,9 +8,9 @@
     "description": "Seismic Domain Data Management APIs to store and manage strongly typed seismic datasets.",
     "scripts": {
         "build": "tsc",
-        "copy-static-files": "copyfiles --error --up 1 ./docs/openapi.yaml ./dist/docs",
         "lint": "eslint --ignore-path .eslintignore --ext .js,.ts .",
-        "postbuild": "npm run copy-static-files",
+        "generate-docs": "node --trace-warnings ./dist/docs/docstart.js",
+        "postbuild": "npm run generate-docs",
         "start-service": "node --trace-warnings --trace-uncaught ./dist/server/server-start.js",
         "test": "mocha -r ts-node/register tests/e2e/test.ts --timeout 150000 --bail"
     },
@@ -22,7 +22,6 @@
         "@azure/storage-blob": "^12.14.0",
         "@types/qs": "^6.9.7",
         "axios": "^1.2.2",
-        "copyfiles": "^2.4.1",
         "cors": "^2.8.5",
         "express": "^4.18.2",
         "hpropagate": "^1.0.1",

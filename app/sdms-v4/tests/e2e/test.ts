@@ -81,9 +81,14 @@ const testSchemasArgs = [
         model: 'SeismicProcessingProject.1.2.0.json',
     },
     {
-        endpoint: 'seismichorizon',
-        tag: 'Seismic Horizon',
+        endpoint: 'horizon',
+        tag: 'Horizon',
         model: 'SeismicHorizon.1.2.0.json',
+    },
+    {
+        endpoint: 'notionalseismicline',
+        tag: 'Notional Seismic Line',
+        model: 'NotionalSeismicLine.1.1.0.json',
     },
 ] as TestSchemaArgs[];
 
