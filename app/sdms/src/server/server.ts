@@ -160,10 +160,7 @@ export class Server {
 
                     // track caller to the main log
                     if (!req.url.endsWith('svcstatus')) {
-                        const key = req.headers['x-api-key'] as string;
-                        logger.info(
-                            ((key && key.length > 5) ? ('[***' + key.substr(key.length - 5) + '] ') : '')
-                            + '[' + req.method + '] ' + req.url);
+                        logger.info(logger.buildTraceInfo(req));
 
                         logger.metric('SeismicDMS Request Size',
                             req.headers['content-length'] ? +req.headers['content-length'] : 0);

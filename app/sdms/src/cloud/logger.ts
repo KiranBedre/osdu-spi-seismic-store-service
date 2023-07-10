@@ -15,17 +15,23 @@
 // ============================================================================
 
 import { CloudFactory } from './cloud';
+import { Request } from 'express'
 
 export interface ILogger {
     info(data: any): void;
     error(data: any): void;
     metric(key: string, data: any): void;
+    buildTraceInfo(req: Request): any;
 }
 export abstract class AbstractLogger implements ILogger {
     public abstract info(data: any): void;
     public abstract error(data: any): void;
     public abstract metric(key: string, data: any): void;
-
+    public buildTraceInfo(req: Request): any {
+        const key = req.headers['x-api-key'] as string;
+        return ((key && key.length > 5) ? ('[***' + key.substr(key.length - 5) + '] ') : '')
+                            + '[' + req.method + ']' + req.url;
+    };
 }
 export class LoggerFactory extends CloudFactory {
     public static build(providerLabel: string, args: { [key: string]: any; } = {}): ILogger {
