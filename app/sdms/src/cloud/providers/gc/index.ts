@@ -24,10 +24,13 @@ export { ConfigGoogle } from './config';
 export { GoogleTrace } from './trace';
 export { GoogleDataEcosystemServices } from './dataecosystem';
 export { GoogleSeistore } from './seistore';
+import { Auth } from '../../../auth/index'
 
+
+if ( process.env.CLOUDPROVIDER === 'gc' ) {
  /* FIXME: This is a dirty workaround to pass access tokens
             Auth.isImpersonationToken can work only with JWT tokens, and since accessTokens are not JWT in GCP,
             the original method fails.
 */
-import { Auth } from '../../../auth/index'
-Auth.isImpersonationToken = (userToken) => {return false };
+    Auth.isImpersonationToken = (userToken) => {return false };
+}
