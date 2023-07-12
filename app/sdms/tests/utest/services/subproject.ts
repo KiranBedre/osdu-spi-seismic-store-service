@@ -194,6 +194,7 @@ export class TestSubProjectSVC {
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ ltag: 'ltag' }, {}] as any);
             this.sandbox.stub(Auth, 'isLegalTagValid');
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(SubProjectDAO, 'get').resolves();
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.List);
             Tx.check200(expRes.statusCode, done);
         });
@@ -205,6 +206,7 @@ export class TestSubProjectSVC {
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ ltag: 'ltag' }, {}] as any);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves({} as any);
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(SubProjectDAO, 'get').resolves();
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.List);
             Tx.check200(expRes.statusCode, done);
         });

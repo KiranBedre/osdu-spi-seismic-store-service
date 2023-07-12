@@ -24,13 +24,12 @@ import { DESUtils } from '../../dataecosystem';
 import { UserAssociationServiceFactory } from '../../dataecosystem';
 import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { DatasetDAO, PaginationModel } from '../dataset';
-import { TenantAuth, TenantModel } from '../tenant';
+import { TenantAuth, TenantModel, TenantGroups } from '../tenant';
 import { TenantDAO } from '../tenant/dao';
 import { SubProjectDAO } from './dao';
 import { SubprojectGroups } from './groups';
 import { SubProjectOP } from './optype';
 import { SubProjectParser } from './parser';
-
 export class SubProjectHandler {
 
     // handler for the [ /subproject ] endpoints
@@ -182,9 +181,15 @@ export class SubProjectHandler {
             userInfo = false;
         }
         const convertSubIdToEmail = userInfo;
+        let subproject: SubProjectModel;
 
-        // get subproject
-        const subproject = await SubProjectDAO.get(journalClient, tenant.name, req.params.subprojectid);
+        try {
+            subproject = await SubProjectDAO.get(journalClient, tenant.name, req.params.subprojectid);
+        } catch(error) {
+            await Auth.isUserAuthorized(req.get('authorization'),
+                [TenantGroups.userGroup(tenant.esd)], tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+            throw error;
+        }
 
         // Check if user is member of any of the subproject acl admin groups
         await Auth.isUserAuthorized(req.headers.authorization,
@@ -272,7 +277,15 @@ export class SubProjectHandler {
         const journalClient = JournalFactoryTenantClient.get(tenant);
 
         // get subproject
-        const subproject = await SubProjectDAO.get(journalClient, tenant.name, req.params.subprojectid);
+        let subproject: SubProjectModel;
+
+        try {
+            subproject = await SubProjectDAO.get(journalClient, tenant.name, req.params.subprojectid);
+        } catch(error) {
+            await Auth.isUserAuthorized(req.get('authorization'),
+                [TenantGroups.userGroup(tenant.esd)], tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+            throw error;
+        }
 
         // Check if user is a subproject admin
         await Auth.isUserAuthorized(req.headers.authorization,
