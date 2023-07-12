@@ -16,7 +16,19 @@ sdms_ibm-deploy:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/ibm/**/*
     refs:
       - branches
       - merge_requests
@@ -38,7 +50,19 @@ sdms_ibm-deploy-devpri:
     - if: '$CI_COMMIT_BRANCH == "master"'
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/ibm/**/*
 
 sdms_ibm-test-py:
   image: node:18
@@ -64,7 +88,19 @@ sdms_ibm-test-py:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/ibm/**/*
     refs:
       - branches
       - merge_requests
@@ -82,7 +118,19 @@ sdms_ibm-preship-promote:
     - if: '$CI_COMMIT_BRANCH == "master"'
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/ibm/**/*
 
 sdms_ibm-preship-promote-release:
   extends: .ibm-preship-promote-release
@@ -97,4 +145,16 @@ sdms_ibm-preship-promote-release:
     - if: '$CI_COMMIT_BRANCH == $IBM_PRESHIP_RELEASE_BRANCH'
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/ibm/**/*

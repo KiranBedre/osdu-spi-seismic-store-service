@@ -56,7 +56,19 @@ sdms_aws-containerize:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/aws/**/*
     refs:
       - branches
       - merge_requests
@@ -80,7 +92,19 @@ sdms_aws-update-tf:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/aws/**/*
     refs:
       - branches
       - merge_requests
@@ -110,7 +134,19 @@ sdms_aws-update-helm:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/aws/**/*
     refs:
       - branches
       - merge_requests
@@ -168,7 +204,19 @@ sdms_aws-test-newman:
       -  $AWS == '1'
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/aws/**/*
     refs:
       - branches
       - merge_requests
