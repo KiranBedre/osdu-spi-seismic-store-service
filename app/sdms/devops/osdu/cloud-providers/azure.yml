@@ -93,7 +93,19 @@ sdms_azure_containerize:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/azure/**/*
     refs:
       - branches
       - merge_requests
@@ -110,11 +122,35 @@ sdms_azure_container_scanning:
       allow_failure: false
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/azure/**/*
     - if: $AZURE == '1'
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/azure/**/*
 
 sdms_azure_deploy:
   extends: .azure_deploy
@@ -160,7 +196,19 @@ sdms_azure_deploy:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/azure/**/*
     refs:
       - branches
       - merge_requests
@@ -205,7 +253,19 @@ sdms_azure_test:
   only:
     changes:
       - devops/**/*
-      - app/sdms/**/*
+      - app/sdms/devops/**/*
+      - app/sdms/docker/**/*
+      - app/sdms/docs/**/*
+      - app/sdms/tests/**/*
+      - app/sdms/src/auth/**/*
+      - app/sdms/src/dataecosystem/**/*
+      - app/sdms/src/server/**/*
+      - app/sdms/src/services/**/*
+      - app/sdms/src/shared/**/*
+      - app/sdms/src/cloud/*.ts
+      - app/sdms/src/cloud/shared/**/*
+      - app/sdms/src/cloud/providers/*.ts
+      - app/sdms/src/cloud/providers/azure/**/*
     refs:
       - branches
       - merge_requests

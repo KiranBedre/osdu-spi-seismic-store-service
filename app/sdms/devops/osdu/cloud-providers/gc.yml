@@ -15,17 +15,62 @@ sdms-gc-helm-charts-gitlab:
       when: never
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: never
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
     - if: '$GC == "1"'
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-helm-charts-release-gitlab:
   extends: .gc-helm-charts-release-gitlab
@@ -57,17 +102,62 @@ sdms-gc-containerize-gitlab:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
     - if: '$GC == "1"'
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-containerize-gcr:
   extends: .gc-containerize-gcr
@@ -84,7 +174,22 @@ sdms-gc-containerize-gcr:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-deploy:
   extends: .gc-deploy
@@ -102,7 +207,22 @@ sdms-gc-deploy:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-dev2-deploy:
   extends: .gc-dev2-deploy
@@ -118,12 +238,42 @@ sdms-gc-dev2-deploy:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-preship-deploy:
   extends: .gc-preship-deploy
@@ -139,13 +289,43 @@ sdms-gc-preship-deploy:
       when: manual
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
       allow_failure: true
     - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
       when: manual
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
       allow_failure: true
 
 sdms-gc-baremetal-deploy:
@@ -164,7 +344,22 @@ sdms-gc-baremetal-deploy:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-test-python:
   variables:
@@ -200,7 +395,22 @@ sdms-gc-test-python:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-dev2-test-python:
   variables:
@@ -232,12 +442,42 @@ sdms-gc-dev2-test-python:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
 
 sdms-gc-baremetal-test-python:
   extends: .gc-baremetal-test-python
@@ -279,4 +519,19 @@ sdms-gc-baremetal-test-python:
       when: on_success
       changes:
         - devops/**/*
-        - app/sdms/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/docker/**/*
+        - app/sdms/docs/**/*
+        - app/sdms/tests/**/*
+        - app/sdms/provider/**/*
+        - app/sdms/src/auth/**/*
+        - app/sdms/src/dataecosystem/**/*
+        - app/sdms/src/server/**/*
+        - app/sdms/src/services/**/*
+        - app/sdms/src/shared/**/*
+        - app/sdms/src/cloud/*.ts
+        - app/sdms/src/cloud/shared/**/*
+        - app/sdms/src/cloud/providers/*.ts
+        - app/sdms/src/cloud/providers/anthos/**/*
+        - app/sdms/src/cloud/providers/gc/**/*
+        - app/sdms/src/cloud/providers/google/**/*
