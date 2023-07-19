@@ -29,4 +29,4 @@ spec:
             notRequestPrincipals: [ "*" ]
       to:
         - operation:
-            notPaths: [ "/", "/seismic-file-metadata/api/v1/*" ]
+            notPaths: [ "/", "/seismic-file-metadata/api/*", "/seismic-file-metadata/api/v1/*", "/seismic-file-metadata/api/v2/*" ]
