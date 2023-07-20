@@ -224,12 +224,17 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async listFolders(dataset: DatasetModel): Promise<any[]> {
+        // extract the SDPATH between SDPATH rpovided and the next "/"
         let sqlQuery = 'SELECT SUBSTRING(c.data.path, LENGTH("' + dataset.path + '") - 1,';
         sqlQuery += ' INDEX_OF(c.data.path, "/", LENGTH("' + dataset.path + '")) -';
         sqlQuery += ' LENGTH("' + dataset.path + '") + 2) as path';
         sqlQuery += ' FROM c';
+        // dataset exactly belongs to subproject provided
         sqlQuery += ' WHERE RegexMatch(c.id, "^(ds-' + dataset.tenant + '-' + dataset.subproject + '-)([a-z0-9]+)$")';
-        sqlQuery += ' AND STARTSWITH(c.data.path, "' + dataset.path + '", true) AND c.data.path != "' + dataset.path + '"';
+        // dataset that is inside of SDPATH provided
+        // subfolder of SDPATH provided
+        sqlQuery += ' AND STARTSWITH(c.data.path, "' + dataset.path + '") AND c.data.path != "' + dataset.path + '"';
+        // group by the same way we extract the SDPATH
         sqlQuery += ' GROUP BY SUBSTRING(c.data.path, LENGTH("' + dataset.path + '") - 1,'
         sqlQuery += ' INDEX_OF(c.data.path, "/", LENGTH("' + dataset.path + '")) - LENGTH("' + dataset.path + '") + 2)'
         if (AzureConfig.SIDECAR_ENABLE_QUERY) {
