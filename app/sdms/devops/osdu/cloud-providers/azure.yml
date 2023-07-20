@@ -11,6 +11,11 @@ variables:
   E2E_LEGALTAG01: $LEGAL_TAG
   E2E_LEGALTAG02: opendes-dps-integration-test-valid2-legal-tag
   E2E_TENANT: $TENANT_NAME
+  E2E_DOMAINANAME: contoso.com
+  E2E_HOSTNAME: https://$AZURE_DNS_NAME
+  E2E_ENTITLEMENTS_USER: $INTEGRATION_TESTER
+
+
 
 sdms_azure_containerize:
   extends: .azure_containerize
@@ -249,7 +254,7 @@ sdms_azure_test:
     - npm install -g husky
     - npm ci
     - chmod +x ./tests/e2e/run_e2e_tests.sh
-    - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url="https://${AZURE_DNS_NAME}${AZURE_SDMS_PREFIX}" --seistore-svc-api-key="NA" --user-idtoken="$svctoken" --tenant="${E2E_TENANT}" --admin-email="${E2E_ADMIN_EMAIL}" --datapartition="${E2E_DATA_PARTITION}" --legaltag01="${E2E_LEGALTAG01}" --legaltag02="${E2E_LEGALTAG02}" --VCS-Provider="${ISGITLAB}"  --subproject="${E2E_SUBPROJECT}"
+    - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url="https://${AZURE_DNS_NAME}${AZURE_SDMS_PREFIX}" --seistore-svc-api-key="NA" --user-idtoken="$svctoken" --tenant="${E2E_TENANT}" --admin-email="${E2E_ADMIN_EMAIL}" --datapartition="${E2E_DATA_PARTITION}" --legaltag01="${E2E_LEGALTAG01}" --legaltag02="${E2E_LEGALTAG02}" --VCS-Provider="${ISGITLAB}"  --subproject="${E2E_SUBPROJECT}" --domain_name="${E2E_DOMAINANAME}" --hostname="${E2E_HOSTNAME}" --entitlements_user="${E2E_ENTITLEMENTS_USER}"
   only:
     changes:
       - devops/**/*
@@ -284,3 +289,4 @@ sdms_azure_publish:
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/$SDMS_SERVICE:${AZ_VER}
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_SIDECAR_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_SIDECAR_NAME}:${AZ_VER}
    - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
+

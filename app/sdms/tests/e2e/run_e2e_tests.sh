@@ -100,6 +100,18 @@ case $i in
   subproject="${i#*=}"
   shift
   ;;
+  --domain_name=*)
+  domain_name="${i#*=}"
+  shift
+  ;;
+  --hostname=*)
+  hostname="${i#*=}"
+  shift
+  ;;
+  --entitlements_user=*)
+  entitlements_user="${i#*=}"
+  shift
+  ;;
   *)
   usage "unknown option $i"
   ;;
@@ -114,6 +126,7 @@ if [ -z "${working_tenant}" ]; then usage "tenant not defined" && exit 1; fi
 if [ -z "${datapartition}" ]; then usage "datapartition not defined" && exit 1; fi
 if [ -z "${legaltag01}" ]; then usage "legaltag01 not defined" && exit 1; fi
 if [ -z "${legaltag02}" ]; then usage "legaltag02 not defined" && exit 1; fi
+
 
 # required parameter should be skipped for GitLab
 if [[ "${VCS_Provider}" == true || "${VCS_Provider}" == "true" || "${VCS_Provider}" == "gitlab" ]]; then
@@ -152,6 +165,9 @@ printf "%s\n" "newuser = ${newuser}"
 printf "%s\n" "newusergroup = ${newusergroup}"
 printf "%s\n" "VCS_Provider = ${VCS_Provider}"
 printf "%s\n" "subproject = ${subproject}"
+printf "%s\n" "domain_name = ${domain_name}"
+printf "%s\n" "hostname = ${hostname}"
+printf "%s\n" "entitlements_user = ${entitlements_user}"
 printf "%s\n" "--------------------------------------------"
 
 # replace values in the main env
@@ -171,6 +187,9 @@ then
    sed -i "s/#{VCS_PROVIDER}#/${VCS_Provider}/g" ./tests/e2e/postman_env.json
    sed -i "s/#{DE_APP_KEY}#/${de_app_key}/g" ./tests/e2e/postman_env.json
    sed -i "s/#{SUBPROJECT}#/${subproject}/g" ./tests/e2e/postman_env.json
+   sed -i "s/#{DOMAINNAME}#/${domain_name}/g" ./tests/e2e/postman_env.json
+   sed -i "s,#{HOSTNAME}#,${hostname},g" ./tests/e2e/postman_env.json
+   sed -i "s/#{ENTITLEMENTS_USER}#/${entitlements_user}/g" ./tests/e2e/postman_env.json
    cp ./tests/e2e/postman_env.json ./tests/e2e/postman_env_initiated.json
 
    echo "-----------------------------------------------------------"
@@ -217,6 +236,7 @@ else
          --bail
    }
 fi
+
 
 # make three attempts in case of failure
 i=1

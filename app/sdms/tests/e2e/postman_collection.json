@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "66a13272-4b59-4e52-95db-57a68a6d0e5e",
-		"name": "SDMS-E2E ver.M19 - Release 0.22",
+		"name": "SDMS-E2E ver.M20 - Release 0.23",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -182,9 +182,438 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "GENERAL READINESS: Check Seismic store service readiness",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.test(\"Status code is 200\", function () {\r",
+									"        pm.response.to.have.status(200);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Body matches string\", function () {\r",
+									"        pm.expect(jsonData.ready).to.eql(true);\r",
+									"    });\r",
+									"\r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "opendes"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}",
+								"type": "text"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus/readiness",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus",
+								"readiness"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"description": "These tests return status and checks access for seismic store service."
+		},
+		{
+			"name": "initial setup",
+			"item": [
+				{
+					"name": "INITIAL SETUP : SET CONDITIONS",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    pm.test(\"Status code is 200\", function() {\r",
+									"        pm.response.to.have.status(200);\r",
+									"    });\r",
+									"\r",
+									"    pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));\r",
+									"\r",
+									"    //test only for azure\r",
+									"    const provider = pm.environment.get('serviceCloudProvider');\r",
+									"    if (provider !== 'azure') {\r",
+									"        postman.setNextRequest('TENANT GET: Retrieve tenant metadata');\r",
+									"    }\r",
+									"\r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LEGAL GET: Get a Legal tag 01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ((responseCode.code != 200) && (responseCode.code != 404)) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else if (responseCode.code == 200) {",
+									"    pm.test(\"Status code is 200\", function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Status description - Retrieved LegalTag successfully.\", function() {",
+									"        pm.response.to.have.status(\"OK\");",
+									"    });",
+									"",
+									"    pm.test(\"Proper legal tag returned? : \" + pm.environment.get(\"legaltag01\"), function() {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.name).to.equal(pm.environment.get(\"legaltag01\"));",
+									"    });",
+									"",
+									"    postman.setNextRequest('LEGAL GET: Get a Legal tag 02');",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"} else if (responseCode.code == 404) {",
+									"    postman.setNextRequest('LEGAL POST: create Legal tag 01');",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{STOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"description": "This value should be the desired data partition id.",
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{datapartition}}"
+							}
+						],
+						"url": {
+							"raw": "{{legal_host}}/legaltags/:name",
+							"host": [
+								"{{legal_host}}"
+							],
+							"path": [
+								"legaltags",
+								":name"
+							],
+							"variable": [
+								{
+									"key": "name",
+									"value": "{{legaltag01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LEGAL POST: create Legal tag 01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 201) {\r",
+									"    console.log(pm.response.text());\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"} else if (responseCode.code == 201) {\r",
+									"    // Ensure the API was able to send a successful response\r",
+									"    pm.test(\"Status code is 201 : legaltag successfully created\", function() {\r",
+									"        pm.response.to.have.status(201);\r",
+									"    });\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{STOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Data-Partition-Id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman.",
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{legaltag01}}\",\r\n    \"description\": \"A legaltag used for demonstration purposes.\",\r\n    \"properties\": {\r\n        \"countryOfOrigin\": [\r\n            \"US\"\r\n        ],\r\n        \"contractId\": \"No Contract Related\",\r\n        \"expirationDate\": \"2099-01-01\",\r\n        \"dataType\": \"Public Domain Data\",\r\n        \"originator\": \"OSDU\",\r\n        \"securityClassification\": \"Public\",\r\n        \"exportClassification\": \"Not - Technical Data\",\r\n        \"personalData\": \"No Personal Data\"\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{legal_host}}/legaltags",
+							"host": [
+								"{{legal_host}}"
+							],
+							"path": [
+								"legaltags"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LEGAL GET: Get a Legal tag 02",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ((responseCode.code != 200) && (responseCode.code != 404)) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else if (responseCode.code == 200) {",
+									"    pm.test(\"Status code is 200\", function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Status description - Retrieved LegalTag successfully.\", function() {",
+									"        pm.response.to.have.status(\"OK\");",
+									"    });",
+									"",
+									"    pm.test(\"Proper legal tag returned? : \" + pm.environment.get(\"legaltag02\"), function() {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.name).to.equal(pm.environment.get(\"legaltag02\"));",
+									"    });",
+									"",
+									"    postman.setNextRequest('TENANT GET: Retrieve tenant metadata');",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"} else if (responseCode.code == 404) {",
+									"    postman.setNextRequest('LEGAL POST: create Legal tag 02');",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{STOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"description": "This value should be the desired data partition id.",
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{datapartition}}"
+							}
+						],
+						"url": {
+							"raw": "{{legal_host}}/legaltags/:name",
+							"host": [
+								"{{legal_host}}"
+							],
+							"path": [
+								"legaltags",
+								":name"
+							],
+							"variable": [
+								{
+									"key": "name",
+									"value": "{{legaltag02}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LEGAL POST: create Legal tag 02",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 201) {\r",
+									"    console.log(pm.response.text());\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"} else if (responseCode.code == 201) {\r",
+									"    // Ensure the API was able to send a successful response\r",
+									"    pm.test(\"Status code is 201 : legaltag successfully created\", function() {\r",
+									"        pm.response.to.have.status(201);\r",
+									"    });\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{STOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Data-Partition-Id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman.",
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{legaltag02}}\",\r\n    \"description\": \"A legaltag used for Integration Testing.\",\r\n    \"properties\": {\r\n        \"countryOfOrigin\": [\r\n            \"US\"\r\n        ],\r\n        \"contractId\": \"No Contract Related\",\r\n        \"expirationDate\": \"2099-01-01\",\r\n        \"dataType\": \"Public Domain Data\",\r\n        \"originator\": \"OSDU\",\r\n        \"securityClassification\": \"Public\",\r\n        \"exportClassification\": \"Not - Technical Data\",\r\n        \"personalData\": \"No Personal Data\"\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{legal_host}}/legaltags",
+							"host": [
+								"{{legal_host}}"
+							],
+							"path": [
+								"legaltags"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		},
 		{
 			"name": "tenant",
@@ -196,21 +625,34 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"if (responseCode.code != 200) {",
+									"if ((responseCode.code != 200) && (responseCode.code != 404)) {",
 									"    console.log(pm.response.text())",
 									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
 									"",
-									"} else {",
+									"} else if (responseCode.code == 200) {",
 									"    var jsonData = pm.response.json();",
 									"",
-									"    pm.test(\"Status code is 200\", function () {",
+									"    pm.test(\"Status code is 200\", function() {",
 									"        pm.response.to.have.status(200);",
 									"    });",
 									"",
-									"    pm.test(\"Tenant details\", function () {",
+									"    pm.test(\"Tenant details\", function() {",
 									"        pm.expect(jsonData.name).to.eql(pm.environment.get(\"tenant\"));",
 									"        pm.expect(jsonData.gcpid).to.exist;",
 									"    });",
+									"",
+									"    postman.setNextRequest('TENANT GET sdpath: Retrieve the tenant seismic store path');",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"    ",
+									"} else {",
+									"    const provider = pm.environment.get('serviceCloudProvider');",
+									"    if (provider !== 'azure') {",
+									"        postman.setNextRequest('SUBPROJECT REGISTER NEGATIVE: Create subproject failure scenario');",
+									"    }",
 									"",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
@@ -243,6 +685,188 @@
 								"type": "text"
 							}
 						],
+						"url": {
+							"raw": "{{SVC_URL}}/tenant/{{tenant}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"tenant",
+								"{{tenant}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ENTITLEMENTS POST:  add user to datalake admin group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ((responseCode.code != 200) && (responseCode.code != 409)) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200 or 409\", function() {",
+									"        pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+									"    });",
+									"",
+									"    pm.test(\"Status description - OK or Conflict\", function() {",
+									"        pm.expect(pm.response.status).to.be.oneOf([\"OK\", \"Conflict\"]);",
+									"    });",
+									"",
+									"    if(responseCode.code == 200){",
+									"        pm.test(\"validate response for 200 responseCode\", function(){",
+									"            var jsonData = pm.response.json();",
+									"            pm.expect(jsonData.email).to.eql(pm.environment.get(\"entitlement_user\"));",
+									"            pm.expect(jsonData.role).to.eql(\"OWNER\")",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{STOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"description": "This value should be the desired data partition id.",
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{datapartition}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{entitlement_user}}\",\n    \"role\": \"OWNER\"\n}"
+						},
+						"url": {
+							"raw": "{{entitlements_host}}/groups/:group_email/members",
+							"host": [
+								"{{entitlements_host}}"
+							],
+							"path": [
+								"groups",
+								":group_email",
+								"members"
+							],
+							"variable": [
+								{
+									"key": "group_email",
+									"value": "users.datalake.admins@{{datapartition}}.{{domainName}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TENANT POST: Register a seismic-dms tenant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ((responseCode.code != 200) && (responseCode.code != 409)) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else if (responseCode.code == 200) {\r",
+									"    pm.test(\"Status code is 200\", function() {\r",
+									"        pm.expect(pm.response.code).to.be.eql(200);\r",
+									"    });\r",
+									"    pm.test(\"validate tenant details\", function() {\r",
+									"        var jsonData = pm.response.json();\r",
+									"        console.debug(jsonData)\r",
+									"\r",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get(\"tenant\"));\r",
+									"        pm.expect(jsonData.gcpid).to.eql(pm.environment.get(\"datapartition\"));\r",
+									"        var domain = pm.environment.get(\"datapartition\") + \".\" + pm.environment.get(\"domainName\");\r",
+									"        pm.expect(jsonData.esd).to.eql(domain);\r",
+									"        var acls = \"users.datalake.admins@\" + pm.environment.get(\"datapartition\") + \".\" + pm.environment.get(\"domainName\");\r",
+									"        pm.expect(jsonData.default_acls).to.eql(acls);\r",
+									"    });\r",
+									"\r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1);\r",
+									"    \r",
+									"} else {\r",
+									"\r",
+									"    pm.test(\"Tenant already exists\", function() {\r",
+									"        pm.expect(pm.response.code).to.be.eql(409);\r",
+									"    });\r",
+									"\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1);\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{STOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"gcpid\": \"{{datapartition}}\",\r\n\t\"esd\": \"{{datapartition}}.{{domainName}}\",\r\n    \"default_acl\": \"users.datalake.admins@{{datapartition}}.{{domainName}}\"\r\n}"
+						},
 						"url": {
 							"raw": "{{SVC_URL}}/tenant/{{tenant}}",
 							"host": [
@@ -512,6 +1136,11 @@
 									"    pm.test(\"Status code is 200\", function () {",
 									"        pm.response.to.have.status(200);",
 									"    });",
+									"    let seismic_default_admins = jsonData.acls.admins[0];",
+									"    let seismic_default_viewers = jsonData.acls.viewers[0];",
+									"    pm.collectionVariables.set('seismic_default_admins', seismic_default_admins)",
+									"    pm.collectionVariables.set('seismic_default_viewers', seismic_default_viewers)",
+									"",
 									"",
 									"    pm.test(\"Legal tag is legaltag01\", function () {",
 									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
@@ -612,6 +1241,10 @@
 									"    if (pm.response.code === 200) {",
 									"        pm.test(\"Subproject created\", function () {",
 									"            var jsonData = pm.response.json();",
+									"            let seismic_default_admins = jsonData.acls.admins[0];",
+									"            let seismic_default_viewers = jsonData.acls.viewers[0];",
+									"            pm.collectionVariables.set('seismic_default_admins', seismic_default_admins)",
+									"            pm.collectionVariables.set('seismic_default_viewers', seismic_default_viewers)",
 									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subproject\"));",
 									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
 									"            pm.expect(jsonData.ltag).to.exist;",
@@ -1104,6 +1737,132 @@
 							],
 							"path": [
 								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET REGISTER RANDOM: Register a new dataset with randomname",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 200 : Dataset is created\", function() {\r",
+									"        pm.response.to.have.status(200);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Check content type\", function() {\r",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"check Dataset name\", function() {\r",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('randomDatasetName'));\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"check tenant\", function() {\r",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"check subproject\", function() {\r",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"check Dates are present\", function() {\r",
+									"        pm.expect(jsonData.created_date).to.exist;\r",
+									"        pm.expect(jsonData.last_modified_date).to.exist;\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"check sbit_count\", function() {\r",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);\r",
+									"    });\r",
+									"\r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeName_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'testds.sgy';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"randomDatasetName\", makeName_dataset(10));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/plain"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"admin\": \"{{adminEmail}}\",\r\n    \"storage_class\": \"MULTI_REGIONAL\",\r\n    \"storage_location\": \"US\",\r\n    \"access_policy\": \"dataset\",\r\n    \"acls\": {\r\n        \"admins\": [\r\n            \"{{seismic_default_admins}}\"\r\n        ],\r\n        \"viewers\": [\r\n            \"{{seismic_default_viewers}}\"\r\n        ]\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomDatasetName}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{randomDatasetName}}"
 							]
 						}
 					},
@@ -2765,6 +3524,67 @@
 					"response": []
 				},
 				{
+					"name": "DATASET DELETE RANDOM: Delete random dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomDatasetName}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{randomDatasetName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "DATASET DELETE: Delete a dataset dsx01",
 					"event": [
 						{
@@ -3085,6 +3905,9 @@
 									"pm.environment.unset('gcsBucketName')",
 									"pm.environment.unset('gcsObjectPrefix')",
 									"pm.environment.unset('ctag')",
+									"pm.environment.unset('randomDatasetName');",
+									"pm.collectionVariables.unset('seismic_default_admins');",
+									"pm.collectionVariables.unset('seismic_default_viewers');",
 									"postman.setEnvironmentVariable('execCounter', 1)",
 									"",
 									"console.log('Dataset variables were removed for datasets folder');"
@@ -12692,7 +13515,7 @@
 									"    pm.environment.unset(key);",
 									"    postman.setEnvironmentVariable('execCounter', 1);",
 									"",
-									"    postman.setNextRequest(\"UTILITY LS: Retrieve list of datasets and directories\");",
+									"    postman.setNextRequest(\"UTILITY LS SUBPROJECT : Retrieve list of datasets for a subproject\");",
 									"    ",
 									"}"
 								],
@@ -12722,6 +13545,79 @@
 							"raw": "{{acsSasUrl}}",
 							"host": [
 								"{{acsSasUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY LS SUBPROJECT : Retrieve list of datasets for a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 200\", function() {\r",
+									"        pm.response.to.have.status(200);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Atleast 1 dataset must be present\", function() {\r",
+									"        pm.expect(jsonData.length).gte(1);\r",
+									"    });\r",
+									"\r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}",
+								"type": "text"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/ls?sdpath=sd://{{tenant}}/{{subproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"ls"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{subproject}}"
+								}
 							]
 						}
 					},
@@ -18578,7 +19474,6 @@
 									"pm.environment.unset('maxAmountOfRetries');",
 									"pm.environment.unset('subprojectLongName');",
 									"pm.environment.unset('execCounter');",
-									"",
 									"// if subproject name was not provided remove subproject",
 									"if (pm.environment.get(\"hold_subproject\" !== true)) {",
 									"    pm.environment.unset('subproject');",

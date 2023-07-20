@@ -67,9 +67,39 @@
 			"key": "subproject",
 			"value": "#{SUBPROJECT}#",
 			"enabled": true
+		},
+		{
+			"key": "domainName",
+			"value": "#{DOMAINNAME}#",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "entitlements_host",
+			"value": "{{HOSTNAME}}/api/entitlements/v2",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "legal_host",
+			"value": "{{HOSTNAME}}/api/legal/v1",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "HOSTNAME",
+			"value": "#{HOSTNAME}#",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "entitlement_user",
+			"value": "#{ENTITLEMENTS_USER}#",
+			"type": "default",
+			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",
-	"_postman_exported_at": "2022-09-21T08:35:08.061Z",
-	"_postman_exported_using": "Postman/9.31.9"
+	"_postman_exported_at": "2023-07-04T16:11:31.957Z",
+	"_postman_exported_using": "Postman/10.15.4"
 }
