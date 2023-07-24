@@ -24,7 +24,7 @@ export interface IAccessTokenModel {
 
 export interface ICredentials {
     getStorageCredentials(bucket: string, readonly: boolean, partitionID: string): Promise<IAccessTokenModel>;
-    getServiceCredentials(): Promise<IAccessTokenModel>;
+    getServiceCredentials(): Promise<string>;
 }
 
 export abstract class AbstractCredentials implements ICredentials {
@@ -33,7 +33,7 @@ export abstract class AbstractCredentials implements ICredentials {
         readonly: boolean,
         partitionID: string
     ): Promise<IAccessTokenModel>;
-    public abstract getServiceCredentials(): Promise<IAccessTokenModel>;
+    public abstract getServiceCredentials(): Promise<string>;
 }
 
 export class CredentialsFactory extends CloudFactory {

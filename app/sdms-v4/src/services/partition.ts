@@ -27,7 +27,7 @@ export class PartitionCoreService {
         const options = {
             headers: {
                 Accept: 'application/json',
-                Authorization: Utils.PreBearerToken(serviceCredentials.access_token),
+                Authorization: Utils.PreBearerToken(serviceCredentials),
                 'Content-Type': 'application/json',
             },
         };
