@@ -20,11 +20,8 @@ import { AzureSecrets } from './secrets';
 
 @ConfigFactory.register('azure')
 export class AzureConfig extends Config {
-    // Service Principal;
-    public static SP_TENANT_ID: string;
-    public static SP_CLIENT_ID: string;
-    public static SP_CLIENT_SECRET: string;
-    public static SP_APP_RESOURCE_ID: string;
+    // Application Resource ID
+    public static APP_RESOURCE_ID: string;
 
     // Logs and Monitor
     public static AI_INSTRUMENTATION_KEY: string;

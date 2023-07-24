@@ -24,7 +24,7 @@ export class AzureSdms extends AbstractReadiness {
     public async handleReadinessCheck(): Promise<boolean> {
         try {
             const credentials = AzureCredentials.getCredential();
-            const scope = AzureConfig.SP_APP_RESOURCE_ID;
+            const scope = AzureConfig.APP_RESOURCE_ID;
             await credentials.getToken(`${scope}/.default`);
             return true;
         } catch (error: any) {

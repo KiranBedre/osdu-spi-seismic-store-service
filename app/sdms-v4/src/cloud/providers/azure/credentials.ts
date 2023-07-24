@@ -26,13 +26,9 @@ import {
 import { DefaultAzureCredential, DefaultAzureCredentialOptions, TokenCredential } from '@azure/identity';
 
 import { AzureConfig } from './config';
-import { Error } from '../../../shared';
 import { ExponentialRetryPolicyOptions } from '@azure/core-rest-pipeline';
 import { PartitionCoreService } from '../../../services';
-import axios from 'axios';
-import qs from 'qs';
 
-const expiresMargin = 300; // 5 minutes
 const UserDelegationKeyValidityInMinutes = 60 * 4; // 4 hours
 const ExpirationLeadInMinutes = 15; // Expire 15 minutes before actual date
 const SasExpirationInMinutes = 3599; // Shortly under 2.5 days
@@ -46,12 +42,6 @@ interface ICachedUserDelegationKey {
 export class AzureCredentials extends AbstractCredentials {
     private delegationKeyMap: Map<string, ICachedUserDelegationKey>;
     private defaultAzureCredential: TokenCredential;
-
-    private static servicePrincipalCredential: IAccessTokenModel = {
-        access_token: null,
-        expires_in: 0,
-        token_type: null,
-    };
 
     public constructor() {
         super();
@@ -70,47 +60,8 @@ export class AzureCredentials extends AbstractCredentials {
         return new RetriableAzureCredential();
     }
 
-    public async getServiceCredentials(): Promise<IAccessTokenModel> {
-        const tokenType =
-            'internal;' +
-            AzureConfig.SP_CLIENT_ID +
-            ';' +
-            AzureConfig.SP_CLIENT_SECRET +
-            ';' +
-            AzureConfig.SP_TENANT_ID +
-            ';' +
-            AzureConfig.SP_APP_RESOURCE_ID;
-        if (
-            AzureCredentials.servicePrincipalCredential &&
-            AzureCredentials.servicePrincipalCredential.expires_in > Math.floor(Date.now() / 1000) &&
-            AzureCredentials.servicePrincipalCredential?.token_type === tokenType
-        ) {
-            return AzureCredentials.servicePrincipalCredential;
-        }
-        const url = 'https://login.microsoftonline.com/' + AzureConfig.SP_TENANT_ID + '/oauth2/token';
-        const data = {
-            grant_type: 'client_credentials',
-            client_id: AzureConfig.SP_CLIENT_ID,
-            client_secret: AzureConfig.SP_CLIENT_SECRET,
-            resource: AzureConfig.SP_APP_RESOURCE_ID,
-        };
-
-        const options: any = {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-        };
-
-        try {
-            AzureCredentials.servicePrincipalCredential = (await axios.post(url, qs.stringify(data), options))
-                .data as IAccessTokenModel;
-            AzureCredentials.servicePrincipalCredential.expires_in =
-                Math.floor(Date.now() / 1000) + AzureCredentials.servicePrincipalCredential.expires_in - expiresMargin;
-            AzureCredentials.servicePrincipalCredential.token_type = tokenType;
-            return AzureCredentials.servicePrincipalCredential;
-        } catch (error) {
-            throw Error.makeForHTTPRequest(error);
-        }
+    public async getServiceCredentials(): Promise<string> {
+        return (await AzureCredentials.getCredential().getToken(AzureConfig.APP_RESOURCE_ID + '/.default')).token;
     }
 
     public async getStorageCredentials(
