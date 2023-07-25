@@ -141,6 +141,9 @@ export class UtilityHandler {
 
         // subproject access request
         if (Object.keys(inputParams.dataset).length === 0) {
+            if(subproject.access_policy === Config.DATASET_ACCESS_POLICY){
+                throw (Error.make(Error.Status.BAD_REQUEST,'Please provide dataset path'));
+            }
 
             readOnly ?
                 await Auth.isReadAuthorized(req.headers.authorization,
@@ -158,8 +161,6 @@ export class UtilityHandler {
 
 
         } else { // dataset access request
-
-            SeistoreFactory.build(Config.CLOUDPROVIDER).validateAccessPolicy(subproject, Config.DATASET_ACCESS_POLICY);
 
             const dataset = subproject.enforce_key ?
                 await DatasetDAO.getByKey(journalClient, inputParams.dataset) :
