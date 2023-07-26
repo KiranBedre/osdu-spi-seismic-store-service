@@ -17,5 +17,6 @@
 export { AzureConfig } from './config';
 export { AzureCredentials } from './credentials';
 export { AzureSecrets } from './secrets';
-export { AzureSdms } from './readiness';
+export { AzureReadiness } from './readiness';
 export { AzureCloudStorage } from './storage';
+export { AzureLogger } from './logger';

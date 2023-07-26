@@ -55,6 +55,7 @@ export class Response {
             'X-Frame-Options': 'DENY',
             'X-XSS-Protection': '1',
         };
+        headers[Config.CORRELATION_ID] = res.locals[Config.CORRELATION_ID];
         res.set(headers)
             .status(code)
             .send(JSON.parse(xssfilters.inHTMLData(JSON.stringify(data))));

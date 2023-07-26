@@ -15,9 +15,9 @@
 // ============================================================================
 
 import { Error, Response } from '../shared';
-
 import { Config } from '../cloud';
 import { Context } from '../shared/context';
+import { LoggerFactory } from '../cloud/logger';
 import { ServiceRouter } from '../apis';
 import cors from 'cors';
 import { corsOptions } from './cors';
@@ -25,6 +25,7 @@ import express from 'express';
 import fs from 'fs';
 import https from 'https';
 import swaggerUi from 'swagger-ui-express';
+import { v4 as uuidv4 } from 'uuid';
 
 export class Server {
     private app: express.Express;
@@ -50,10 +51,16 @@ export class Server {
 
     // Set of operations to perform before serving the request
     public sdmsMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
+        // Create and set a correlation-id string if not exist
+        if (!req.headers[Config.CORRELATION_ID]) {
+            req.headers[Config.CORRELATION_ID] = uuidv4();
+        }
+        res.locals[Config.CORRELATION_ID] = req.headers[Config.CORRELATION_ID];
+
         // Required data-partition-id header
+        const statusCall = req.url.endsWith('status');
+        const readinessCall = req.url.endsWith('readiness');
         if (!req.headers['data-partition-id']) {
-            const statusCall = req.url.endsWith('status');
-            const readinessCall = req.url.endsWith('readiness');
             if (!(statusCall || readinessCall)) {
                 Response.writeError(
                     res,
@@ -65,8 +72,6 @@ export class Server {
 
         // Required authorization header
         if (!req.headers.authorization) {
-            const statusCall = req.url.endsWith('status');
-            const readinessCall = req.url.endsWith('readiness');
             if (!(statusCall || readinessCall)) {
                 Response.writeError(
                     res,
@@ -77,6 +82,11 @@ export class Server {
                 );
                 return;
             }
+        }
+
+        // track request
+        if (!(statusCall || readinessCall) && Config.LOGGER_ENABLED) {
+            LoggerFactory.build(Config.CLOUD_PROVIDER).trackRequest(req);
         }
 
         // Initialize request execution context

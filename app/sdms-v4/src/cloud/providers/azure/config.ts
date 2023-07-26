@@ -15,6 +15,7 @@
 // ============================================================================
 
 import { Config, ConfigFactory } from '../../config';
+import { AzureInsights } from './insights';
 
 import { AzureSecrets } from './secrets';
 
@@ -25,17 +26,16 @@ export class AzureConfig extends Config {
 
     // Logs and Monitor
     public static AI_INSTRUMENTATION_KEY: string;
-    private static CORRELATION_ID = 'correlation-id';
 
     // KeyVault Url
     public static KEYVAULT_URL: string;
 
     public async init(): Promise<void> {
+        // Load secrets
         AzureConfig.KEYVAULT_URL = process.env.KEYVAULT_URL;
         Config.checkRequiredConfig(AzureConfig.KEYVAULT_URL, 'KEYVAULT_URL');
         await AzureSecrets.loadSecrets();
-        Config.CALLER_FORWARD_HEADERS = Config.CALLER_FORWARD_HEADERS
-            ? Config.CALLER_FORWARD_HEADERS + ',' + AzureConfig.CORRELATION_ID
-            : AzureConfig.CORRELATION_ID;
+        // Initialize Insights
+        AzureInsights.initialize();
     }
 }

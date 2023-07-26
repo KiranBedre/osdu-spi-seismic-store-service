@@ -20,12 +20,6 @@ import express from 'express';
 export class Context {
     public static schemaEndpoint: SchemaEndpoint;
 
-    private static urlIncludeSchemaModel = (url: string, models: string[]): boolean => {
-        return models.some((model) => {
-            return url.toLowerCase().includes(model);
-        });
-    };
-
     public static init(req: express.Request) {
         for (const endpoint of SchemaEndpoints) {
             if (req.url.indexOf('/' + endpoint.name + '/') !== -1) {
