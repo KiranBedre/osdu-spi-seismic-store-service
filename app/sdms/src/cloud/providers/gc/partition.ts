@@ -19,7 +19,7 @@ export class DataPartitionInfo {
     public static async fromDataPartitionId(dataPartitionId: string): Promise<DataPartitionInfo> {
         const partitionUrl = new url.URL(ConfigGoogle.DES_SERVICE_HOST_PARTITION);
         partitionUrl.pathname = path_join(
-            'api/partition/v1/partitions',
+            'partition/v1/partitions',
             dataPartitionId
         );
         const partitionResponse = await axios.get(partitionUrl.toString());
