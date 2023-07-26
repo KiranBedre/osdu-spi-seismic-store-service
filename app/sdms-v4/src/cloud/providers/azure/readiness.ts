@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import { AzureConfig } from './config';
 import { AzureCredentials } from './credentials';
 
 @ReadinessFactory.register('azure')
-export class AzureSdms extends AbstractReadiness {
+export class AzureReadiness extends AbstractReadiness {
     public async handleReadinessCheck(): Promise<boolean> {
         try {
             const credentials = AzureCredentials.getCredential();

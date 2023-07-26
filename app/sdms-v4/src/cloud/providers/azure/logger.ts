@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,10 +14,20 @@
 // Limitations under the License.
 // ============================================================================
 
-export * from './providers';
-export { Config, ConfigFactory } from './config';
-export { CredentialsFactory } from './credentials';
-export { SecretsFactory } from './secrets';
-export { ReadinessFactory } from './readiness';
-export { StorageFactory } from './storage';
-export { LoggerFactory } from './logger';
+import { AbstractLogger, LoggerFactory } from '../../logger';
+import { AzureInsights } from './insights';
+import { Config } from '../../config';
+import { Request } from 'express';
+
+@LoggerFactory.register('azure')
+export class AzureLogger extends AbstractLogger {
+    public trackRequest(req: Request): void {
+        AzureInsights.trackTrace({
+            message: '[' + req.method + '] ' + req.url,
+            properties: {
+                'correlation-id': req.headers[Config.CORRELATION_ID],
+                'data-partition-id': req.headers[Config.DATA_PARTITION_ID],
+            },
+        });
+    }
+}

@@ -29,6 +29,9 @@ export abstract class Config implements IConfig {
     // https://github.com/WealthWizardsEngineering/hpropagate
     public static CALLER_FORWARD_HEADERS: string;
 
+    // Correlation ID
+    public static CORRELATION_ID: string;
+
     // Server SSL
     public static SSL_ENABLED: boolean;
     public static SSL_KEY_PATH: string;
@@ -61,6 +64,12 @@ export abstract class Config implements IConfig {
     public static REDIS_TLS_DISABLE: boolean;
     public static REDIS_PWD_DISABLE: boolean;
 
+    // Logger
+    public static LOGGER_ENABLED: boolean;
+
+    // User ID Header Key
+    public static USER_ID_HEADER_KEY_NAME: string;
+
     // Initialization methods
     public static setCloudProvider(cloudProvider: string | undefined) {
         if (!cloudProvider) {
@@ -81,6 +90,7 @@ export abstract class Config implements IConfig {
         Config.SSL_CERT_PATH = this.getEnvString('SSL_CERT_PATH');
         Config.APIS_BASE_PATH = this.getEnvString('APIS_BASE_PATH', '/seistore-svc/api/v4');
         Config.CALLER_FORWARD_HEADERS = this.getEnvString('CALLER_FORWARD_HEADERS');
+        Config.CORRELATION_ID = this.getEnvString('CORRELATION_ID', 'correlation-id');
         Config.DATA_PARTITION_ID = this.getEnvString('DATA_PARTITION_HEADER_KEY', 'data-partition-id');
         Config.CORE_SERVICE_HOST = this.getEnvString('CORE_SERVICE_HOST');
         Config.CORE_SERVICE_STORAGE_BASE_PATH = this.getEnvString('STORAGE_SERVICE_BASE_PATH', '/api/storage/v2');
@@ -103,6 +113,8 @@ export abstract class Config implements IConfig {
         Config.REDIS_KEY = this.getEnvString('REDIS_KEY');
         Config.REDIS_TLS_DISABLE = this.getEnvBoolean('REDIS_TLS_DISABLE', false);
         Config.REDIS_PWD_DISABLE = this.getEnvBoolean('REDIS_PWD_DISABLE', false);
+        Config.LOGGER_ENABLED = this.getEnvBoolean('LOGGER_ENABLED', true);
+        Config.USER_ID_HEADER_KEY_NAME = this.getEnvString('USER_ID_HEADER_KEY_NAME', 'x-user-id');
 
         // Initialize the CSP specific configuration
         await ConfigFactory.build(Config.CLOUD_PROVIDER).init();
@@ -110,6 +122,11 @@ export abstract class Config implements IConfig {
         // Check required configurations
         this.checkRequiredConfig(Config.CORE_SERVICE_HOST, 'CORE_SERVICE_HOST');
         this.checkRequiredConfig(Config.REDIS_HOST, 'REDIS_HOST');
+
+        // Set config default values after cloud specific initialization
+        Config.CALLER_FORWARD_HEADERS = Config.CALLER_FORWARD_HEADERS
+            ? Config.CALLER_FORWARD_HEADERS + ',' + Config.CORRELATION_ID
+            : Config.CORRELATION_ID;
     }
 
     protected static getEnvBoolean(key: string, defaultValue?: boolean): boolean {
