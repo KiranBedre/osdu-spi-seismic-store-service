@@ -142,14 +142,13 @@ export class AzureInsightsLogger extends AbstractLogger {
 
     public buildTraceInfo(req: Request): any {
         const key = req.headers['x-api-key'] as string;
-        const customDimensions = {
-            correlation_id: req.headers[Config.CORRELATION_ID]
-        };
 
         const telemetry = {
             message: (((key && key.length > 5) ? ('[***' + key.substr(key.length - 5) + '] ') : '')
             + '[' + req.method + '] ' + req.url),
-            properties: customDimensions,
+            properties: {
+                'correlation-id': req.headers[Config.CORRELATION_ID],
+            },
         };
         return telemetry;
     }
