@@ -63,6 +63,7 @@ export interface ConfigModel {
     FEATURE_FLAG_STACKDRIVER_EXPORTER: boolean;
     FEATURE_FLAG_CCM_INTERACTION: boolean;
     FEATURE_FLAG_POLICY_SVC_INTERACTION: boolean;
+    FULL_DATA_ACCESS_GROUP?: string;
     CCM_SERVICE_URL: string;
     CCM_TOKEN_SCOPE: string;
     CALLER_FORWARD_HEADERS: string;
@@ -144,6 +145,9 @@ export abstract class Config implements IConfig {
     public static FEATURE_FLAG_STACKDRIVER_EXPORTER = true;
     public static FEATURE_FLAG_CCM_INTERACTION = false;
     public static FEATURE_FLAG_POLICY_SVC_INTERACTION = false;
+
+    // Full Data Permission Group
+    public static FULL_DATA_ACCESS_GROUP: string;
 
     // DataGroups prefix
     public static DATAGROUPS_PREFIX = 'data.sdms';
@@ -258,6 +262,8 @@ export abstract class Config implements IConfig {
         Config.FEATURE_FLAG_STACKDRIVER_EXPORTER = model.FEATURE_FLAG_STACKDRIVER_EXPORTER;
         Config.FEATURE_FLAG_CCM_INTERACTION = model.FEATURE_FLAG_CCM_INTERACTION;
         Config.FEATURE_FLAG_POLICY_SVC_INTERACTION = model.FEATURE_FLAG_POLICY_SVC_INTERACTION;
+
+        Config.FULL_DATA_ACCESS_GROUP = process.env.FULL_DATA_ACCESS_GROUP || 'users.data.root';
 
         Config.DES_SERVICE_HOST_ENTITLEMENT = model.DES_SERVICE_HOST_ENTITLEMENT;
         Config.DES_SERVICE_HOST_COMPLIANCE = model.DES_SERVICE_HOST_COMPLIANCE;

@@ -25,21 +25,23 @@ export class DatasetAuth {
     // Return the dataset's authorization groups
     public static getAuthGroups(
         subproject: SubProjectModel, dataset: DatasetModel, role: AuthRoles): string[] {
+        let result: string[] = [];
         if (subproject.access_policy === Config.UNIFORM_ACCESS_POLICY) {
-            return role === AuthRoles.viewer ? subproject.acls.viewers.concat(
+            result = role === AuthRoles.viewer ? subproject.acls.viewers.concat(
                 subproject.acls.admins) : subproject.acls.admins;
         } else if (subproject.access_policy === Config.DATASET_ACCESS_POLICY) {
             if (dataset.acls) {
-                return role === AuthRoles.viewer ? dataset.acls.viewers.concat(
+                result = role === AuthRoles.viewer ? dataset.acls.viewers.concat(
                     dataset.acls.admins) : dataset.acls.admins;
             } else {
-                return role === AuthRoles.viewer ? subproject.acls.viewers.concat(
+                result = role === AuthRoles.viewer ? subproject.acls.viewers.concat(
                     subproject.acls.admins) : subproject.acls.admins;
             }
         } else {
             throw (Error.make(Error.Status.PERMISSION_DENIED,
                 'Access policy is neither uniform nor dataset'));
         }
+        return result.concat(Config.FULL_DATA_ACCESS_GROUP)
     }
 
 }
