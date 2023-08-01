@@ -472,7 +472,9 @@ export class UtilityHandler {
                 DatasetDAO.register(journalClient, { key: datasetToEntityKey, data: datasetTo }),
                 (datasetTo.seismicmeta_guid && (FeatureFlags.isEnabled(Feature.SEISMICMETA_STORAGE))) ?
                     DESStorage.insertRecord(req.headers.authorization, [seismicmeta],
-                        tenant.esd, req[Config.DE_FORWARD_APPKEY]) : undefined,
+                        tenant.esd, req[Config.DE_FORWARD_APPKEY],
+                        req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization))
+                        : undefined,
             ]);
 
             // set the objects prefix

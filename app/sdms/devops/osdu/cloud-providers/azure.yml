@@ -178,6 +178,7 @@ sdms_azure_deploy:
       --set azure.keyvault.name=${ENV_VAULT}
       --set azure.acr=${AZURE_REGISTRY}.azurecr.io
       --set ingress.dns=${AZURE_DNS_NAME}
+      --set azure.service_account_id=$(az keyvault secret show --id https://${ENV_VAULT}.vault.azure.net/secrets/app-dev-sp-username --query value -otsv)
       --set configuration[0].config.DES_SERVICE_HOST="https://${AZURE_DNS_NAME}"
       --set configuration[0].container.image=${SDMS_SERVICE_NAME}
       --set configuration[0].container.tag=${CI_COMMIT_SHA}

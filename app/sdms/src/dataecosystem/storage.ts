@@ -15,7 +15,7 @@
 // ============================================================================
 
 import axios from 'axios';
-import { Config, DataEcosystemCoreFactory } from '../cloud';
+import { Config, DataEcosystemCoreFactory, LoggerFactory } from '../cloud';
 import { Error } from '../shared';
 import { DESUtils } from './utils';
 
@@ -23,7 +23,7 @@ import { DESUtils } from './utils';
 export class DESStorage {
 
     public static async insertRecord(
-        userToken: string, seismicMeta: any, esd: string, appkey: string): Promise<void> {
+        userToken: string, seismicMeta: any, esd: string, appkey: string, userId?: string): Promise<void> {
 
         const dataecosystem = DataEcosystemCoreFactory.build(Config.CLOUDPROVIDER);
 
@@ -41,6 +41,14 @@ export class DESStorage {
         // tslint:disable-next-line: no-string-literal
         options.headers['Authorization'] = await dataecosystem.getAuthorizationHeader(userToken);
         options.headers[dataecosystem.getDataPartitionIDRestHeaderName()] = DESUtils.getDataPartitionID(esd);
+
+        // Whether or not its undefined, logging helps
+        // Logging on this particular flow since we want to validate if the storage service is getting the header
+        LoggerFactory.build(Config.CLOUDPROVIDER).info('creating record in storage service with user id = ' + userId);
+
+        if(userId !== undefined){
+            options.headers['x-on-behalf-of'] = userId;
+        };
 
         await axios.put(url, data, options).catch((error) => {
             throw (Error.makeForHTTPRequest(error, '[storage-service]'));
