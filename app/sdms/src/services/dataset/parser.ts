@@ -165,8 +165,16 @@ export class DatasetParser {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The \'cursor\' query parameter can not be empty if supplied'));
         }
-        return input;
 
+        if (req.query?.search) {
+            input.search = req.query.search as string;
+        }
+
+        if (req.query?.select && typeof req.query.select === 'string') {
+            input.select = req.query.select.slice(1,-1).split(',');
+        }
+
+        return input;
     }
 
     public static listPost(req: expRequest): DatasetListRequest {

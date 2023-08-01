@@ -172,7 +172,6 @@ export class SubProjectHandler {
     // Get the subproject data group metadata
     // Required role: subproject.admin
     private static async get(req: expRequest, tenant: TenantModel): Promise<SubProjectModel> {
-
         // init journalClient client
         const journalClient = JournalFactoryTenantClient.get(tenant);
         // [NOTE OF DEPRECATION] subid-to-email to deprecated in favor of translate-user-info

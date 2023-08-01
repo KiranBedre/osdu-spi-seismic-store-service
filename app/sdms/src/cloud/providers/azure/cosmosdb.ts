@@ -275,7 +275,6 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async runQuery(query: IJournalQueryModel): Promise<[any[], { endCursor?: string }]> {
-
         const cosmosQuery = (query as AzureCosmosDbQuery);
 
         let sqlQuery: string;
@@ -287,7 +286,6 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
 
         if (cosmosQuery.kind === Config.DATASETS_KIND) {
-
             // return selected fields
             if (cosmosQuery.projectedFieldNames.length) {
                 let fieldList = '';
@@ -301,7 +299,6 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             } else {
                 sqlQuery = 'SELECT *';
             }
-
             // query using partial partition key
             const partialKey = 'ds' + cosmosQuery.namespace.replace(new RegExp(Config.SEISMIC_STORE_NS, 'g'), '')
             sqlQuery += ' FROM c WHERE RegexMatch(c.id, "^(' + partialKey + '-)([a-z0-9]+)$")'
@@ -329,10 +326,9 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 }
                 sqlQuery += ' GROUP BY ' + groupByList;
             }
-
             if (AzureConfig.SIDECAR_ENABLE_QUERY) {
                 const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
-                const url = AzureConfig.SIDECAR_URL + (sqlQuery.indexOf('SELECT *') > -1 ? '/query' : '/query-path')
+                const url = AzureConfig.SIDECAR_URL + '/query';
                 const payload = {};
                 payload['cs'] = 'AccountEndpoint=' + connectionParams.endpoint + ';' +
                     'AccountKey=' + connectionParams.key + ';'
@@ -352,6 +348,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 }
                 try {
                     const result = await AzureCosmosDbDAO.axiosInstance.post(url, payload);
+
                     if (!result.data.records) { return; }
                     const records = result.data.records;
                     const resultsList = [];
@@ -370,7 +367,9 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                         }
                     } else {
                         for (const record of records) {
-                            resultsList.push(record);
+                            if (Object.keys(record).length !== 0){
+                                resultsList.push(record);
+                            }
                         }
                     }
                     return Promise.resolve([resultsList, { endCursor: result.data.continuationToken }]);
@@ -451,7 +450,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
 
 }
 
-declare type Operator = '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch';
+declare type Operator = '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch' | 'LIKE';
 
 export class AzureCosmosDbQuery implements IJournalQueryModel {
 

@@ -791,7 +791,7 @@ export class TestDatasetSVC {
         Tx.test(async (done: any) => {
             this.journal.runQuery.resolves([[{}], {}] as never);
             this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves();
-            await DatasetDAO.list(this.journal, this.dataset, null);
+            await DatasetDAO.list(this.journal, this.dataset, null, null, null);
             done();
         });
 

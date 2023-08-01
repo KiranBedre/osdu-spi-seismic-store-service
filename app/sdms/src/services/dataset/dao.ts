@@ -106,7 +106,7 @@ export class DatasetDAO {
 
     public static async list(
         journalClient: IJournal,
-        dataset: DatasetModel, pagination: PaginationModel):
+        dataset: DatasetModel, pagination: PaginationModel, searchParam:string, selectParam:string[]):
         Promise<any> {
 
         let query: any;
@@ -126,11 +126,20 @@ export class DatasetDAO {
 
         if (pagination && pagination.limit) { query = query.limit(pagination.limit); }
 
+        if (searchParam) {
+            const [variable, value] = searchParam.split('=');
+            query = query.filter(variable, 'LIKE', value);
+        }
+
+        if (selectParam){ query = query.select(selectParam); }
+
         const [entities, info] = await journalClient.runQuery(query);
 
         // Fix model for old entity
-        for (let entity of entities) {
-            entity = await this.fixOldModel(entity, dataset.tenant, dataset.subproject);
+        if(!selectParam){
+            for (let entity of entities) {
+                entity = await this.fixOldModel(entity, dataset.tenant, dataset.subproject);
+            }
         }
 
         const output: PaginatedDatasetList = {

@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { Request as expRequest, Response as expResponse } from 'express';
-
+import url from 'url';
 import { DatasetModel, DatasetUtils } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
@@ -382,6 +382,8 @@ export class DatasetHandler {
         // Retrieve the dataset path information
         const userInput = DatasetParser.list(req);
 
+        const searchParam: string  = userInput.search;
+        const selectParam: string[] = userInput.select;
         const dataset = userInput.dataset;
         const pagination = userInput.pagination;
         const userInfo = userInput.userInfo;
@@ -396,18 +398,34 @@ export class DatasetHandler {
             req.headers['impersonation-token-context'] as string);
 
         // Retrieve the list of datasets metadata
-        const output = await DatasetDAO.list(journalClient, dataset, pagination) as any;
+        const output = await DatasetDAO.list(journalClient, dataset, pagination, searchParam, selectParam) as any;
 
         // attach the gcpid for fast check, access_policy and exchange user-info (if requested)
         const userAssociationService = FeatureFlags.isEnabled(Feature.CCM_INTERACTION) && userInfo ?
             UserAssociationServiceFactory.build(Config.USER_ASSOCIATION_SVC_PROVIDER) : undefined;
         const dataPartition = DESUtils.getDataPartitionID(tenant.esd);
-        for (const item of output.datasets) {
-            item.ctag = item.ctag + tenant.gcpid + ';' + dataPartition;
-            item.access_policy = subproject.access_policy || Config.UNIFORM_ACCESS_POLICY;
-            if (userAssociationService && !Utils.isEmail(item.created_by)) {
-                item.created_by = await userAssociationService.convertPrincipalIdentifierToUserInfo(
-                    item.created_by, dataPartition);
+        if(!selectParam){
+            for (const item of output.datasets) {
+                item.ctag = item.ctag + tenant.gcpid + ';' + dataPartition;
+                item.access_policy = subproject.access_policy || Config.UNIFORM_ACCESS_POLICY;
+                if (userAssociationService && !Utils.isEmail(item.created_by)) {
+                    item.created_by = await userAssociationService.convertPrincipalIdentifierToUserInfo(
+                        item.created_by, dataPartition);
+                }
+            }
+        } else {
+            if(selectParam.includes('ctag')) {
+                for (const item of output.datasets) {
+                   item.ctag = item.ctag + tenant.gcpid + ';' + dataPartition;
+                }
+            }
+            if (selectParam.includes('created_by')) {
+                for (const item of output.datasets) {
+                    if (userAssociationService && !Utils.isEmail(item.created_by)) {
+                        item.created_by = await userAssociationService.convertPrincipalIdentifierToUserInfo(
+                            item.created_by, dataPartition);
+                    }
+                }
             }
         }
 
