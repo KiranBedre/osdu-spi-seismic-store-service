@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json;
 
 namespace Sidecar.Services
 {
@@ -47,7 +48,7 @@ namespace Sidecar.Services
                 requestOptions: options);
             if (ctoken == null && limit == null) // fetch all
             {
-                while (query.HasMoreResults) 
+                while (query.HasMoreResults)
                 {
                     var results = await query.ReadNextAsync();
                     foreach (RecordPath record in results)
@@ -74,16 +75,14 @@ namespace Sidecar.Services
             }
         }
 
-
-
-        public async Task<PaginatedRecords> Query(string cs, string sql, string? ctoken, int? limit)
+        public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
         {
             this.initCosmosClient(cs);
             Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
             Container container = database.GetContainer(this.containerId);
-            List<Record> records = new List<Record>();
+            List<Object> records = new List<Object>();
             QueryRequestOptions options = new QueryRequestOptions() { MaxItemCount = limit != null ? limit : 100 };
-            FeedIterator<Record> query = container.GetItemQueryIterator<Record>(
+            FeedIterator<Object> query = container.GetItemQueryIterator<Object>(
                 sql,
                 continuationToken: ctoken,
                 requestOptions: options);
@@ -92,7 +91,7 @@ namespace Sidecar.Services
                 while (query.HasMoreResults) 
                 {
                     var results = await query.ReadNextAsync();
-                    foreach (Record record in results)
+                    foreach (Object record in results)
                     {
                         records.Add(record);
                     }
@@ -100,19 +99,19 @@ namespace Sidecar.Services
                 PaginatedRecords paginatedRecords = new PaginatedRecords();
                 paginatedRecords.records = records;
                 paginatedRecords.continuationToken = null;
-                return paginatedRecords;
+                return JsonConvert.SerializeObject(paginatedRecords);
             }
             else // fetch next page
             {
                 var results = await query.ReadNextAsync();
-                foreach (Record record in results)
+                foreach (Object record in results)
                 {
                     records.Add(record);
                 }
                 PaginatedRecords paginatedRecords = new PaginatedRecords();
                 paginatedRecords.records = records;
                 paginatedRecords.continuationToken = results.ContinuationToken;
-                return paginatedRecords;
+                return JsonConvert.SerializeObject(paginatedRecords);
             }
         }
 

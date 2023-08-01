@@ -213,7 +213,7 @@ export class DatasetDAOTest {
 
         Tx.testExp(async (done: any) => {
 
-            let pm = await DAO.list(journalClient, datasetModel, pagination);
+            let pm = await DAO.list(journalClient, datasetModel, pagination, null, null);
             Tx.checkTrue(!(pm === undefined), done);
 
         } );
@@ -221,7 +221,7 @@ export class DatasetDAOTest {
         Tx.testExp(async (done: any) => {
 
             datasetModel.gtags = [];
-            let pm = await DAO.list(journalClient, datasetModel, pagination);
+            let pm = await DAO.list(journalClient, datasetModel, pagination, null, null);
             datasetModel.gtags = ["gtags"];
             Tx.checkTrue(!(pm === undefined), done);
 

@@ -24,7 +24,7 @@ export interface IJournalQueryModel {
     filter(property: string, value: {}): IJournalQueryModel;
     filter(
         property: string,
-        operator: '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR',
+        operator: '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'LIKE',
         value: {}): IJournalQueryModel;
     start(start: string | Buffer): IJournalQueryModel;
     limit(n: number): IJournalQueryModel;

@@ -13,7 +13,7 @@ public class QueryPaginatedRequestBody
 public class PaginatedRecords
 {
 
-    public List<Record>? records { get; set; }
+    public List<Object>? records { get; set; }
 
     public string? continuationToken { get; set; }
 
@@ -27,6 +27,7 @@ public class PaginatedRecordsPath
     public string? continuationToken { get; set; }
 
 }
+
 
 public class RecordPath
 {

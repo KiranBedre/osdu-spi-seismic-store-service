@@ -839,6 +839,18 @@ paths:
       tags:
         - Dataset
       parameters:
+        - description: "Select multiple fields to return example: select=[name,subproject...]"
+          in: query
+          name: select
+          required: false
+          default: ""
+          type: string
+        - description: "Select single SQL like search parameter example: search=name=file%"
+          in: query
+          name: search
+          required: false
+          default: ""
+          type: string
         - description: "The impersonation token context (required only with impersonation token credentials)"
           in: header
           name: impersonation-token-context

@@ -184,7 +184,7 @@ export class TestDataset {
 			this.journal.runQuery.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			const result = await DatasetDAO.list(this.journal, this.dataset, null);
+			const result = await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 
 			Tx.checkTrue(
 				this.journal.runQuery.calledWith(query) && result[0] === expectedResult[0],
@@ -229,7 +229,7 @@ export class TestDataset {
 			this.journal.runQuery.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			const result = await DatasetDAO.list(this.journal, this.dataset, null);
+			const result = await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 
 			Tx.checkTrue(
 				this.journal.runQuery.calledWith(query) && result[0] === expectedResult[0],
@@ -272,7 +272,7 @@ export class TestDataset {
 			this.journal.getQueryFilterSymbolContains.returns('=');
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			await DatasetDAO.list(this.journal, this.dataset, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 			done()
 		});
 
@@ -314,7 +314,7 @@ export class TestDataset {
 			this.journal.getQueryFilterSymbolContains.returns('=');
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			await DatasetDAO.list(this.journal, this.dataset, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 			done()
 		});
 
@@ -357,7 +357,7 @@ export class TestDataset {
 			this.journal.getQueryFilterSymbolContains.returns('CONTAINS');
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			await DatasetDAO.list(this.journal, this.dataset, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 			done()
 		});
 
@@ -400,7 +400,7 @@ export class TestDataset {
 			this.journal.runQuery.resolves([expectedResult, undefined]);
 			this.journal.getQueryFilterSymbolContains.returns('CONTAINS');
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
-			await DatasetDAO.list(this.journal, this.dataset, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 			done()
 		});
 	}

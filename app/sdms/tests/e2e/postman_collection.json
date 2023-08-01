@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "66a13272-4b59-4e52-95db-57a68a6d0e5e",
+		"_postman_id": "df15a6e7-37c9-4b00-a6fe-9e6e2653eed4",
 		"name": "SDMS-E2E ver.M20 - Release 0.23",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1706,7 +1706,10 @@
 									"postman.setEnvironmentVariable(\"dsx02\", makeID_dataset(16) + \"_.ds-x\");\r",
 									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
 									"postman.setEnvironmentVariable(\"testPath\", path);\r",
-									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));"
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));\r",
+									"\r",
+									"const OriginalFiles = [\"randomfile1.txt\", \"randomfile2.txt\", \"randomfile3.txt\"];\r",
+									"postman.setEnvironmentVariable(\"OriginalFiles\", OriginalFiles);"
 								],
 								"type": "text/javascript"
 							}
@@ -1737,6 +1740,143 @@
 							],
 							"path": [
 								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET REGISTER: Register random txt files in dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let cloudProvider = pm.environment.get('serviceCloudProvider');",
+									"if (cloudProvider === 'azure') {",
+									"    if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    } else {",
+									"        var jsonData = pm.response.json();",
+									"",
+									"        pm.test(\"Status code is 200\", function () {",
+									"            pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    let CurrentFiles = pm.environment.get(\"CurrentFiles\");",
+									"",
+									"    if(CurrentFiles.length > 0) {",
+									"        postman.setNextRequest('DATASET REGISTER: Register random txt files in dataset');",
+									"    }else{",
+									"        pm.environment.unset('CurrentFiles');",
+									"    }",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"    }",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
+									"if(!CurrentFiles) {\r",
+									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
+									"}\r",
+									"let Current = CurrentFiles.pop();\r",
+									"\r",
+									"pm.environment.set(\"randomfile\", Current);\r",
+									"pm.environment.set(\"CurrentFiles\", CurrentFiles);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomfile}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{randomfile}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
 							]
 						}
 					},
@@ -2711,6 +2851,168 @@
 					"response": []
 				},
 				{
+					"name": "DATASET LIST: Files in subproject with search parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let cloudProvider = pm.environment.get('serviceCloudProvider');",
+									"if (cloudProvider === 'azure') {",
+									"    if (responseCode.code != 200) {",
+									"        console.log(pm.response.text())",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"    } else {",
+									"        var jsonData = pm.response.json();",
+									"",
+									"        pm.test(\"Status code is 200\", function () {",
+									"            pm.response.to.have.status(200);",
+									"        });",
+									"",
+									"        pm.test(\"Check content type\", function () {",
+									"            pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"        });",
+									"",
+									"        pm.test('Ensure that item\\'s name starts with \"random-file\"', () => {",
+									"            const responseData = pm.response.json();",
+									"            responseData.forEach(item => {",
+									"            pm.expect(item.name).to.match(/^randomfile/);",
+									"            });",
+									"        });",
+									"",
+									"        // Reset environment variables if _.retryOnFailure function was used before",
+									"        var key = request.name + '_counter';",
+									"        pm.environment.unset(key);",
+									"        postman.setEnvironmentVariable('execCounter', 1)",
+									"    }",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name=randomfile%",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name=randomfile%"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET LIST: Files in subproject with select parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let cloudProvider = pm.environment.get('serviceCloudProvider');",
+									"if (cloudProvider === 'azure') {",
+									"    if (responseCode.code != 200) {",
+									"        console.log(pm.response.text())",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"    } else {",
+									"        var jsonData = pm.response.json();",
+									"",
+									"        pm.test(\"Status code is 200\", function () {",
+									"            pm.response.to.have.status(200);",
+									"        });",
+									"",
+									"        pm.test(\"Check content type\", function () {",
+									"            pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"        });",
+									"",
+									"        pm.test(\"Name parameter only\", function() {",
+									"            pm.response.json().forEach(function(item) {",
+									"                pm.expect(Object.keys(item)).to.eql([\"name\"]);",
+									"            });",
+									"    });",
+									"",
+									"        // Reset environment variables if _.retryOnFailure function was used before",
+									"        var key = request.name + '_counter';",
+									"        pm.environment.unset(key);",
+									"        postman.setEnvironmentVariable('execCounter', 1)",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[name]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[name]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "DATASET DSX01 CHECK CTAG TRUE: Validate ctag to equal true",
 					"event": [
 						{
@@ -3378,7 +3680,7 @@
 									"    });",
 									"",
 									"    pm.test(\"Read Datasets\", function () {",
-									"        pm.expect(jsonData.datasets.length).to.eql(2);",
+									"        pm.expect(jsonData.datasets.length).to.eql(5);",
 									"    });",
 									"",
 									"    pm.test(\"Read Directories\", function () {",
@@ -3656,6 +3958,98 @@
 					"response": []
 				},
 				{
+					"name": "DATASET DELETE: Delete random txt files in dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let cloudProvider = pm.environment.get('serviceCloudProvider');",
+									"if (cloudProvider === 'azure') {",
+									"    if (responseCode.code != 200) {",
+									"        console.log(pm.response.text())",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"    } else {",
+									"        pm.test(\"Status code is 200\", function () {",
+									"            pm.response.to.have.status(200);",
+									"        });",
+									"        let CurrentFiles = pm.environment.get(\"CurrentFiles\");",
+									"        if(CurrentFiles.length > 0) {",
+									"            postman.setNextRequest('DATASET DELETE: Delete random txt files in dataset');",
+									"        }else{",
+									"            pm.environment.unset('CurrentFiles')",
+									"        }",
+									"",
+									"        // Reset environment variables if _.retryOnFailure function was used before",
+									"        var key = request.name + '_counter';",
+									"        pm.environment.unset(key);",
+									"        postman.setEnvironmentVariable('execCounter', 1)",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
+									"if(!CurrentFiles) {\r",
+									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
+									"}\r",
+									"let Current = CurrentFiles.pop();\r",
+									"\r",
+									"pm.environment.set(\"randomfile\", Current);\r",
+									"pm.environment.set(\"CurrentFiles\", CurrentFiles);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomfile}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{randomfile}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "DATASET LIST AFTER DELETE: Ensure the deleted dataset not present in list",
 					"event": [
 						{
@@ -3906,6 +4300,8 @@
 									"pm.environment.unset('gcsObjectPrefix')",
 									"pm.environment.unset('ctag')",
 									"pm.environment.unset('randomDatasetName');",
+									"pm.environment.unset('OriginalFiles')",
+									"pm.environment.unset('CurrentlFiles')",
 									"pm.collectionVariables.unset('seismic_default_admins');",
 									"pm.collectionVariables.unset('seismic_default_viewers');",
 									"postman.setEnvironmentVariable('execCounter', 1)",

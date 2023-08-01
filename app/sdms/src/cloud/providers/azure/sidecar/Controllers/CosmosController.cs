@@ -77,6 +77,7 @@ namespace Sidecar.Controllers
             {
                 return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
             }
+
         }
 
         [HttpPost("/query-path")]
