@@ -217,7 +217,9 @@ export class DatasetHandler {
                 DatasetDAO.register(journalClient, { key: datasetEntityKey, data: dataset }),
                 (storageSchemaRecord && (FeatureFlags.isEnabled(Feature.SEISMICMETA_STORAGE))) ?
                     DESStorage.insertRecord(req.headers.authorization,
-                        [storageSchemaRecord], tenant.esd, req[Config.DE_FORWARD_APPKEY]) : undefined,
+                        [storageSchemaRecord], tenant.esd, req[Config.DE_FORWARD_APPKEY],
+                        req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization))
+                        : undefined,
             ]);
 
             // release the mutex and keep the lock session
@@ -669,7 +671,8 @@ export class DatasetHandler {
 
         if (datasetIN.storageSchemaRecord && (FeatureFlags.isEnabled(Feature.SEISMICMETA_STORAGE))) {
             await DESStorage.insertRecord(
-                req.headers.authorization, [datasetIN.storageSchemaRecord], tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+                req.headers.authorization, [datasetIN.storageSchemaRecord], tenant.esd, req[Config.DE_FORWARD_APPKEY],
+                req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization));
         }
 
         if (newName) {
