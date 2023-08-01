@@ -15,6 +15,7 @@
 // ============================================================================
 
 import { AuthRoles } from '../../auth';
+import { Config } from '../../cloud';
 import { SubProjectModel } from '../subproject';
 
 export class SubprojectAuth {
@@ -23,7 +24,8 @@ export class SubprojectAuth {
     public static getAuthGroups(
         subproject: SubProjectModel, role: AuthRoles): string[] {
         return role === AuthRoles.viewer ? subproject.acls.viewers.concat(
-            subproject.acls.admins) : subproject.acls.admins;
+            subproject.acls.admins.concat(Config.FULL_DATA_ACCESS_GROUP)) : subproject.acls.admins.concat(
+                Config.FULL_DATA_ACCESS_GROUP);
     }
 
 }
