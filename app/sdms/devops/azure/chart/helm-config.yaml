@@ -19,9 +19,6 @@ configEnv:
   port: #{PORT}#
   sdmsPrefix: #{SDMS_PREFIX}#
   sidecarUrl: #{SIDECAR_URL}#
-  sidecarEnableInsert: #{SDMS_SIDECAR_ENABLE_INSERT}#
-  sidecarEnableGet: #{SDMS_SIDECAR_ENABLE_GET}#
-  sidecarEnableDelete: #{SDMS_SIDECAR_ENABLE_DELETE}#
   sidecarEnableQuery: #{SDMS_SIDECAR_ENABLE_QUERY}#
   sidecarEnvironment: #{SDMS_SIDECAR_ENV}#
   sidecarUrls: #{SIDECAR_URLS}#

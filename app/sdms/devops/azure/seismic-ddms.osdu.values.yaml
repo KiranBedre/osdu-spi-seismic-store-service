@@ -62,9 +62,6 @@ configuration:
       PORT: "8080"
       KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
       SIDECAR_URL: "https://localhost:7138"
-      SIDECAR_ENABLE_INSERT: "false"
-      SIDECAR_ENABLE_GET: "false"
-      SIDECAR_ENABLE_DELETE: "false"
       SIDECAR_ENABLE_QUERY: "true"
     # Use only for secret rotation
     secrets:

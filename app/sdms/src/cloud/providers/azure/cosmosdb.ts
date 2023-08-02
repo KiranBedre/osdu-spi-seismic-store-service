@@ -24,7 +24,7 @@ import { AzureConfig } from './config';
 import { Config } from '../..';
 import { Error } from '../../../shared';
 
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { DatasetModel } from '../../../services/dataset';
 
 @JournalFactory.register('azure')
@@ -109,65 +109,31 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 data: entity.data
             }
             item.data[this.KEY.toString()] = entity.key;
-
-            if (item.id.startsWith('ds-') && AzureConfig.SIDECAR_ENABLE_INSERT) {
-                const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
-                const url = AzureConfig.SIDECAR_URL + '/insert?cs=AccountEndpoint=' + connectionParams.endpoint + ';AccountKey=' + connectionParams.key + ';&item=' + JSON.stringify(item);
-                try {
-                    await AzureCosmosDbDAO.axiosInstance.post(url);
-                } catch (error) {
-                    this.checkAndParseCosmosError(error);
-                }
-            } else {
-                await (await this.getCosmoContainer()).items.upsert(item);
-            }
+            await (await this.getCosmoContainer()).items.upsert(item);
         }
     }
 
     public async get(key: any): Promise<[any | any[]]> {
-        if ((key.partitionKey as string).startsWith('ds-') && AzureConfig.SIDECAR_ENABLE_GET) {
-            const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
-            const url = AzureConfig.SIDECAR_URL + '/get?cs=AccountEndpoint=' + connectionParams.endpoint + ';AccountKey=' + connectionParams.key + ';&pk=' + key.partitionKey;
-            let response: AxiosResponse<any>;
-            try {
-                response = await AzureCosmosDbDAO.axiosInstance.get(url);
-            } catch (error) {
-                this.checkAndParseCosmosError(error);
+        let retry = 0;
+        let item: ItemResponse<any>;
+        while (retry++ < 5) {
+            item = await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).read();
+            if (item.statusCode !== 404 || !Config.ENABLE_STRONG_CONSISTENCY_EMULATION) { break; }
+            await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+
+        if (!item.resource) {
+            if (item.statusCode === 404) {
                 return [undefined];
+            } else {
+                throw (Error.make(item.statusCode, 'Internal Cosmos Server Error'));
             }
-            const data = response.data.data;
-            Object.keys(data).forEach(key2 => {
-                if (data[key2] === null || data[key2] === undefined) {
-                    delete data[key2];
-                }
-            });
-            data[this.KEY] = data['symbolId'];
-            delete data['symbolId'];
-            delete data[this.KEY.toString()];
-            return [data];
         }
-        else {
-            let retry = 0;
-            let item: ItemResponse<any>;
-            while (retry++ < 5) {
-                item = await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).read();
-                if (item.statusCode !== 404 || !Config.ENABLE_STRONG_CONSISTENCY_EMULATION) { break; }
-                await new Promise((resolve) => setTimeout(resolve, 200));
-            }
 
-            if (!item.resource) {
-                if (item.statusCode === 404) {
-                    return [undefined];
-                } else {
-                    throw (Error.make(item.statusCode, 'Internal Cosmos Server Error'));
-                }
-            }
-
-            const data = item.resource.data;
-            data[this.KEY] = data[this.KEY.toString()];
-            delete data[this.KEY.toString()];
-            return [data];
-        }
+        const data = item.resource.data;
+        data[this.KEY] = data[this.KEY.toString()];
+        delete data[this.KEY.toString()];
+        return [data];
     }
 
     private async getMetaDataByKeys(keys: any[]): Promise<any[]> {
@@ -206,17 +172,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async delete(key: any): Promise<void> {
-        if (key.partitionKey.startsWith('ds-') && AzureConfig.SIDECAR_ENABLE_DELETE) {
-            const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
-            const url = AzureConfig.SIDECAR_URL + '/delete?cs=AccountEndpoint=' + connectionParams.endpoint + ';AccountKey=' + connectionParams.key + ';&pk=' + key.partitionKey;
-            try {
-                await AzureCosmosDbDAO.axiosInstance.delete(url);
-            } catch (error) {
-                this.checkAndParseCosmosError(error);
-            }
-        } else {
-            await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).delete();
-        }
+        await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).delete();
     }
 
     public createQuery(namespace: string, kind: string): IJournalQueryModel {
@@ -239,7 +195,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         sqlQuery += ' INDEX_OF(c.data.path, "/", LENGTH("' + dataset.path + '")) - LENGTH("' + dataset.path + '") + 2)'
         if (AzureConfig.SIDECAR_ENABLE_QUERY) {
             const cParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
-            const url = AzureConfig.SIDECAR_URL + '/query-path'
+            const url = AzureConfig.SIDECAR_URL + '/query'
             const payload = {
                 'cs': 'AccountEndpoint=' + cParams.endpoint + ';' + 'AccountKey=' + cParams.key + ';',
                 'sql': sqlQuery
