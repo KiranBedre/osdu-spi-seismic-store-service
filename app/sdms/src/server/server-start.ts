@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import { Config, ConfigFactory, LoggerFactory, TraceFactory } from '../cloud';
 import { StorageJobManager } from '../cloud/shared/queue';
 import { Locker } from '../services/dataset/locker';
 import { SchemaManagerFactory } from '../services/dataset/schema-manager';
-import { Feature, FeatureFlags } from '../shared';
+import { Feature, FeatureFlags, cacheShared } from '../shared';
 import { SwaggerManager } from './swagger-manager';
 
 async function ServerStart() {
@@ -40,12 +40,20 @@ async function ServerStart() {
         console.log('- Initializing redis locker cache');
         await Locker.init();
 
+        console.log('- Initializing redis shared cache');
+        await cacheShared.init(
+            Config.REDIS_SHARED_INSTANCE_ADDRESS,
+            Config.REDIS_SHARED_INSTANCE_PORT,
+            Config.REDIS_SHARED_INSTANCE_KEY,
+            Config.REDIS_SHARED_INSTANCE_TLS_DISABLE,
+            'sdms-shared-cache');
+
         console.log('- Initializing storage transfer daemon');
         StorageJobManager.setup({
-            ADDRESS: Config.DES_REDIS_INSTANCE_ADDRESS,
-            PORT: Config.DES_REDIS_INSTANCE_PORT,
-            KEY: Config.DES_REDIS_INSTANCE_KEY,
-            DISABLE_TLS: Config.DES_REDIS_INSTANCE_TLS_DISABLE
+            ADDRESS: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
+            PORT: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
+            KEY: Config.LOCKSMAP_REDIS_INSTANCE_KEY,
+            DISABLE_TLS: Config.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE
         });
 
         if (FeatureFlags.isEnabled(Feature.TRACE)) {

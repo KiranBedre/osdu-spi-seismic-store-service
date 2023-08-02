@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,8 +20,11 @@ import { AzureCredentials } from './credentials';
 
 export class KeyVault {
     public static AI_INSTRUMENTATION_KEY = 'appinsights-key';
-    public static REDIS_HOST = 'redis-queue-hostname';
-    public static REDIS_KEY = 'redis-queue-password';
+    public static REDIS_QUEUE_HOST = 'redis-queue-hostname';
+    public static REDIS_QUEUE_KEY = 'redis-queue-password';
+    public static REDIS_HOST = 'redis-hostname';
+    public static REDIS_KEY = 'redis-password';
+
     // pragma: allowlist nextline secret
     public static APP_RESOURCE_ID = 'aad-client-id';
     public static DATA_PARTITION_STORAGE_ACCOUNT_NAME = 'sdms-storage-account-name';
@@ -51,8 +54,12 @@ export class KeyVault {
         AzureConfig.AI_INSTRUMENTATION_KEY = (await client.getSecret(this.AI_INSTRUMENTATION_KEY)).value;
 
         // locksmap redis cache secret
-        AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY = (await client.getSecret(this.REDIS_KEY)).value;
-        AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS = (await client.getSecret(this.REDIS_HOST)).value;
+        AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY = (await client.getSecret(this.REDIS_QUEUE_KEY)).value;
+        AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS = (await client.getSecret(this.REDIS_QUEUE_HOST)).value;
+
+        // shared cache
+        AzureConfig.REDIS_SHARED_INSTANCE_KEY = (await client.getSecret(this.REDIS_KEY)).value;
+        AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS = (await client.getSecret(this.REDIS_HOST)).value;
 
         try {
             AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL = (

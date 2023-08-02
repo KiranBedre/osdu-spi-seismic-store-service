@@ -28,10 +28,14 @@ export interface ConfigModel {
     LOCKSMAP_REDIS_INSTANCE_PORT: number;
     LOCKSMAP_REDIS_INSTANCE_KEY?: string;
     LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE?: boolean;
-    DES_REDIS_INSTANCE_ADDRESS: string;
-    DES_REDIS_INSTANCE_PORT: number;
+    DES_REDIS_INSTANCE_ADDRESS?: string;
+    DES_REDIS_INSTANCE_PORT?: number;
     DES_REDIS_INSTANCE_KEY?: string;
     DES_REDIS_INSTANCE_TLS_DISABLE?: boolean;
+    REDIS_SHARED_INSTANCE_ADDRESS?: string;
+    REDIS_SHARED_INSTANCE_PORT?: number;
+    REDIS_SHARED_INSTANCE_KEY?: string;
+    REDIS_SHARED_INSTANCE_TLS_DISABLE?: boolean;
     DES_SERVICE_HOST_ENTITLEMENT: string;
     DES_SERVICE_HOST_COMPLIANCE: string;
     DES_SERVICE_HOST_STORAGE: string;
@@ -105,17 +109,23 @@ export abstract class Config implements IConfig {
     // Impersonation Token Service Account [this is the account used to sign the impersonation token]
     public static IMP_SERVICE_ACCOUNT_SIGNER: string;
 
-    // Redis cache for lock
+    // Redis cache for lock (high performance cache) - required cache
     public static LOCKSMAP_REDIS_INSTANCE_ADDRESS: string;
     public static LOCKSMAP_REDIS_INSTANCE_PORT: number;
     public static LOCKSMAP_REDIS_INSTANCE_KEY: string;
     public static LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE: boolean;
 
-    // Redis cache for DataEcosystem results
+    // Redis cache for DataEcosystem results (deprecated - to remove)
     public static DES_REDIS_INSTANCE_ADDRESS: string;
     public static DES_REDIS_INSTANCE_PORT: number;
     public static DES_REDIS_INSTANCE_KEY: string;
     public static DES_REDIS_INSTANCE_TLS_DISABLE: boolean;
+
+    // Redis cache for shared result
+    public static REDIS_SHARED_INSTANCE_ADDRESS: string;
+    public static REDIS_SHARED_INSTANCE_PORT: number;
+    public static REDIS_SHARED_INSTANCE_KEY: string;
+    public static REDIS_SHARED_INSTANCE_TLS_DISABLE: boolean;
 
     // DataEcosystem Configuration
     public static DES_SERVICE_HOST_ENTITLEMENT: string;
@@ -254,6 +264,15 @@ export abstract class Config implements IConfig {
             model.DES_REDIS_INSTANCE_KEY || model.LOCKSMAP_REDIS_INSTANCE_KEY;
         Config.DES_REDIS_INSTANCE_TLS_DISABLE =
             model.DES_REDIS_INSTANCE_TLS_DISABLE || model.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE;
+
+        Config.REDIS_SHARED_INSTANCE_ADDRESS = model.REDIS_SHARED_INSTANCE_ADDRESS ||
+            process.env.REDIS_SHARED_INSTANCE_ADDRESS;
+        Config.REDIS_SHARED_INSTANCE_PORT = model.REDIS_SHARED_INSTANCE_PORT ||
+            +process.env.REDIS_SHARED_INSTANCE_PORT;
+        Config.REDIS_SHARED_INSTANCE_KEY = model.REDIS_SHARED_INSTANCE_KEY ||
+            process.env.REDIS_SHARED_INSTANCE_KEY;
+        Config.REDIS_SHARED_INSTANCE_TLS_DISABLE = model.REDIS_SHARED_INSTANCE_TLS_DISABLE ||
+            process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE.toLowerCase() === 'true';
 
         Config.FEATURE_FLAG_SEISMICMETA_STORAGE = model.FEATURE_FLAG_SEISMICMETA_STORAGE;
         Config.FEATURE_FLAG_IMPTOKEN = model.FEATURE_FLAG_IMPTOKEN;

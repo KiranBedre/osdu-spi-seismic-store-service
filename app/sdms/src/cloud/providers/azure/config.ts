@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -98,6 +98,17 @@ export class AzureConfig extends Config {
             Config.checkRequiredConfig(AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS, 'REDIS_INSTANCE_ADDRESS');
             Config.checkRequiredConfig(AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY, 'REDIS_INSTANCE_KEY');
 
+            // redis shared
+            AzureConfig.REDIS_SHARED_INSTANCE_KEY = process.env.REDIS_SHARED_INSTANCE_KEY ||
+                AzureConfig.REDIS_SHARED_INSTANCE_KEY;
+            AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS = process.env.REDIS_SHARED_INSTANCE_ADDRESS ||
+                AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS;
+            AzureConfig.REDIS_SHARED_INSTANCE_PORT = +process.env.REDIS_SHARED_INSTANCE_PORT;
+            AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE =
+                process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE === 'true';  // enabled by default
+            if (AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS) {
+                Config.checkRequiredConfig(AzureConfig.REDIS_SHARED_INSTANCE_PORT, 'REDIS_SHARED_INSTANCE_PORT');
+            }
 
             // set the auth provider
             AzureConfig.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;
@@ -128,9 +139,10 @@ export class AzureConfig extends Config {
                 LOCKSMAP_REDIS_INSTANCE_PORT: AzureConfig.LOCKSMAP_REDIS_INSTANCE_PORT,
                 LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE: AzureConfig.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE,
                 LOCKSMAP_REDIS_INSTANCE_KEY: AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY,
-                DES_REDIS_INSTANCE_ADDRESS: AzureConfig.DES_REDIS_INSTANCE_ADDRESS,
-                DES_REDIS_INSTANCE_PORT: AzureConfig.DES_REDIS_INSTANCE_PORT,
-                DES_REDIS_INSTANCE_KEY: AzureConfig.DES_REDIS_INSTANCE_KEY,
+                REDIS_SHARED_INSTANCE_KEY: AzureConfig.REDIS_SHARED_INSTANCE_KEY,
+                REDIS_SHARED_INSTANCE_ADDRESS: AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS,
+                REDIS_SHARED_INSTANCE_PORT: AzureConfig.REDIS_SHARED_INSTANCE_PORT,
+                REDIS_SHARED_INSTANCE_TLS_DISABLE: AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE,
                 DES_SERVICE_HOST_COMPLIANCE: AzureConfig.DES_SERVICE_HOST_COMPLIANCE,
                 DES_SERVICE_HOST_ENTITLEMENT: AzureConfig.DES_SERVICE_HOST_ENTITLEMENT,
                 DES_SERVICE_HOST_STORAGE: AzureConfig.DES_SERVICE_HOST_STORAGE,
