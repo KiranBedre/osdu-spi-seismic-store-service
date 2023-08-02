@@ -49,9 +49,6 @@ export class AzureConfig extends Config {
 
     // SideCar
     public static SIDECAR_URL: string;
-    public static SIDECAR_ENABLE_INSERT: boolean;
-    public static SIDECAR_ENABLE_GET: boolean;
-    public static SIDECAR_ENABLE_DELETE: boolean;
     public static SIDECAR_ENABLE_QUERY: boolean;
 
     public async init(): Promise<void> {
@@ -116,9 +113,6 @@ export class AzureConfig extends Config {
             AzureConfig.ENABLE_LOGGING_METRIC = process.env.ENABLE_LOGGING_METRIC === 'true'; // disabled by default
 
             AzureConfig.SIDECAR_URL = process.env.SIDECAR_URL || 'https://localhost:7138';
-            AzureConfig.SIDECAR_ENABLE_INSERT = process.env.SIDECAR_ENABLE_INSERT === 'true';
-            AzureConfig.SIDECAR_ENABLE_GET = process.env.SIDECAR_ENABLE_GET === 'true';
-            AzureConfig.SIDECAR_ENABLE_DELETE = process.env.SIDECAR_ENABLE_DELETE === 'true';
             AzureConfig.SIDECAR_ENABLE_QUERY = process.env.SIDECAR_ENABLE_QUERY === 'true';
 
             // set the correlation id

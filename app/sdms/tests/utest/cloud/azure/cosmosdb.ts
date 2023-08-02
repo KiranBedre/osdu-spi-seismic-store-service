@@ -170,18 +170,6 @@ export class TestAzureCosmosDbDAO {
             });
         });
 
-        Tx.test(async (done: any) => {
-            //this.sandbox.stub(Items.prototype, 'upsert').resolves(mockEntity.data as any);
-            AzureConfig.SIDECAR_ENABLE_INSERT = true;
-            this.sandbox.stub(AzureDataEcosystemServices, "getCosmosConnectionParams").resolves({ endpoint: "endpoint", key: "key" });
-            mockEntity.key.partitionKey = "ds-testPartitionKey";
-            await this.cosmos.save(mockEntity).then(res => {
-                done();
-            }).catch(err => {
-                done();
-                assert.fail(err)
-            })
-        });
     }
 
     private static get() {
@@ -237,30 +225,7 @@ export class TestAzureCosmosDbDAO {
             const [res] = await this.cosmos.get(key);
             Tx.checkTrue(res === undefined, done);
         });
-
-        Tx.test(async (done: any) => {
-            const key2 = { id: 'testId', partitionKey: 'ds-testKey', kind: 'testKind' };
-            const mockResult = {
-                resource: {
-                    data: {
-                        id: 'testId',
-                        param: 'testParam'
-                    }
-                }
-            } as any;
-
-            AzureConfig.SIDECAR_ENABLE_GET = true;
-            this.sandbox.stub(AzureDataEcosystemServices, "getCosmosConnectionParams").resolves({ endpoint: "endpoint", key: "key" });
-            this.sandbox.stub(Item.prototype, 'read').returns(mockResult);
-            await this.cosmos.get(key2).then(res => {
-                done();
-            }).catch(err => {
-                done();
-                assert.fail(err)
-            });
-        });
     
-
     }
 
     private static delete() {
@@ -270,17 +235,6 @@ export class TestAzureCosmosDbDAO {
             this.sandbox.stub(Item.prototype, 'delete').resolves();
             await this.cosmos.delete({ partitionKey: 'entity' });
             done();
-        });
-
-        Tx.test(async (done: any) => {
-            AzureConfig.SIDECAR_ENABLE_DELETE = true;
-            this.sandbox.stub(AzureDataEcosystemServices, "getCosmosConnectionParams").resolves({ endpoint: "endpoint", key: "key" });
-            await this.cosmos.delete({ partitionKey: 'ds-partitionKey' }).then(res => {
-                done();
-            }).catch(err => {
-                done();
-                assert.fail(err)
-            });
         });
     }
 

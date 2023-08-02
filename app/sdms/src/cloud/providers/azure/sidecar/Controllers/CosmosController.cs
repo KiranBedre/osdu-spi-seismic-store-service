@@ -1,4 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿// ============================================================================
+// Copyright 2017-2023, Schlumberger
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Sidecar.Services;
 
@@ -15,61 +31,22 @@ namespace Sidecar.Controllers
             _dataAccess = dataAccess;
         }
 
-        [HttpPost("/insert")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> Insert(string cs, string item)
-        {
-            try
-            {
-                await _dataAccess.Insert(cs, Record.FromString(item));
-                return Ok();
-            }
-            catch (CosmosException ex)
-            {
-                return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
-            }
-        }
-
-        [HttpGet("/get")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Record))]
-        public async Task<IActionResult> Get(string cs, string pk)
-        {
-            try
-            {
-                return Ok(await _dataAccess.Get(cs, pk));
-            }
-            catch (CosmosException ex)
-            {
-                return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
-            }
-        }
-
-        [HttpDelete("/delete")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> Delete(string cs, string pk)
-        {
-            try
-            {
-                await _dataAccess.Delete(cs, pk);
-                return Ok();
-            }
-            catch (CosmosException ex)
-            {
-                return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
-            }
-        }
-
         [HttpPost("/query")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedRecords))]
         public async Task<IActionResult> Query([FromBody] QueryPaginatedRequestBody body)
         {
             try
             {
-                if(body.cs != null && body.sql != null) {
+                if (body.cs != null && body.sql != null)
+                {
                     return Ok(await _dataAccess.Query(body.cs, body.sql, body.ctoken, body.limit));
-                } else if(body.cs == null) {
-                    return Problem(400 + "- cs query argument is required");                    
-                } else {
+                }
+                else if (body.cs == null)
+                {
+                    return Problem(400 + "- cs query argument is required");
+                }
+                else
+                {
                     return Problem(400 + "- sql query argument is required");
                 }
             }
@@ -78,27 +55,6 @@ namespace Sidecar.Controllers
                 return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
             }
 
-        }
-
-        [HttpPost("/query-path")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedRecordsPath))]
-        public async Task<IActionResult> QueryPath([FromBody] QueryPaginatedRequestBody body)
-        {
-            try
-            {
-                if(body.cs != null && body.sql != null) {
-                    return Ok(await _dataAccess.QueryPath(body.cs, body.sql, body.ctoken, body.limit));
-                } else if(body.cs == null) {
-                    return Problem(400 + "- cs query argument is required");                    
-                } else {
-                    return Problem(400 + "- sql query argument is required");
-                }
-
-            }
-            catch (CosmosException ex)
-            {
-                return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
-            }
         }
 
     }

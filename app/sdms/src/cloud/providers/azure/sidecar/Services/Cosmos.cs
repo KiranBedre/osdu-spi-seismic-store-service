@@ -1,4 +1,20 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿// ============================================================================
+// Copyright 2017-2023, Schlumberger
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 
 namespace Sidecar.Services
@@ -7,73 +23,7 @@ namespace Sidecar.Services
     {
         private readonly string databaseId = "sdms-db";
         private readonly string containerId = "data";
-
         private static Dictionary<string, CosmosClient> cosmosClients = new Dictionary<string, CosmosClient>();
-
-        public async Task Insert(string cs, Record? record)
-        {
-            if (record == null) { return; };
-            this.initCosmosClient(cs);
-            Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-            Container container = database.GetContainer(this.containerId);
-            await container.UpsertItemAsync<Record>(record, new PartitionKey(record.Id));
-        }
-
-        public async Task<Record> Get(string cs, string pk)
-        {
-            this.initCosmosClient(cs);
-            Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-            Container container = database.GetContainer(this.containerId);
-            return await container.ReadItemAsync<Record>(pk, new PartitionKey(pk));
-        }
-
-        public async Task Delete(string cs, string pk)
-        {
-            this.initCosmosClient(cs);
-            Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-            Container container = database.GetContainer(this.containerId);
-            await container.DeleteItemAsync<Record>(pk, new PartitionKey(pk));
-        }
-
-        public async Task<PaginatedRecordsPath> QueryPath(string cs, string sql, string? ctoken, int? limit)
-        {
-            this.initCosmosClient(cs);
-            Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-            Container container = database.GetContainer(this.containerId);
-            List<RecordPath> records = new List<RecordPath>();
-            QueryRequestOptions options = new QueryRequestOptions() { MaxItemCount = limit != null ? limit : 100 };
-            FeedIterator<RecordPath> query = container.GetItemQueryIterator<RecordPath>(
-                sql,
-                continuationToken: ctoken,
-                requestOptions: options);
-            if (ctoken == null && limit == null) // fetch all
-            {
-                while (query.HasMoreResults)
-                {
-                    var results = await query.ReadNextAsync();
-                    foreach (RecordPath record in results)
-                    {
-                        records.Add(record);
-                    }
-                }
-                PaginatedRecordsPath paginatedRecords = new PaginatedRecordsPath();
-                paginatedRecords.records = records;
-                paginatedRecords.continuationToken = null;
-                return paginatedRecords;
-            }
-            else // fetch next page
-            {
-                var results = await query.ReadNextAsync();
-                foreach (RecordPath record in results)
-                {
-                    records.Add(record);
-                }
-                PaginatedRecordsPath paginatedRecords = new PaginatedRecordsPath();
-                paginatedRecords.records = records;
-                paginatedRecords.continuationToken = results.ContinuationToken;
-                return paginatedRecords;
-            }
-        }
 
         public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
         {
@@ -88,7 +38,7 @@ namespace Sidecar.Services
                 requestOptions: options);
             if (ctoken == null && limit == null) // fetch all
             {
-                while (query.HasMoreResults) 
+                while (query.HasMoreResults)
                 {
                     var results = await query.ReadNextAsync();
                     foreach (Object record in results)

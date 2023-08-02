@@ -13,9 +13,6 @@ data:
   PORT: "{{ .Values.configEnv.port }}"
   SDMS_PREFIX: "{{ .Values.configEnv.sdmsPrefix }}"
   SIDECAR_URL: "{{ .Values.configEnv.sidecarUrl}}"
-  SIDECAR_ENABLE_INSERT: "{{ .Values.configEnv.sidecarEnableInsert}}"
-  SIDECAR_ENABLE_GET: "{{ .Values.configEnv.sidecarEnableGet}}"
-  SIDECAR_ENABLE_DELETE: "{{ .Values.configEnv.sidecarEnableDelete}}"
   SIDECAR_ENABLE_QUERY: "{{ .Values.configEnv.sidecarEnableQuery}}"
 ---
 apiVersion: v1
