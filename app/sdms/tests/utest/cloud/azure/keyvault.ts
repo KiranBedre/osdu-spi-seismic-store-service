@@ -25,8 +25,8 @@ import { KeyVaultSecret } from '@azure/keyvault-secrets';
 const mockAIInstrumentationKey = 'mockAIInstrumentationKey';
 const mockRedisKey = 'mockRedisKey';
 const mockRedisHost= 'mockRedisHost';
-const mockSpTenantID = 'mockSpTenantID';
-const mockSpClientID = 'mockSpClientID';
+const mockRedisQueueKey = 'mockRedisQueueKey';
+const mockRedisQueueHost= 'mockRedisQueueHost';
 // pragma: allowlist nextline secret
 const mockSpClientSecret = 'mockSpClientSecret';
 const mockSpAppSourceID = 'mockSpAppSourceID';
@@ -48,6 +48,16 @@ const mockSecretClient = {
             if (secretName === KeyVault.REDIS_HOST) {
                 resolve( {
                     value: mockRedisHost,
+                } as any)
+            }
+            if (secretName === KeyVault.REDIS_QUEUE_KEY) {
+                resolve( {
+                    value: mockRedisQueueKey,
+                } as any)
+            }
+            if (secretName === KeyVault.REDIS_QUEUE_HOST) {
+                resolve( {
+                    value: mockRedisQueueHost,
                 } as any)
             }
             if (secretName === KeyVault.APP_RESOURCE_ID) {
@@ -86,11 +96,12 @@ export class TestAzureKeyVault {
         Tx.test(async (done: any) => {
             await KeyVault.loadSecrets(mockSecretClient);
             assert.equal(AzureConfig.AI_INSTRUMENTATION_KEY, mockAIInstrumentationKey);
-            assert.equal(AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY, mockRedisKey);
-            assert.equal(AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS, mockRedisHost);
+            assert.equal(AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY, mockRedisQueueKey);
+            assert.equal(AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS, mockRedisQueueHost);
+            assert.equal(AzureConfig.REDIS_SHARED_INSTANCE_KEY, mockRedisKey);
+            assert.equal(AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS, mockRedisHost);
             assert.equal(AzureConfig.APP_RESOURCE_ID, mockSpAppSourceID);
             assert.equal(AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL, mockSauthProvider);
-
             done();
         });
     }
