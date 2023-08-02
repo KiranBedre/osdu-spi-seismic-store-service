@@ -2,11 +2,11 @@
 **/node_modules/**
 dist
 
-# python  
-*.pyc
+# python   
+*.pyc 
 
 # Log Files   
-*.log
+*.log 
 
 # test   
 .nyc_output
