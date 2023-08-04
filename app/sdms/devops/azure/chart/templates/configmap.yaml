@@ -9,6 +9,7 @@ data:
   REDIS_INSTANCE_ADDRESS: "{{ .Values.configEnv.redisInstanceAddress }}"
   REDIS_INSTANCE_KEY: "{{ .Values.configEnv.redisInstanceKey }}"
   REDIS_INSTANCE_PORT: "{{ .Values.configEnv.redisInstancePort }}"
+  REDIS_SHARED_INSTANCE_PORT: "{{ .Values.configEnv.redisInstancePort }}"
   APP_ENVIRONMENT_IDENTIFIER: {{ .Values.configEnv.appEnvironmentIdentifier }}
   PORT: "{{ .Values.configEnv.port }}"
   SDMS_PREFIX: "{{ .Values.configEnv.sdmsPrefix }}"
