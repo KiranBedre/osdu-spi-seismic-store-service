@@ -106,9 +106,6 @@ export class AzureConfig extends Config {
             AzureConfig.REDIS_SHARED_INSTANCE_PORT = +process.env.REDIS_SHARED_INSTANCE_PORT;
             AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE =
                 process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE === 'true';  // enabled by default
-            if (AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS) {
-                Config.checkRequiredConfig(AzureConfig.REDIS_SHARED_INSTANCE_PORT, 'REDIS_SHARED_INSTANCE_PORT');
-            }
 
             // set the auth provider
             AzureConfig.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;
@@ -192,7 +189,7 @@ export class AzureConfig extends Config {
             AzureInsightsLogger.initialize();
 
         } catch (error) {
-            LoggerFactory.build(Config.CLOUDPROVIDER).error('Unable to initialize configuration for azure cloud provider ' + error);
+            console.error('Unable to initialize configuration for azure cloud provider ' + error);
             throw error;
         }
 

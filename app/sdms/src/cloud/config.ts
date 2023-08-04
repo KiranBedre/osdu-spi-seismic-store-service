@@ -272,7 +272,7 @@ export abstract class Config implements IConfig {
         Config.REDIS_SHARED_INSTANCE_KEY = model.REDIS_SHARED_INSTANCE_KEY ||
             process.env.REDIS_SHARED_INSTANCE_KEY;
         Config.REDIS_SHARED_INSTANCE_TLS_DISABLE = model.REDIS_SHARED_INSTANCE_TLS_DISABLE ||
-            process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE.toLowerCase() === 'true';
+            process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE?.toLowerCase() === 'true';
 
         Config.FEATURE_FLAG_SEISMICMETA_STORAGE = model.FEATURE_FLAG_SEISMICMETA_STORAGE;
         Config.FEATURE_FLAG_IMPTOKEN = model.FEATURE_FLAG_IMPTOKEN;
