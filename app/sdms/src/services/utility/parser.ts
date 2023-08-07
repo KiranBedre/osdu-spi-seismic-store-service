@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 import { Request as expRequest } from 'express';
 import { Config } from '../../cloud';
 import { Error, Params, SDPath, SDPathModel } from '../../shared';
-import { DatasetModel, PaginationModel } from '../dataset';
+import { DatasetModel } from '../dataset';
+import { UtilityLsRequest } from './model';
 
 export class UtilityParser {
 
@@ -56,44 +57,55 @@ export class UtilityParser {
 
     }
 
-    public static ls(req: expRequest): { sdPath: SDPathModel, wmode: string, pagination: PaginationModel } {
+    public static ls(req: expRequest): UtilityLsRequest {
 
-        Params.checkString(req.query.sdpath, 'sdpath');
-        Params.checkString(req.query.wmode, 'wmode', false);
-        Params.checkString(req.query.limit, 'limit', false);
-        Params.checkString(req.query.cursor, 'cursor', false);
+        const params = req.method === 'POST' ? req.body : req.query;
 
-        const sdPath = SDPath.getFromString(req.query.sdpath as string, false); // partial path
-        if (!sdPath) {
+        // check input field
+        Params.checkString(params?.sdpath, 'sdpath'); // required
+        Params.checkString(params?.wmode, 'wmode', false); // optional
+        Params.checkString(params?.limit, 'limit', false);  // optional
+        Params.checkString(params?.cursor, 'cursor', false);  // optional
+
+        // build input request params model
+        const input = {
+            sdPath: SDPath.getFromString(params.sdpath as string, false),
+            pagination: {
+                cursor: params.cursor as string,
+                limit: parseInt(params.limit as string, 10)
+            },
+            workingMode: (params.wmode as string ||  Config.LS_MODE.ALL).toLowerCase()
+        } as UtilityLsRequest;
+
+        // check if the specified sdpath is valid
+        if (!input.sdPath) {
             throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'sdpath\' query parameter is not a valid seismic store path.'));
+                'The "sdpath" request parameter is not a valid seismic store path.'));
         }
 
-        const wmode = (req.query.wmode as string || Config.LS_MODE.ALL).toLowerCase();
-        if (wmode !== Config.LS_MODE.ALL && wmode !== Config.LS_MODE.DATASETS && wmode !== Config.LS_MODE.DIRS) {
+        // check if the specified working mode is valid
+        if (input.workingMode !== Config.LS_MODE.ALL &&
+            input.workingMode !== Config.LS_MODE.DATASETS &&
+            input.workingMode !== Config.LS_MODE.DIRS) {
+                throw (Error.make(Error.Status.BAD_REQUEST,
+                    'The "wmode" request parameter must be "dirs", ' +
+                    'or "datasets" or "all". The specified "' + input.workingMode + '" value is not valid'));
+        }
+
+        // ensure limit is a positive value
+        if (input.pagination?.limit < 0) {
             throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'wmode\' query parameter must be \'dirs\' ' +
-                'or \'datasets\'. The \'' + wmode + '\' value is not valid'));
+                'The "limit" request parameter must be greater than zero.'));
         }
 
-        const limit = parseInt(req.query.limit as string, 10);
-        if (limit < 0) {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'limit\' query parameter can not be less than zero.'));
+        // remove the pagination content if no pagination params have been specified
+        if((!input.pagination?.cursor || input.pagination?.cursor === '') &&
+            !input.pagination?.limit) {
+                delete input.pagination;
         }
 
-        const cursor = req.query.cursor as string;
-        if (cursor === '') {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'cursor\' query parameter can not be empty if supplied'));
-        }
+        return input
 
-        let pagination = null;
-        if (limit || cursor) {
-            pagination = { limit, cursor };
-        }
-
-        return { sdPath, wmode, pagination };
     }
 
     public static connectionString(req: expRequest): DatasetModel {

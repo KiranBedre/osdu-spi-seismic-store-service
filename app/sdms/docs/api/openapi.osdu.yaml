@@ -1103,7 +1103,7 @@ paths:
           required: true
           schema:
             type: string
-        - description: Working mode, directories or datasets or undefined for both.
+        - description: Working mode, dirs or datasets or undefined for both.
           in: query
           name: wmode
           required: false
@@ -1121,6 +1121,50 @@ paths:
           required: false
           schema:
             type: string
+      responses:
+        "200":
+          description: Seismic store path content.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LsDatasets"
+        "201":
+          description: "Paginated seismic store path content - For documentation purposes, if limit or cursor is given, status code here is 200."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LsPaginatedDatasets"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+    post:
+      summary: Retrieve the list of datasets and sub-directories inside a seismic store
+        path.
+      description: |
+        <ul>
+        <li>Return the list of datasets and sub-directories of a seismic store path.</li>
+        <li>Required roles: subproject.admin, subproject.viewer</li></ul>
+      operationId: ls
+      tags:
+        - Utility
+      parameters:
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetLsBody"
       responses:
         "200":
           description: Seismic store path content.
@@ -2241,6 +2285,28 @@ components:
         gtags:
           - tagA
           - tagB
+        limit: 10
+        cursor: next-page-token-931fvm19vm1-vm1v1
+    DatasetLsBody:
+      type: object
+      required:
+        - sdpath
+      properties:
+        sdpath:
+          type: string
+          description: "the seismic dms path uri: sd://tenant or sd://tenant/subproject or sd://tenant/subproject/path."
+        wmode:
+          type: string
+          description: "the endpoint working mode: dirs, datasets, all (default if not specified)."
+        limit:
+          type: number
+          description: "the max response datasets number."
+        cursor:
+          type: string
+          description: "the next page cursor."
+      example:
+        sdpath: "sd://test-tenant/test-subproject/test-path"
+        wmode: "all"
         limit: 10
         cursor: next-page-token-931fvm19vm1-vm1v1
     DatasetRegisterBody:
