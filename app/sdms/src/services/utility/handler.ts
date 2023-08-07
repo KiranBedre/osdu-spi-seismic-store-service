@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -194,13 +194,10 @@ export class UtilityHandler {
     //  - for list accessible subproject content: subproject.viewer
     private static async ls(req: expRequest) {
 
-        const userInput = UtilityParser.ls(req);
-        const sdPath = userInput.sdPath;
-        const wmode = userInput.wmode;
-        const pagination = userInput.pagination;
+        const inputArgs = UtilityParser.ls(req);
 
         // list accessible tenants for sdPaths <sd://>
-        if (!sdPath.tenant) {
+        if (!inputArgs.sdPath.tenant) {
             const tenants = await TenantDAO.getAll();
             const partitions = tenants
                 .map((t) => DESUtils.getDataPartitionID(t.esd))
@@ -228,19 +225,19 @@ export class UtilityHandler {
         }
 
         // list the tenant subprojects for sdPaths <sd://tenant>
-        const tenant = await TenantDAO.get(sdPath.tenant);
+        const tenant = await TenantDAO.get(inputArgs.sdPath.tenant);
 
         // Create  tenant journalClient client
         const journalClient = JournalFactoryTenantClient.get(tenant);
 
-        if (!sdPath.subproject) {
+        if (!inputArgs.sdPath.subproject) {
             let subprojects = [];
             const entitlementTenant = DESUtils.getDataPartitionID(tenant.esd);
             const userGroups = await DESEntitlement.getUserGroups(
                 req.headers.authorization, entitlementTenant, req[Config.DE_FORWARD_APPKEY]);
             const userGroupEmailsList = userGroups.map(group => group.email);
 
-            const registeredSubprojectsList = await SubProjectDAO.list(journalClient, sdPath.tenant);
+            const registeredSubprojectsList = await SubProjectDAO.list(journalClient, inputArgs.sdPath.tenant);
 
             for (const registeredSubproject of registeredSubprojectsList) {
                 if (registeredSubproject.acls) {
@@ -258,30 +255,33 @@ export class UtilityHandler {
 
         // list the folder content for sdPaths <sd://tenant/subproject>
         const dataset = {} as DatasetModel;
-        dataset.tenant = sdPath.tenant;
-        dataset.subproject = sdPath.subproject;
-        dataset.path = sdPath.path || '/';
+        dataset.tenant = inputArgs.sdPath.tenant;
+        dataset.subproject = inputArgs.sdPath.subproject;
+        dataset.path = inputArgs.sdPath.path || '/';
 
         const subproject = await SubProjectDAO.get(journalClient, dataset.tenant, dataset.subproject);
 
         //  Check if user is authorized
         await Auth.isReadAuthorized(req.headers.authorization,
             SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
-            tenant, sdPath.subproject, req[Config.DE_FORWARD_APPKEY],
+            tenant, inputArgs.sdPath.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
 
-        if (pagination) {
+        if (inputArgs.pagination) {
             // Retrieve paginated content list
-            return await DatasetDAO.paginatedListContent(journalClient, dataset, wmode, pagination);
+            return await DatasetDAO.paginatedListContent(
+                journalClient, dataset, inputArgs.workingMode, inputArgs.pagination);
         }
 
         // Retrieve complete content list
-        const results = await DatasetDAO.listContent(journalClient, dataset, wmode);
+        const results = await DatasetDAO.listContent(journalClient, dataset, inputArgs.workingMode);
         return (
-            (wmode === Config.LS_MODE.ALL || wmode === Config.LS_MODE.DIRS) ?
+            (inputArgs.workingMode === Config.LS_MODE.ALL ||
+                inputArgs.workingMode === Config.LS_MODE.DIRS) ?
                 results.directories : []).concat(
-                    (wmode === Config.LS_MODE.ALL || wmode === Config.LS_MODE.DATASETS) ?
+                    (inputArgs.workingMode === Config.LS_MODE.ALL ||
+                        inputArgs.workingMode === Config.LS_MODE.DATASETS) ?
                         results.datasets : []);
     }
 

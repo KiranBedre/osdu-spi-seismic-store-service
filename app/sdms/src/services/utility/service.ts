@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,8 +20,13 @@ import { UtilityOP } from './optype';
 
 const router = Router();
 
-// list a path content
+// list a path content (url query params)
 router.get('/ls', async (req: expRequest, res: expResponse) => {
+    await UtilityHandler.handler(req, res, UtilityOP.LS);
+});
+
+// list a path content (body query params)
+router.post('/ls', async (req: expRequest, res: expResponse) => {
     await UtilityHandler.handler(req, res, UtilityOP.LS);
 });
 
