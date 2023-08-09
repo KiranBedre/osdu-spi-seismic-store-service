@@ -18,7 +18,7 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { Auth, AuthProviderFactory, AuthRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
-import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
+import { Error, Feature, FeatureFlags, Response, Utils, getInMemoryCacheInstance, cacheShared } from '../../shared';
 import { SubprojectAuth, SubProjectDAO } from '../subproject';
 import { TenantDAO } from '../tenant';
 import { ImpersonationTokenContextModel, ImpersonationTokenModel } from './model';
@@ -27,8 +27,12 @@ import { ImpersonationTokenParser } from './parser';
 
 export class ImpersonationTokenHandler {
 
+    private static impersonationTokenTTL = 3300;
+    private static cacheKey = 'sdms-auth-token';
+
     // handler for the [ /impersonation-token ] endpoints
     public static async handler(req: expRequest, res: expResponse, op: ImpersonationTokenOps) {
+
         try {
 
             // the impersonation token endpoints are not available with impersonation tokens
@@ -119,13 +123,27 @@ export class ImpersonationTokenHandler {
         }
 
         // generate the impersonation token credential token (the auth credential)
-        const authProvider = AuthProviderFactory.build(Config.SERVICE_AUTH_PROVIDER);
-        const scopes = [authProvider.getClientID()];
-        if (Config.DES_TARGET_AUDIENCE) {
-            scopes.push(Config.DES_TARGET_AUDIENCE);
+        const inMemoryCache = getInMemoryCacheInstance();
+        let impersonationToken = inMemoryCache.get<ImpersonationTokenModel>(this.cacheKey);
+        if (!impersonationToken) {
+            impersonationToken = (await cacheShared.get(this.cacheKey)) as ImpersonationTokenModel;
+            if (!impersonationToken) {
+                const authProvider = AuthProviderFactory.build(Config.SERVICE_AUTH_PROVIDER);
+                const scopes = [authProvider.getClientID()];
+                if (Config.DES_TARGET_AUDIENCE) {
+                    scopes.push(Config.DES_TARGET_AUDIENCE);
+                }
+                impersonationToken = authProvider.convertToImpersonationTokenModel(
+                    await authProvider.generateScopedAuthCredential(scopes));
+                await cacheShared.set(this.cacheKey, impersonationToken, this.impersonationTokenTTL);
+                inMemoryCache.set<ImpersonationTokenModel>(
+                    this.cacheKey, impersonationToken, this.impersonationTokenTTL);
+            }
+            else {
+                const ttlInShared = await cacheShared.getTTL(this.cacheKey);
+                inMemoryCache.set<ImpersonationTokenModel>(this.cacheKey, impersonationToken, ttlInShared);
+            }
         }
-        const impersonationToken = authProvider.convertToImpersonationTokenModel(
-            await authProvider.generateScopedAuthCredential(scopes));
 
         const impersonatedBy = await Utils.getUserId(
             req.headers.authorization);
@@ -144,7 +162,6 @@ export class ImpersonationTokenHandler {
         const encryptedContext = Utils.encrypt(JSON.stringify(context), authClientSecret);
         impersonationToken.context = encryptedContext.encryptedText + '.' + encryptedContext.encryptedTextIV;
 
-        // Done
         return impersonationToken;
     }
 
