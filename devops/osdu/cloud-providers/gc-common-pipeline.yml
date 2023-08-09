@@ -247,7 +247,7 @@ variables:
       --wait
       --timeout=1200s
       --history-max=3
-      --set data.serviceAccountName=$SEISMIC_GC_SERVICE-k8s
+      --set data.serviceAccountName=$SEISMIC_GC_SERVICE
       --set global.domain=$GC_DOMAIN
       --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
@@ -277,7 +277,7 @@ variables:
       --wait
       --history-max=3
       --set data.imagePullPolicy=Always
-      --set data.serviceAccountName=$SEISMIC_GC_SERVICE-k8s
+      --set data.serviceAccountName=$SEISMIC_GC_SERVICE
       --set global.domain=$GC_DOMAIN
       --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
       --set data.googleAudiences=$GOOGLE_AUDIENCE
@@ -308,7 +308,7 @@ variables:
       --wait
       --history-max=3
       --set data.imagePullPolicy=Always
-      --set data.serviceAccountName=$SEISMIC_GC_SERVICE-k8s
+      --set data.serviceAccountName=$SEISMIC_GC_SERVICE
       --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
       --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
