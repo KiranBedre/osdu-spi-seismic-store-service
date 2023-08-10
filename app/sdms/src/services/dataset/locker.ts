@@ -117,12 +117,14 @@ export class Locker {
                 });
             }
 
+            this.redisClient.config('SET', 'notify-keyspace-events', 'Ex');
+
             // This will automatically remove the wid entries from the main read lock
             this.redisSubscriptionClient.on('message', async (channel, key) => {
                 if (channel === '__keyevent@0__:expired') {
                     await Locker.unlockReadLockSession(
-                        key.substr(0, key.lastIndexOf('/')),
-                        key.substr(key.lastIndexOf('/') + 1)
+                        key.substring(0, key.lastIndexOf('/')),
+                        key.substring(key.lastIndexOf('/') + 1)
                     );
                 }
             });
