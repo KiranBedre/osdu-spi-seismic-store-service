@@ -79,64 +79,64 @@ export class TestLocker {
 	// private static testIsWriteLock() {
 	// 	Tx.sectionInit('is write lock');
 
-	// 	Tx.test((done: any) => {
+	// 	Tx.test(() => {
 	// 		const result = Locker.isWriteLock(this.writeLockValueInCache);
-	// 		Tx.checkTrue(result, done);
+	// 		Tx.checkTrue(result);
 	// 	});
 
-	// 	Tx.test((done: any) => {
+	// 	Tx.test(() => {
 	// 		const result = Locker.isWriteLock(this.writeLockValueInCache);
-	// 		Tx.checkTrue(result, done);
+	// 		Tx.checkTrue(result);
 	// 	});
 
-	// 	Tx.test((done: any) => {
+	// 	Tx.test(() => {
 	// 		const result = Locker.isWriteLock(['RAxAMSFEssarGGERGEG']);
-	// 		Tx.checkFalse(result, done);
+	// 		Tx.checkFalse(result);
 	// 	});
 	// }
 
 	// private static testGetLock() {
 	// 	Tx.sectionInit('get lock');
 
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'get' as any).resolves(this.writeLockValueInCache);
 	// 		const result = await Locker.getLock(this.datasetKey);
-	// 		Tx.checkTrue(result === this.writeLockValueInCache, done);
+	// 		Tx.checkTrue(result === this.writeLockValueInCache);
 	// 	});
 	// }
 
 	// private static testDeleteLock() {
 	// 	Tx.sectionInit('delete lock ');
 
-	// 	// Tx.test(async (done: any) => {
+	// 	// Tx.test(async () => {
 	// 	// 	this.redisClient.set(this.datasetKey, this.writeLockValueInCache);
 	// 	// 	const result = await Locker.del(this.datasetKey);
-	// 	// 	Tx.checkTrue(result === 1, done);
+	// 	// 	Tx.checkTrue(result === 1);
 	// 	// });
 	// }
 
 	// private static testCreateWriteLock() {
 	// 	Tx.sectionInit('create write lock');
 
-	// 	// Tx.test(async (done: any) => {
+	// 	// Tx.test(async () => {
 	// 	// 	this.sandbox.stub(Redlock.prototype, 'lock').resolves();
 
 	// 	// 	await Locker.createWriteLock(this.datasetKey, 'Wx123');
 
 	// 	// 	this.redisClient.get(this.datasetKey, (err, response) => {
-	// 	// 		Tx.checkTrue('Wx123' === response.toString(), done);
+	// 	// 		Tx.checkTrue('Wx123' === response.toString());
 	// 	// 	});
 	// 	// });
 
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Redlock.prototype, <any>'lock').resolves({});
 
 	// 		this.sandbox.stub(Locker, 'acquireMutex').rejects();
 	// 		try {
 	// 			await Locker.createWriteLock(this.datasetKey);
-	// 			done();
+	//
 	// 		} catch (e) {
-	// 			done();
+	//
 	// 		}
 	// 	});
 	// }
@@ -146,19 +146,19 @@ export class TestLocker {
 	// 	Tx.sectionInit('acquire write lock');
 
 	// 	// unlocked dataset
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
 
 	// 		try {
 	// 			await Locker.acquireWriteLock(this.datasetKey, 'WAxBxCx');
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 	// 	});
 
 	// 	// unlocked dataset
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(undefined);
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
@@ -167,12 +167,12 @@ export class TestLocker {
 
 	// 		const result = await Locker.acquireWriteLock(this.datasetKey, undefined);
 
-	// 		Tx.checkTrue(result.id != null && result.cnt === 1, done);
+	// 		Tx.checkTrue(result.id != null && result.cnt === 1);
 
 	// 	});
 
 	// 	// already locked dataset
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
@@ -181,13 +181,13 @@ export class TestLocker {
 	// 		try {
 	// 			await Locker.acquireWriteLock(this.datasetKey, undefined);
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 
 	// 	});
 
 	// 	// already locked dataset
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
@@ -196,13 +196,13 @@ export class TestLocker {
 	// 		try {
 	// 			await Locker.acquireWriteLock(this.datasetKey, undefined);
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 
 	// 	});
 
 	// 	// already locked dataset
-	// 	// Tx.test(async (done: any) => {
+	// 	// Tx.test(async () => {
 	// 	// 	this.sandbox.stub(Locker, 'acquireMutex').resolves();
 
 	// 	// 	// lock value in the cache is a multi session read locks string
@@ -214,12 +214,12 @@ export class TestLocker {
 
 	// 	// 	// the wid is a session readlock value;
 	// 	// 	const result = await Locker.acquireWriteLock(this.datasetKey, undefined, sessionReadLockValue);
-	// 	// 	Tx.checkTrue(result.id === sessionReadLockValue && result.cnt === multiSessionReadLockArray.length, done);
+	// 	// 	Tx.checkTrue(result.id === sessionReadLockValue && result.cnt === multiSessionReadLockArray.length);
 
 	// 	// });
 
 	// 	// already locked dataset
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 
 	// 		// lock value in the cache is a multi session read locks string
@@ -232,7 +232,7 @@ export class TestLocker {
 	// 		try {
 	// 			await Locker.acquireWriteLock(this.datasetKey, undefined, 'RRandomReadLockValue');
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 
 	// 	});
@@ -243,7 +243,7 @@ export class TestLocker {
 	// 	Tx.sectionInit('acquire read lock');
 
 	// 	// already locked with write lock
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
@@ -251,12 +251,12 @@ export class TestLocker {
 	// 		try {
 	// 			await Locker.acquireReadLock(this.datasetKey);
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 	// 	});
 
 	// 	// already locked with write lock and wid mismatch
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
@@ -266,12 +266,12 @@ export class TestLocker {
 	// 		try {
 	// 			await Locker.acquireReadLock(this.datasetKey, undefined, wid);
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 	// 	});
 
 	// 	// already locked with write lock and wid matches
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
@@ -279,11 +279,11 @@ export class TestLocker {
 	// 		const wid = this.writeLockValueInCache;
 	// 		const result = await Locker.acquireReadLock(this.datasetKey, undefined, wid);
 
-	// 		Tx.checkTrue(result.id === wid && result.cnt === 1, done);
+	// 		Tx.checkTrue(result.id === wid && result.cnt === 1);
 	// 	});
 
 	// 	// already locked with multi session read lock
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.multiSessionReadLockValueInCache);
@@ -295,12 +295,12 @@ export class TestLocker {
 	// 		try {
 	// 			const result = await Locker.acquireReadLock(this.datasetKey, undefined, wid);
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 	// 	});
 
 	// 	// unlocked dataset with no value in cache
-	// 	// Tx.test(async (done: any) => {
+	// 	// Tx.test(async () => {
 	// 	// 	this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 	// 	this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 	// 	this.sandbox.stub(Locker, 'getLock' as any).resolves(undefined);
@@ -311,12 +311,12 @@ export class TestLocker {
 
 	// 	// 	const result = await Locker.acquireReadLock(this.datasetKey);
 
-	// 	// 	Tx.checkTrue(result.id === readlockID && result.cnt === 1, done);
+	// 	// 	Tx.checkTrue(result.id === readlockID && result.cnt === 1);
 	// 	// });
 
 
 	// 	// // unlocked dataset with multi session read lock value in cache
-	// 	// Tx.test(async (done: any) => {
+	// 	// Tx.test(async () => {
 
 
 	// 	// 	const readlockID = 'RAxBxCx';
@@ -330,7 +330,7 @@ export class TestLocker {
 
 	// 	// 	const result = await Locker.acquireReadLock(this.datasetKey);
 
-	// 	// 	Tx.checkTrue(result.id === readlockID && result.cnt === 3, done);
+	// 	// 	Tx.checkTrue(result.id === readlockID && result.cnt === 3);
 
 	// 	// });
 
@@ -341,7 +341,7 @@ export class TestLocker {
 	// 	Tx.sectionInit('unlock');
 
 	// 	// write lock cache value differs from the wid
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
@@ -350,11 +350,11 @@ export class TestLocker {
 	// 		try {
 	// 			await Locker.unlock(this.datasetKey, wid);
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 404, done);
+	// 			Tx.checkTrue(e.error.code === 404);
 	// 		}
 	// 	});
 
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
@@ -367,12 +367,12 @@ export class TestLocker {
 
 	// 		const result = await Locker.unlock(this.datasetKey, wid);
 
-	// 		Tx.checkTrue(lockerDelStub.calledWith(this.datasetKey) && result.id === null && result.cnt === 0, done);
+	// 		Tx.checkTrue(lockerDelStub.calledWith(this.datasetKey) && result.id === null && result.cnt === 0);
 
 	// 	});
 
 	// 	// cache has write lock but the user does not supply wid
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'getLock' as any).resolves(this.writeLockValueInCache);
@@ -384,13 +384,13 @@ export class TestLocker {
 
 	// 		const result = await Locker.unlock(this.datasetKey);
 
-	// 		Tx.checkTrue(lockerDelStub.calledWith(this.datasetKey) && result.id === null && result.cnt === 0, done);
+	// 		Tx.checkTrue(lockerDelStub.calledWith(this.datasetKey) && result.id === null && result.cnt === 0);
 
 	// 	});
 
 
 	// 	// cache has multi session read lock but the user does not supply wid
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		const multiSessionReadLockArray: string[] = this.multiSessionReadLockValueInCache.substr(4).split(':');
@@ -407,14 +407,14 @@ export class TestLocker {
 	// 			lockerDelStub.getCall(1).calledWith(this.datasetKey + '/' + multiSessionReadLockArray[1]) &&
 	// 			lockerDelStub.getCall(2).calledWith(this.datasetKey);
 
-	// 		Tx.checkTrue(validationResult === true && result.id === null && result.cnt === 0, done);
+	// 		Tx.checkTrue(validationResult === true && result.id === null && result.cnt === 0);
 
 	// 	});
 
 
 	// 	// cache has multi session read lock and the user supplies a wid
 	// 	// which is in the cache's multi session read lock value
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		const multiSessionReadLockArray: string[] = this.multiSessionReadLockValueInCache.substr(4).split(':');
@@ -441,13 +441,13 @@ export class TestLocker {
 	// 		const validationResult = setLockStub.calledWith(this.datasetKey, multiSessionReadLockArray, 3600)
 	// 			&& lockerDelStub.calledWith(this.datasetKey + '/' + wid);
 
-	// 		Tx.checkTrue(validationResult === true && result.id === multiSessionReadLockArray[0] && result.cnt === 1, done);
+	// 		Tx.checkTrue(validationResult === true && result.id === multiSessionReadLockArray[0] && result.cnt === 1);
 
 	// 	});
 
 	// 	// cache has multi session read lock and the user supplies a wid
 	// 	// which is not in the cache's multi session read lock value
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		this.sandbox.stub(Locker, 'acquireMutex').resolves();
 	// 		this.sandbox.stub(Locker, 'releaseMutex').resolves();
 	// 		const multiSessionReadLockArray: string[] = this.multiSessionReadLockValueInCache.substr(4).split(':');
@@ -463,13 +463,13 @@ export class TestLocker {
 	// 		try {
 	// 			await Locker.unlock(this.datasetKey, wid);
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 404, done);
+	// 			Tx.checkTrue(e.error.code === 404);
 	// 		}
 
 	// 	});
 
 	// 	// cache was no lock value for the dataset but the user supplies wid
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 
 	// 		const wid = 'WSomeRandom';
 	// 		this.dataset.sbit = 'WSomeRandom';
@@ -482,7 +482,7 @@ export class TestLocker {
 
 	// 		const result = await Locker.unlock(this.datasetKey, wid);
 
-	// 		Tx.checkTrue(result.id === null && result.cnt === 0, done);
+	// 		Tx.checkTrue(result.id === null && result.cnt === 0);
 
 	// 	});
 
@@ -493,7 +493,7 @@ export class TestLocker {
 
 	// 	// cache contains a multi session read lock value and the
 	// 	// user supplies a wid present in the multi session read lock value
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		const multiSessionReadLockArray: string[] = this.multiSessionReadLockValueInCache.substr(4).split(':');
 	// 		const wid = multiSessionReadLockArray[0];
 
@@ -512,7 +512,7 @@ export class TestLocker {
 
 	// 		multiSessionReadLockArray.shift();
 	// 		const validationResult = setLockStub.calledWith(this.datasetKey, multiSessionReadLockArray, 3600);
-	// 		Tx.checkTrue(validationResult === true, done);
+	// 		Tx.checkTrue(validationResult === true);
 
 	// 	});
 
@@ -520,7 +520,7 @@ export class TestLocker {
 
 	// 	// cache contains a multi session read lock value and the
 	// 	// user supplies a wid present in the multi session read lock value
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		const multiSessionReadLockArray: string[] = ['RAxBxCx'];
 	// 		const wid = multiSessionReadLockArray[0];
 
@@ -535,7 +535,7 @@ export class TestLocker {
 	// 		await Locker.unlockReadLockSession(this.datasetKey, wid);
 
 	// 		const validationResult = lockerDelStub.calledWith(this.datasetKey);
-	// 		Tx.checkTrue(validationResult === true, done);
+	// 		Tx.checkTrue(validationResult === true);
 
 	// 	});
 	// }
@@ -544,22 +544,22 @@ export class TestLocker {
 
 	// 	Tx.sectionInit('acquire mutex');
 
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		const cacheLock = {};
 	// 		this.sandbox.stub(Redlock.prototype, <any>'lock').resolves(cacheLock);
 	// 		const result = await Locker.acquireMutex(this.datasetKey);
-	// 		Tx.checkTrue(result === cacheLock, done);
+	// 		Tx.checkTrue(result === cacheLock);
 
 	// 	});
 
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		const cacheLock = { lock: 'cache_lock' };
 	// 		this.sandbox.stub(Redlock.prototype, <any>'lock').rejects();
 	// 		try {
 	// 			await Locker.acquireMutex(this.datasetKey);
-	// 			done();
+	//
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 	// 	});
 	// }
@@ -568,21 +568,21 @@ export class TestLocker {
 
 	// 	Tx.sectionInit('release mutex');
 
-	// 	// Tx.test(async (done: any) => {
+	// 	// Tx.test(async () => {
 	// 	// 	const cacheLock = { lock: 'cache_lock' };
 	// 	// 	this.sandbox.stub(Redlock.prototype, <any>'unlock').resolves();
 	// 	// 	await Locker.releaseMutex(cacheLock,);
-	// 	// 	done();
+	// 	//
 	// 	// });
 
-	// 	Tx.test(async (done: any) => {
+	// 	Tx.test(async () => {
 	// 		const cacheLock = { lock: 'cache_lock' };
 	// 		this.sandbox.stub(Redlock.prototype, <any>'unlock').rejects();
 	// 		try {
 	// 			await Locker.releaseMutex(cacheLock);
-	// 			done();
+	//
 	// 		} catch (e) {
-	// 			Tx.checkTrue(e.error.code === 423, done);
+	// 			Tx.checkTrue(e.error.code === 423);
 	// 		}
 
 	// 	});

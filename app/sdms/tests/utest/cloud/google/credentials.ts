@@ -48,27 +48,26 @@ export class TestGoogleCredentials {
   private static getServiceAccountEmail() {
     Tx.sectionInit('service account email');
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
       this.sandbox.stub(axios, 'get').resolves({data: 'email'});
       await this.credentials.getServiceAccountEmail();
-      done();
     });
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
       this.sandbox.stub(axios, 'get').throws();
       try {
         await this.credentials.getServiceAccountEmail();
       } catch (e) {
         ConfigGoogle.SERVICE_IDENTITY_EMAIL = '';
-        Tx.check500(e.error.code, done);
+        Tx.check500(e.error.code);
       }
     });
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
       ConfigGoogle.SERVICE_IDENTITY_EMAIL = 'test@email.com';
       const result = await this.credentials.getServiceAccountEmail();
       ConfigGoogle.SERVICE_IDENTITY_EMAIL = '';
-      Tx.checkTrue(result === 'test@email.com', done);
+      Tx.checkTrue(result === 'test@email.com');
     });
 
   }
@@ -78,7 +77,7 @@ export class TestGoogleCredentials {
     // [REVERT-DOWNSCOPE] re-enable this test
     // Tx.sectionInit('user credentials');
 
-    // Tx.testExp(async (done: any) => {
+    // Tx.test(async () => {
     //   this.sandbox.stub(google.Credentials.prototype, 'getServiceAccountEmail').resolves('user@email');
     //   this.sandbox.stub(google.Credentials.prototype, 'getServiceAccountAccessToken').resolves({
     //     access_token: 'access_token',
@@ -98,7 +97,7 @@ export class TestGoogleCredentials {
     //   Tx.checkTrue(
     //     result.access_token === 'access_token' &&
     //     result.expires_in === 3599 &&
-    //     result.token_type === 'Bearer', done);
+    //     result.token_type === 'Bearer');
     // });
   }
 
@@ -106,7 +105,7 @@ export class TestGoogleCredentials {
 
     Tx.sectionInit('service credentials');
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
       this.sandbox.stub(google.Credentials.prototype, 'getServiceAccountEmail').resolves('user@email');
       this.sandbox.stub(google.Credentials.prototype, 'getServiceAccountAccessToken').resolves({
         access_token: 'access_token',
@@ -118,7 +117,7 @@ export class TestGoogleCredentials {
 
       const idToken = await this.credentials.getServiceCredentials();
 
-      Tx.checkTrue(idToken === 'id_token', done);
+      Tx.checkTrue(idToken === 'id_token');
 
     });
   }
@@ -127,7 +126,7 @@ export class TestGoogleCredentials {
 
     Tx.sectionInit('service access token');
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
       this.sandbox.stub(axios, 'get').resolves({ status: 200, data: {
         access_token: 'acces_token',
         expires_in: 1000,
@@ -135,7 +134,7 @@ export class TestGoogleCredentials {
       }});
 
       const result = await this.credentials.getServiceAccountAccessToken();
-      Tx.checkTrue(result.access_token === 'acces_token', done);
+      Tx.checkTrue(result.access_token === 'acces_token');
     });
   }
 

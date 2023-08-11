@@ -63,10 +63,9 @@ export class TestSubProject {
          access_policy: 'uniform'
       };
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.journal.save.resolves();
          await SubProjectDAO.register(this.journal, createdSubproject);
-         done();
       });
    }
 
@@ -74,10 +73,10 @@ export class TestSubProject {
 
       Tx.sectionInit('get subproject');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          this.journal.get.resolves([{ a: 'b' }]);
          const result = await SubProjectDAO.get(this.journal, 'tenant-a', 'subproject-a');
-         Tx.checkTrue(result.name === 'subproject-a' && result.tenant === 'tenant-a', done);
+         Tx.checkTrue(result.name === 'subproject-a' && result.tenant === 'tenant-a');
       });
 
    }
@@ -86,23 +85,22 @@ export class TestSubProject {
 
       Tx.sectionInit('list subprojects');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          this.journal.runQuery.resolves([[{ name: 'name-1', tenant: 'tenant-1' },
          { name: 'name-2', tenant: 'tenant-2' }],
          { endCursor: 'end', moreResults: 'NO_MORE_RESULTS' }]);
          const entities = await SubProjectDAO.list(this.journal, 'tenant-a');
          Tx.checkTrue(entities.length === 2 && entities[0].tenant === 'tenant-1'
-            && entities[1].tenant === 'tenant-2', done);
+            && entities[1].tenant === 'tenant-2');
       });
    }
 
    private static testDelete() {
       Tx.sectionInit('delete subproject');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          this.journal.delete.resolves();
          await SubProjectDAO.delete(this.journal, 'tenant', 'subproject');
-         done();
       });
    }
 
@@ -110,12 +108,11 @@ export class TestSubProject {
 
       Tx.sectionInit('get all');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          this.journal.runQuery.resolves([[{ name: 'name-1', tenant: 'tenant-1' },
          { name: 'name-2', tenant: 'tenant-2' }],
          { endCursor: 'end', moreResults: 'NO_MORE_RESULTS' }]);
          await SubProjectDAO.getAll(this.journal, 'tenant-a');
-         done();
       });
 
    }

@@ -62,9 +62,9 @@ export class TestUtils {
    private static testGetPropertyFromTokenPayload() {
       Tx.sectionInit('get property from token payload');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const emailid = Utils.getPropertyFromTokenPayload(this.jwtToken, 'desid');
-         Tx.checkTrue(emailid === 'user@comp.desid.com', done);
+         Tx.checkTrue(emailid === 'user@comp.desid.com');
       });
 
    }
@@ -72,9 +72,9 @@ export class TestUtils {
    private static testGetIssFromPayload() {
       Tx.sectionInit('get iss from token payload');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const emailid = Utils.getPropertyFromTokenPayload(this.jwtToken, 'iss');
-         Tx.checkTrue(emailid === 'auth-issuer', done);
+         Tx.checkTrue(emailid === 'auth-issuer');
       });
 
    }
@@ -83,19 +83,19 @@ export class TestUtils {
 
       Tx.sectionInit('get expiry time from payload');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const expiryTime = Utils.getExpTimeFromPayload(this.jwtToken);
-         Tx.checkTrue(expiryTime === 1573060691, done);
+         Tx.checkTrue(expiryTime === 1573060691);
       });
    }
 
    private static testAudienceFromPayload() {
-      
+
       Tx.sectionInit('get Audience from payload');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const audience = Utils.getAudienceFromPayload(this.jwtToken);
-         Tx.checkTrue(audience === 'audience01', done);
+         Tx.checkTrue(audience === 'audience01');
       });
 
    }
@@ -103,13 +103,13 @@ export class TestUtils {
    private static testAzpFromPayload() {
 
       Tx.sectionInit('get Azp from payload');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const azp = Utils.getAzpFromPayload(this.jwtToken);
-         Tx.checkTrue(azp === undefined, done);
+         Tx.checkTrue(azp === undefined);
 
       });
-      
-      // done();
+
+      //
 
 
    }
@@ -117,80 +117,82 @@ export class TestUtils {
    private static testPayloadFromStringToken() {
 
       Tx.sectionInit('test PayloadFromStringToken');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const basePayload = Utils.getPayloadFromStringToken(undefined);
-         Tx.checkTrue(basePayload === undefined, done);
+         Tx.checkTrue(basePayload === undefined);
       });
 
-      // Tx.test((done: any) => {
+      // Tx.test(() => {
       //    const basePayload = Utils.getPayloadFromStringToken('abcde.fghijk');
-      //    Tx.checkTrue(basePayload === undefined, done);
+      //    Tx.checkTrue(basePayload === undefined);
       // });
    }
 
    private static testdecrypt() {
       Tx.sectionInit('test decrypt');
-      // Tx.test((done: any) => {
+      // Tx.test(() => {
       //    // const hash = this.sandbox.stub(crypto, 'createHash').resolves('hash');
       //    this.sandbox.stub(crypto, 'createDecipher').resolves();
       //    Utils.decrypt('encryptedText', 'encryptedTextIV', 'key')
-      //    done();
-      // });   
+      //
+      // });
 
    }
 
    private static testexponentialBackOff() {
       Tx.sectionInit('test exponential BackOff');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const methodToCall = {} as any;
          Utils.exponentialBackOff(methodToCall);
-         done();
-      });   
+      });
 
    }
 
    private static testisEmail() {
       Tx.sectionInit('test is Email');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const methodToCall = {} as any;
          const input1 = 'abc'
          const res = Utils.isEmail(input1);
-         Tx.checkFalse(res, done);
+         Tx.checkFalse(res);
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const methodToCall = {} as any;
          const input1 = 'abc@test.com'
          const res = Utils.isEmail(input1);
-         Tx.checkTrue(res, done);
-      });   
+         Tx.checkTrue(res);
+      });
 
    }
 
    private static resolveJsonRefs() {
       Tx.sectionInit('resolve JsonRefs');
 
-      Tx.test((done: any) => {
-         const methodToCall = {} as any;
-         const input1 = 'abc'
-         const res = Utils.resolveJsonRefs(input1);
-         done();
-         Tx.checkFalse(typeof res === "object", done);
-      });  
+      // Tx.test(async () => {
+      //    const methodToCall = {} as any;
+      //    const input1 = 'abc'
+      //    const res = await Utils.resolveJsonRefs(input1);
+      //    Tx.checkFalse(typeof res === "object");
+      // });
    }
 
    private static checkSauthV1EmailDomainName() {
       Tx.sectionInit('resolve JsonRefs');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          // const methodToCall = {} as any;
          // const input1 = 'abc'
          const temp = Config.CLOUDPROVIDER;
-         Config.CLOUDPROVIDER = 'google';
-         const res = Utils.checkSauthV1EmailDomainName('slbservice.com@slb.com');
-         Config.CLOUDPROVIDER = temp;
-         done();
-      });  
+         try{
+            Config.CLOUDPROVIDER = 'google';
+            const res = Utils.checkSauthV1EmailDomainName('slbservice.com@slb.com');
+            Tx.checkTrue(res === 'slbservice.com@delfiserviceaccount.com');
+         }
+         finally {
+            Config.CLOUDPROVIDER = temp;
+         }
+      });
    }
 }

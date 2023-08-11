@@ -61,7 +61,7 @@ export class TestCompliance {
    private static isLegalTagValid() {
       Tx.sectionInit('legal tag validity');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.resolves({ status: 200, data: {
             invalidLegalTags: [],
@@ -70,11 +70,11 @@ export class TestCompliance {
          const result = await DESCompliance.isLegalTagValid('usertoken', 'ltag', 'tenant-a', 'appkey');
 
          requestStub.calledWith(this.url, this.data, this.options);
-         Tx.checkTrue(result && requestStub.calledWith(this.url, this.data, this.options), done);
+         Tx.checkTrue(result && requestStub.calledWith(this.url, this.data, this.options));
 
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.resolves({ status: 200, data: {
             invalidLegalTags: ['ltag'],
@@ -82,7 +82,7 @@ export class TestCompliance {
 
          const result = await DESCompliance.isLegalTagValid('usertoken', 'ltag', 'tenant-a', 'appkey');
          requestStub.calledWith(this.url, this.data, this.options);
-         Tx.checkFalse(result && requestStub.calledWith(this.url, this.data, this.options), done);
+         Tx.checkFalse(result && requestStub.calledWith(this.url, this.data, this.options));
 
       });
 

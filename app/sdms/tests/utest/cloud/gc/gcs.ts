@@ -50,9 +50,9 @@ export class TestGCSOSDUCore {
 
       Tx.sectionInit('random bucket name');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          const name= await this.gcsStorage.randomBucketName();
-         Tx.checkTrue(name.length > 0, done);
+         Tx.checkTrue(name.length > 0);
       });
    }
 
@@ -61,12 +61,12 @@ export class TestGCSOSDUCore {
       // [REVERT-DOWNSCOPE] re-enable this test
       // Tx.sectionInit('create bucket');
 
-      // Tx.testExp(async (done: any) => {
+      // Tx.test(async () => {
       //    const createStub = this.sandbox.stub(Bucket.prototype, 'create');
       //    createStub.resolves();
       //    this.sandbox.stub(Bucket.prototype, 'setMetadata').resolves();
       //    await this.gcsStorage.createBucket('buckname', 'loc', 'storage-class');
-      //    Tx.checkTrue(createStub.callCount === 1, done);
+      //    Tx.checkTrue(createStub.callCount === 1);
       // });
    }
 
@@ -74,11 +74,11 @@ export class TestGCSOSDUCore {
 
       Tx.sectionInit('delete bucket');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          const deleteStub = this.sandbox.stub(Bucket.prototype, 'deleteFiles');
          deleteStub.resolves();
          await this.gcsStorage.deleteBucket('bucket-a');
-         Tx.checkTrue(deleteStub.calledOnce, done);
+         Tx.checkTrue(deleteStub.calledOnce);
 
       });
    }
@@ -87,11 +87,11 @@ export class TestGCSOSDUCore {
 
       Tx.sectionInit('object save');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const fileSaveStub = this.sandbox.stub(File.prototype, 'save');
          fileSaveStub.resolves();
          await this.gcsStorage.saveObject('buckname', 'objname', 'data');
-         Tx.checkTrue(fileSaveStub.calledOnce, done);
+         Tx.checkTrue(fileSaveStub.calledOnce);
       });
 
    }
@@ -100,14 +100,14 @@ export class TestGCSOSDUCore {
 
       Tx.sectionInit('delete objects ');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const deleteFilesStub = this.sandbox.stub(Bucket.prototype, 'deleteFiles');
          deleteFilesStub.resolves();
          await this.gcsStorage.deleteObjects('test://bucket-a', 'prefix');
-         Tx.checkTrue(deleteFilesStub.calledOnce, done);
+         Tx.checkTrue(deleteFilesStub.calledOnce);
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const deleteFiles = this.sandbox.stub(Bucket.prototype, 'deleteFiles');
          deleteFiles.resolves();
          await this.gcsStorage.deleteObjects('bucket-a', 'obj-a');
@@ -117,10 +117,10 @@ export class TestGCSOSDUCore {
             prefix: 'obj-a/',
          };
 
-         Tx.checkTrue(deleteFiles.calledWith(opts), done);
+         Tx.checkTrue(deleteFiles.calledWith(opts));
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const deleteFiles = this.sandbox.stub(Bucket.prototype, 'deleteFiles');
          deleteFiles.resolves();
          await this.gcsStorage.deleteObjects('bucket-a', 'prefix//obj-b');
@@ -129,7 +129,7 @@ export class TestGCSOSDUCore {
             force: true,
             prefix: 'prefix/obj-b/',
          };
-         Tx.checkTrue(deleteFiles.calledWith(opts), done);
+         Tx.checkTrue(deleteFiles.calledWith(opts));
       });
    }
 
@@ -137,7 +137,7 @@ export class TestGCSOSDUCore {
 
       Tx.sectionInit('copy objects');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          const file = new File(new Bucket(new Storage(), 'bname'), 'fname');
          this.sandbox.stub(Acl.prototype, 'add').resolves();
          this.sandbox.stub(Bucket.prototype, 'getFiles').resolves(
@@ -145,10 +145,10 @@ export class TestGCSOSDUCore {
          const fileCopyStub = this.sandbox.stub(File.prototype, 'copy');
          fileCopyStub.resolves();
          await this.gcsStorage.copy('ba', 'prefix-a', 'bb', 'prefix-b', 'email');
-         Tx.checkTrue(fileCopyStub.calledThrice, done);
+         Tx.checkTrue(fileCopyStub.calledThrice);
       });
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          const file = new File(new Bucket(new Storage(), 'bname'), 'fname');
          this.sandbox.stub(Acl.prototype, 'add').resolves();
          const getFilesStub = this.sandbox.stub(Bucket.prototype, 'getFiles');
@@ -159,7 +159,7 @@ export class TestGCSOSDUCore {
          const fileCopyStub = this.sandbox.stub(File.prototype, 'copy');
          fileCopyStub.resolves();
          await this.gcsStorage.copy('ba', 'prefix-a', 'bb', 'prefix-b', 'email');
-         Tx.checkTrue(fileCopyStub.callCount === 9, done);
+         Tx.checkTrue(fileCopyStub.callCount === 9);
       });
    }
 
@@ -167,7 +167,7 @@ export class TestGCSOSDUCore {
 
       Tx.sectionInit('copy objects');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          const file = new File(new Bucket(new Storage(), 'bname'), 'fname');
          this.sandbox.stub(Acl.prototype, 'add').resolves();
          this.sandbox.stub(Bucket.prototype, 'getFiles').resolves(
@@ -175,7 +175,7 @@ export class TestGCSOSDUCore {
          const fileCopyStub = this.sandbox.stub(File.prototype, 'copy');
          fileCopyStub.resolves();
          await this.gcsStorage.copy('ba', 'prefix-a', 'bb', 'prefix-b', 'email');
-         Tx.checkTrue(fileCopyStub.calledThrice, done);
+         Tx.checkTrue(fileCopyStub.calledThrice);
       });
    }
 }

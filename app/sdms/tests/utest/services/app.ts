@@ -53,7 +53,7 @@ export class TestAppSVC {
 
         Tx.sectionInit('register');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
@@ -63,23 +63,23 @@ export class TestAppSVC {
             this.spy.stub(AppsDAO, 'register').resolves(undefined);
             this.spy.stub(Auth, 'isImpersonationToken').returns(false);
             await AppHandler.handler(expReq, expRes, AppOp.Register);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sdx://tnx';
             try {
                 AppParser.register(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sd://';
             try {
                 AppParser.register(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
     }
@@ -88,7 +88,7 @@ export class TestAppSVC {
 
         Tx.sectionInit('register trusted');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
@@ -99,10 +99,10 @@ export class TestAppSVC {
             this.spy.stub(AppsDAO, 'register').resolves(undefined);
             this.spy.stub(Auth, 'isImpersonationToken').returns(false);
             await AppHandler.handler(expReq, expRes, AppOp.RegisterTrusted);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.email = 'user@user.com';
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
@@ -113,7 +113,7 @@ export class TestAppSVC {
             this.spy.stub(AppsDAO, 'register').resolves(undefined);
             this.spy.stub(Auth, 'isImpersonationToken').returns(false);
             await AppHandler.handler(expReq, expRes, AppOp.RegisterTrusted);
-            Tx.check400(expRes.statusCode, done);
+            Tx.check400(expRes.statusCode);
         });
 
     }
@@ -122,7 +122,7 @@ export class TestAppSVC {
 
         Tx.sectionInit('list');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
             this.spy.stub(TenantAuth, 'getAuthGroups').returns([]);
@@ -130,21 +130,21 @@ export class TestAppSVC {
             this.spy.stub(AppsDAO, 'list').resolves([]);
             this.spy.stub(Auth, 'isImpersonationToken').returns(false);
             await AppHandler.handler(expReq, expRes, AppOp.List);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath = 'sdx://tnx';
             try {
                 AppParser.list(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath = 'sd://';
             try {
                 AppParser.list(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
     }
@@ -153,7 +153,7 @@ export class TestAppSVC {
 
         Tx.sectionInit('list trusted');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             this.spy.stub(TenantDAO, 'get').resolves({} as any);
             this.spy.stub(TenantAuth, 'getAuthGroups').returns([]);
@@ -161,7 +161,7 @@ export class TestAppSVC {
             this.spy.stub(AppsDAO, 'list').resolves([]);
             this.spy.stub(Auth, 'isImpersonationToken').returns(false);
             await AppHandler.handler(expReq, expRes, AppOp.ListTrusted);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
     }
@@ -170,15 +170,14 @@ export class TestAppSVC {
 
         Tx.sectionInit('others');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.spy.stub(Auth, 'isImpersonationToken').returns(true);
             await AppHandler.handler(expReq, expRes, AppOp.List);
-            Tx.check403(expRes.statusCode, done);
+            Tx.check403(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             await AppHandler.handler(expReq, expRes, undefined);
-            done();
         });
 
     }

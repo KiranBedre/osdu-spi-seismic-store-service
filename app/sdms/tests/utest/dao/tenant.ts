@@ -56,7 +56,7 @@ export class TestTenant {
    private static testGet() {
 
       Tx.sectionInit('tenant get');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
 
          this.journal.get.resolves([{
             esd: 'esd.dom',
@@ -65,13 +65,13 @@ export class TestTenant {
          } as ITenantModel]);
 
          const result = await TenantDAO.get('tenant-c');
-         Tx.checkTrue(result.name === 'tenant-c' && result.esd === 'esd.dom' && result.gcpid === 'gcpid', done);
+         Tx.checkTrue(result.name === 'tenant-c' && result.esd === 'esd.dom' && result.gcpid === 'gcpid');
       });
    }
 
    private static testGetAll() {
       Tx.sectionInit('tenant get all');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
 
          const entity: Entity = {
             esd: 'esd', gcpid: 'gcpid', name: 'tenant-a',
@@ -85,10 +85,10 @@ export class TestTenant {
          ]]);
 
          const results = await TenantDAO.getAll();
-         Tx.checkTrue(results[0].name === 'tenant-a' && results[0].esd === 'esd' && results[0].gcpid === 'gcpid', done);
+         Tx.checkTrue(results[0].name === 'tenant-a' && results[0].esd === 'esd' && results[0].gcpid === 'gcpid');
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
 
          const entity: Entity = {
             esd: 'esd', gcpid: 'gcpid', name: 'tenant-a',
@@ -105,56 +105,51 @@ export class TestTenant {
 
          try {
             const results = await TenantDAO.getAll();
-            done();
          } catch (e) { 
-            done(); 
          }
-         // Tx.checkTrue(results[0].name === 'tenant-a' && results[0].esd === 'esd' && results[0].gcpid === 'gcpid', done);
+         // Tx.checkTrue(results[0].name === 'tenant-a' && results[0].esd === 'esd' && results[0].gcpid === 'gcpid');
       });
    }
 
    private static testRegister() {
       Tx.sectionInit('tenant register');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.journal.save.resolves();
          await TenantDAO.register({ esd: 'esd', gcpid: 'gcpid', name: 'tenant-a', default_acls: 'undefined' });
-         done();
       });
 
    }
 
    private static testExist() {
       Tx.sectionInit('tenant exist');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.journal.get.resolves([[{ name: 'tenant-a', esd: 'esd', gcpid: 'gcpid' }]]);
          const result = await TenantDAO.exist({ name: 'tenant-a', esd: 'esd', gcpid: 'gcpid', default_acls: 'default_acls' });
-         Tx.checkTrue(result, done);
+         Tx.checkTrue(result);
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(InMemoryCache.prototype, 'get').resolves(undefined);
          this.journal.get.resolves([[{ name: 'tenant-a', esd: 'esd', gcpid: 'gcpid' }]]);
          const result = await TenantDAO.exist({ name: 'tenant-a', esd: 'esd', gcpid: 'gcpid', default_acls: 'default_acls' });
-         Tx.checkTrue(result, done);
+         Tx.checkTrue(result);
       });
 
    }
 
    private static testDelete() {
       Tx.sectionInit('tenant delete');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.journal.delete.resolves();
          await TenantDAO.delete('tenant');
-         done();
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const originalValue = Config.TENANT_JOURNAL_ON_DATA_PARTITION;
          Config.TENANT_JOURNAL_ON_DATA_PARTITION = true;
          this.journal.delete.resolves();
          await TenantDAO.delete('tenant');
          Config.TENANT_JOURNAL_ON_DATA_PARTITION = originalValue;
-         done();
       });
 
    }

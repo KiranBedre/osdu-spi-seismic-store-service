@@ -149,13 +149,12 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("registerTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             let datasetEntity: { key: object, data: DatasetModel; } = {
                 key: {},
                 data: datasetModel
             };
             await DAO.register(journalClient, datasetEntity);
-            done();
 
         } );
         
@@ -165,10 +164,10 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("getByKeyTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let dm = await DAO.getByKey(journalClient, datasetModel);
-            Tx.checkTrue(!(dm === undefined), done);
+            Tx.checkTrue(!(dm === undefined));
 
         } );
         
@@ -178,10 +177,10 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("getTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let dm = await DAO.get(journalClient, datasetModel);
-            Tx.checkTrue(!(dm === undefined), done);
+            Tx.checkTrue(!(dm === undefined));
 
         } );
         
@@ -191,10 +190,9 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("updateTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             await DAO.update(journalClient, datasetModel, { key: "" });
-            done();
 
         } );
         
@@ -204,10 +202,9 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("updateAllTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             await DAO.updateAll(journalClient, [{ data: datasetModel,  key: "" } ]);
-            done();
 
         } );
         
@@ -217,19 +214,19 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("listTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let pm = await DAO.list(journalClient, datasetModel, pagination, null, null);
-            Tx.checkTrue(!(pm === undefined), done);
+            Tx.checkTrue(!(pm === undefined));
 
         } );
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             datasetModel.gtags = [];
             let pm = await DAO.list(journalClient, datasetModel, pagination, null, null);
             datasetModel.gtags = ["gtags"];
-            Tx.checkTrue(!(pm === undefined), done);
+            Tx.checkTrue(!(pm === undefined));
 
         } );
         
@@ -239,10 +236,9 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("deleteAllTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             await DAO.deleteAll(journalClient, datasetModel.tenant, datasetModel.subproject);
-            done();
 
         } );
         
@@ -252,10 +248,9 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("deleteTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             await DAO.delete(journalClient, datasetModel);
-            done();
 
         } );
         
@@ -265,19 +260,19 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("paginatedListContentTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let output = await DAO.paginatedListContent(journalClient, datasetModel, "datasets", pagination);
-            Tx.checkTrue(!(output === undefined), done);
+            Tx.checkTrue(!(output === undefined));
 
         } );
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             pagination.cursor = '';
             let output = await DAO.paginatedListContent(journalClient, datasetModel, "dirs", pagination);
             pagination.cursor = 'cursor';
-            Tx.checkTrue(!(output === undefined), done);
+            Tx.checkTrue(!(output === undefined));
 
         } );
         
@@ -287,10 +282,10 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("listDatasetsTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let output = await DAO.listDatasets(journalClient, datasetModel.tenant, datasetModel.subproject, pagination);
-            Tx.checkTrue(!(output === undefined), done);
+            Tx.checkTrue(!(output === undefined));
 
         } );
         
@@ -300,17 +295,17 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("listContentTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let results = await DAO.listContent(journalClient, datasetModel, "dirs");
-            Tx.checkTrue(!(results === undefined), done);
+            Tx.checkTrue(!(results === undefined));
 
         } );
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let results = await DAO.listContent(journalClient, datasetModel, "datasets");
-            Tx.checkTrue(!(results === undefined), done);
+            Tx.checkTrue(!(results === undefined));
 
         } );
         
@@ -320,23 +315,23 @@ export class DatasetDAOTest {
 
         Tx.sectionInit("fixOldModelTest");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, "getLock").resolves(["xx"]);
             let entity = await DAO.fixOldModel(datasetModel, datasetModel.tenant, datasetModel.subproject);
-            Tx.checkTrue(!(entity === undefined), done);
+            Tx.checkTrue(!(entity === undefined));
 
         } );
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, "getLock").resolves("xx");
             let entity = await DAO.fixOldModel(datasetModel, datasetModel.tenant, datasetModel.subproject);
-            Tx.checkTrue(!(entity === undefined), done);
+            Tx.checkTrue(!(entity === undefined));
 
         } );
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let datasetModelclone = JSON.parse(JSON.stringify(datasetModel));
             datasetModelclone.tenant = '';
@@ -344,7 +339,7 @@ export class DatasetDAOTest {
             datasetModelclone.ctag = '';
             datasetModelclone.readonly = true;
             let entity = await DAO.fixOldModel(datasetModelclone, datasetModel.tenant, datasetModel.subproject);
-            Tx.checkTrue(!(entity === undefined), done);
+            Tx.checkTrue(!(entity === undefined));
 
         } );
         

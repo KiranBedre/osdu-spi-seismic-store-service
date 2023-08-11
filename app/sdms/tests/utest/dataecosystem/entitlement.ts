@@ -56,7 +56,7 @@ export class TestDESEntitlement {
 
       Tx.sectionInit('get users groups');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
 
          const requestStub = this.sandbox.stub(axios, 'get');
          requestStub.resolves({ status: 200, data: { groups: ['group1,', 'group2'] } });
@@ -73,16 +73,16 @@ export class TestDESEntitlement {
             }
          };
          const url = Config.DES_SERVICE_HOST_ENTITLEMENT + '/entitlements' + '/groups';
-         Tx.checkTrue(requestStub.calledWith(url, options), done);
+         Tx.checkTrue(requestStub.calledWith(url, options));
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'get');
          requestStub.throws(Error.make(500, 'Error', 'mprefix'));
          try {
             await DESEntitlement.getUserGroups('usertoken', 'tenant-one', 'appkey');
          } catch (e) {
-            Tx.check500(500, done);
+            Tx.check500(500);
          }
 
       });
@@ -92,7 +92,7 @@ export class TestDESEntitlement {
 
       Tx.sectionInit('add user to group');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.resolves();
 
@@ -118,17 +118,16 @@ export class TestDESEntitlement {
          const expectedUrl = 'testEntitlement' + '/entitlements' + '/groups' + '/group-a' + '/members';
 
          this.sandbox.assert.calledOnceWithExactly(requestStub, expectedUrl, expectedData, expectedOptions);
-         done();
       });
 
-      // Tx.test(async (done: any) => {
+      // Tx.test(async () => {
       //    this.sandbox.stub(axios, 'post').throws();
 
       //    try {
       //       await DESEntitlement.addUserToGroup('usertoken', 'group-a', 'tenant-a', 'user@email', 'role-a', 'appkey');
       //    } catch (e) {
-      //       Tx.check501(501, done);
-      //       done();
+      //       Tx.check501(501);
+      //
       //    }
       // });
    }
@@ -136,7 +135,7 @@ export class TestDESEntitlement {
    private static removeUserFromGroup() {
       Tx.sectionInit('remove user from group');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'delete');
          requestStub.resolves();
 
@@ -153,25 +152,25 @@ export class TestDESEntitlement {
          };
          const url = Config.DES_SERVICE_HOST_ENTITLEMENT + '/entitlements/groups/' + 'group-a' + '/members/' + 'user@email';
 
-         Tx.checkTrue(requestStub.calledWith(url, options), done);
+         Tx.checkTrue(requestStub.calledWith(url, options));
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'delete').throws();
          this.sandbox.stub(DataEcosystemCoreFactory, 'build').resolves();
          try {
             await DESEntitlement.removeUserFromGroup('usertoken', 'group-a', 'tenant-a', 'user@email', 'appkey');
          } catch (e) {
-            Tx.check500(500, done);
+            Tx.check500(500);
          }
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'delete').throws({response: {status: 400}});
          try {
             await DESEntitlement.removeUserFromGroup('usertoken', 'group-a', 'tenant-a', 'user@email', 'appkey');
          } catch (e) {
-            Tx.check500(500, done);
+            Tx.check500(500);
          }
       });
    }
@@ -179,7 +178,7 @@ export class TestDESEntitlement {
    private static createGroup() {
       Tx.sectionInit('create group');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.resolves();
 
@@ -200,18 +199,18 @@ export class TestDESEntitlement {
          }
          const url = Config.DES_SERVICE_HOST_ENTITLEMENT + '/entitlements/groups';
 
-         Tx.checkTrue(requestStub.calledWith(url, data, options), done);
+         Tx.checkTrue(requestStub.calledWith(url, data, options));
 
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.throws();
 
          try {
             await DESEntitlement.createGroup('usertoken', 'group-a', 'group-desc', 'tenant-a','appkey');
          } catch (e) {
-            Tx.check500(500, done);
+            Tx.check500(500);
          }
 
       });
@@ -220,7 +219,7 @@ export class TestDESEntitlement {
    private static getGroupMembers() {
       Tx.sectionInit('get group members');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'get');
          requestStub.resolves({ status: 200, data: 
             {
@@ -239,17 +238,17 @@ export class TestDESEntitlement {
          );
 
          const results = await DESEntitlement.listUsersInGroup('userToken', 'group-a', 'tenant-a', '');
-         Tx.checkTrue(results.members.length === 2 && results.nextCursor === 'cursor', done);
+         Tx.checkTrue(results.members.length === 2 && results.nextCursor === 'cursor');
 
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'get');
          requestStub.throws();
          try {
             await DESEntitlement.listUsersInGroup('userToken', 'group-a', 'tenant-a', '');
          } catch (e) {
-            Tx.check500(500, done);
+            Tx.check500(500);
          }
       });
    }

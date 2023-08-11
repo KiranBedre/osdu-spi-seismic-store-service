@@ -49,19 +49,17 @@ export class TestStorage {
 
       Tx.sectionInit('create put record');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'put').resolves();
          await DESStorage.insertRecord('usertoken', JSON.stringify({ seismetadata: 'data' }), 'esd', 'appkey');
-         done();
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'put').resolves();
          await DESStorage.insertRecord('usertoken', undefined, 'esd', 'appkey');
-         done();
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'put');
          requestStub.resolves();
          await DESStorage.insertRecord('usertoken', JSON.stringify({ seismetadata: 'data' }), 'esd', 'appkey');
@@ -78,15 +76,15 @@ export class TestStorage {
          const  data = JSON.stringify({ seismetadata: 'data' })
          
          const url = Config.DES_SERVICE_HOST_STORAGE + '/storage/v2/records';
-         Tx.checkTrue(requestStub.calledWith(url, data, options), done);
+         Tx.checkTrue(requestStub.calledWith(url, data, options));
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'put').throws();
          try {
             await DESStorage.insertRecord('usertoken', JSON.stringify({ seismetadata: 'data' }), 'esd', 'appkey');
          } catch (e) {
-            Tx.check500(500, done);
+            Tx.check500(500);
          }
       });
 
@@ -95,29 +93,27 @@ export class TestStorage {
    private static deleteRecord() {
       Tx.sectionInit('delete record');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.resolves();
          await DESStorage.deleteRecord('usertoken', 'uid', 'esd', 'appkey');
-         done();
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'post').resolves();
          await DESStorage.deleteRecord('usertoken', 'uid', 'esd', 'appkey');
-         done();
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'post').throws();
          try {
             await DESStorage.deleteRecord('usertoken', 'uid', 'esd', 'appkey');
          } catch (e) {
-            Tx.check500(500, done);
+            Tx.check500(500);
          }
       });
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const requestStub = this.sandbox.stub(axios, 'post').resolves();
          requestStub.resolves();
          await DESStorage.deleteRecord('usertoken', 'uid', 'esd', 'appkey');
@@ -133,7 +129,7 @@ export class TestStorage {
          };
          const url = Config.DES_SERVICE_HOST_STORAGE + '/storage/v2/records/uid' + ':delete';
 
-         Tx.checkTrue(requestStub.calledWith(url, '', options), done);
+         Tx.checkTrue(requestStub.calledWith(url, '', options));
 
       });
    }

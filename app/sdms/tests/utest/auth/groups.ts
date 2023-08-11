@@ -54,9 +54,9 @@ export class TestAuthGroups {
    private static datalakeUserAdminGroupName() {
 
       Tx.sectionInit('get datalake user admin group name');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const result = TenantGroups.datalakeUserAdminGroupName();
-         Tx.checkTrue(result === 'users.datalake.admins', done);
+         Tx.checkTrue(result === 'users.datalake.admins');
 
       });
 
@@ -65,12 +65,12 @@ export class TestAuthGroups {
    private static createGroup() {
 
       Tx.sectionInit('create group');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const stub = this.spy.stub(DESEntitlement, 'createGroup');
          stub.resolves();
          this.spy.stub(DESUtils, 'getDataPartitionID').returns('partition-a');
          await AuthGroups.createGroup(undefined, 'group-a', 'group-desc', 'esd', 'appkey');
-         Tx.checkTrue(stub.calledWith(undefined, 'group-a', 'group-desc', 'partition-a'), done);
+         Tx.checkTrue(stub.calledWith(undefined, 'group-a', 'group-desc', 'partition-a'));
       });
 
    }
@@ -78,7 +78,7 @@ export class TestAuthGroups {
    private static deleteGroup() {
 
       Tx.sectionInit('delete group');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const deleteGroupstub = this.spy.stub(DESEntitlement, 'deleteGroup')
              .resolves();
 
@@ -95,14 +95,13 @@ export class TestAuthGroups {
              deleteGroupstub,
              undefined, 'group-a', 'partition-a', 'appkey',
          )
-         done();
       });
    }
 
    private static isMemberOfaGroup() {
 
       Tx.sectionInit('Is member of a group ');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.spy.stub(DESUtils, 'getDataPartitionID').returns('data-partition-a');
          const members: IDESEntitlementMemberModel[] = [
             {
@@ -118,7 +117,7 @@ export class TestAuthGroups {
 
          const result = await AuthGroups.isMemberOfaGroup(undefined, 'member-email-two', 'group', 'esd', 'cursor');
 
-         Tx.checkTrue(result === true, done);
+         Tx.checkTrue(result === true);
 
       });
    }
@@ -126,7 +125,7 @@ export class TestAuthGroups {
    private static hasOneInGroups() {
 
       Tx.sectionInit('has one in groups');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.spy.stub(DESUtils, 'getDataPartitionID').returns('data-partition-a');
          const groups: IDESEntitlementGroupModel[] = [
             {
@@ -143,7 +142,7 @@ export class TestAuthGroups {
          this.spy.stub(DESEntitlement, 'getUserGroups').resolves(groups);
          const result = await AuthGroups.isMemberOfAtLeastOneGroup('token', ['email-a'], 'esd', 'appkey');
 
-         Tx.checkTrue(result === true, done);
+         Tx.checkTrue(result === true);
       });
 
    }
@@ -151,7 +150,7 @@ export class TestAuthGroups {
    private static getUserGroups() {
 
       Tx.sectionInit('get user groups');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.spy.stub(DESUtils, 'getDataPartitionID').resolves('data-partition-a');
          const groups: IDESEntitlementGroupModel[] = [{
             description: 'group-a-desc',
@@ -162,14 +161,14 @@ export class TestAuthGroups {
          this.spy.stub(DESEntitlement, 'getUserGroups').resolves(groups);
          const result = await AuthGroups.getUserGroups('token', 'esd', 'appkey');
 
-         Tx.checkTrue(result === groups, done);
+         Tx.checkTrue(result === groups);
       });
    }
 
    private static listUsersInGroup() {
 
       Tx.sectionInit('list users in group');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const members: IDESEntitlementMemberModel[] = [
             {
                email: 'member-email-one', role: 'OWNER',
@@ -184,14 +183,14 @@ export class TestAuthGroups {
          this.spy.stub(DESUtils, 'getDataPartitionID').returns('data-partition-a');
          const result = await AuthGroups.listUsersInGroup(undefined, 'group-a', 'esd', 'appkey');
 
-         Tx.checkTrue(result === members, done);
+         Tx.checkTrue(result === members);
       });
    }
 
    private static addUserToGroup() {
 
       Tx.sectionInit('add user to group');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const addUserToGroupStub = this.spy.stub(DESEntitlement, 'addUserToGroup');
          addUserToGroupStub.resolves();
 
@@ -201,14 +200,14 @@ export class TestAuthGroups {
 
          const calledWithResult = addUserToGroupStub.calledWith(undefined, 'group-a', 'data-partition-a', 'useremail', UserRoles.Member, 'appkey');
 
-         Tx.checkTrue(calledWithResult === true, done);
+         Tx.checkTrue(calledWithResult === true);
       });
    }
 
    private static removeUserFromGroup() {
 
       Tx.sectionInit('remove user from group');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          const removeUserFromGroupStub = this.spy.stub(DESEntitlement, 'removeUserFromGroup');
          removeUserFromGroupStub.resolves();
 
@@ -217,7 +216,7 @@ export class TestAuthGroups {
 
          const calldedWithResult = removeUserFromGroupStub.calledWith(undefined, 'group-a', 'data-partition-a', 'useremail', 'appkey');
 
-         Tx.checkTrue(calldedWithResult === true, done);
+         Tx.checkTrue(calldedWithResult === true);
       });
    }
 
