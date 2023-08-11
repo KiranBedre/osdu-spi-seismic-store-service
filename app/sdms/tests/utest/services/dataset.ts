@@ -21,7 +21,7 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { Auth, AuthProviderFactory } from '../../../src/auth';
 import { IAuthProvider } from '../../../src/auth/auth';
 import { Config, google, StorageFactory } from '../../../src/cloud';
-import { DESStorage, DESUtils, DESUserAssociation } from '../../../src/dataecosystem';
+import { DESStorage, DESUtils } from '../../../src/dataecosystem';
 import { IStorage } from '../../../src/cloud/storage';
 import { DatasetDAO, DatasetModel } from '../../../src/services/dataset';
 import { DatasetHandler } from '../../../src/services/dataset/handler';
@@ -316,7 +316,6 @@ export class TestDatasetSVC {
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [{} as DatasetModel], nextPageCursor: null });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            this.sandbox.stub(DESUserAssociation.prototype, 'convertPrincipalIdentifierToUserInfo').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
             Tx.check200(expRes.statusCode, done);
         });
@@ -328,7 +327,6 @@ export class TestDatasetSVC {
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [this.dataset as DatasetModel], nextPageCursor: 'cursor' });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            this.sandbox.stub(DESUserAssociation.prototype, 'convertPrincipalIdentifierToUserInfo').resolves();
             const responseStub = this.sandbox.stub(Response, 'writeOK');
             responseStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
@@ -343,7 +341,6 @@ export class TestDatasetSVC {
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [this.dataset as DatasetModel], nextPageCursor: '' });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            this.sandbox.stub(DESUserAssociation.prototype, 'convertPrincipalIdentifierToUserInfo').resolves();
             const responseStub = this.sandbox.stub(Response, 'writeOK');
             responseStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
