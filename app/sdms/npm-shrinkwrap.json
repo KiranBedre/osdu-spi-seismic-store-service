@@ -4048,12 +4048,12 @@
       }
     },
     "applicationinsights-native-metrics": {
-      "version": "0.0.9",
-      "resolved": "https://registry.npmjs.org/applicationinsights-native-metrics/-/applicationinsights-native-metrics-0.0.9.tgz",
-      "integrity": "sha512-JGnb6Ou/E4XuM3eKZP+nvpA9NWYLscclwoMFvAHyUknthiNJwREHYrNQT3c63P7AWoFsyf6cyUqeo9KX1jMp8w==",
+      "version": "0.0.6",
+      "resolved": "https://registry.npmjs.org/applicationinsights-native-metrics/-/applicationinsights-native-metrics-0.0.6.tgz",
+      "integrity": "sha512-5Z9l9PW9WTNkR9yLQt/sZT98XNN1DCAFSy3OKoXH4lXADcYTwh7YATM/VEnWzTE7tMyiyUsGFAXEl24AyFROww==",
       "requires": {
-        "@mapbox/node-pre-gyp": "^1.0.10",
-        "nan": "^2.17.0"
+        "@mapbox/node-pre-gyp": "^1.0.0",
+        "nan": "^2.14.0"
       }
     },
     "aproba": {
