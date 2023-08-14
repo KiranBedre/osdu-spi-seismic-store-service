@@ -111,6 +111,9 @@ sdms_azure_containerize:
       - app/sdms/src/cloud/shared/**/*
       - app/sdms/src/cloud/providers/*.ts
       - app/sdms/src/cloud/providers/azure/**/*
+      - app/sdms/**/*.json
+      - app/sdms/**/*.yml
+      - app/sdms/**/*.md
     refs:
       - branches
       - merge_requests
@@ -140,6 +143,9 @@ sdms_azure_container_scanning:
         - app/sdms/src/cloud/shared/**/*
         - app/sdms/src/cloud/providers/*.ts
         - app/sdms/src/cloud/providers/azure/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
     - if: $AZURE == '1'
       changes:
         - devops/**/*
@@ -156,6 +162,9 @@ sdms_azure_container_scanning:
         - app/sdms/src/cloud/shared/**/*
         - app/sdms/src/cloud/providers/*.ts
         - app/sdms/src/cloud/providers/azure/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms_azure_deploy:
   extends: .azure_deploy
@@ -215,6 +224,9 @@ sdms_azure_deploy:
       - app/sdms/src/cloud/shared/**/*
       - app/sdms/src/cloud/providers/*.ts
       - app/sdms/src/cloud/providers/azure/**/*
+      - app/sdms/**/*.json
+      - app/sdms/**/*.yml
+      - app/sdms/**/*.md
     refs:
       - branches
       - merge_requests
@@ -272,6 +284,9 @@ sdms_azure_test:
       - app/sdms/src/cloud/shared/**/*
       - app/sdms/src/cloud/providers/*.ts
       - app/sdms/src/cloud/providers/azure/**/*
+      - app/sdms/**/*.json
+      - app/sdms/**/*.yml
+      - app/sdms/**/*.md
     refs:
       - branches
       - merge_requests
