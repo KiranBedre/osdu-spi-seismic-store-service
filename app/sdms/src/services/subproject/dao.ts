@@ -18,6 +18,7 @@ import { SubprojectGroups, SubProjectModel } from '.';
 import { Config, IJournal } from '../../cloud';
 import { Error, getInMemoryCacheInstance } from '../../shared';
 import { TenantDAO } from '../tenant';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SubProjectDAO {
 
@@ -87,6 +88,16 @@ export class SubProjectDAO {
         });
         await journalClient.delete(entityKey);
         getInMemoryCacheInstance().delete(this.getCacheKey(tenantName, subprojectName));
+    }
+
+    public static async deleteDatasets(journalClient: IJournal, operationId: string, tenantName: string, subprojectName: string, path: string) {
+        const message = {
+            "operationId": operationId,
+            "tenant": tenantName,
+            "subproject": subprojectName,
+            "path": path
+        }
+        // await journalClient.deleteDatasets(JSON.stringify(message));
     }
 
     // get all tenant metadata (throw if not exist)

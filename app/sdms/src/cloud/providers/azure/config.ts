@@ -51,6 +51,10 @@ export class AzureConfig extends Config {
     public static SIDECAR_URL: string;
     public static SIDECAR_ENABLE_QUERY: boolean;
 
+    // Service Bus
+    public static SERVICE_BUS_NAMESPACE: string;
+    public static SERVICE_BUS_QUEUE_NAME: string;
+
     public async init(): Promise<void> {
 
 
@@ -125,6 +129,9 @@ export class AzureConfig extends Config {
 
             // set the correlation id
             AzureConfig.CORRELATION_ID = process.env.CORRELATION_ID || AzureConfig.CORRELATION_ID;
+
+            AzureConfig.SERVICE_BUS_NAMESPACE = process.env.SERVICE_BUS_NAMESPACE;
+            AzureConfig.SERVICE_BUS_QUEUE_NAME = process.env.SERVICE_BUS_QUEUE_NAME;
 
             // init generic configurations
             await Config.initServiceConfiguration({

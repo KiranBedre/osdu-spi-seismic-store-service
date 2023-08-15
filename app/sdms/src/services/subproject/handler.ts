@@ -227,12 +227,17 @@ export class SubProjectHandler {
         const path = SubProjectParser.deleteDatasets(req);
         const subprojectName = req.params.subprojectid;
 
+        const journalClient = JournalFactoryTenantClient.get(tenant);
+
         // auth check: tenant.admin
         await Auth.isUserAuthorized(
             req.headers.authorization, TenantAuth.getAuthGroups(tenant),
             tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
         const operationId = uuidv4();
+        
+        await SubProjectDAO.deleteDatasets(journalClient, operationId, tenant.name, subprojectName, path);
+
         return operationId;
     } 
 
