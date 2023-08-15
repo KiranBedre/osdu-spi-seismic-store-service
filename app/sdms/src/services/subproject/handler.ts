@@ -62,6 +62,11 @@ export class SubProjectHandler {
                 await this.delete(req, tenant);
                 Response.writeOK(res);
 
+            } else if (op === SubProjectOP.DeleteDatasets) {
+
+                await this.deleteDatasets(req, tenant);
+                Response.writeOK(res);
+
             } else if (op === SubProjectOP.Patch) {
 
                 const subproject = await this.patch(req, tenant);
@@ -215,6 +220,21 @@ export class SubProjectHandler {
         return subproject;
 
     }
+
+    // delete datasets with a given path within the subproject 
+    private static async deleteDatasets(req: expRequest, tenant: TenantModel) {
+        
+        const path = SubProjectParser.deleteDatasets(req);
+        const subprojectName = req.params.subprojectid;
+
+        // auth check: tenant.admin
+        await Auth.isUserAuthorized(
+            req.headers.authorization, TenantAuth.getAuthGroups(tenant),
+            tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+
+        const operationId = uuidv4();
+        return operationId;
+    } 
 
     // delete the subproject resource
     // required roles: [tenant.admin]

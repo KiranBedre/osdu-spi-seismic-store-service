@@ -32,7 +32,7 @@ info:
 # ===========================================================================
 
 servers:
-  - url: "#{SDMS_PREFIX}#"
+  - url: "/seistore-svc/api/v3"
 
 paths:
   /svcstatus:
@@ -1844,6 +1844,47 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  "/subproject/tenant/{tenantid}/subproject/{subprojectid}/datasetpath/{datasetpath}":
+    delete:
+      summary: Delete datasets with a given path within a subproject.
+      description: "<ul><li>Delete a subproject in seismic store.</li><li>Required roles: users.datalake.admin</li></ul>"
+      operationId: datasets-delete
+      tags:
+        - SubProject
+      parameters:
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Path of datasets to delete within the subproject.
+          in: path
+          name: datasetpath
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Delete operation started successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteOperation"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
   "/subproject/tenant/{tenantid}":
     get:
       summary: List subprojects in a tenant.
@@ -2871,6 +2912,15 @@ components:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.admin@slb.p4d.cloud.slb-ds.com
           viewers:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.viewer@slb.p4d.cloud.slb-ds.com
+    DeleteOperation:
+      required:
+        - operation_id
+      properties:
+        operation_id:
+          type: string
+          description: Operation id of the deletion job.
+      example:
+        operation_id: c3d282e6-e7d1-40d8-8ac2-edc15b6d174c
     TenantCreateBody:
       required:
         - gcpid

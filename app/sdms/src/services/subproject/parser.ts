@@ -101,6 +101,13 @@ export class SubProjectParser {
         };
     }
 
+    public static deleteDatasets(req: expRequest): string
+    {
+        Params.checkString(req.query.datasetpath, 'datasetpath');
+
+        return req.query.datasetpath as string;
+    }
+
     private static checkAccessPolicy(req: expRequest): void {
         if (req.body && req.body.access_policy &&
             req.body.access_policy !== Config.DATASET_ACCESS_POLICY &&

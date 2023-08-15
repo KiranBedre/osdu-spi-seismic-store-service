@@ -35,6 +35,11 @@ router.delete('/tenant/:tenantid/subproject/:subprojectid', async (req: expReque
     await SubProjectHandler.handler(req, res, SubProjectOP.Delete);
 });
 
+// delete datasets with a given path within a subproject
+router.delete('/tenant/:tenantid/subproject/:subprojectid/datasetpath/:datasetpath', async (req: expRequest, res: expResponse) => {
+    await SubProjectHandler.handler(req, res, SubProjectOP.DeleteDatasets);
+});
+
 // patch a subproject
 router.patch('/tenant/:tenantid/subproject/:subprojectid', async (req: expRequest, res: expResponse) => {
     await SubProjectHandler.handler(req, res, SubProjectOP.Patch);
