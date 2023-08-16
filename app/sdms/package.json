@@ -64,7 +64,6 @@
     "@azure/cosmos": "^3.14.1",
     "@azure/identity": "^2.0.1",
     "@azure/keyvault-secrets": "^4.3.0",
-    "@azure/service-bus": "^7.9.0",
     "@azure/storage-blob": "^12.10.0",
     "@cloudant/cloudant": "^4.5.1",
     "@google-cloud/datastore": "^6.6.2",
