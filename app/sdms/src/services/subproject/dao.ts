@@ -18,7 +18,6 @@ import { SubprojectGroups, SubProjectModel } from '.';
 import { Config, IJournal } from '../../cloud';
 import { Error, getInMemoryCacheInstance } from '../../shared';
 import { TenantDAO } from '../tenant';
-import { v4 as uuidv4 } from 'uuid';
 
 export class SubProjectDAO {
 
