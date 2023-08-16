@@ -14,4 +14,4 @@
 // limitations under the License.
 // ============================================================================
 
-export enum SubProjectOP { Create, Get, List, Delete, Patch, DeleteDatasets }
+export enum SubProjectOP { Create, Get, List, Delete, Patch, BulkDelete }

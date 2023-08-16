@@ -62,9 +62,9 @@ export class SubProjectHandler {
                 await this.delete(req, tenant);
                 Response.writeOK(res);
 
-            } else if (op === SubProjectOP.DeleteDatasets) {
+            } else if (op === SubProjectOP.BulkDelete) {
 
-                await this.deleteDatasets(req, tenant);
+                await this.bulkDelete(req, tenant);
                 Response.writeOK(res);
 
             } else if (op === SubProjectOP.Patch) {
@@ -221,26 +221,6 @@ export class SubProjectHandler {
 
     }
 
-    // delete datasets with a given path within the subproject 
-    private static async deleteDatasets(req: expRequest, tenant: TenantModel) {
-        
-        const path = SubProjectParser.deleteDatasets(req);
-        const subprojectName = req.params.subprojectid;
-
-        const journalClient = JournalFactoryTenantClient.get(tenant);
-
-        // auth check: tenant.admin
-        await Auth.isUserAuthorized(
-            req.headers.authorization, TenantAuth.getAuthGroups(tenant),
-            tenant.esd, req[Config.DE_FORWARD_APPKEY]);
-
-        const operationId = uuidv4();
-        
-        await SubProjectDAO.deleteDatasets(journalClient, operationId, tenant.name, subprojectName, path);
-
-        return operationId;
-    } 
-
     // delete the subproject resource
     // required roles: [tenant.admin]
     private static async delete(req: expRequest, tenant: TenantModel) {
@@ -284,6 +264,26 @@ export class SubProjectHandler {
         });
 
     }
+
+    // delete datasets in a given path within the subproject 
+    private static async bulkDelete(req: expRequest, tenant: TenantModel) {
+        
+        const path = SubProjectParser.bulkDelete(req);
+        const subprojectName = req.params.subprojectid;
+
+        const journalClient = JournalFactoryTenantClient.get(tenant);
+
+        // auth check: tenant.admin
+        await Auth.isUserAuthorized(
+            req.headers.authorization, TenantAuth.getAuthGroups(tenant),
+            tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+
+        const operationId = uuidv4();
+
+        await SubProjectDAO.deleteDatasets(journalClient, operationId, tenant.name, subprojectName, path);
+
+        return operationId;
+    } 
 
     // Patch the subproject
     // Required role: subproject.admin

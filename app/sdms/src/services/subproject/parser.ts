@@ -101,11 +101,10 @@ export class SubProjectParser {
         };
     }
 
-    public static deleteDatasets(req: expRequest): string
+    public static bulkDelete(req: expRequest): string
     {
-        Params.checkString(req.query.datasetpath, 'datasetpath');
-
-        return req.query.datasetpath as string;
+        Params.checkString(req.query.path, 'path');
+        return req.query.path as string;
     }
 
     private static checkAccessPolicy(req: expRequest): void {

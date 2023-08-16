@@ -1844,11 +1844,11 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/subproject/tenant/{tenantid}/subproject/{subprojectid}/datasetpath/{datasetpath}":
+  "/subproject/tenant/{tenantid}/subproject/{subprojectid}/bulk-delete":
     delete:
-      summary: Delete datasets with a given path within a subproject.
-      description: "<ul><li>Delete a subproject in seismic store.</li><li>Required roles: users.datalake.admin</li></ul>"
-      operationId: datasets-delete
+      summary: Delete datasets in a given path within a subproject.
+      description: "<ul><li>Delete datasets within a subproject in seismic store.</li><li>Required roles: users.datalake.admin</li></ul>"
+      operationId: bulk-delete
       tags:
         - SubProject
       parameters:
@@ -1865,8 +1865,8 @@ paths:
           schema:
             type: string
         - description: Path of datasets to delete within the subproject.
-          in: path
-          name: datasetpath
+          in: query
+          name: path
           required: true
           schema:
             type: string
