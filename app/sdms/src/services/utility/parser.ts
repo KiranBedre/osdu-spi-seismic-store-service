@@ -93,7 +93,7 @@ export class UtilityParser {
         }
 
         // ensure limit is a positive value
-        if (input.pagination?.limit < 0) {
+        if (input.pagination?.limit < 0 && input.pagination?.limit !== -1) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The "limit" request parameter must be greater than zero.'));
         }
