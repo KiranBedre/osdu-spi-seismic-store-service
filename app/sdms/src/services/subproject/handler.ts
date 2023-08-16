@@ -269,12 +269,10 @@ export class SubProjectHandler {
     }
 
     // delete datasets in a given path within the subproject 
-    private static async bulkDelete(req: expRequest, tenant: TenantModel) {
+    private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<string> {
         
-        const path = SubProjectParser.bulkDelete(req);
         const subprojectName = req.params.subprojectid;
-
-        const journalClient = JournalFactoryTenantClient.get(tenant);
+        const path = SubProjectParser.bulkDelete(req);
 
         let deletionJob: Bull.Job;
 
