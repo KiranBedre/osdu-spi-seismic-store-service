@@ -90,16 +90,6 @@ export class SubProjectDAO {
         getInMemoryCacheInstance().delete(this.getCacheKey(tenantName, subprojectName));
     }
 
-    public static async deleteDatasets(journalClient: IJournal, operationId: string, tenantName: string, subprojectName: string, path: string) {
-        const message = {
-            "operationId": operationId,
-            "tenant": tenantName,
-            "subproject": subprojectName,
-            "path": path
-        }
-        // await journalClient.deleteDatasets(JSON.stringify(message));
-    }
-
     // get all tenant metadata (throw if not exist)
     public static async getAll(journalClient: IJournal, tenantName: string): Promise<SubProjectModel[]> {
 

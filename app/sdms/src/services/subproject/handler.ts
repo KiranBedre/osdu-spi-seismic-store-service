@@ -14,6 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
+import Bull from 'bull';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { SubprojectAuth, SubProjectModel } from '.';
@@ -30,6 +31,8 @@ import { SubProjectDAO } from './dao';
 import { SubprojectGroups } from './groups';
 import { SubProjectOP } from './optype';
 import { SubProjectParser } from './parser';
+import { StorageJobManager } from '../../cloud/shared/queue';
+
 export class SubProjectHandler {
 
     // handler for the [ /subproject ] endpoints
@@ -273,14 +276,24 @@ export class SubProjectHandler {
 
         const journalClient = JournalFactoryTenantClient.get(tenant);
 
+        let deletionJob: Bull.Job;
+
         // auth check: tenant.admin
         await Auth.isUserAuthorized(
             req.headers.authorization, TenantAuth.getAuthGroups(tenant),
             tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
         const operationId = uuidv4();
+        const RETRY_MAX_ATTEMPTS = 10;
 
-        await SubProjectDAO.deleteDatasets(journalClient, operationId, tenant.name, subprojectName, path);
+        deletionJob = await StorageJobManager.deleteJobsQueue.add({
+            operationId: operationId,
+            tenant: tenant.name,
+            subprojectName: subprojectName,
+            query: path
+        }, {
+            attempts: RETRY_MAX_ATTEMPTS
+        });
 
         return operationId;
     } 

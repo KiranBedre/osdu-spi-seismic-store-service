@@ -29,6 +29,8 @@ export class StorageJobManager {
 
    public static copyJobsQueue: Bull.Queue;
 
+   public static deleteJobsQueue: Bull.Queue;
+
    public static setup(cacheParams: { ADDRESS: string, PORT: number, KEY?: string, DISABLE_TLS?: boolean; }) {
 
       const redisOptions: Redis.RedisOptions = {
@@ -46,6 +48,14 @@ export class StorageJobManager {
       }
 
       StorageJobManager.copyJobsQueue = new Bull('copyjobqueue', {
+         redis: redisOptions,
+         limiter: {
+            max: 100,
+            duration: 600000,
+         }
+      });
+
+      StorageJobManager.deleteJobsQueue = new Bull('deletejobqueue', {
          redis: redisOptions,
          limiter: {
             max: 100,

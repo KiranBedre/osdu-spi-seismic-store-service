@@ -1871,8 +1871,8 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: Delete operation started successfully.
+        "202":
+          description: Delete operation initiated successfully.
           content:
             application/json:
               schema:
