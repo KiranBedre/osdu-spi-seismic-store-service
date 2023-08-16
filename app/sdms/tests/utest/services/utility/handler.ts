@@ -284,7 +284,7 @@ export class TestServicesUtilityHandler {
             req.query = {};
             req.query.sdpath = "sd://";
             req.query.wmode = "all";
-            req.query.limit = "-1";
+            req.query.limit = "-2";
             req.query.cursor = "";
 
             await Handler.handler(req, res, op);
@@ -299,7 +299,7 @@ export class TestServicesUtilityHandler {
             req.query = {};
             req.query.sdpath = "sd://";
             req.query.wmode = "all";
-            req.query.limit = "-1";
+            req.query.limit = "-2";
             req.query.cursor = "cursor";
 
             await Handler.handler(req, res, op);
