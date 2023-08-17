@@ -15,6 +15,6 @@
 // ============================================================================
 
 export { SubProjectDAO } from './dao';
-export { ISubProjectModel as SubProjectModel } from './model';
+export { ISubProjectModel as SubProjectModel, IDeleteOperationModel } from './model';
 export { SubprojectGroups } from './groups';
 export { SubprojectAuth } from './auth';

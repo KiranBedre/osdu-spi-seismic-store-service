@@ -17,7 +17,7 @@
 import Bull from 'bull';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { SubprojectAuth, SubProjectModel } from '.';
+import { SubprojectAuth, SubProjectModel, IDeleteOperationModel } from '.';
 import { Auth, AuthGroups, AuthRoles, UserRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
@@ -67,8 +67,8 @@ export class SubProjectHandler {
 
             } else if (op === SubProjectOP.BulkDelete) {
 
-                await this.bulkDelete(req, tenant);
-                Response.writeOK(res);
+                const operationId = await this.bulkDelete(req, tenant);
+                Response.writeOK(res, operationId, 202);
 
             } else if (op === SubProjectOP.Patch) {
 
@@ -269,7 +269,7 @@ export class SubProjectHandler {
     }
 
     // delete datasets in a given path within the subproject 
-    private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<string> {
+    private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationModel> {
         
         const subprojectName = req.params.subprojectid;
         const path = SubProjectParser.bulkDelete(req);
@@ -293,7 +293,9 @@ export class SubProjectHandler {
             attempts: RETRY_MAX_ATTEMPTS
         });
 
-        return operationId;
+        return {
+            operation_id: operationId
+        };
     } 
 
     // Patch the subproject

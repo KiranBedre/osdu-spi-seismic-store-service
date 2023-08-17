@@ -31,3 +31,7 @@ export interface ISubprojectAcl {
     admins: string[],
     viewers: string[];
 }
+
+export interface IDeleteOperationModel {
+    operation_id: string;
+}
