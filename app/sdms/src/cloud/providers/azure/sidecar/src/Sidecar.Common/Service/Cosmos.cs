@@ -17,8 +17,10 @@
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 
-namespace Sidecar.Services
+namespace Sidecar.Common.Service
 {
+    using Sidecar.Common.Model;
+
     public class Cosmos : IDataAccess
     {
         private readonly string databaseId = "sdms-db";

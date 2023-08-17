@@ -1,4 +1,4 @@
-using Sidecar.Services;
+using Sidecar.Common.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 

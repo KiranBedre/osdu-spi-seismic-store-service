@@ -1,4 +1,5 @@
-﻿// ============================================================================
+﻿
+// ============================================================================
 // Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +15,10 @@
 // limitations under the License.
 // ============================================================================
 
-public class QueryPaginatedRequestBody
+namespace Sidecar.Common.Service
 {
-    public string? cs { get; set; }
-    public string? sql { get; set; }
-    public string? ctoken { get; set; }
-    public int? limit { get; set; }
-}
-
-public class PaginatedRecords
-{
-    public List<Object>? records { get; set; }
-    public string? continuationToken { get; set; }
-
+    public interface IDataAccess
+    {
+        Task<string> Query(string cs, string sql, string? ctoken, int? limit);
+    }
 }

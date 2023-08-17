@@ -16,10 +16,11 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
-using Sidecar.Services;
 
 namespace Sidecar.Controllers
 {
+    using Sidecar.Common.Model;
+    using Sidecar.Common.Service;
     [Route("api/[controller]")]
     [ApiController]
     public class CosmosController : ControllerBase
