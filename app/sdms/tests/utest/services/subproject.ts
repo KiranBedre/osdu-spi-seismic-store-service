@@ -28,7 +28,9 @@ import { TenantAuth, TenantDAO, TenantModel } from '../../../src/services/tenant
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
 
+import Bull from 'bull';
 import sinon from 'sinon';
+import { StorageJobManager } from '../../../src/cloud/shared/queue';
 
 export class TestSubProjectSVC {
 
@@ -94,6 +96,7 @@ export class TestSubProjectSVC {
             this.list();
             this.others();
             this.delete();
+            this.bulkDelete();
 
         });
 
@@ -303,6 +306,28 @@ export class TestSubProjectSVC {
 
         });
 
+    }
+
+    private static bulkDelete() {
+
+        Tx.sectionInit('bulkDelete');
+        
+        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+            try {
+                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a', gcpid: 'gcp-id' } as TenantModel);
+                this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
+                this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+                this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+                
+                let queue = {add: this.sandbox.fake.resolves("")};
+                StorageJobManager.deleteJobsQueue = queue as unknown as Bull.Queue;
+
+                await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDelete);
+                Tx.check202(expRes.statusCode, done);
+            } catch (e) {
+                done(e);
+            }
+        });
     }
 
 }
