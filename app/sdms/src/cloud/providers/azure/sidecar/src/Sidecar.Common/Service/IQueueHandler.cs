@@ -16,16 +16,9 @@
 
 namespace Sidecar.Common.Service
 {
-    public class ServiceBusQueue : IQueueAccess
+    public interface IQueueHandler<TOptions, TMessage> where TOptions : class
     {
-        public void Enqueue<T>(string key, T value)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Dequeue<T>(string key, T value)
-        {
-            throw new NotImplementedException();
-        }
+        void Enqueue(string key, TMessage value);
+        TMessage Dequeue(string key, TMessage value);
     }
 }

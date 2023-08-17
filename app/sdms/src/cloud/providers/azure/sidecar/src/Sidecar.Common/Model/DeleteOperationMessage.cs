@@ -14,11 +14,19 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Service
-{
-    public interface IQueueAccess
+namespace Sidecar.Common.Model{
+
+    public class DeleteOperationMessage : IDeleteOperationMessage
     {
-        void Enqueue<T>(string key, T value);
-        T Dequeue<T>(string key, T value);
+
+        public long Id { get; set; }
+        public string OperationId{get;set;} = "";
+
+        public string Tenant { get; set; } = "";
+
+        public string SubProjectName {get;  set;} = "";
+
+        public string Query { get; set; } = "";
+
     }
 }

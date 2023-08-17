@@ -14,14 +14,12 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Service
+namespace Sidecar.Common.Model
 {
-    public interface ICacheAccess
+    public interface IQueueOptionsRedis
     {
-        T Get<T>(string key);
-        void Set<T>(string key, T value);
-        bool Exists(string key);
-        bool Exists(string key, out object value);
-        bool Exists<T>(string key, out T value);
+        string ConnectionString { get; set; }
+        string QueueName { get; set; }
     }
+
 }
