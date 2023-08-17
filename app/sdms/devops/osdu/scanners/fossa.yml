@@ -1,5 +1,5 @@
 fossa-analyze:
-  image: $CI_REGISTRY/divido/fossa-with-cache:v0.8
+  image: $CI_REGISTRY/divido/fossa-with-cache:v0.9
   stage: scan
   tags: ['osdu-medium']
   variables:
