@@ -55,16 +55,16 @@ export class DeleteJobRedisStore {
         }
     }
 
-    private static getDeleteOperationId(operation: IDeleteOperationQueueTaskModel) {
-        return deleteJobQueueName + ":" + operation.operation_id;
+    private static getDeleteOperationKey(operationId: string) {
+        return deleteJobQueueName + ":" + operationId;
     }
 
     public static async pushOperation(operation: IDeleteOperationQueueTaskModel) {
-        const operationId = this.getDeleteOperationId(operation);
+        const operationKey = this.getDeleteOperationKey(operation.operation_id);
         await this.redisClient
             .multi()
-            .hset(operationId, operation)
-            .lpush(deleteJobQueueName, operationId)
+            .hset(operationKey, operation)
+            .lpush(deleteJobQueueName, operation.operation_id)
             .exec();
     }
 }
