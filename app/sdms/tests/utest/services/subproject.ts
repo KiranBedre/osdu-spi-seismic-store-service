@@ -31,6 +31,7 @@ import { Tx } from '../utils';
 import Bull from 'bull';
 import sinon from 'sinon';
 import { StorageJobManager } from '../../../src/cloud/shared/queue';
+import { DeleteJobRedisStore } from '../../../src/services/subproject/redis';
 
 export class TestSubProjectSVC {
 
@@ -318,9 +319,7 @@ export class TestSubProjectSVC {
                 this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
                 this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
                 this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
-                
-                let queue = {add: this.sandbox.fake.resolves("")};
-                StorageJobManager.deleteJobsQueue = queue as unknown as Bull.Queue;
+                this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').resolves();
 
                 await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDelete);
                 Tx.check202(expRes.statusCode, done);
