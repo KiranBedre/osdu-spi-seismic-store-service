@@ -55,15 +55,10 @@ export class DeleteJobRedisStore {
         }
     }
 
-    private static getDeleteOperationKey(operationId: string) {
-        return deleteJobQueueName + ":" + operationId;
-    }
-
     public static async pushOperation(operation: IDeleteOperationQueueTaskModel) {
-        const operationKey = this.getDeleteOperationKey(operation.operation_id);
         await this.redisClient
             .multi()
-            .hset(operationKey, operation)
+            .hset(operation.operation_id, operation)
             .lpush(deleteJobQueueName, operation.operation_id)
             .exec();
     }

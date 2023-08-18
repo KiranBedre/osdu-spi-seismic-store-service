@@ -49,7 +49,7 @@ async function ServerStart() {
             Config.REDIS_SHARED_INSTANCE_TLS_DISABLE,
             'sdms-shared-cache');
         
-        console.log('- Initializing deletion job redis');
+        console.log('- Initializing deletion job Redis store');
         await DeleteJobRedisStore.init({
             ADDRESS: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
             PORT: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
