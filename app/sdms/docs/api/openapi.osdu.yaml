@@ -108,7 +108,7 @@ paths:
         - description: Hierarchical path of the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -184,7 +184,7 @@ paths:
         - description: Hierarchical path of the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -265,7 +265,7 @@ paths:
         - description: Hierarchical path of the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -329,7 +329,7 @@ paths:
         - description: Hierarchical path of the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -421,7 +421,7 @@ paths:
         - description: Hierarchical path of the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -505,7 +505,7 @@ paths:
         - description: Hierarchical path for the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -572,7 +572,7 @@ paths:
         - description: Hierarchical path for the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -626,7 +626,7 @@ paths:
         - description: Hierarchical path of the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -696,7 +696,7 @@ paths:
         - description: Hierarchical path of the dataset.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
         - description: Name of the dataset.
@@ -817,7 +817,7 @@ paths:
         - description: The hierarchy path.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
       responses:
