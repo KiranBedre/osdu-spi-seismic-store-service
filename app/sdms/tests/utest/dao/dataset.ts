@@ -268,8 +268,7 @@ export class TestDataset {
 				Config.DATASETS_KIND
 			);
 
-			this.journal.runQuery.resolves([expectedResult, undefined]);
-			this.journal.getQueryFilterSymbolContains.returns('=');
+			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
@@ -310,8 +309,7 @@ export class TestDataset {
 				query = query.filter('gtags', '=', gtag);
 			}
 
-			this.journal.runQuery.resolves([expectedResult, undefined]);
-			this.journal.getQueryFilterSymbolContains.returns('=');
+			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
@@ -353,8 +351,7 @@ export class TestDataset {
 				query = query.filter('gtags', 'CONTAINS', gtag);
 			}
 
-			this.journal.runQuery.resolves([expectedResult, undefined]);
-			this.journal.getQueryFilterSymbolContains.returns('CONTAINS');
+			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
@@ -397,8 +394,7 @@ export class TestDataset {
 				query = query.filter('gtags', 'CONTAINS', gtag);
 			}
 
-			this.journal.runQuery.resolves([expectedResult, undefined]);
-			this.journal.getQueryFilterSymbolContains.returns('CONTAINS');
+			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 			done()
@@ -468,8 +464,8 @@ export class TestDataset {
 				limit: 5,
 			};
 
+			this.journal.listDatasets.resolves([[{}], { endCursor: 'NO_MORE_RESULTS' }]);
 			this.journal.listFolders.resolves([[{path: '/a/b/c/'}], { endCursor: 'NO_MORE_RESULTS' }]);
-			this.journal.runQuery.resolves([[{}], { endCursor: 'NO_MORE_RESULTS' }]);
 			await DatasetDAO.paginatedListContent(this.journal, this.dataset, Config.LS_MODE.ALL, pagination);
 			done()
 		});
@@ -486,20 +482,11 @@ export class TestDataset {
 				path: ['datasets', '123'],
 			});
 
-			let query = this.journal
-				.createQuery(
-					Config.SEISMIC_STORE_NS + '-' + this.dataset.tenant + '-' + this.dataset.subproject,
-					Config.DATASETS_KIND
-				)
-				.filter('path', this.dataset.path);
-
-			query = query.start('cursor').limit(pagination.limit);
-
-			this.journal.runQuery.resolves([[entityOne], { endCursor: 'MORE_RESULTS' }]);
+			this.journal.listDatasets.resolves([[entityOne], { endCursor: 'MORE_RESULTS' }]);
 
 			await DatasetDAO.paginatedListContent(this.journal, this.dataset, Config.LS_MODE.ALL, pagination);
 
-			Tx.checkTrue(this.journal.runQuery.calledWith(query), done);
+			Tx.checkTrue(this.journal.listDatasets.calledWith(this.dataset, pagination), done);
 		});
 	}
 
@@ -572,7 +559,7 @@ export class TestDataset {
 			});
 
 			// stub results for dataset (with path "/");
-			this.journal.runQuery.resolves([[entityOne]]);
+			this.journal.listDatasets.resolves([[entityOne]]);
 
 			// stub results for all directories under the path "/"
 			this.journal.listFolders.resolves([[entityTwo, entityThree, entityFour]]);

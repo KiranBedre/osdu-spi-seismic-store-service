@@ -17,7 +17,7 @@
 import {Config} from './config';
 import {CloudFactory} from './cloud';
 import {TenantModel} from '../services/tenant';
-import {DatasetModel} from '../services/dataset';
+import {DatasetModel, PaginationModel} from '../services/dataset';
 import {Error} from '../shared';
 
 export interface IJournalQueryModel {
@@ -44,6 +44,11 @@ export interface IJournal {
     getTransaction(): IJournalTransaction;
     getQueryFilterSymbolContains(): string;
     listFolders(dataset: DatasetModel): Promise<any[]>;
+    listDatasets(
+        dataset: DatasetModel,
+        pagination?: PaginationModel,
+        searchParam?: string,
+        selectParam?: string[]): Promise<[any[], { endCursor?: string }]>;
     KEY: symbol;
 }
 
@@ -78,6 +83,45 @@ export abstract class AbstractJournal implements IJournal {
         const [res] = [await this.runQuery(query)];
         return res;
     }
+    public async listDatasets(
+        dataset: DatasetModel,
+        pagination?: PaginationModel,
+        searchParam?: string,
+        selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
+
+        let query: any;
+        query = this.createQuery(
+            Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND);
+
+        if (dataset.path) {
+            query = query.filter('path', dataset.path);
+        }
+
+        if (pagination && pagination.cursor) {
+            query = query.start(pagination.cursor);
+        }
+        if (pagination && pagination.limit) {
+            query = query.limit(pagination.limit);
+        }
+
+        if (dataset.gtags !== undefined || dataset.gtags.length !== 0) {
+            // filter based on gtags if parsed dataset model has gtags
+            for (const gtag of dataset.gtags) {
+                query = query.filter('gtags', this.getQueryFilterSymbolContains(), gtag);
+            }
+        }
+
+        if (searchParam) {
+            const [variable, value] = searchParam.split('=');
+            query = query.filter(variable, 'LIKE', value);
+        }
+
+        if (selectParam){ query = query.select(selectParam); }
+
+        return await this.runQuery(query);
+    }
+
+
     public getIdByKeys(keys: any[]): Promise<string[]> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }

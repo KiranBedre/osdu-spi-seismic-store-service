@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -107,31 +107,7 @@ export class DatasetDAO {
         dataset: DatasetModel, pagination: PaginationModel, searchParam:string, selectParam:string[]):
         Promise<any> {
 
-        let query: any;
-        if (dataset.gtags === undefined || dataset.gtags.length === 0) {
-            query = journalClient.createQuery(
-                Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND);
-        } else {
-            // filter based on gtags if parsed dataset model has gtags
-            query = journalClient.createQuery(
-                Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND);
-            for (const gtag of dataset.gtags) {
-                query = query.filter('gtags', journalClient.getQueryFilterSymbolContains(), gtag);
-            }
-        }
-
-        if (pagination && pagination.cursor) { query = query.start(pagination.cursor); }
-
-        if (pagination && pagination.limit) { query = query.limit(pagination.limit); }
-
-        if (searchParam) {
-            const [variable, value] = searchParam.split('=');
-            query = query.filter(variable, 'LIKE', value);
-        }
-
-        if (selectParam){ query = query.select(selectParam); }
-
-        const [entities, info] = await journalClient.runQuery(query);
+        const [entities, info] = await journalClient.listDatasets(dataset, pagination, searchParam, selectParam);
 
         // Fix model for old entity
         if(!selectParam){
@@ -194,16 +170,8 @@ export class DatasetDAO {
 
         // list datasets
         if (workingMode !== Config.LS_MODE.DIRS) {
-            let query = journalClient.createQuery(
-                Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
-                .filter('path', dataset.path);
-            if (pagination.cursor) {
-                query = query.start(pagination.cursor);
-            }
-            if (pagination.limit) {
-                query = query.limit(pagination.limit);
-            }
-            const [datasetEntities, info] = await journalClient.runQuery(query);
+            const [datasetEntities, info] = await journalClient.listDatasets(dataset, pagination);
+
             if (datasetEntities.length !== 0 || info.endCursor) {
                 output.datasets = output.datasets.concat(datasetEntities.map((item) => item.name));
                 if (pagination) {
@@ -220,17 +188,13 @@ export class DatasetDAO {
         tenant: string, subproject: string, pagination?: PaginationModel):
         Promise<{ datasets: { data: DatasetModel, key: any; }[], nextPageCursor: string; }> {
 
-        const output: any = { datasets: [], nextPageCursor: undefined };
-
-        // Retrieve the content datasets
-        let query = journalClient.createQuery(
-            Config.SEISMIC_STORE_NS + '-' + tenant + '-' + subproject, Config.DATASETS_KIND);
-
-        if (pagination && pagination.cursor) query = query.start(pagination.cursor);
-        if (pagination && pagination.limit) query = query.limit(pagination.limit);
-
+        const dataset: DatasetModel = {} as DatasetModel;
+        dataset.tenant = tenant;
+        dataset.subproject = subproject;
         const [datasetEntities, info] = (
-            await journalClient.runQuery(query)) as [DatasetModel[], { endCursor?: string; }];
+            await journalClient.listDatasets(dataset)) as [DatasetModel[], { endCursor?: string; }];
+
+        const output: any = { datasets: [], nextPageCursor: undefined };
 
         if (datasetEntities.length !== 0) {
             output.datasets = datasetEntities.map((entity) => {
@@ -252,10 +216,7 @@ export class DatasetDAO {
 
         // list datasets
         if (workingMode !== Config.LS_MODE.DIRS) {
-            const query = journalClient.createQuery(
-                Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
-                .filter('path', dataset.path);
-            const [datasetEntities] = await journalClient.runQuery(query);
+            const [datasetEntities] = await journalClient.listDatasets(dataset);
             if (datasetEntities.length !== 0) { results.datasets = datasetEntities.map((item) => item.name); }
         }
 

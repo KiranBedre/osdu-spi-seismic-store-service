@@ -225,6 +225,43 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
     }
 
+    public async listDatasets(
+        dataset: DatasetModel,
+        pagination?: PaginationModel,
+        searchParam?: string,
+        selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
+
+        let query: any
+        query = this.createQuery(
+            Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
+            .filter('subproject', dataset.subproject)
+
+        if (dataset.path && dataset.path !== '/') {
+            query = query.filter('path', dataset.path)
+        }
+
+        if (pagination && pagination.cursor) {
+            query = query.start(pagination.cursor);
+        }
+        if (pagination && pagination.limit) {
+            query = query.limit(pagination.limit);
+        }
+        if (dataset.gtags !== undefined && dataset.gtags.length !== 0) {
+            // filter based on gtags if parsed dataset model has gtags
+            for (const gtag of dataset.gtags) {
+                query = query.filter('gtags', this.getQueryFilterSymbolContains(), gtag);
+            }
+        }
+
+        if (searchParam) {
+            const [variable, value] = searchParam.split('=');
+            query = query.filter(variable, 'LIKE', value);
+        }
+
+        if (selectParam){ query = query.select(selectParam); }
+        return this.runQuery(query);
+    }
+
     private async getSubfoldersUsingDistinctPathsQuery(sqlQuery: string, dataset: DatasetModel) {
         if (AzureConfig.SIDECAR_ENABLE_QUERY) {
             const cParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
@@ -317,20 +354,23 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             } else {
                 sqlQuery = 'SELECT *';
             }
-            // query using partial partition key
-            const partialKey = 'ds' + cosmosQuery.namespace.replace(new RegExp(Config.SEISMIC_STORE_NS, 'g'), '')
-            sqlQuery += ' FROM c WHERE RegexMatch(c.id, "^(' + partialKey + '-)([a-z0-9]+)$")'
+
+            sqlQuery += ' FROM c';
 
             // add filters
+            const filters = []
             for (const filter of cosmosQuery.filters) {
                 if (filter.operator === 'CONTAINS') {
-                    sqlQuery += (' AND (ARRAY_CONTAINS(c.data.' + filter.property + ', ' + '\'' + filter.value + '\'' + ')' +
+                    filters.push('(ARRAY_CONTAINS(c.data.' + filter.property + ', ' + '\'' + filter.value + '\'' + ')' +
                         ' OR c.data.' + filter.property + ' = ' + '\'' + filter.value + '\'' + ')')
                 } else if (filter.operator === 'RegexMatch') {
-                    sqlQuery += (' AND (RegexMatch(c.data.' + filter.property + ', \'' + filter.value + '\')' + ')')
+                    filters.push('(RegexMatch(c.data.' + filter.property + ', \'' + filter.value + '\')' + ')')
                 } else {
-                    sqlQuery += (' AND c.data.' + filter.property + ' ' + filter.operator + ' "' + filter.value + '"')
+                    filters.push('c.data.' + filter.property + ' ' + filter.operator + ' "' + filter.value + '"')
                 }
+            }
+            if (filters) {
+                sqlQuery += ' WHERE ' + filters.join(' AND ')
             }
 
             // group results by field
@@ -404,7 +444,6 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                     response = await (await this.getCosmoContainer()).items.query(sqlQuery).fetchAll();
                 }
             }
-
         }
 
         if (cosmosQuery.kind === Config.APPS_KIND) {
