@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import Bull from 'bull';
+import { DeleteJobRedisStore } from './redis';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { SubprojectAuth, SubProjectModel, IDeleteOperationModel } from '.';
@@ -31,7 +31,7 @@ import { SubProjectDAO } from './dao';
 import { SubprojectGroups } from './groups';
 import { SubProjectOP } from './optype';
 import { SubProjectParser } from './parser';
-import { StorageJobManager } from '../../cloud/shared/queue';
+import { IDeleteOperationQueueTaskModel } from './model';
 
 export class SubProjectHandler {
 
@@ -274,24 +274,21 @@ export class SubProjectHandler {
         const subprojectName = req.params.subprojectid;
         const path = SubProjectParser.bulkDelete(req);
 
-        let deletionJob: Bull.Job;
-
         // auth check: tenant.admin
         await Auth.isUserAuthorized(
             req.headers.authorization, TenantAuth.getAuthGroups(tenant),
             tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
         const operationId = uuidv4();
-        const RETRY_MAX_ATTEMPTS = 10;
 
-        deletionJob = await StorageJobManager.deleteJobsQueue.add({
-            operationId: operationId,
+        const operation: IDeleteOperationQueueTaskModel = {
+            operation_id: operationId,
             tenant: tenant.name,
-            subprojectName: subprojectName,
-            query: path
-        }, {
-            attempts: RETRY_MAX_ATTEMPTS
-        });
+            subproject: subprojectName,
+            path: path
+        }
+
+        await DeleteJobRedisStore.pushOperation(operation);
 
         return {
             operation_id: operationId

@@ -35,3 +35,10 @@ export interface ISubprojectAcl {
 export interface IDeleteOperationModel {
     operation_id: string;
 }
+
+export interface IDeleteOperationQueueTaskModel {
+    operation_id: string;
+    tenant: string;
+    subproject: string;
+    path: string;
+}
