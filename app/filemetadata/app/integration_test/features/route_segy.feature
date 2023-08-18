@@ -6,7 +6,7 @@ Feature: Route segy integration test
     And create dataset with id integration_test_dataset.sgy
     And upload dataset with id integration_test_dataset.sgy
 
-  Scenario: Endpoint check
+  Scenario: V2 Endpoint check
     When revision endpoint is called
     Then revision response should have value 0
 

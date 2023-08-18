@@ -13,7 +13,8 @@ def apply_test_settings():
     baseUrl = f"{os.getenv('DNS')}" if dnsVariableExists else "http://localhost:8080"
     externalServicesUrl = f"{os.getenv('DNS')}" if dnsVariableExists else "https://eu5.api.enterprisedata.slb.com"
     Settings.BASE_URL = f"{baseUrl}/seismic-file-metadata/api"
-    Settings.BASE_API_URL = f"{baseUrl}/seismic-file-metadata/api/v2"
+    Settings.BASE_API_URL_v1 = f"{baseUrl}/seismic-file-metadata/api/v1"
+    Settings.BASE_API_URL_v2 = f"{baseUrl}/seismic-file-metadata/api/v2"
     Settings.SEISTORE_SVC_URL = f"{externalServicesUrl}/seistore-svc/api/v3"
     Settings.STORAGE_SVC_URL = f"{externalServicesUrl}/api/storage/v2"
     logging.info("---ENV VARIABLES---")
