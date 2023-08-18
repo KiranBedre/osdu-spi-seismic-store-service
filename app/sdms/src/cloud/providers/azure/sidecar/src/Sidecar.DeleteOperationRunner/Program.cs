@@ -18,7 +18,7 @@ public class Program
     private static void AttemptOptionsFromEnv(QueueOptionsRedis opts)
     {
         opts.ConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
-        opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
+        opts.DeletionQueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
     }
 
     private static async Task RunAsync(QueueOptionsRedis opts)
@@ -26,7 +26,7 @@ public class Program
         var host = Host.CreateDefaultBuilder()
             .ConfigureServices(services => _ = services
                 .AddSingleton<IQueueOptionsRedis>(opts)
-                .AddSingleton<IQueueHandler<IQueueOptionsRedis, IDeleteOperationMessage>,QueueHanderRedis>()
+                .AddSingleton<IDeletionOperationQueueHandler<IQueueOptionsRedis, IDeleteOperationMessage>,QueueHanderRedis>()
                 .AddHostedService<DeletionOperationService<IQueueOptionsRedis, IDeleteOperationMessage>>()
 
             ).ConfigureLogging(lg => _ = lg

@@ -14,19 +14,15 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model{
-    using System.Text.Json.Serialization;
-
-    public interface IDeleteOperationMessage
+namespace Sidecar.Common.Service
+{
+    using Model;
+    using System.Diagnostics;
+    using System.Threading.Tasks;
+    public interface IDeletionOperationQueueHandler<TOptions, TMessage> : IQueueHandler<TOptions, TMessage>
+        where TOptions : class
+        where TMessage : IDeleteOperationMessage
     {
-        [JsonPropertyName("operationId")]
-        string OperationId{get;set;}
-        [JsonPropertyName("tenant")]
-        string Tenant { get; set;}
-        [JsonPropertyName("subprojectName")]
-       string SubProjectName {get;  set;}
-        [JsonPropertyName("query")]
-        string Query { get; set; }
-
+        Task<TMessage?> CheckForDeletionOperationAsync();
     }
 }

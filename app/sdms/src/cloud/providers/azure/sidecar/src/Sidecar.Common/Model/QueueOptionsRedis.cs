@@ -25,7 +25,7 @@ namespace Sidecar.Common.Model
         public string ConnectionString {get; set;}
 
         [Option('q', "queue", Required = true, HelpText = "Queue name.")]
-        public string QueueName { get; set; }
+        public string DeletionQueueName { get; set; }
     }
 
 }

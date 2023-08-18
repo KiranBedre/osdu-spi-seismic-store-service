@@ -15,18 +15,15 @@
 // ============================================================================
 
 namespace Sidecar.Common.Model{
-    using System.Text.Json.Serialization;
 
-    public interface IDeleteOperationMessage
+    public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationStatus
     {
-        [JsonPropertyName("operationId")]
-        string OperationId{get;set;}
-        [JsonPropertyName("tenant")]
-        string Tenant { get; set;}
-        [JsonPropertyName("subprojectName")]
-       string SubProjectName {get;  set;}
-        [JsonPropertyName("query")]
-        string Query { get; set; }
-
+        public DateTime CreatedAt { get;set; } = DateTime.UtcNow;
+        public DateTime LastUpdatedAt { get;set; } = DateTime.UtcNow;
+        public string CreatedBy { get;set; } = "";
+        public string Status { get;set; } = "";
+        public long DatasetsCnt { get;set; } = 0;
+        public long DeletedCnt { get;set; } = 0;
+        public long FailedCnt { get;set; } = 0;
     }
 }

@@ -20,30 +20,33 @@ namespace Sidecar.Common.Service
     using Microsoft.Extensions.Logging;
     using System.Diagnostics;
     using Model;
+    using System.Globalization;
 
-    public class DeletionOperationService<TQueueOptions,TQueueMessage> : BackgroundService
+    public class DeletionOperationService<TQueueOptions, TQueueMessage> : BackgroundService
         where TQueueOptions : class
         where TQueueMessage : IDeleteOperationMessage
     {
-        private readonly ILogger<DeletionOperationService<TQueueOptions,TQueueMessage>> Logger;
-        private readonly IQueueHandler<TQueueOptions, TQueueMessage> Queue;
+        private readonly ILogger<DeletionOperationService<TQueueOptions, TQueueMessage>> Logger;
+        private readonly IDeletionOperationQueueHandler<TQueueOptions, TQueueMessage> Queue;
         private readonly Stopwatch RunTimer;
 
-        public DeletionOperationService(ILogger<DeletionOperationService<TQueueOptions,TQueueMessage>> logger, IQueueHandler<TQueueOptions, TQueueMessage> queue)
+        public DeletionOperationService(ILogger<DeletionOperationService<TQueueOptions, TQueueMessage>> logger, IDeletionOperationQueueHandler<TQueueOptions, TQueueMessage> queue)
         {
             RunTimer = new Stopwatch();
             Logger = logger;
             Queue = queue;
         }
 
-        protected override Task ExecuteAsync(CancellationToken stopToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
-            // while (!stopToken.IsCancellationRequested)
-            // {
-            //     await ProcessDeleteMessages();
-            // }
-            // return;
+            do{
+                var op = await Queue.CheckForDeletionOperationAsync();
+                if(op is not null){
+                    //---start the deletion process
+                    Logger.LogDebug("Starting deletion operation {0}...", op.OperationId);
+                }
+                await Task.Delay(1000,cancellationToken);
+            }while(!cancellationToken.IsCancellationRequested);
         }
 
         // private async Task ProcessDeleteMessages(){

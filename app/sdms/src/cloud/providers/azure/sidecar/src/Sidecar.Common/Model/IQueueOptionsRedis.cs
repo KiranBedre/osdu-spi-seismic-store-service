@@ -19,7 +19,7 @@ namespace Sidecar.Common.Model
     public interface IQueueOptionsRedis
     {
         string ConnectionString { get; set; }
-        string QueueName { get; set; }
+        string DeletionQueueName { get; set; }
     }
 
 }

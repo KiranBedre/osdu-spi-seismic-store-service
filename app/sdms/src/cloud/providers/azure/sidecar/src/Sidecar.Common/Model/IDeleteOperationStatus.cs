@@ -17,16 +17,27 @@
 namespace Sidecar.Common.Model{
     using System.Text.Json.Serialization;
 
-    public interface IDeleteOperationMessage
+    public interface IDeleteOperationStatus : IDeleteOperationMessage
     {
-        [JsonPropertyName("operationId")]
-        string OperationId{get;set;}
-        [JsonPropertyName("tenant")]
-        string Tenant { get; set;}
-        [JsonPropertyName("subprojectName")]
-       string SubProjectName {get;  set;}
-        [JsonPropertyName("query")]
-        string Query { get; set; }
+        [JsonPropertyName("createdAt")]
+        DateTime CreatedAt { get; set; }
 
+        [JsonPropertyName("lastUpdatedAt")]
+        DateTime LastUpdatedAt { get; set; }
+
+        [JsonPropertyName("createdBy")]
+        string CreatedBy { get; set; }
+
+        [JsonPropertyName("status")]
+        string Status {get;  set;}
+
+        [JsonPropertyName("datasetsCnt")]
+        long DatasetsCnt{get;set;}
+
+        [JsonPropertyName("deletedCnt")]
+        long DeletedCnt{get;set;}
+
+        [JsonPropertyName("failedCnt")]
+        long FailedCnt{get;set;}
     }
 }
