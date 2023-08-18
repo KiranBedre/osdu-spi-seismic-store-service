@@ -108,6 +108,7 @@ export class TestAzureCosmosDbDAO {
             this.queryStart();
             this.queryLimit();
             this.querygroupBy();
+            this.listDatasets();
             this.listFolders();
         });
     }
@@ -225,40 +226,7 @@ export class TestAzureCosmosDbDAO {
             requestCharge: 0,
             activityId: ''
         } as any;
-        const queryIterator: QueryIterator<any> = {
-            clientContext: undefined,
-            query: undefined,
-            options: undefined,
-            fetchFunctions: undefined,
-            fetchAllTempResources: undefined,
-            fetchAllLastResHeaders: undefined,
-            queryExecutionContext: undefined,
-            queryPlanPromise: undefined,
-            isInitialized: undefined,
-            getAsyncIterator (): AsyncIterable<FeedResponse<any>> {
-                throw new Error('Function not implemented.');
-            },
-            hasMoreResults (): boolean {
-                throw new Error('Function not implemented.');
-            },
-            fetchAll (): Promise<FeedResponse<any>> {
-                return Promise.resolve(feedResponse);
-            },
-            fetchNext (): Promise<FeedResponse<any>> {
-                return Promise.resolve(feedResponse);
-            },
-            reset (): void {
-                throw new Error('Function not implemented.');
-            },
-            toArrayImplementation: undefined,
-            createPipelinedExecutionContext: undefined,
-            fetchQueryPlan: undefined,
-            needsQueryPlan: undefined,
-            initPromise: undefined,
-            init: undefined,
-            _init: undefined,
-            handleSplitError: undefined
-        } as any;
+        let queryIterator: QueryIterator<any> = this.getQueryIterator() as any;
         const azureCosmosDbQuery: AzureCosmosDbQuery = {
             filter (property: string, operator?: ('CONTAINS' | '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'RegexMatch') | undefined, value?: {} | undefined): IJournalQueryModel {
                 throw new Error('Function not implemented.');
@@ -516,6 +484,266 @@ export class TestAzureCosmosDbDAO {
 
     }
 
+    private static listDatasets() {
+        const datasetModel1: DatasetModel = this.getDatasetModel('dataset1.txt');
+        const datasetModel2: DatasetModel = this.getDatasetModel('dataset2.txt');
+        let tenant = 'tenant'
+        let subproject = 'subproject'
+        let path = 'path'
+        let pagination = {
+            limit: 1,
+            cursor: "cursor"
+        }
+        Tx.sectionInit('listDatasets');
+        let query =  'SELECT * FROM c WHERE c.data.subproject = "' + subproject +
+            '" AND c.data.path = "' + path + '"'
+        let queryIterator: QueryIterator<any> = this.getQueryIterator() as any;
+        Tx.test( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
+            sinonStub.returns(queryIterator);
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+
+            let res = await this.cosmos.listDatasets(dataset);
+            let expectedQuery = 'SELECT * FROM c WHERE c.data.subproject = "' + dataset.subproject + '"';
+            sinon.assert.calledWith(sinonStub, expectedQuery);
+            done();
+        });
+
+        Tx.test( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
+            sinonStub.returns(queryIterator);
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+            dataset.path = path;
+
+            let res = await this.cosmos.listDatasets(dataset);
+            sinon.assert.calledWith(sinonStub, query);
+            done();
+        });
+
+        Tx.test( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
+            sinonStub.returns(queryIterator);
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+            dataset.path = path;
+
+            let res = await this.cosmos.listDatasets(dataset, pagination);
+            sinon.assert.calledWith(sinonStub, query, {
+                continuationToken: pagination.cursor,
+                maxItemCount: pagination.limit
+            });
+            done();
+        });
+
+        Tx.test( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
+            sinonStub.returns(queryIterator);
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+            dataset.path = path;
+            dataset.gtags = ['gtag1'];
+            const searchParam = 'name=file';
+            const selectParams = ['name', 'subproject'];
+            const expectedQuery = 'SELECT c.data.name, c.data.subproject FROM c WHERE c.data.subproject = "'
+                + subproject + '" AND c.data.path = "' + path +
+                '" AND (ARRAY_CONTAINS(c.data.gtags, \'gtag1\') OR c.data.gtags = \'gtag1\') AND c.data.name LIKE "file"';
+
+            await this.cosmos.listDatasets(dataset, pagination, searchParam, selectParams);
+
+            sinon.assert.calledWith(sinonStub, expectedQuery, {
+                continuationToken: pagination.cursor,
+                maxItemCount: pagination.limit
+            });
+            done();
+        });
+
+        Tx.asyncTest( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+
+            this.sandbox.stub(this.axiosInstance, 'post').resolves({
+                data: {
+                    records: [
+                        {
+                            data: datasetModel1
+                        },
+                        {
+                            data: datasetModel2
+                        }
+                    ]
+                }
+            });
+
+            const expectedDatasets = [
+                datasetModel1,
+                datasetModel2
+            ]
+
+            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
+                {endpoint: 'myendpoint', key: 'mykey'});
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+            dataset.path = path;
+
+            const results = await this.cosmos.listDatasets(dataset);
+
+            this.sandbox.assert.calledWith(
+                // @ts-ignore
+                this.axiosInstance.post,
+                AzureConfig.SIDECAR_URL + '/query',
+                {
+                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    sql: query
+                },
+            );
+
+            expect(results[0]).to.have.same.members(expectedDatasets);
+            expect(results[1].endCursor).to.be.undefined
+
+            done();
+        });
+
+        Tx.asyncTest(async (done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+
+            this.sandbox.stub(this.axiosInstance, 'post').resolves({
+                data: {
+                    records: [
+                        {
+                            data: datasetModel1
+                        },
+                        {
+                            data: datasetModel2
+                        }
+                    ],
+                    continuationToken: "continuationToken"
+                }
+            });
+
+            const expectedDatasets = [
+                datasetModel1,
+                datasetModel2
+            ]
+
+            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
+                {endpoint: 'myendpoint', key: 'mykey'});
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+            dataset.path = path;
+
+            const results = await this.cosmos.listDatasets(dataset, pagination);
+
+            this.sandbox.assert.calledWith(
+                // @ts-ignore
+                this.axiosInstance.post,
+                AzureConfig.SIDECAR_URL + '/query',
+                {
+                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    sql: query,
+                    ctoken: pagination.cursor,
+                    limit: pagination.limit
+                },
+            );
+
+            expect(results[0]).to.have.same.members(expectedDatasets);
+            expect(results[1].endCursor).to.not.be.undefined
+
+            done();
+        });
+
+        Tx.asyncTest(async (done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+
+            this.sandbox.stub(this.axiosInstance, 'post').resolves({
+                data: {
+                    records: [
+                        {
+                            data: datasetModel1
+                        },
+                        {
+                            data: datasetModel2
+                        }
+                    ],
+                    continuationToken: "continuationToken"
+                }
+            });
+
+            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
+                {endpoint: 'myendpoint', key: 'mykey'});
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+            dataset.path = path;
+            dataset.gtags = ['gtag1'];
+            const searchParam = 'name=file';
+            const selectParams = ['name', 'subproject'];
+            const expectedQuery = 'SELECT c.data.name, c.data.subproject FROM c WHERE c.data.subproject = "'
+                + subproject + '" AND c.data.path = "' + path +
+                '" AND (ARRAY_CONTAINS(c.data.gtags, \'gtag1\') OR c.data.gtags = \'gtag1\') AND c.data.name LIKE "file"';
+
+
+            await this.cosmos.listDatasets(dataset, pagination, searchParam, selectParams);
+
+            this.sandbox.assert.calledWith(
+                // @ts-ignore
+                this.axiosInstance.post,
+                AzureConfig.SIDECAR_URL + '/query',
+                {
+                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    sql: expectedQuery,
+                    ctoken: pagination.cursor,
+                    limit: pagination.limit
+                },
+            );
+
+            done();
+        });
+    }
+
+    private static getDatasetModel(name: string) {
+        return {
+            name: name,
+            tenant: 'tenant',
+            subproject: 'subproject',
+            path: '/path/to/the/folder/',
+            created_date: '',
+            last_modified_date: '',
+            created_by: '',
+            metadata: undefined,
+            filemetadata: undefined,
+            gcsurl: '',
+            type: '',
+            ltag: '',
+            ctag: '0000000000000000',
+            sbit: '',
+            sbit_count: 0,
+            gtags: ['gtag1'],
+            readonly: false,
+            seismicmeta_guid: '',
+            transfer_status: '',
+            acls: {admins: [], viewers: []},
+            access_policy: ''
+        };
+    }
+
     private static createKey() {
         Tx.sectionInit('create key');
 
@@ -596,7 +824,7 @@ export class TestAzureCosmosDbDAO {
     private static queryFilter() {
         Tx.sectionInit('filter');
 
-        Tx.test( (done: any) => {
+        Tx.test((done: any) => {
             const res = this.query.filter('property');
             Tx.checkTrue(res === this.query , done);
 
@@ -639,6 +867,7 @@ export class TestAzureCosmosDbDAO {
         });
     }
 
+
     private static queryLimit() {
         Tx.sectionInit('Limit');
 
@@ -679,6 +908,53 @@ export class TestAzureCosmosDbDAO {
             Tx.checkTrue(res === this.query , done);
 
         });
+    }
+
+    private static getQueryIterator() {
+        let feedResponse: FeedResponse<any> = {
+            resources: ["resources"],
+            headers: undefined,
+            hasMoreResults: false,
+            continuation: '',
+            continuationToken: 'continuationToken',
+            queryMetrics: '',
+            requestCharge: 0,
+            activityId: ''
+        } as any;
+        return {
+            clientContext: undefined,
+            query: undefined,
+            options: undefined,
+            fetchFunctions: undefined,
+            fetchAllTempResources: undefined,
+            fetchAllLastResHeaders: undefined,
+            queryExecutionContext: undefined,
+            queryPlanPromise: undefined,
+            isInitialized: undefined,
+            getAsyncIterator: function (): AsyncIterable<FeedResponse<any>> {
+                throw new Error('Function not implemented.');
+            },
+            hasMoreResults: function (): boolean {
+                throw new Error('Function not implemented.');
+            },
+            fetchAll: function (): Promise<FeedResponse<any>> {
+                return Promise.resolve(feedResponse);
+            },
+            fetchNext: function (): Promise<FeedResponse<any>> {
+                return Promise.resolve(feedResponse);
+            },
+            reset: function (): void {
+                throw new Error('Function not implemented.');
+            },
+            toArrayImplementation: undefined,
+            createPipelinedExecutionContext: undefined,
+            fetchQueryPlan: undefined,
+            needsQueryPlan: undefined,
+            initPromise: undefined,
+            init: undefined,
+            _init: undefined,
+            handleSplitError: undefined
+        };
     }
 
 }

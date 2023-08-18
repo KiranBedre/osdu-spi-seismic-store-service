@@ -31,7 +31,6 @@ import { UtilityParser } from '../../../src/services/utility/parser';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
 
-
 export class TestUtilitySVC {
 
     public static run() {
