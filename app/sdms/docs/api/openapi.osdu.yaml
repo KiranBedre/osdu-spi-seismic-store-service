@@ -1885,6 +1885,46 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+    get:
+      summary: Get status of a bulk delete operation.
+      description: "<ul><li>Get status of a hierarchical delete operation.</li><li>Required roles: subproject.admin</li></ul>"
+      operationId: bulk-delete-get
+      tags:
+        - SubProject
+      parameters:
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Id of a bulk delete operation.
+          in: query
+          name: operationid
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retrieved the delete operation successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteOperationStatus"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
   "/subproject/tenant/{tenantid}":
     get:
       summary: List subprojects in a tenant.
@@ -2921,6 +2961,50 @@ components:
           description: Operation id of the deletion job.
       example:
         operation_id: c3d282e6-e7d1-40d8-8ac2-edc15b6d174c
+    DeleteOperationStatus:
+      required:
+        - operation_id
+        - created_at
+        - created_by
+        - last_updated_at
+        - status
+        - dataset_cnt
+        - deleted_cnt
+        - failed_cnt
+      properties:
+        operation_id:
+          type: string
+          description: Operation id of the deletion job.
+        created_at:
+          type: string
+          description: Time when the operation was initiated.
+        created_by:
+          type: string
+          description: User who initiated the deletion job.
+        last_updated_at:
+          type: string
+          description: Time when the operation status was last updated.
+        status:
+          type: string
+          description: Status of the deletion job.
+        dataset_cnt:
+          type: number
+          description: Total number of datasets to delete.
+        deleted_cnt:
+          type: number
+          description: Number of deleted datasets.
+        failed_cnt:
+          type: number
+          description: Number of datasets which failed to be deleted.
+      example:
+        operation_id: c3d282e6-e7d1-40d8-8ac2-edc15b6d174c
+        created_at: string
+        created_by: string
+        last_updated_at: string
+        status: Completed
+        dataset_cnt: 1000
+        deleted_cnt: 997
+        failed_cnt: 3
     TenantCreateBody:
       required:
         - gcpid
