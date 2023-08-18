@@ -14,11 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-import { Config } from './config';
-import { CloudFactory } from './cloud';
-import { TenantModel } from '../services/tenant';
-import { DatasetModel } from '../services/dataset';
-import { Error } from '../shared';
+import {Config} from './config';
+import {CloudFactory} from './cloud';
+import {TenantModel} from '../services/tenant';
+import {DatasetModel} from '../services/dataset';
+import {Error} from '../shared';
 
 export interface IJournalQueryModel {
     filter(property: string, value: {}): IJournalQueryModel;
@@ -88,7 +88,7 @@ export abstract class AbstractJournal implements IJournal {
 
 export abstract class AbstractJournalTransaction implements IJournalTransaction {
     public abstract KEY: symbol;
-    public abstract get(key: any): Promise<[any | any[]]>;;
+    public abstract get(key: any): Promise<[any | any[]]>;
     public abstract save(entity: any): Promise<void>;
     public abstract delete(key: any): Promise<void>;
     public abstract createQuery(namespace: string, kind: string): IJournalQueryModel;

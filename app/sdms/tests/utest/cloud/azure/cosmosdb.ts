@@ -24,7 +24,7 @@ import { AzureDataEcosystemServices } from '../../../../src/cloud/providers/azur
 import { Config, IJournal, IJournalTransaction } from '../../../../src/cloud';
 import { IJournalQueryModel } from '../../../../src/cloud/journal';
 import { Tx } from '../../utils';
-import { assert } from 'chai';
+import {assert, expect} from 'chai';
 import { AzureConfig } from '../../../../src/cloud/providers/azure';
 import { HighlightSpanKind } from 'typescript';
 import { query } from 'winston';
@@ -42,10 +42,12 @@ export class TestAzureCosmosDbDAO {
         describe(Tx.testInit('azure cosmos db dao test'), () => {
             Config.CLOUDPROVIDER = 'azure';
             this.sandbox = sinon.createSandbox();
-            this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' });
+            // axiosInstance needs to have any kind or "post" method to make it stubbable in the tests
+            this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
+            this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' }, this.axiosInstance);
             this.query = new AzureCosmosDbQuery('name-a', 'kind-a');
 
-            let datasetModel: DatasetModel = {
+            const datasetModel: DatasetModel = {
                 name: 'name',
                 tenant: 'tenant',
                 subproject: 'subproject',
@@ -61,68 +63,30 @@ export class TestAzureCosmosDbDAO {
                 ctag: '0000000000000000',
                 sbit: '',
                 sbit_count: 0,
-                gtags: ["gtag1"],
+                gtags: ['gtag1'],
                 readonly: false,
                 seismicmeta_guid: '',
                 transfer_status: '',
                 acls: { admins: [], viewers: [] },
                 access_policy: ''
             };
-            let iJournalQueryModel: IJournalQueryModel = {
-                filter: function (property: string, value: {}): IJournalQueryModel {
+            const iJournalQueryModel: IJournalQueryModel = {
+                filter (property: string, value: {}): IJournalQueryModel {
                     return iJournalQueryModel;
                 },
-                start: function (start: string | Buffer): IJournalQueryModel {
+                start (start: string | Buffer): IJournalQueryModel {
                     return iJournalQueryModel;
                 },
-                limit: function (n: number): IJournalQueryModel {
+                limit (n: number): IJournalQueryModel {
                     return iJournalQueryModel;
                 },
-                groupBy: function (fieldNames: string | string[]): IJournalQueryModel {
+                groupBy (fieldNames: string | string[]): IJournalQueryModel {
                     return iJournalQueryModel;
                 },
-                select: function (fieldNames: string | string[]): IJournalQueryModel {
+                select (fieldNames: string | string[]): IJournalQueryModel {
                     return iJournalQueryModel;
                 }
             };
-            let journalClient: IJournal = {
-                get: function (key: any): Promise<[any]> {
-                    return Promise.resolve([ datasetModel ]);
-                },
-                getIdByKeys: function (key: any): Promise<[any]> {
-                    return Promise.resolve(["exit getMulti"]);
-                },
-                getMetaDataSizesByKeys: function (key: any): Promise<Map<any, any>> {
-                    return Promise.resolve(new Map<any, any>());
-                },
-                save: function (entity: any): Promise<any> {
-                    return Promise.resolve("exit saved");
-                },
-                delete: function (key: any): Promise<any> {
-                    return Promise.resolve("exit delete");
-                },
-                createQuery: function (namespace: string, kind: string): IJournalQueryModel {
-                    return iJournalQueryModel;
-                },
-                runQuery: function (query: IJournalQueryModel): Promise<[any[], { endCursor?: string | undefined; }]> {
-                    return Promise.resolve( [[datasetModel], {}] );
-                },
-                createKey: function (specs: any): object {
-                    return {};
-                },
-                getTransaction: function (): IJournalTransaction {
-                    throw new Error('Function not implemented.');
-                },
-                getQueryFilterSymbolContains: function (): string {
-                    return "=";
-                },
-                listFolders(dataset: DatasetModel): Promise<any[]> {
-                    return Promise.resolve([]);
-                },
-                KEY: undefined
-            };
-            
-
             beforeEach(() => {
                 this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
                     new Container(undefined, 'id', undefined));
@@ -144,6 +108,7 @@ export class TestAzureCosmosDbDAO {
             this.queryStart();
             this.queryLimit();
             this.querygroupBy();
+            this.listFolders();
         });
     }
 
@@ -225,7 +190,7 @@ export class TestAzureCosmosDbDAO {
             const [res] = await this.cosmos.get(key);
             Tx.checkTrue(res === undefined, done);
         });
-    
+
     }
 
     private static delete() {
@@ -242,7 +207,7 @@ export class TestAzureCosmosDbDAO {
         Tx.sectionInit('createQuery');
 
         Tx.test( (done: any) => {
-            let res = this.cosmos.createQuery("namespace", "kind");
+            const res = this.cosmos.createQuery('namespace', 'kind');
             Tx.checkTrue(res !== undefined, done);
         });
 
@@ -250,8 +215,8 @@ export class TestAzureCosmosDbDAO {
 
     private static runQuery() {
         Tx.sectionInit('runQuery');
-        let feedResponse: FeedResponse<any> = {
-            resources: ["resources"],
+        const feedResponse: FeedResponse<any> = {
+            resources: ['resources'],
             headers: undefined,
             hasMoreResults: false,
             continuation: '',
@@ -260,7 +225,7 @@ export class TestAzureCosmosDbDAO {
             requestCharge: 0,
             activityId: ''
         } as any;
-        let queryIterator: QueryIterator<any> = {
+        const queryIterator: QueryIterator<any> = {
             clientContext: undefined,
             query: undefined,
             options: undefined,
@@ -270,19 +235,19 @@ export class TestAzureCosmosDbDAO {
             queryExecutionContext: undefined,
             queryPlanPromise: undefined,
             isInitialized: undefined,
-            getAsyncIterator: function (): AsyncIterable<FeedResponse<any>> {
+            getAsyncIterator (): AsyncIterable<FeedResponse<any>> {
                 throw new Error('Function not implemented.');
             },
-            hasMoreResults: function (): boolean {
+            hasMoreResults (): boolean {
                 throw new Error('Function not implemented.');
             },
-            fetchAll: function (): Promise<FeedResponse<any>> {
+            fetchAll (): Promise<FeedResponse<any>> {
                 return Promise.resolve(feedResponse);
             },
-            fetchNext: function (): Promise<FeedResponse<any>> {
+            fetchNext (): Promise<FeedResponse<any>> {
                 return Promise.resolve(feedResponse);
             },
-            reset: function (): void {
+            reset (): void {
                 throw new Error('Function not implemented.');
             },
             toArrayImplementation: undefined,
@@ -294,51 +259,51 @@ export class TestAzureCosmosDbDAO {
             _init: undefined,
             handleSplitError: undefined
         } as any;
-        let azureCosmosDbQuery: AzureCosmosDbQuery = {
-            filter: function (property: string, operator?: ('CONTAINS' | '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'RegexMatch') | undefined, value?: {} | undefined): IJournalQueryModel {
+        const azureCosmosDbQuery: AzureCosmosDbQuery = {
+            filter (property: string, operator?: ('CONTAINS' | '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'RegexMatch') | undefined, value?: {} | undefined): IJournalQueryModel {
                 throw new Error('Function not implemented.');
             },
-            start: function (start: string | Buffer): IJournalQueryModel {
+            start (start: string | Buffer): IJournalQueryModel {
                 throw new Error('Function not implemented.');
             },
-            limit: function (n: number): IJournalQueryModel {
+            limit (n: number): IJournalQueryModel {
                 throw new Error('Function not implemented.');
             },
-            groupBy: function (fieldNames: string | string[]): IJournalQueryModel {
+            groupBy (fieldNames: string | string[]): IJournalQueryModel {
                 throw new Error('Function not implemented.');
             },
-            select: function (fieldNames: string | string[]): IJournalQueryModel {
+            select (fieldNames: string | string[]): IJournalQueryModel {
                 throw new Error('Function not implemented.');
             },
             filters: [],
-            projectedFieldNames: ["fieldName1"],
-            groupByFieldNames: ["groupfieldName1"],
+            projectedFieldNames: ['fieldName1'],
+            groupByFieldNames: ['groupfieldName1'],
             namespace: 'namespace',
             pagingStart: '"[pagingStart]"',
             pagingLimit: 1,
             kind: ''
         };
 
-        Tx.test( async(done: any) => {
-            azureCosmosDbQuery.kind = "subprojects";
+        Tx.asyncTest( async(done: any) => {
+            azureCosmosDbQuery.kind = 'subprojects';
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
-            let res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
-            Tx.checkTrue(res[1].endCursor === "continuationToken", done);
+            const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
+            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
+        });
+
+        Tx.asyncTest( async(done: any) => {
+            azureCosmosDbQuery.kind = 'apps';
+            this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
+            const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
+            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
         });
 
         Tx.test( async(done: any) => {
-            azureCosmosDbQuery.kind = "apps";
-            this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
-            let res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
-            Tx.checkTrue(res[1].endCursor === "continuationToken", done);
-        });
-
-        Tx.test( async(done: any) => {
-            azureCosmosDbQuery.kind = "datasets";
-            azureCosmosDbQuery.filters = [{property: "property", operator: "=", value: {value: "value"}}];
+            azureCosmosDbQuery.kind = 'datasets';
+            azureCosmosDbQuery.filters = [{property: 'property', operator: '=', value: {value: 'value'}}];
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
-            AzureConfig.SIDECAR_URL = "sidecar_URL";
-            this.sandbox.stub(AzureDataEcosystemServices, "getCosmosConnectionParams").resolves({ endpoint: "endpoint", key: "key" });
+            AzureConfig.SIDECAR_URL = 'sidecar_URL';
+            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves({ endpoint: 'endpoint', key: 'key' });
             await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel).then(res => {
                 done();
             }).catch(err => {
@@ -347,24 +312,206 @@ export class TestAzureCosmosDbDAO {
             })
         });
 
-        Tx.test( async(done: any) => {
-            azureCosmosDbQuery.kind = "datasets";
-            azureCosmosDbQuery.filters = [{property: "property", operator: "RegexMatch", value: {value: "value"}}];
+        Tx.asyncTest( async(done: any) => {
+            azureCosmosDbQuery.kind = 'datasets';
+            azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
-            let res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
-            Tx.checkTrue(res[1].endCursor === "continuationToken", done);
+            const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
+            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
         });
 
-        Tx.test( async(done: any) => {
-            azureCosmosDbQuery.kind = "datasets";
-            azureCosmosDbQuery.filters = [{property: "property", operator: "CONTAINS", value: {value: "value"}}];
+        Tx.asyncTest( async(done: any) => {
+            azureCosmosDbQuery.kind = 'datasets';
+            azureCosmosDbQuery.filters = [{property: 'property', operator: 'CONTAINS', value: {value: 'value'}}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             azureCosmosDbQuery.pagingStart = '';
             azureCosmosDbQuery.pagingLimit = 0;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
-            let res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel)
-            Tx.checkTrue(res[1].endCursor === "continuationToken", done);
+            const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel)
+            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
+        });
+
+    }
+
+    private static listFolders() {
+        Tx.sectionInit('listFolders');
+        const datasetModel: DatasetModel = {
+            name: 'name',
+            tenant: 'tenant',
+            subproject: 'subproject',
+            path: '/path/to/the/folder/',
+            created_date: '',
+            last_modified_date: '',
+            created_by: '',
+            metadata: undefined,
+            filemetadata: undefined,
+            gcsurl: '',
+            type: '',
+            ltag: '',
+            ctag: '0000000000000000',
+            sbit: '',
+            sbit_count: 0,
+            gtags: ['gtag1'],
+            readonly: false,
+            seismicmeta_guid: '',
+            transfer_status: '',
+            acls: { admins: [], viewers: [] },
+            access_policy: ''
+        };
+        const feedResponse: FeedResponse<any> = {
+            resources: ['resources'],
+            headers: undefined,
+            hasMoreResults: false,
+            continuation: '',
+            continuationToken: 'continuationToken',
+            queryMetrics: '',
+            requestCharge: 0,
+            activityId: ''
+        } as any;
+        const queryIterator: QueryIterator<any> = {
+            clientContext: undefined,
+            query: undefined,
+            options: undefined,
+            fetchFunctions: undefined,
+            fetchAllTempResources: undefined,
+            fetchAllLastResHeaders: undefined,
+            queryExecutionContext: undefined,
+            queryPlanPromise: undefined,
+            isInitialized: undefined,
+            getAsyncIterator (): AsyncIterable<FeedResponse<any>> {
+                throw new Error('Function not implemented.');
+            },
+            hasMoreResults (): boolean {
+                throw new Error('Function not implemented.');
+            },
+            fetchAll (): Promise<FeedResponse<any>> {
+                return Promise.resolve(feedResponse);
+            },
+            fetchNext (): Promise<FeedResponse<any>> {
+                return Promise.resolve(feedResponse);
+            },
+            reset (): void {
+                throw new Error('Function not implemented.');
+            },
+            toArrayImplementation: undefined,
+            createPipelinedExecutionContext: undefined,
+            fetchQueryPlan: undefined,
+            needsQueryPlan: undefined,
+            initPromise: undefined,
+            init: undefined,
+            _init: undefined,
+            handleSplitError: undefined
+        } as any;
+        
+        const subfoldersQuery = 'SELECT SUBSTRING(c.data.path, LENGTH("' + datasetModel.path + '") - 1, ' +
+            'INDEX_OF(c.data.path, "/", LENGTH("' + datasetModel.path + '")) - LENGTH("' + datasetModel.path + '") + 2) as path ' +
+            'FROM c WHERE RegexMatch(c.id, "^(ds-' + datasetModel.tenant + '-' + datasetModel.subproject + '-)([a-z0-9]+)$") ' +
+            'AND STARTSWITH(c.data.path, "' + datasetModel.path + '") ' +
+            'AND c.data.path != "' + datasetModel.path + '" ' +
+            'GROUP BY SUBSTRING(c.data.path, LENGTH("' + datasetModel.path + '") - 1, ' +
+            'INDEX_OF(c.data.path, "/", LENGTH("' + datasetModel.path + '")) - LENGTH("' + datasetModel.path + '") + 2)';
+        
+        const distinctPathsQuery = 'SELECT DISTINCT VALUE c.data.path FROM c WHERE c.data.subproject = "'
+            + datasetModel.subproject + '" AND STARTSWITH(c.data.path, "' + datasetModel.path + '", false)';
+        
+        Tx.asyncTest( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+            AzureConfig.ENABLE_OPTIMISED_QUERY = true;
+
+            const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
+                data: { records: [
+                    datasetModel.path,
+                    datasetModel.path + 'a/b/',
+                    datasetModel.path + 'a/b/c/',
+                    datasetModel.path + 'a/c/',
+                    datasetModel.path + 'b/x/',
+                ]}
+            });
+
+            const expectedPaths = [
+                datasetModel.path + 'a/',
+                datasetModel.path + 'b/',
+            ]
+
+            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
+                {endpoint: 'myendpoint', key: 'mykey'});
+
+            const res = await this.cosmos.listFolders(datasetModel);
+
+            const actualPaths = res[0].map(x => x['path']);
+
+            this.sandbox.assert.calledOnceWithExactly(
+                axiosInstancePostStub,
+                AzureConfig.SIDECAR_URL + '/query',
+                {
+                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    sql: distinctPathsQuery
+                },
+            );
+
+            expect(actualPaths).to.have.same.members(expectedPaths);
+
+            done();
+        });
+
+        Tx.asyncTest( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+            AzureConfig.ENABLE_OPTIMISED_QUERY = false;
+
+            const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
+                data: {
+                    records: [
+                        {'path': 'a/'},
+                        {'path': 'b/'},
+                    ]
+                }
+            });
+
+            const expectedPaths = [
+                datasetModel.path + 'a/',
+                datasetModel.path + 'b/',
+            ]
+
+            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
+                {endpoint: 'myendpoint', key: 'mykey'});
+
+            const res = await this.cosmos.listFolders(datasetModel);
+
+            const actualPaths = res[0].map(x => x['path']);
+
+            this.sandbox.assert.calledOnceWithExactly(
+                axiosInstancePostStub,
+                AzureConfig.SIDECAR_URL + '/query',
+                {
+                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    sql: subfoldersQuery
+                },
+            );
+
+            expect(actualPaths).to.have.same.members(expectedPaths);
+
+            done();
+        });
+
+        Tx.asyncTest( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            AzureConfig.ENABLE_OPTIMISED_QUERY = true;
+            const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
+            itemsQueryStub.returns(queryIterator);
+            const res = await this.cosmos.listFolders(datasetModel);
+            this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, distinctPathsQuery);
+            done();
+        });
+
+        Tx.asyncTest( async(done: any) => {
+            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            AzureConfig.ENABLE_OPTIMISED_QUERY = false;
+            const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
+            itemsQueryStub.returns(queryIterator);
+            const res = await this.cosmos.listFolders(datasetModel);
+            this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, subfoldersQuery);
+            done();
         });
 
     }
@@ -430,7 +577,7 @@ export class TestAzureCosmosDbDAO {
         Tx.sectionInit('getTransaction');
 
         Tx.test( (done: any) => {
-            let res = this.cosmos.getTransaction();
+            const res = this.cosmos.getTransaction();
             Tx.checkTrue(res !== undefined, done);
         });
 
@@ -441,7 +588,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test( (done: any) => {
             const res = this.cosmos.getQueryFilterSymbolContains();
-            Tx.checkTrue(res === "CONTAINS", done);
+            Tx.checkTrue(res === 'CONTAINS', done);
         });
 
     }
@@ -474,7 +621,7 @@ export class TestAzureCosmosDbDAO {
         });
     }
 
-    
+
     private static queryStart() {
         Tx.sectionInit('Start');
 

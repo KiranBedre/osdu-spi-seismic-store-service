@@ -16,11 +16,9 @@
 
 import { DatasetModel, PaginationModel } from '.';
 import { Config, IJournal } from '../../cloud';
-import { AzureConfig } from '../../cloud/providers/azure';
 import { Utils } from '../../shared';
 import { Locker } from './locker';
 import { PaginatedDatasetList } from './model';
-import { AzureCosmosDbQuery } from '../../cloud/providers/azure'
 
 export class DatasetDAO {
 
