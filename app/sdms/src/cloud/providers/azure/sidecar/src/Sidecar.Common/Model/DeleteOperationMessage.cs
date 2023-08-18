@@ -18,15 +18,13 @@ namespace Sidecar.Common.Model{
 
     public class DeleteOperationMessage : IDeleteOperationMessage
     {
-
-        public long Id { get; set; }
         public string OperationId{get;set;} = "";
 
         public string Tenant { get; set; } = "";
 
-        public string SubProjectName {get;  set;} = "";
+        public string Subproject {get;  set;} = "";
 
-        public string Query { get; set; } = "";
+        public string Path { get; set; } = "";
 
     }
 }

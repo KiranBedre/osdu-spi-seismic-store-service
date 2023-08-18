@@ -1,34 +1,50 @@
+// ============================================================================
+// Copyright 2017-2023, Microsoft
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
 
-using System.ComponentModel;
-using System.Reflection;
-
-namespace Sidecar.Common;
-
-public static class EnumExtensionMethods
+namespace Sidecar.Common
 {
-    public static string Description(this Enum enumVal)
+    using System.ComponentModel;
+    using System.Reflection;
+
+    public static class EnumExtensionMethods
     {
-        var field = enumVal.GetType().GetField(enumVal.ToString());
-        if (field != null)
+        public static string Description(this Enum enumVal)
         {
-            if (Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute attribute)
+            var field = enumVal.GetType().GetField(enumVal.ToString());
+            if (field != null)
             {
-                return attribute.Description;
+                if (Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute attribute)
+                {
+                    return attribute.Description;
+                }
             }
+            return enumVal.ToString();
         }
-        return enumVal.ToString();
+
     }
 
-}
-
-public enum DeletionOperationStatus
-{
-    [Description("Started")]
-    Started = 0,
-    [Description("In Progress")]
-    Inprogress = 1,
-    [Description("Completed")]
-    Completed = 2,
-    [Description("Completed With Errors")]
-    CompletedWithErrors = 3
+    public enum Status
+    {
+        [Description("Started")]
+        Started = 0,
+        [Description("In Progress")]
+        Inprogress = 1,
+        [Description("Completed")]
+        Completed = 2,
+        [Description("Completed With Errors")]
+        CompletedWithErrors = 3
+    }
 }

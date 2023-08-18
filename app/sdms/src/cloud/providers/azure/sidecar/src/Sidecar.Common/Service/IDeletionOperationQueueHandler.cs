@@ -21,7 +21,7 @@ namespace Sidecar.Common.Service
     using System.Threading.Tasks;
     public interface IDeletionOperationQueueHandler<TOptions, TMessage> : IQueueHandler<TOptions, TMessage>
         where TOptions : class
-        where TMessage : IDeleteOperationMessage
+        where TMessage : class, IDeleteOperationMessage
     {
         Task<TMessage?> CheckForDeletionOperationAsync();
     }

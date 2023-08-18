@@ -20,14 +20,12 @@ namespace Sidecar.Common.Service
     using StackExchange.Redis;
 
     using Model;
-    using System.Runtime.CompilerServices;
-    using System.Text.Json;
+    using Utilitiy;
 
-    public class QueueHanderRedis : IDeletionOperationQueueHandler<IQueueOptionsRedis, IDeleteOperationMessage>
+    public class QueueHanderRedis : IDeletionOperationQueueHandler<IQueueOptionsRedis, IDeleteOperationStatus>
     {
         private readonly ILogger<QueueHanderRedis> Logger;
         private readonly IQueueOptionsRedis Options;
-
         private ConnectionMultiplexer Client;
 
         public QueueHanderRedis(ILogger<QueueHanderRedis> logger, IQueueOptionsRedis options)
@@ -72,17 +70,17 @@ namespace Sidecar.Common.Service
 
         }
 
-        public void Enqueue(string key, IDeleteOperationMessage value)
+        public void Enqueue<TMesageType>(string key, TMesageType value)
         {
             throw new NotImplementedException();
         }
 
-        public IDeleteOperationMessage Dequeue(string key, IDeleteOperationMessage value)
+        public TMesageType Dequeue<TMesageType>(string key)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<IDeleteOperationMessage?> CheckForDeletionOperationAsync()
+        public async Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync()
         {
             IDatabase db;
             try
@@ -95,6 +93,9 @@ namespace Sidecar.Common.Service
                 throw;
             }
 
+            //var trans = db.CreateTransaction();
+            //trans.AddCondition(Condition.KeyNotExists(statusKey));
+
             var delQ = Options.DeletionQueueName;
             if(!await db.KeyExistsAsync(delQ)){
                 Logger.LogError("Queue {q} does not exist", delQ);
@@ -105,18 +106,47 @@ namespace Sidecar.Common.Service
                 Logger.LogDebug("Deletion queue {q} is empty", delQ);
                 return null;
             }
-            //---because the queue is using Bull (nodejs) need to get the id from the value and retrieve the actual payload
+
             var opDataKey = Options.DeletionQueueName + ":" + op.ToString();
-            //---get the payload of the delete operation
-            var data = await db.HashGetAllAsync(delQ);
-            if(!op.HasValue){
-                Logger.LogDebug("Queue {q} is empty", delQ);
-                return null;
+
+            var delOpData = await db.HashGetAllAsync(opDataKey);
+            if(delOpData.Length == 0){
+                Logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
+                throw new RedisException("Failed to get operation data from queue");
             }
-            var msg = new DeleteOperationMessage(){
-                Id = (long)op
+
+            //---not the best approach but works for now...can revisit with an extension method later
+            var msgValues = delOpData.ToDictionary(x => x.Name, x => x.Value);
+
+            //---make sure that the expected values are present
+            if(!msgValues.ContainsKey("operation_id") ||
+                !msgValues.ContainsKey("subproject") ||
+                !msgValues.ContainsKey("tenant") ||
+                !msgValues.ContainsKey("path"))
+            {
+                Logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
+                throw new RedisException("Failed to get operation data from queue");
+            }
+
+            var status = new DeleteOperationStatus{
+                OperationId = msgValues["operation_id"].ToString(),
+                Tenant = msgValues["tenant"].ToString(),
+                Subproject = msgValues["subproject"].ToString(),
+                Path = msgValues["path"].ToString(),
+                CreatedAt = DateTime.UtcNow,
+                LastUpdatedAt = DateTime.UtcNow,
+                CreatedBy = "Sidecar.QueueHanderRedis",
+                Status = Status.Started.ToString(),
+                StatusDescription = Status.Started.Description(),
+                DatasetsCnt = 0,
+                DeletedCnt = 0,
+                FailedCnt = 0
             };
-            return msg;
+            var statusHash = status.ToHashEntries();
+
+            var statusKey = Options.DeletionQueueName + ":status:" + status.OperationId.ToLower();
+            await db.HashSetAsync(statusKey, statusHash);
+            return status!;
 
         }
     }

@@ -31,6 +31,9 @@ namespace Sidecar.Common.Model{
         [JsonPropertyName("status")]
         string Status {get;  set;}
 
+        [JsonPropertyName("statusDescription")]
+        string StatusDescription {get;  set;}
+
         [JsonPropertyName("datasetsCnt")]
         long DatasetsCnt{get;set;}
 

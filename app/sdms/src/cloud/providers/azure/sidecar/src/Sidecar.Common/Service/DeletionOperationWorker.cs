@@ -24,7 +24,7 @@ namespace Sidecar.Common.Service
 
     public class DeletionOperationService<TQueueOptions, TQueueMessage> : BackgroundService
         where TQueueOptions : class
-        where TQueueMessage : IDeleteOperationMessage
+        where TQueueMessage : class, IDeleteOperationMessage
     {
         private readonly ILogger<DeletionOperationService<TQueueOptions, TQueueMessage>> Logger;
         private readonly IDeletionOperationQueueHandler<TQueueOptions, TQueueMessage> Queue;
@@ -43,14 +43,12 @@ namespace Sidecar.Common.Service
                 var op = await Queue.CheckForDeletionOperationAsync();
                 if(op is not null){
                     //---start the deletion process
-                    Logger.LogDebug("Starting deletion operation {0}...", op.OperationId);
+                    Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
+
+                    //---TODO: execute the deletion operation here...
                 }
                 await Task.Delay(1000,cancellationToken);
             }while(!cancellationToken.IsCancellationRequested);
         }
-
-        // private async Task ProcessDeleteMessages(){
-
-        // }
     }
 }

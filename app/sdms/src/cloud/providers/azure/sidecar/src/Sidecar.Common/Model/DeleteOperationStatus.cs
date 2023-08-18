@@ -14,6 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
+using StackExchange.Redis;
+
 namespace Sidecar.Common.Model{
 
     public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationStatus
@@ -22,6 +24,7 @@ namespace Sidecar.Common.Model{
         public DateTime LastUpdatedAt { get;set; } = DateTime.UtcNow;
         public string CreatedBy { get;set; } = "";
         public string Status { get;set; } = "";
+        public string StatusDescription { get;set; } = "";
         public long DatasetsCnt { get;set; } = 0;
         public long DeletedCnt { get;set; } = 0;
         public long FailedCnt { get;set; } = 0;

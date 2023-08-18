@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
 using Sidecar.Common.Model;
 using Sidecar.Common.Service;
 
@@ -26,8 +25,8 @@ public class Program
         var host = Host.CreateDefaultBuilder()
             .ConfigureServices(services => _ = services
                 .AddSingleton<IQueueOptionsRedis>(opts)
-                .AddSingleton<IDeletionOperationQueueHandler<IQueueOptionsRedis, IDeleteOperationMessage>,QueueHanderRedis>()
-                .AddHostedService<DeletionOperationService<IQueueOptionsRedis, IDeleteOperationMessage>>()
+                .AddSingleton<IDeletionOperationQueueHandler<IQueueOptionsRedis, IDeleteOperationStatus>,QueueHanderRedis>()
+                .AddHostedService<DeletionOperationService<IQueueOptionsRedis, IDeleteOperationStatus>>()
 
             ).ConfigureLogging(lg => _ = lg
                 .ClearProviders()
