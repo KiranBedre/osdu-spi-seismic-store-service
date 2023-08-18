@@ -315,7 +315,7 @@ export class TestSubProjectSVC {
         
         Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
             try {
-                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a', gcpid: 'gcp-id' } as TenantModel);
+                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
                 this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
                 this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
                 this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
@@ -323,6 +323,20 @@ export class TestSubProjectSVC {
 
                 await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDelete);
                 Tx.check202(expRes.statusCode, done);
+            } catch (e) {
+                done(e);
+            }
+        });
+
+        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+            try {
+                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+                this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
+                this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+                this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+                this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').throws();
+                await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDelete);
+                Tx.check500(expRes.statusCode, done);
             } catch (e) {
                 done(e);
             }
