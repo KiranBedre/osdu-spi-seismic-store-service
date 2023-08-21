@@ -22,19 +22,24 @@ namespace Sidecar.Common.Service
     using Model;
     using System.Globalization;
 
-    public class DeletionOperationService<TQueueOptions, TQueueMessage> : BackgroundService
-        where TQueueOptions : class
+    public class DeletionOperationService<TOptions, TQueueMessage> : BackgroundService
+        where TOptions : class
         where TQueueMessage : class, IDeleteOperationMessage
     {
-        private readonly ILogger<DeletionOperationService<TQueueOptions, TQueueMessage>> Logger;
-        private readonly IDeletionOperationQueueHandler<TQueueOptions, TQueueMessage> Queue;
+        private readonly ILogger<DeletionOperationService<TOptions, TQueueMessage>> Logger;
+        private readonly IDeletionOperationQueueHandler<TOptions, TQueueMessage> Queue;
+        private readonly ItemsRetriever<TOptions> ItemsRetriever;
         private readonly Stopwatch RunTimer;
 
-        public DeletionOperationService(ILogger<DeletionOperationService<TQueueOptions, TQueueMessage>> logger, IDeletionOperationQueueHandler<TQueueOptions, TQueueMessage> queue)
+        public DeletionOperationService(ILogger<DeletionOperationService<TOptions, TQueueMessage>> logger, 
+            IDeletionOperationQueueHandler<TOptions, TQueueMessage> queue,
+            ItemsRetriever<TOptions> itemsRetriever)
         {
             RunTimer = new Stopwatch();
             Logger = logger;
             Queue = queue;
+            ItemsRetriever = itemsRetriever;
+
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -45,7 +50,11 @@ namespace Sidecar.Common.Service
                     //---start the deletion process
                     Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-                    //---TODO: execute the deletion operation here...
+                    var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
+                    var items = paginatedRecords.records;
+                    // todo: add total number in Redis operation
+                    Logger.LogInformation("Found {0} items to delete", items.Count.ToString(CultureInfo.InvariantCulture));
+                   
                 }
                 await Task.Delay(1000,cancellationToken);
             }while(!cancellationToken.IsCancellationRequested);

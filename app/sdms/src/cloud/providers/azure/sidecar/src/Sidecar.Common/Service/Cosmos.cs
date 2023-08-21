@@ -27,12 +27,20 @@ namespace Sidecar.Common.Service
         private readonly string containerId = "data";
         private static Dictionary<string, CosmosClient> cosmosClients = new Dictionary<string, CosmosClient>();
 
+
         public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
+        {
+            PaginatedRecords paginatedRecords = await GetRecords(cs, sql, ctoken, limit);
+            return JsonConvert.SerializeObject(paginatedRecords);
+        }
+
+        public async Task<PaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit)
         {
             this.initCosmosClient(cs);
             Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
             Container container = database.GetContainer(this.containerId);
             List<Object> records = new List<Object>();
+            PaginatedRecords paginatedRecords = new PaginatedRecords();
             QueryRequestOptions options = new QueryRequestOptions() { MaxItemCount = limit != null ? limit : 100 };
             FeedIterator<Object> query = container.GetItemQueryIterator<Object>(
                 sql,
@@ -48,10 +56,7 @@ namespace Sidecar.Common.Service
                         records.Add(record);
                     }
                 }
-                PaginatedRecords paginatedRecords = new PaginatedRecords();
-                paginatedRecords.records = records;
                 paginatedRecords.continuationToken = null;
-                return JsonConvert.SerializeObject(paginatedRecords);
             }
             else // fetch next page
             {
@@ -60,11 +65,11 @@ namespace Sidecar.Common.Service
                 {
                     records.Add(record);
                 }
-                PaginatedRecords paginatedRecords = new PaginatedRecords();
-                paginatedRecords.records = records;
                 paginatedRecords.continuationToken = results.ContinuationToken;
-                return JsonConvert.SerializeObject(paginatedRecords);
+
             }
+            paginatedRecords.records = records;
+            return paginatedRecords;
         }
 
         private void initCosmosClient(string cs)

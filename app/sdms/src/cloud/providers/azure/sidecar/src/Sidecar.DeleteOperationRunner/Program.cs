@@ -14,19 +14,23 @@ public class Program
         throw new ArgumentException(errorMessage);
     }
 
-    private static void AttemptOptionsFromEnv(QueueOptionsRedis opts)
+    private static void AttemptOptionsFromEnv(Options opts)
     {
-        opts.ConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
+        opts.RedisQueueConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
         opts.DeletionQueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
+
+        //todo - add all env vars to options
     }
 
-    private static async Task RunAsync(QueueOptionsRedis opts)
+    private static async Task RunAsync(Options opts)
     {
         var host = Host.CreateDefaultBuilder()
             .ConfigureServices(services => _ = services
-                .AddSingleton<IQueueOptionsRedis>(opts)
-                .AddSingleton<IDeletionOperationQueueHandler<IQueueOptionsRedis, IDeleteOperationStatus>,QueueHanderRedis>()
-                .AddHostedService<DeletionOperationService<IQueueOptionsRedis, IDeleteOperationStatus>>()
+                .AddSingleton<IOptions>(opts)
+                .AddSingleton<ItemsRetriever<IOptions>>()
+                .AddScoped<IDataAccess, Cosmos>()
+                .AddSingleton<IDeletionOperationQueueHandler<IOptions, IDeleteOperationStatus>,QueueHanderRedis>()
+                .AddHostedService<DeletionOperationService<IOptions, IDeleteOperationStatus>>()
 
             ).ConfigureLogging(lg => _ = lg
                 .ClearProviders()
@@ -57,13 +61,13 @@ public class Program
             settings.IgnoreUnknownArguments = true;
         });
 
-        var res = parser.ParseArguments<QueueOptionsRedis>(args);
+        var res = parser.ParseArguments<Options>(args);
 
         //---if parsing did not succeed, try to read from env for values instead
         if (res.Errors.Any())
         {
             Logger?.LogWarning("Checking environment variables for options...");
-            var opts = res.Value ?? new QueueOptionsRedis();
+            var opts = res.Value ?? new Options();
             AttemptOptionsFromEnv(opts);
 
             //---update the args to include the env vars
@@ -78,7 +82,7 @@ public class Program
         });
 
         //---parse again in case anything is still missing, if not run the app
-        _ = await parser.ParseArguments<QueueOptionsRedis>(args)
+        _ = await parser.ParseArguments<Options>(args)
             .WithNotParsed(HandleOptionsParserError)
             .WithParsedAsync(RunAsync);
     }
