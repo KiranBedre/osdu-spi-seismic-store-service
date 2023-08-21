@@ -1867,7 +1867,7 @@ paths:
         - description: Path of datasets to delete within the subproject.
           in: query
           name: path
-          required: true
+          required: false
           schema:
             type: string
       responses:

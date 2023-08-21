@@ -71,7 +71,7 @@ export class DeleteJobRedisStore {
         const operationStatusKey = this.getDeleteOperationStatusKey(operationId);
         const operation = await this.redisClient.hgetall(operationStatusKey);
 
-        if (operation === undefined || operation.operationId === undefined) {
+        if (operation === undefined || operation.OperationId === undefined) {
             return undefined;
         }
 

@@ -102,8 +102,8 @@ export class SubProjectParser {
     }
 
     public static bulkDelete(req: expRequest): string {
-        Params.checkString(req.query.path, 'path');
-        let path = req.query.path as string;
+        Params.checkString(req.query.path, 'path', false);
+        let path = req.query.path ? req.query.path as string : "";
         if (!path.endsWith('/')) {
             path += '/';
         }
