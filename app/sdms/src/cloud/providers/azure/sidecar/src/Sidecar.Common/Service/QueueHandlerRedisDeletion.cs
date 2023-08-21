@@ -21,32 +21,16 @@ namespace Sidecar.Common.Service
 
     using Model;
     using Utilitiy;
+    using System.Threading.Tasks;
 
-    public class QueueHanderRedis : IDeletionOperationQueueHandler<IQueueOptionsRedis, IDeleteOperationStatus>
+    public class QueueHandlerRedisDeletion : QueueHanderRedis<IQueueOptionsRedis>, IQueueHandlerDeletion<IQueueOptionsRedis, IDeleteOperationMessage>
     {
-        private readonly ILogger<QueueHanderRedis> Logger;
-        private readonly IQueueOptionsRedis Options;
-        private ConnectionMultiplexer Client;
-
-        public QueueHanderRedis(ILogger<QueueHanderRedis> logger, IQueueOptionsRedis options)
+        public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IQueueOptionsRedis options) : base(logger, options)
         {
-            Logger = logger;
-            Options = options;
-            ValidateOptions();
-            Client = PrepareClient();
+
         }
 
-        private ConnectionMultiplexer PrepareClient()
-        {
-            Logger.LogInformation("Establishing Redis Connection...");
-
-            var client = ConnectionMultiplexer.Connect(Options.ConnectionString!);
-
-            Logger.LogInformation("Established Redis Connection ");
-            return client;
-        }
-
-        private void ValidateOptions()
+        protected override void ValidateOptions()
         {
             ArgumentNullException.ThrowIfNull(Options, nameof(Options));
             var exceptions = new List<Exception>();
@@ -56,7 +40,7 @@ namespace Sidecar.Common.Service
                 exceptions.Add(new ArgumentException("Redis connection string is required."));
             }
 
-            if (string.IsNullOrEmpty(Options.DeletionQueueName))
+            if (string.IsNullOrEmpty(Options.QueueName))
             {
                 exceptions.Add(new ArgumentException("Queue Name is required."));
             }
@@ -70,17 +54,7 @@ namespace Sidecar.Common.Service
 
         }
 
-        public void Enqueue<TMesageType>(string key, TMesageType value)
-        {
-            throw new NotImplementedException();
-        }
-
-        public TMesageType Dequeue<TMesageType>(string key)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync()
+        public async Task<IDeleteOperationMessage?> CheckForDeletionOperationAsync()
         {
             IDatabase db;
             try
@@ -96,21 +70,24 @@ namespace Sidecar.Common.Service
             //var trans = db.CreateTransaction();
             //trans.AddCondition(Condition.KeyNotExists(statusKey));
 
-            var delQ = Options.DeletionQueueName;
-            if(!await db.KeyExistsAsync(delQ)){
+            var delQ = Options.QueueName;
+            if (!await db.KeyExistsAsync(delQ))
+            {
                 Logger.LogError("Queue {q} does not exist", delQ);
                 throw new RedisException("Queue does not exist");
             }
             var op = await db.ListLeftPopAsync(delQ);
-            if(!op.HasValue){
+            if (!op.HasValue)
+            {
                 Logger.LogDebug("Deletion queue {q} is empty", delQ);
                 return null;
             }
 
-            var opDataKey = Options.DeletionQueueName + ":" + op.ToString();
+            var opDataKey = Options.QueueName + ":" + op.ToString();
 
             var delOpData = await db.HashGetAllAsync(opDataKey);
-            if(delOpData.Length == 0){
+            if (delOpData.Length == 0)
+            {
                 Logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
                 throw new RedisException("Failed to get operation data from queue");
             }
@@ -119,7 +96,7 @@ namespace Sidecar.Common.Service
             var msgValues = delOpData.ToDictionary(x => x.Name, x => x.Value);
 
             //---make sure that the expected values are present
-            if(!msgValues.ContainsKey("operation_id") ||
+            if (!msgValues.ContainsKey("operation_id") ||
                 !msgValues.ContainsKey("subproject") ||
                 !msgValues.ContainsKey("tenant") ||
                 !msgValues.ContainsKey("path"))
@@ -128,7 +105,8 @@ namespace Sidecar.Common.Service
                 throw new RedisException("Failed to get operation data from queue");
             }
 
-            var status = new DeleteOperationStatus{
+            var status = new DeleteOperationStatus
+            {
                 OperationId = msgValues["operation_id"].ToString(),
                 Tenant = msgValues["tenant"].ToString(),
                 Subproject = msgValues["subproject"].ToString(),
@@ -144,7 +122,7 @@ namespace Sidecar.Common.Service
             };
             var statusHash = status.ToHashEntries();
 
-            var statusKey = Options.DeletionQueueName + ":status:" + status.OperationId.ToLower();
+            var statusKey = Options.QueueName + ":status:" + status.OperationId.ToLower();
             await db.HashSetAsync(statusKey, statusHash);
             return status!;
 

@@ -16,9 +16,12 @@
 
 namespace Sidecar.Common.Service
 {
-    public interface IQueueHandler<TOptions, TDeleteionMessage> where TOptions : class where TDeleteionMessage : class
+    using Model;
+
+    public interface IQueueHandler<TOptions> where TOptions : class
     {
-        void Enqueue<T>(string key,T  value);
-        T Dequeue<T>(string key);
+        void Enqueue<TMessage>(string key,TMessage  value) where TMessage : class, IQueueMessage;
+        TMessage Dequeue<TMessage>(string key) where TMessage : class, IQueueMessage;
     }
+
 }
