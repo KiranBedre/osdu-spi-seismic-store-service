@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,24 +30,23 @@ export class DeleteJobRedisStore {
         if (Config.UTEST) {
             const redis = require('ioredis-mock');
             this.redisClient = new redis();
-        } else {
-
-            const redisOptions: Redis.RedisOptions = {
-                host: cacheParams.ADDRESS,
-                port: cacheParams.PORT,
-                connectionName: 'sdms-bulk-delete'
-             };
-       
-             if (cacheParams.KEY) {
-                // pragma: allowlist nextline secret
-                redisOptions.password = cacheParams.KEY;
-                if (!cacheParams.DISABLE_TLS) {
-                   redisOptions.tls = { servername: cacheParams.ADDRESS };
-                }
-             }
-
-            this.redisClient = new Redis.Redis(redisOptions);
+            return;
         }
+
+        const redisOptions: Redis.RedisOptions = {
+            host: cacheParams.ADDRESS,
+            port: cacheParams.PORT,
+            connectionName: 'sdms-bulk-delete'
+        };
+    
+        if (cacheParams.KEY) {
+            redisOptions.password = cacheParams.KEY;
+            if (!cacheParams.DISABLE_TLS) {
+                redisOptions.tls = { servername: cacheParams.ADDRESS };
+            }
+        }
+
+        this.redisClient = new Redis.Redis(redisOptions);
     }
 
     private static getDeleteOperationKey(operationId: string) {

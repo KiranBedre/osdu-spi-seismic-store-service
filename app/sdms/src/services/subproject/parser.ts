@@ -103,11 +103,7 @@ export class SubProjectParser {
 
     public static bulkDelete(req: expRequest): string {
         Params.checkString(req.query.path, 'path', false);
-        let path = req.query.path ? req.query.path as string : "";
-        if (!path.endsWith('/')) {
-            path += '/';
-        }
-        return path;
+        return req.query.path ? req.query.path as string : "";
     }
 
     public static bulkDeleteStatus(req: expRequest): string {

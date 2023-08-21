@@ -68,8 +68,8 @@ export class SubProjectHandler {
 
             } else if (op === SubProjectOP.BulkDelete) {
 
-                const operationId = await this.bulkDelete(req, tenant);
-                Response.writeOK(res, operationId, 202);
+                const operation = await this.bulkDelete(req, tenant);
+                Response.writeOK(res, operation, 202);
 
             } else if (op === SubProjectOP.BulkDeleteStatus) {
 

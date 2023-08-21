@@ -24,13 +24,13 @@ import { DatasetDAO } from '../../../src/services/dataset';
 import { SubProjectDAO, SubprojectGroups, SubProjectModel } from '../../../src/services/subproject';
 import { SubProjectHandler } from '../../../src/services/subproject/handler';
 import { SubProjectOP } from '../../../src/services/subproject/optype';
+import { DeleteJobRedisStore } from '../../../src/services/subproject/redis';
 import { TenantAuth, TenantDAO, TenantModel } from '../../../src/services/tenant';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
 
 import sinon from 'sinon';
 import { v4 as uuidv4 } from 'uuid';
-import { DeleteJobRedisStore } from '../../../src/services/subproject/redis';
 
 export class TestSubProjectSVC {
 
