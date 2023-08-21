@@ -25,11 +25,6 @@ export class DeleteJobRedisStore {
 
     private static redisClient: Redis.Redis;
 
-    // Exponential Retry strategy in event of an error
-    private static retryStrategy = (times: number) => {
-        return Math.pow(2, times) + Math.random() * 100;
-    };
-
     public static async init(cacheParams: { ADDRESS: string, PORT: number, KEY?: string, DISABLE_TLS?: boolean; }) {
         
         if (Config.UTEST) {
@@ -59,6 +54,10 @@ export class DeleteJobRedisStore {
         return deleteJobQueueName + ":" + operationId;
     }
 
+    private static getDeleteOperationStatusKey(operationId: string) {
+        return deleteJobQueueName + ":status:" + operationId;
+    }
+
     public static async pushOperation(operation: IDeleteOperationQueueTaskModel) {
         const operationKey = this.getDeleteOperationKey(operation.operation_id);
         await this.redisClient
@@ -66,5 +65,10 @@ export class DeleteJobRedisStore {
             .hset(operationKey, operation)
             .lpush(deleteJobQueueName, operation.operation_id)
             .exec();
+    }
+
+    public static async getOperationStatus(operationId: string) {
+        
+        return "";
     }
 }

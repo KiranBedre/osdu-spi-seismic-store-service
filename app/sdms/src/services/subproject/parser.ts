@@ -101,14 +101,18 @@ export class SubProjectParser {
         };
     }
 
-    public static bulkDelete(req: expRequest): string
-    {
+    public static bulkDelete(req: expRequest): string {
         Params.checkString(req.query.path, 'path');
         let path = req.query.path as string;
         if (!path.endsWith('/')) {
             path += '/';
         }
         return path;
+    }
+
+    public static bulkDeleteStatus(req: expRequest): string {
+        Params.checkString(req.query.operationid, 'operationid');
+        return req.query.operationid as string;
     }
 
     private static checkAccessPolicy(req: expRequest): void {

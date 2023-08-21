@@ -40,6 +40,11 @@ router.delete('/tenant/:tenantid/subproject/:subprojectid/bulk-delete', async (r
     await SubProjectHandler.handler(req, res, SubProjectOP.BulkDelete);
 });
 
+// get status of a bulk delete operation
+router.get('/tenant/:tenantid/subproject/:subprojectid/bulk-delete', async (req: expRequest, res: expResponse) => {
+    await SubProjectHandler.handler(req, res, SubProjectOP.BulkDeleteStatus);
+});
+
 // patch a subproject
 router.patch('/tenant/:tenantid/subproject/:subprojectid', async (req: expRequest, res: expResponse) => {
     await SubProjectHandler.handler(req, res, SubProjectOP.Patch);

@@ -42,3 +42,15 @@ export interface IDeleteOperationQueueTaskModel {
     subproject: string;
     path: string;
 }
+
+export interface IDeleteOperationStatusModel {
+    // operation: IDeleteOperationQueueTaskModel;
+    operation_id: string;
+    created_at: string;
+    created_by: string;
+    last_updated_at: string;
+    status: string;
+    dataset_cnt: number;
+    deleted_cnt: number;
+    failed_cnt: number;
+}

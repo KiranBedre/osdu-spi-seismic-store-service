@@ -17,7 +17,7 @@
 import { DeleteJobRedisStore } from './redis';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { SubprojectAuth, SubProjectModel, IDeleteOperationModel } from '.';
+import { SubprojectAuth, SubProjectModel, IDeleteOperationModel, IDeleteOperationStatusModel } from '.';
 import { Auth, AuthGroups, AuthRoles, UserRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
@@ -69,6 +69,11 @@ export class SubProjectHandler {
 
                 const operationId = await this.bulkDelete(req, tenant);
                 Response.writeOK(res, operationId, 202);
+
+            } else if (op === SubProjectOP.BulkDeleteStatus) {
+
+                const status = await this.bulkDeleteStatus(req, tenant);
+                Response.writeOK(res, status);
 
             } else if (op === SubProjectOP.Patch) {
 
@@ -293,7 +298,25 @@ export class SubProjectHandler {
         return {
             operation_id: operationId
         };
-    } 
+    }
+    
+    // get status of a bulk delete operation
+    private static async bulkDeleteStatus(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationStatusModel> {
+
+        const operationId = SubProjectParser.bulkDeleteStatus(req);
+        const operationStatus = await DeleteJobRedisStore.getOperationStatus(operationId);
+
+        return {
+            operation_id: operationId,
+            created_at: "",
+            created_by: "",
+            last_updated_at: "",
+            status: "",
+            dataset_cnt: 0,
+            deleted_cnt: 0,
+            failed_cnt: 0
+        };
+    }
 
     // Patch the subproject
     // Required role: subproject.admin

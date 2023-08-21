@@ -32,7 +32,7 @@ info:
 # ===========================================================================
 
 servers:
-  - url: "#{SDMS_PREFIX}#"
+  - url: "/seistore-svc/api/v3"
 
 paths:
   /svcstatus:
@@ -1887,7 +1887,7 @@ paths:
           description: Not found.
     get:
       summary: Get status of a bulk delete operation.
-      description: "<ul><li>Get status of a hierarchical delete operation.</li><li>Required roles: subproject.admin</li></ul>"
+      description: "<ul><li>Get status of a hierarchical delete operation.</li><li>Required roles: none</li></ul>"
       operationId: bulk-delete-get
       tags:
         - SubProject
