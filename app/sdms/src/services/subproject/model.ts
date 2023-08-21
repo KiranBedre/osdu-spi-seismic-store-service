@@ -44,7 +44,6 @@ export interface IDeleteOperationQueueTaskModel {
 }
 
 export interface IDeleteOperationStatusModel {
-    // operation: IDeleteOperationQueueTaskModel;
     operation_id: string;
     created_at: string;
     created_by: string;

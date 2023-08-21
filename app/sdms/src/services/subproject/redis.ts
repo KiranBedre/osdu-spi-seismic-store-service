@@ -16,7 +16,7 @@
 
 import * as Redis from 'ioredis';
 import { Config } from '../../cloud';
-import { IDeleteOperationQueueTaskModel } from './model';
+import { IDeleteOperationQueueTaskModel, IDeleteOperationStatusModel } from './model';
 
 
 const deleteJobQueueName = "deletejobqueue";
@@ -67,8 +67,23 @@ export class DeleteJobRedisStore {
             .exec();
     }
 
-    public static async getOperationStatus(operationId: string) {
-        
-        return "";
+    public static async getOperationStatus(operationId: string): Promise<IDeleteOperationStatusModel> {
+        const operationStatusKey = this.getDeleteOperationStatusKey(operationId);
+        const operation = await this.redisClient.hgetall(operationStatusKey);
+
+        if (operation === undefined || operation.operationId === undefined) {
+            return undefined;
+        }
+
+        return {
+            operation_id: operation.OperationId,
+            created_at: operation.CreatedAt,
+            created_by: operation.CreatedBy,
+            last_updated_at: operation.LastUpdatedAt,
+            status: operation.Status,
+            dataset_cnt: Number(operation.DatasetsCnt),
+            deleted_cnt: Number(operation.DeletedCnt),
+            failed_cnt: Number(operation.FailedCnt)
+        };
     }
 }

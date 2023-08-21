@@ -32,6 +32,7 @@ import { SubprojectGroups } from './groups';
 import { SubProjectOP } from './optype';
 import { SubProjectParser } from './parser';
 import { IDeleteOperationQueueTaskModel } from './model';
+import { UnauthorizedError } from 'express-jwt';
 
 export class SubProjectHandler {
 
@@ -72,7 +73,7 @@ export class SubProjectHandler {
 
             } else if (op === SubProjectOP.BulkDeleteStatus) {
 
-                const status = await this.bulkDeleteStatus(req, tenant);
+                const status = await this.bulkDeleteStatus(req);
                 Response.writeOK(res, status);
 
             } else if (op === SubProjectOP.Patch) {
@@ -301,21 +302,15 @@ export class SubProjectHandler {
     }
     
     // get status of a bulk delete operation
-    private static async bulkDeleteStatus(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationStatusModel> {
+    private static async bulkDeleteStatus(req: expRequest): Promise<IDeleteOperationStatusModel> {
 
         const operationId = SubProjectParser.bulkDeleteStatus(req);
         const operationStatus = await DeleteJobRedisStore.getOperationStatus(operationId);
+        if (operationStatus === undefined) {
+            throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
+        }
 
-        return {
-            operation_id: operationId,
-            created_at: "",
-            created_by: "",
-            last_updated_at: "",
-            status: "",
-            dataset_cnt: 0,
-            deleted_cnt: 0,
-            failed_cnt: 0
-        };
+        return operationStatus;
     }
 
     // Patch the subproject
