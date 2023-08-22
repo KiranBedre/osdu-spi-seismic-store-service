@@ -16,10 +16,8 @@
 
 namespace Sidecar.Common.Model
 {
-    public interface ICosmosOptions
+    public interface IOptionsStorageAcount
     {
-        string CosmosEndpoint { get; set; }
-
-        string CosmosKey { get; set; }
-    }   
+        string StorageAccountConnectionString { get; set; }
+    }
 }

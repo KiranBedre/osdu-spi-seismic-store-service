@@ -23,14 +23,14 @@ namespace Sidecar.Common.Service
     using Utilitiy;
     using System.Threading.Tasks;
 
-    public class QueueHandlerRedisDeletion : QueueHandlerRedis<IRedisQueueOptions>, IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>
+    public class QueueHandlerRedisDeletion : QueueHandlerRedis<IOptionsQueueRedis>, IQueueHandlerDeletion<IOptionsQueueRedis, IDeleteionOperationMessage>
     {
-        public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IRedisQueueOptions options) : base(logger, options)
+        public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IOptionsQueueRedis options) : base(logger, options)
         {
 
         }
 
-        public async Task<IDeleteOperationMessage?> CheckForDeletionOperationAsync()
+        public async Task<IDeleteionOperationMessage?> CheckForDeletionOperationAsync()
         {
             IDatabase db;
             try
@@ -53,9 +53,7 @@ namespace Sidecar.Common.Service
                 throw new RedisException("Queue does not exist");
             }
 
-            //ld temp var op = await db.ListLeftPopAsync(delQ);
-            var op = await db.ListGetByIndexAsync(delQ, 0);
-
+            var op = await db.ListLeftPopAsync(delQ);
 
             if (!op.HasValue)
             {

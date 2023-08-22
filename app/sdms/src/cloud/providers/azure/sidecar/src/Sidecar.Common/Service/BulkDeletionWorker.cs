@@ -10,12 +10,12 @@ using System.Security;
 
 namespace Sidecar.Common.Service
 {
-    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IStorageAcountOptions>
+    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IOptionsStorageAcount>
     {
         private readonly int _batchSize = 100;
 
         private static ILogger<BulkDeletionWorker> _logger;
-        protected readonly Model.IStorageAcountOptions Options;
+        protected readonly Model.IOptionsStorageAcount Options;
 
         private int _deletedDatasetTotalCount = 0;
         private int _deletedDatasetInABatchCount = 0;
@@ -25,11 +25,11 @@ namespace Sidecar.Common.Service
 
         private readonly BlobServiceClient _client;
 
-        public BulkDeletionWorker(IStorageAcountOptions options, ILogger<BulkDeletionWorker> logger)
+        public BulkDeletionWorker(IOptionsStorageAcount options, ILogger<BulkDeletionWorker> logger)
         {
             _logger = logger;
             Options = options;
-           
+
             var storageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
             _client = CreateClient(storageAccountConnectionString);
 
@@ -82,12 +82,12 @@ namespace Sidecar.Common.Service
                         }
                         catch (Azure.RequestFailedException e)
                         {
-/*                            if (e.ErrorCode == "ContainerNotFound")
+                            if (e.ErrorCode == "ContainerNotFound")
                             {
-                                // we assume this was previously deleted and continue ignorint this exception
+                                // we assume this was previously deleted and continue ignoring this exception
                                 _logger.LogInformation($"Could not find container {containerName}. Ignoring as it is assumed to have already been deleted");
                             }
-                            else*/
+                            else
                             {
                                 _logger.LogError($"Could not delete container {containerName}: {e.Message}");
                                 _errors.Add(e.Message);

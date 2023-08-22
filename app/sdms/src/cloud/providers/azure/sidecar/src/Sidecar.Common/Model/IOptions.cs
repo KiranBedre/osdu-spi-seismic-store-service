@@ -18,8 +18,8 @@ using CommandLine;
 
 namespace Sidecar.Common.Model
 {
-    public interface IOptions : ICosmosOptions, IRedisQueueOptions, IStorageAcountOptions
-    { 
+    public interface IOptions : IOptionsCosmos, IOptionsQueueRedis, IOptionsStorageAcount
+    {
 /*        string QueueConnectionString { get; set; }
 
         string QueueName { get; set; }
