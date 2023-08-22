@@ -23,14 +23,14 @@ namespace Sidecar.Common.Service
     using Utilitiy;
     using System.Data.Common;
 
-    public class QueueHanderRedis<TOptions> : IQueueHandler<Model.TOptions>
+    public class QueueHandlerRedis<TOptions> : IQueueHandler<Model.TOptions>
         where TOptions : Model.TOptions
     {
-        protected readonly ILogger<QueueHanderRedis<TOptions>> Logger;
+        protected readonly ILogger<QueueHandlerRedis<TOptions>> Logger;
         protected readonly Model.TOptions Options;
         protected ConnectionMultiplexer Client;
 
-        public QueueHanderRedis(ILogger<QueueHanderRedis<TOptions>> logger, Model.TOptions options)
+        public QueueHandlerRedis(ILogger<QueueHandlerRedis<TOptions>> logger, Model.TOptions options)
         {
             Logger = logger;
             Options = options;

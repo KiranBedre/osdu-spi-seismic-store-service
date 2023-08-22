@@ -23,7 +23,7 @@ namespace Sidecar.Common.Service
     using Utilitiy;
     using System.Threading.Tasks;
 
-    public class QueueHandlerRedisDeletion : QueueHanderRedis<TOptions>, IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>
+    public class QueueHandlerRedisDeletion : QueueHandlerRedis<TOptions>, IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>
     {
         public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, TOptions options) : base(logger, options)
         {
