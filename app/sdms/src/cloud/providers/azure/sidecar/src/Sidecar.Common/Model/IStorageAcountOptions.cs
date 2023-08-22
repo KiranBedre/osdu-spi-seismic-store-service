@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
-using CommandLine;
-
 namespace Sidecar.Common.Model
 {
-    public interface TOptions
+    public interface IStorageAcountOptions
     {
-        string RedisQueueConnectionString { get; set; }
-
-        string QueueName { get; set; }
-
-        public string CosmosEndpoint { get; set; }
-
-        public string CosmosKey { get; set; }
-
         string StorageAccountConnectionString { get; set; }
     }
-
 }

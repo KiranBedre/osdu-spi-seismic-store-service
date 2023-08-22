@@ -3,12 +3,12 @@ using System.Net;
 
 namespace Sidecar.Common.Service
 {
-    public class ItemsRetriever: IItemsRetriever<TOptions>
+    public class ItemsRetriever: IItemsRetriever<ICosmosOptions>
     {
         private readonly IDataAccess DataAccess;
-        private readonly Model.TOptions Options;
+        private readonly Model.ICosmosOptions Options;
 
-        public ItemsRetriever(IDataAccess dataAccess, Model.TOptions options)
+        public ItemsRetriever(IDataAccess dataAccess, Model.ICosmosOptions options)
         {
             DataAccess = dataAccess;
             Options = options;

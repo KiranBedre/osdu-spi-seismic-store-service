@@ -16,25 +16,19 @@
 
 using CommandLine;
 
-# pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 namespace Sidecar.Common.Model
 {
-    public class Options : IOptions, IRedisQueueOptions, ICosmosOptions, IStorageAcountOptions
-    {
-        [Option('c', "conn", Required = true, HelpText = "Redis Connection String.")]
-        public string QueueConnectionString {get; set;}
+    public interface IOptions : ICosmosOptions, IRedisQueueOptions, IStorageAcountOptions
+    { 
+/*        string QueueConnectionString { get; set; }
 
-        [Option('q', "queue", Required = true, HelpText = "Queue name.")]
-        public string QueueName { get; set; }
+        string QueueName { get; set; }
 
-        [Option('u', "url", Required = true, HelpText = "Cosmos endpoint URL.")]
         public string CosmosEndpoint { get; set; }
 
-        [Option('a', "AuthorizationKey", Required = true, HelpText = "Authorization Key for Cosmos.")]
         public string CosmosKey { get; set; }
 
-        [Option('s', "storageAccountConnectionString", Required = true, HelpText = "storageAccountConnectionString.")]
-        public string StorageAccountConnectionString { get; set; }
+        string StorageAccountConnectionString { get; set; }*/
     }
 
 }

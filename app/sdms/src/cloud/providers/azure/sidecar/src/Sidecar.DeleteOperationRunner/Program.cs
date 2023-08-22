@@ -16,7 +16,7 @@ public class Program
 
     private static void AttemptOptionsFromEnv(Options opts)
     {
-        opts.RedisQueueConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
+        opts.QueueConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
         opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
 
         opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
@@ -29,12 +29,15 @@ public class Program
     {
         var host = Host.CreateDefaultBuilder()
             .ConfigureServices(services => _ = services
-                .AddSingleton<TOptions>(opts)
-                .AddSingleton<IItemsRetriever<TOptions>, ItemsRetriever>()
-                //.AddSingleton<IBulkDeletionWorker<TOptions, IDeleteOperationStatus>>()
-                .AddSingleton<IBulkDeletionWorker<TOptions>, BulkDeletionWorker<TOptions>>()
-                .AddSingleton<IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>,QueueHandlerRedisDeletion>()
-                .AddHostedService<DeletionOperationService<TOptions, IDeleteOperationStatus>>()
+                .AddSingleton<IOptions>(opts)
+                .AddSingleton<ICosmosOptions>(sp => sp.GetService<IOptions>()!)
+                .AddSingleton<IRedisQueueOptions>(sp => sp.GetService<IOptions>()!)
+                .AddSingleton<IStorageAcountOptions>(sp => sp.GetService<IOptions>()!)
+                .AddSingleton<IItemsRetriever<ICosmosOptions>, ItemsRetriever>()
+                //.AddSingleton<IBulkDeletionWorker<IOptions, IDeleteOperationStatus>>()
+                .AddSingleton<IBulkDeletionWorker<IStorageAcountOptions>, BulkDeletionWorker>()
+                .AddSingleton<IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>,QueueHandlerRedisDeletion>()
+                .AddHostedService<DeletionOperationService<IStorageAcountOptions, IRedisQueueOptions, ICosmosOptions, IDeleteOperationStatus>>()
                 .AddScoped<IDataAccess, Cosmos>()
 
             ).ConfigureLogging(lg => _ = lg

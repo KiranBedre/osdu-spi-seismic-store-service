@@ -22,19 +22,21 @@ namespace Sidecar.Common.Service
     using Model;
     using System.Globalization;
 
-    public class DeletionOperationService<TOptions, TQueueMessage> : BackgroundService
-        where TOptions : class
-        where TQueueMessage : class, IDeleteOperationMessage
+    public class DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage> : BackgroundService
+        where TStorageOptions : class
+        where TQueueOptions : class
+        where TCosmosOptions : class
+        where TQueueMessage : class,  IDeleteOperationMessage
     {
-        private readonly ILogger<DeletionOperationService<TOptions, TQueueMessage>> Logger;
-        private readonly IQueueHandlerDeletion<TOptions, IDeleteOperationMessage> Queue;
-        private readonly IItemsRetriever<TOptions> ItemsRetriever;
-        private readonly IBulkDeletionWorker<TOptions> BulkDeletionWorker;
+        private readonly ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> Logger;
+        private readonly IQueueHandlerDeletion<TQueueOptions, IDeleteOperationMessage> Queue;
+        private readonly IItemsRetriever<TCosmosOptions> ItemsRetriever;
+        private readonly IBulkDeletionWorker<TStorageOptions> BulkDeletionWorker;
 
-        public DeletionOperationService(ILogger<DeletionOperationService<TOptions, TQueueMessage>> logger,
-            IQueueHandlerDeletion<TOptions, IDeleteOperationMessage> queue,
-            IItemsRetriever<TOptions> itemsRetriever,
-            IBulkDeletionWorker<TOptions> bulkDeletionWorker)
+        public DeletionOperationService(ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> logger,
+            IQueueHandlerDeletion<TQueueOptions, IDeleteOperationMessage> queue,
+            IItemsRetriever<TCosmosOptions> itemsRetriever,
+            IBulkDeletionWorker<TStorageOptions> bulkDeletionWorker)
         {
             Logger = logger;
             Queue = queue;
@@ -46,19 +48,23 @@ namespace Sidecar.Common.Service
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             do{
+                //todo: add try catch with consecutive retries
+
                 var op = await Queue.CheckForDeletionOperationAsync();
                 if(op is not null){
                     //---start the deletion process
                     Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
-
+                    
+                    
                     var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
                     var items = paginatedRecords.records;
                     // todo: add total number in Redis operation
                     Logger.LogInformation("Found {0} items to delete", items.Count.ToString(CultureInfo.InvariantCulture));
 
-                    //todo: lock them all
+                    //todo: lock
 
                     //---start the deletion process
+                    
                     await BulkDeletionWorker.RunBulkDeletion(items);
 
                 }

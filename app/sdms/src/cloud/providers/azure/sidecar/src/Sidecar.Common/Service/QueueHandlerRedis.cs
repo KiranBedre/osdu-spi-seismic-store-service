@@ -22,14 +22,14 @@ namespace Sidecar.Common.Service
     using Model;
     using Utilitiy;
 
-    public class QueueHanderRedis<TOptions> : IQueueHandler<Model.TOptions>
-        where TOptions : Model.TOptions
+    public class QueueHanderRedis<TOptions> : IQueueHandler<Model.IRedisQueueOptions>
+        where TOptions : Model.IRedisQueueOptions
     {
         protected readonly ILogger<QueueHanderRedis<TOptions>> Logger;
-        protected readonly Model.TOptions Options;
+        protected readonly Model.IRedisQueueOptions Options;
         protected ConnectionMultiplexer Client;
 
-        public QueueHanderRedis(ILogger<QueueHanderRedis<TOptions>> logger, Model.TOptions options)
+        public QueueHanderRedis(ILogger<QueueHanderRedis<TOptions>> logger, Model.IRedisQueueOptions options)
         {
             Logger = logger;
             Options = options;
@@ -51,7 +51,7 @@ namespace Sidecar.Common.Service
         {
             Logger.LogInformation("Establishing Redis Connection...");
 
-            var client = ConnectionMultiplexer.Connect(Options.RedisQueueConnectionString!);
+            var client = ConnectionMultiplexer.Connect(Options.QueueConnectionString!);
 
             Logger.LogInformation("Established Redis Connection ");
             return client;

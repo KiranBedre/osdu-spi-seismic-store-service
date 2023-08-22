@@ -9,13 +9,12 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Sidecar.Common.Service
 {
-    public class BulkDeletionWorker<TOptions> : IBulkDeletionWorker<Model.TOptions>
-        where TOptions : Model.TOptions
+    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IStorageAcountOptions>
     {
         private readonly int _batchSize = 100;
 
-        private static ILogger<BulkDeletionWorker<TOptions>> _logger;
-        protected readonly Model.TOptions Options;
+        private static ILogger<BulkDeletionWorker> _logger;
+        protected readonly Model.IStorageAcountOptions Options;
 
         private int _deletedDatasetTotalCount = 0;
         private int _deletedDatasetInABatchCount = 0;
@@ -25,7 +24,7 @@ namespace Sidecar.Common.Service
 
         private readonly BlobServiceClient _client;
 
-        public BulkDeletionWorker(TOptions options, ILogger<BulkDeletionWorker<TOptions>> logger)
+        public BulkDeletionWorker(IStorageAcountOptions options, ILogger<BulkDeletionWorker> logger)
         {
             _logger = logger;
             Options = options;
@@ -46,6 +45,8 @@ namespace Sidecar.Common.Service
 
         public async Task RunBulkDeletion(List<Object> itemsToDelete)
         {
+            // todo: smaller functions
+
             _logger.LogInformation($"Started blob deletion, it will delete {itemsToDelete.Count} items");
             
             var blobBatchClient = _client.GetBlobBatchClient();
@@ -65,6 +66,7 @@ namespace Sidecar.Common.Service
                 JObject jsonObject = JsonConvert.DeserializeObject<JObject>(item.ToString());
                 string datasetGcsUrl = jsonObject["gcsurl"].ToString();
 
+                _logger.LogInformation($"Deleting blobs in {datasetGcsUrl}");
                 var itemParts = datasetGcsUrl.Split('/');
 /*                if (itemParts.Length != 2)
                 {
