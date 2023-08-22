@@ -9,12 +9,12 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Sidecar.Common.Service
 {
-    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IStorageAcountOptions>
+    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IOptionsStorageAcount>
     {
         private readonly int _batchSize = 100;
 
         private static ILogger<BulkDeletionWorker> _logger;
-        protected readonly Model.IStorageAcountOptions Options;
+        protected readonly Model.IOptionsStorageAcount Options;
 
         private int _deletedDatasetTotalCount = 0;
         private int _deletedDatasetInABatchCount = 0;
@@ -24,11 +24,11 @@ namespace Sidecar.Common.Service
 
         private readonly BlobServiceClient _client;
 
-        public BulkDeletionWorker(IStorageAcountOptions options, ILogger<BulkDeletionWorker> logger)
+        public BulkDeletionWorker(IOptionsStorageAcount options, ILogger<BulkDeletionWorker> logger)
         {
             _logger = logger;
             Options = options;
-           
+
             var storageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
             _client = CreateClient(storageAccountConnectionString);
 
@@ -48,7 +48,7 @@ namespace Sidecar.Common.Service
             // todo: smaller functions
 
             _logger.LogInformation($"Started blob deletion, it will delete {itemsToDelete.Count} items");
-            
+
             var blobBatchClient = _client.GetBlobBatchClient();
             // will contain container name and virtual folder name
             var batchBlock = new BatchBlock<Tuple<string, string>>(_batchSize);
@@ -114,7 +114,7 @@ namespace Sidecar.Common.Service
                             _logger.LogError($"Could not delete container {containerName}: {e.Message}");
                             _errors.Add(e.Message);
                         }
-                        
+
                     }
                 }
 
@@ -126,7 +126,7 @@ namespace Sidecar.Common.Service
                 {
                     _logger.LogInformation($"No errors, will delete metadata for {datasetId}");
                     //delete metadata
-                    
+
                 }
                 else
                 {

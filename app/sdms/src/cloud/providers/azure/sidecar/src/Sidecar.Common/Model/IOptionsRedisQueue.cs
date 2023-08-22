@@ -16,7 +16,7 @@
 
 namespace Sidecar.Common.Model
 {
-    public interface IRedisQueueOptions
+    public interface IOptionsRedisQueue
     {
         string QueueConnectionString { get; set; }
         string QueueName { get; set; }

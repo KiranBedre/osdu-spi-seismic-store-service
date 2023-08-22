@@ -23,9 +23,9 @@ namespace Sidecar.Common.Service
     using Utilitiy;
     using System.Threading.Tasks;
 
-    public class QueueHandlerRedisDeletion : QueueHandlerRedis<IRedisQueueOptions>, IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>
+    public class QueueHandlerRedisDeletion : QueueHandlerRedis<IOptionsRedisQueue>, IQueueHandlerDeletion<IOptionsRedisQueue, IDeleteOperationMessage>
     {
-        public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IRedisQueueOptions options) : base(logger, options)
+        public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IOptionsRedisQueue options) : base(logger, options)
         {
 
         }
@@ -52,7 +52,7 @@ namespace Sidecar.Common.Service
                 Logger.LogError("Queue {q} does not exist", delQ);
                 throw new RedisException("Queue does not exist");
             }
-            
+
             var op = await db.ListLeftPopAsync(delQ);
 
             if (!op.HasValue)

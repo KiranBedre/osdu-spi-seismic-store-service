@@ -16,7 +16,7 @@
 
 namespace Sidecar.Common.Model
 {
-    public interface IStorageAcountOptions
+    public interface IOptionsStorageAcount
     {
         string StorageAccountConnectionString { get; set; }
     }
