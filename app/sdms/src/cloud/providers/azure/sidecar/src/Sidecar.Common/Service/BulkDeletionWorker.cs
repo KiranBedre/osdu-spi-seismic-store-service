@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using Sidecar.Common.Model;
 using System.Threading.Tasks.Dataflow;
+using System.Security;
 
 namespace Sidecar.Common.Service
 {
@@ -43,110 +44,115 @@ namespace Sidecar.Common.Service
         }
 
 
+
         public async Task RunBulkDeletion(List<Object> itemsToDelete)
         {
-            // todo: smaller functions
-
             _logger.LogInformation($"Started blob deletion, it will delete {itemsToDelete.Count} items");
-            
-            var blobBatchClient = _client.GetBlobBatchClient();
-            // will contain container name and virtual folder name
-            var batchBlock = new BatchBlock<Tuple<string, string>>(_batchSize);
-            var importer = new ActionBlock<Tuple<string, string>[]>(async x => await SubmitDeletionBatch(x, blobBatchClient), new ExecutionDataflowBlockOptions
-            {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-            });
-            _ = batchBlock.LinkTo(importer, new DataflowLinkOptions { PropagateCompletion = true });
+
+            var batchBlock = CreateBatchForBlobsDeletion(out ActionBlock<Tuple<string, string>[]> importer);
 
             await Parallel.ForEachAsync(itemsToDelete,
                 new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
                 async (item, ct) =>
-            {
-                //get gcsurl from the item
-                JObject jsonObject = JsonConvert.DeserializeObject<JObject>(item.ToString());
-                string datasetGcsUrl = jsonObject["gcsurl"].ToString();
-
-                _logger.LogInformation($"Deleting blobs in {datasetGcsUrl}");
-                var itemParts = datasetGcsUrl.Split('/');
-                /*if (itemParts.Length != 2)
                 {
-                    _logger.LogError($"Dataset GCS URL {datasetGcsUrl} is not valid. It should be in the format <container>/<virtual folder name>.");
-                    return;
-                }*/
-                var containerName = itemParts[0];
-                string virtualFolderName = null;
-                if (itemParts.Length == 2)
-                {
-                    virtualFolderName = itemParts[1];
-                }
+                    JObject jsonItem = JsonConvert.DeserializeObject<JObject>(item.ToString());
+                    (string containerName, string? virtualFolderName) = ParseContainerAndFolderName(jsonItem);
 
-                var containerClient = _client.GetBlobContainerClient(containerName);
+                    var containerClient = _client.GetBlobContainerClient(containerName);
 
-                if (virtualFolderName is not null)
-                {
-                    var blobs = containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: virtualFolderName + "/");
-                    _logger.LogInformation($"Deleting blobs in container {containerName} with prefix {virtualFolderName}");
-                    await foreach (var pages in blobs.AsPages())
+                    if (virtualFolderName is not null)
                     {
-                        _logger.LogInformation($"pages: {pages.Values}");
-                        foreach (var blob in pages.Values)
+                        var blobs = containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: virtualFolderName + "/");
+                        _logger.LogDebug($"Deleting blobs in container {containerName} with prefix {virtualFolderName}");
+                        await foreach (var pages in blobs.AsPages())
                         {
-                            _logger.LogInformation($"blob: {blob.Name}");
-                            _ = await batchBlock.SendAsync(new Tuple<string, string>(containerName, blob.Name));
+                            foreach (var blob in pages.Values)
+                            {
+                                _logger.LogDebug($"Deleting blob: {blob.Name}");
+                                _ = await batchBlock.SendAsync(new Tuple<string, string>(containerName, blob.Name));
+                            }
                         }
                     }
-                }
-                else
-                {
-                    _logger.LogInformation($"Deleting container {containerName}");
-                    try
+                    else
                     {
-                        _ = await containerClient.DeleteAsync();
-                    } catch (Azure.RequestFailedException e)
-                    {
-                        if (e.ErrorCode == "ContainerNotFound")
+                        _logger.LogDebug($"Deleting container {containerName}");
+                        try
                         {
-                            // we assume this was previously deleted and continue ignorint this exception
-                            _logger.LogInformation($"Could not find container {containerName}");
+                            _ = await containerClient.DeleteAsync();
                         }
-                        else
+                        catch (Azure.RequestFailedException e)
                         {
-                            _logger.LogError($"Could not delete container {containerName}: {e.Message}");
-                            _errors.Add(e.Message);
+/*                            if (e.ErrorCode == "ContainerNotFound")
+                            {
+                                // we assume this was previously deleted and continue ignorint this exception
+                                _logger.LogInformation($"Could not find container {containerName}. Ignoring as it is assumed to have already been deleted");
+                            }
+                            else*/
+                            {
+                                _logger.LogError($"Could not delete container {containerName}: {e.Message}");
+                                _errors.Add(e.Message);
+                            }
                         }
-                        
                     }
-                }
 
-                _logger.LogInformation($"Errors {_errors.Count}");
-                //get gcsurl from the item
-                string datasetId = jsonObject["id"].ToString();
+                    string datasetId = jsonItem["id"].ToString();
+                    if (_errors.Count == 0)
+                    {
+                        _logger.LogInformation($"No errors, will delete metadata for {datasetId}");
+                        //delete metadata
 
-                if (_errors.Count == 0)
-                {
-                    _logger.LogInformation($"No errors, will delete metadata for {datasetId}");
-                    //delete metadata
-                    
-                }
-                else
-                {
-                    _logger.LogInformation($"Errors, will not delete metadata for {datasetId}");
-                }
+                    }
+                    else
+                    {
+                        var allErrors = string.Join(" ", _errors);
+                        _logger.LogInformation($"Will not delete metadata for {datasetId} due to {allErrors}");
+                    }
 
-                _deletedDatasetTotalCount++;
-                _deletedDatasetInABatchCount++;
-                _logger.LogInformation($"Current progress: deleted dataset total count / total dataset count -- {_deletedDatasetTotalCount} / {itemsToDelete.Count}");
-            });
+                    _deletedDatasetTotalCount++;
+                    _deletedDatasetInABatchCount++;
+                    _logger.LogInformation($"Current progress: processed dataset total count / total dataset count -- {_deletedDatasetTotalCount} / {itemsToDelete.Count}");
+                });
 
             batchBlock.Complete();
             await importer.Completion;
         }
 
+        static (string containerName, string? virtualFolderName) ParseContainerAndFolderName(JObject jsonObject)
+        {
+            string datasetGcsUrl = jsonObject["gcsurl"].ToString();
+            string[] parts = datasetGcsUrl.Split('/');
+
+            if (parts.Length == 1)
+            {
+                return (parts[0], null);
+            }
+            else if (parts.Length == 2)
+            {
+                return (parts[0], parts[1]);
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid input format for $jsonObject. Could not extract gcsurl in the format <container>/<folder name> ");
+            }
+        }
+
+      
+        private BatchBlock<Tuple<string, string>> CreateBatchForBlobsDeletion(out ActionBlock<Tuple<string, string>[]> importer)
+        {
+            var blobBatchClient = _client.GetBlobBatchClient();
+            var batchBlock = new BatchBlock<Tuple<string, string>>(_batchSize);
+            importer = new ActionBlock<Tuple<string, string>[]>(async x => await SubmitDeletionBatch(x, blobBatchClient), new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+            });
+            _ = batchBlock.LinkTo(importer, new DataflowLinkOptions { PropagateCompletion = true });
+            return batchBlock;
+        }
 
         private Task SubmitDeletionBatch(Tuple<string, string>[] listOfBlobs, BlobBatchClient blobBatchClient)
         {
             var deletedDatasetInABatchCount = _deletedDatasetInABatchCount;
-            _logger.LogInformation($"Current batch start: dataset count: {deletedDatasetInABatchCount}, blob count: {listOfBlobs.Length}, batch max size: {_batchSize}");
+            _logger.LogDebug($"Current batch start: dataset count: {deletedDatasetInABatchCount}, blob count: {listOfBlobs.Length}, batch max size: {_batchSize}");
 
             var batchedBlobs = new List<Tuple<string, string>>(listOfBlobs);
 

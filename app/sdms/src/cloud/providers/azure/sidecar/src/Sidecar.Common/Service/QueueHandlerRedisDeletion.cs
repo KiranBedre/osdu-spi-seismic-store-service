@@ -52,8 +52,10 @@ namespace Sidecar.Common.Service
                 Logger.LogError("Queue {q} does not exist", delQ);
                 throw new RedisException("Queue does not exist");
             }
-            
-            var op = await db.ListLeftPopAsync(delQ);
+
+            //ld temp var op = await db.ListLeftPopAsync(delQ);
+            var op = await db.ListGetByIndexAsync(delQ, 0);
+
 
             if (!op.HasValue)
             {
