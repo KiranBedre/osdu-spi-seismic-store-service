@@ -27,12 +27,12 @@ namespace Sidecar.Common.Service
         where TQueueMessage : class, IDeleteOperationMessage
     {
         private readonly ILogger<DeletionOperationService<TOptions, TQueueMessage>> Logger;
-        private readonly IDeletionOperationQueueHandler<TOptions, TQueueMessage> Queue;
+        private readonly IQueueHandlerDeletion<TOptions, TQueueMessage> Queue;
         private readonly ItemsRetriever<TOptions> ItemsRetriever;
         private readonly Stopwatch RunTimer;
 
         public DeletionOperationService(ILogger<DeletionOperationService<TOptions, TQueueMessage>> logger, 
-            IDeletionOperationQueueHandler<TOptions, TQueueMessage> queue,
+            IQueueHandlerDeletion<TOptions, TQueueMessage> queue,
             ItemsRetriever<TOptions> itemsRetriever)
         {
             RunTimer = new Stopwatch();

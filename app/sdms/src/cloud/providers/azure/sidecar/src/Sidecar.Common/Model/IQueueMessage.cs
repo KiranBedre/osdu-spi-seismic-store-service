@@ -14,14 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Service
+namespace Sidecar.Common.Model
 {
-    using Model;
-
-    public interface IQueueHandler<TOptions> where TOptions : class
+    public interface IQueueMessage
     {
-        void Enqueue<TMessage>(string key,TMessage  value) where TMessage : class, IQueueMessage;
-        TMessage Dequeue<TMessage>(string key) where TMessage : class, IQueueMessage;
-    }
 
+    }
 }
