@@ -34,6 +34,7 @@ public class Program
                 //.AddSingleton<IBulkDeletionWorker<TOptions, IDeleteOperationStatus>>()
                 .AddSingleton<IBulkDeletionWorker<TOptions>, BulkDeletionWorker<TOptions>>()
                 .AddSingleton<IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>,QueueHandlerRedisDeletion>()
+                .AddSingleton<IQueueHandler<TOptions>>(sp => sp.GetRequiredService<IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>>())
                 .AddHostedService<DeletionOperationService<TOptions, IDeleteOperationStatus>>()
                 .AddScoped<IDataAccess, Cosmos>()
 
