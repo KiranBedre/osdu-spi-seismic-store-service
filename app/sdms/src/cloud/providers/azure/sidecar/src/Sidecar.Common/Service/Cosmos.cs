@@ -72,6 +72,15 @@ namespace Sidecar.Common.Service
             return paginatedRecords;
         }
 
+        public async Task<bool> DeleteMetadata(string cs, string id)
+        {   
+            this.initCosmosClient(cs);
+            Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
+            Container container = database.GetContainer(this.containerId);
+            var itemResponse = await container.DeleteItemAsync<Object>(id, new PartitionKey(id));
+            return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
+        }
+
         private void initCosmosClient(string cs)
         {
             if (!Cosmos.cosmosClients.ContainsKey(cs))

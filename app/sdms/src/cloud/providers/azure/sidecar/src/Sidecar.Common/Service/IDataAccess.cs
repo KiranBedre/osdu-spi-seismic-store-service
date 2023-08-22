@@ -22,7 +22,7 @@ namespace Sidecar.Common.Service
     public interface IDataAccess
     {
         Task<string> Query(string cs, string sql, string? ctoken, int? limit);
-
         Task<PaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit);
+        Task<bool> DeleteMetadata(string cs, string id);
     }
 }

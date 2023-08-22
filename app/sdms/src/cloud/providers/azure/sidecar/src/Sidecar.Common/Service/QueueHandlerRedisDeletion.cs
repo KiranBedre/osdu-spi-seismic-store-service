@@ -103,7 +103,6 @@ namespace Sidecar.Common.Service
             var statusKey = Options.QueueName + ":status:" + status.OperationId.ToLower();
             await db.HashSetAsync(statusKey, statusHash);
             return status!;
-
         }
     }
 }

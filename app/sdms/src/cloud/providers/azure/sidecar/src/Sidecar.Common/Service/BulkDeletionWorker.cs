@@ -10,29 +10,28 @@ using System.Security;
 
 namespace Sidecar.Common.Service
 {
-    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IOptionsStorageAcount>
+    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IOptionsStorageAcount, Model.IOptionsCosmos>
     {
         private readonly int _batchSize = 100;
 
         private static ILogger<BulkDeletionWorker> _logger;
-        protected readonly Model.IOptionsStorageAcount Options;
+        private readonly IMetadataDeletionWorker<Model.IOptionsCosmos> MetadataDeletionWorker;
 
         private int _deletedDatasetTotalCount = 0;
         private int _deletedDatasetInABatchCount = 0;
         private int _batchNr = 1;
 
         private readonly List<string> _errors = new();
-
         private readonly BlobServiceClient _client;
 
-        public BulkDeletionWorker(IOptionsStorageAcount options, ILogger<BulkDeletionWorker> logger)
+        public BulkDeletionWorker(IOptionsStorageAcount options, ILogger<BulkDeletionWorker> logger,
+            IMetadataDeletionWorker<Model.IOptionsCosmos> metadataDeletionWorker)
         {
             _logger = logger;
-            Options = options;
+            MetadataDeletionWorker = metadataDeletionWorker;
 
             var storageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
             _client = CreateClient(storageAccountConnectionString);
-
         }
 
         private BlobServiceClient CreateClient(string storageAccountConnectionString)
@@ -42,8 +41,6 @@ namespace Sidecar.Common.Service
             var blobServiceClient = new BlobServiceClient(storageAccountConnectionString, clientOptions);
             return blobServiceClient;
         }
-
-
 
         public async Task RunBulkDeletion(List<Object> itemsToDelete)
         {
@@ -99,8 +96,15 @@ namespace Sidecar.Common.Service
                     if (_errors.Count == 0)
                     {
                         _logger.LogInformation($"No errors, will delete metadata for {datasetId}");
-                        //delete metadata
+                      
+                        try {
+                            await MetadataDeletionWorker.DeleteMetadata(datasetId);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError($"Could not delete metadata for {datasetId}: {e.Message}");
 
+                        }
                     }
                     else
                     {
