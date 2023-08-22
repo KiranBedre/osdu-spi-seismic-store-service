@@ -30,30 +30,6 @@ namespace Sidecar.Common.Service
 
         }
 
-        protected override void ValidateOptions()
-        {
-            ArgumentNullException.ThrowIfNull(Options, nameof(Options));
-            var exceptions = new List<Exception>();
-
-            if (string.IsNullOrEmpty(Options.RedisQueueConnectionString))
-            {
-                exceptions.Add(new ArgumentException("Redis connection string is required."));
-            }
-
-            if (string.IsNullOrEmpty(Options.QueueName))
-            {
-                exceptions.Add(new ArgumentException("Queue Name is required."));
-            }
-
-            if (exceptions.Count == 0)
-            {
-                return;
-            }
-
-            throw new AggregateException(exceptions);
-
-        }
-
         public async Task<IDeleteOperationMessage?> CheckForDeletionOperationAsync()
         {
             IDatabase db;
