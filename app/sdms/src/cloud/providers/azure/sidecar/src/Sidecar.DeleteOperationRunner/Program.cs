@@ -19,17 +19,22 @@ public class Program
         opts.RedisQueueConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
         opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
 
-        //todo - add all env vars to options
+        opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
+        opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
+
+        opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
     }
 
     private static async Task RunAsync(Options opts)
     {
         var host = Host.CreateDefaultBuilder()
             .ConfigureServices(services => _ = services
-                .AddSingleton<IOptions>(opts)
-                .AddSingleton<IQueueHandlerDeletion<IOptions, IDeleteOperationMessage>,QueueHandlerRedisDeletion>()
-                .AddHostedService<DeletionOperationService<IOptions, IDeleteOperationStatus>>()
-                .AddSingleton<ItemsRetriever<IOptions>>()
+                .AddSingleton<TOptions>(opts)
+                .AddSingleton<IItemsRetriever<TOptions>, ItemsRetriever>()
+                //.AddSingleton<IBulkDeletionWorker<TOptions, IDeleteOperationStatus>>()
+                .AddSingleton<IBulkDeletionWorker<TOptions>, BulkDeletionWorker<TOptions>>()
+                .AddSingleton<IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>,QueueHandlerRedisDeletion>()
+                .AddHostedService<DeletionOperationService<TOptions, IDeleteOperationStatus>>()
                 .AddScoped<IDataAccess, Cosmos>()
 
             ).ConfigureLogging(lg => _ = lg

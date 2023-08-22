@@ -27,18 +27,19 @@ namespace Sidecar.Common.Service
         where TQueueMessage : class, IDeleteOperationMessage
     {
         private readonly ILogger<DeletionOperationService<TOptions, TQueueMessage>> Logger;
-        private readonly IQueueHandlerDeletion<TOptions, TQueueMessage> Queue;
-        private readonly ItemsRetriever<TOptions> ItemsRetriever;
-        private readonly Stopwatch RunTimer;
+        private readonly IQueueHandlerDeletion<TOptions, IDeleteOperationMessage> Queue;
+        private readonly IItemsRetriever<TOptions> ItemsRetriever;
+        private readonly IBulkDeletionWorker<TOptions> BulkDeletionWorker;
 
-        public DeletionOperationService(ILogger<DeletionOperationService<TOptions, TQueueMessage>> logger, 
-            IQueueHandlerDeletion<TOptions, TQueueMessage> queue,
-            ItemsRetriever<TOptions> itemsRetriever)
+        public DeletionOperationService(ILogger<DeletionOperationService<TOptions, TQueueMessage>> logger,
+            IQueueHandlerDeletion<TOptions, IDeleteOperationMessage> queue,
+            IItemsRetriever<TOptions> itemsRetriever,
+            IBulkDeletionWorker<TOptions> bulkDeletionWorker)
         {
-            RunTimer = new Stopwatch();
             Logger = logger;
             Queue = queue;
             ItemsRetriever = itemsRetriever;
+            BulkDeletionWorker = bulkDeletionWorker;
 
         }
 
@@ -54,7 +55,12 @@ namespace Sidecar.Common.Service
                     var items = paginatedRecords.records;
                     // todo: add total number in Redis operation
                     Logger.LogInformation("Found {0} items to delete", items.Count.ToString(CultureInfo.InvariantCulture));
-                   
+
+                    //todo: lock them all
+
+                    //---start the deletion process
+                    await BulkDeletionWorker.RunBulkDeletion(items);
+
                 }
                 await Task.Delay(1000,cancellationToken);
             }while(!cancellationToken.IsCancellationRequested);
