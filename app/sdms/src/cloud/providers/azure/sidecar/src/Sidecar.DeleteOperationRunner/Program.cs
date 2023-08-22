@@ -19,10 +19,12 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using CommandLine;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sidecar.Common.HealthChecks;
 using Sidecar.Common.Utility;
 
 public class Program
@@ -84,74 +86,96 @@ public class Program
 
     private static async Task RunAsync(Options opts)
     {
+        var webApplicationBuilder = WebApplication.CreateBuilder();
+        
+        ConfigureServices(webApplicationBuilder.Services, opts);
 
-        var host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddAzureClients(builder =>
-                {
-                    _ = builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
-                });
+        webApplicationBuilder.Logging
+            .ClearProviders()
+            .AddSimpleConsole(o => {
+                o.SingleLine = true;
+                o.TimestampFormat = "[HH:mm:ss:fff] ";
+            });
 
-                // From the local machine, the user is expected to az login and have access to all dependencies
-                // such as Key Vault, CosmosDB, Storage accounts.
-                // When deployed, there will be a pod identity with access to these dependencies.
-                // DefaultAzureCredential works in both cases.
-                _ = services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+        webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
 
-                if (!string.IsNullOrEmpty(opts.DesUrl))
-                {
-                    _ = services
-                        .AddSingleton<DesClient>()
-                        .AddSingleton<IDesClient>(
-                            sp => new CachingDesClient(sp.GetRequiredService<DesClient>()));
-                }
-                else
-                {
-                    _logger!.LogWarning("Using DES client from environment");
-                    _ = services.AddSingleton<IDesClient, DesClientFromEnv>();
-                }
+        var webapp = webApplicationBuilder.Build();
 
-                _ = services
-                    .AddSingleton<CosmosClientFactory>()
-                    .AddSingleton<ICosmosClientFactory>(
-                        sp => new CachingCosmosClientFactory(sp.GetRequiredService<CosmosClientFactory>()));
+        webapp.UseHealthChecks("/healthz");
+        
+        await webapp.RunAsync();
+    }
 
-                _ = services
-                    .AddSingleton<BlobClientFactory>()
-                    .AddSingleton<IBlobClientFactory>(
-                        sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
+    private static void ConfigureServices(IServiceCollection services, Options opts)
+    {
+        services.AddAzureClients(builder =>
+        {
+            _ = builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
+        });
 
-                _ = services
-                    .AddSingleton<RedisConnectionFactory>()
-                    .AddSingleton<IRedisConnectionFactory>(sp =>
-                        new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
+        // From the local machine, the user is expected to az login and have access to all dependencies
+        // such as Key Vault, CosmosDB, Storage accounts.
+        // When deployed, there will be a pod identity with access to these dependencies.
+        // DefaultAzureCredential works in both cases.
+        _ = services.AddSingleton<TokenCredential, DefaultAzureCredential>();
 
-                _ = services
-                    .AddSingleton<IOptions>(opts)
-                    .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
-                    .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
-                    .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
-                    .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
-                    .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
-                    .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
-                    .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
-                    .AddSingleton<IBlobClientFactory, BlobClientFactory>()
-                    .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-                    .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
-                    .AddHostedService<DeletionOperationService>()
-                    .AddSingleton<ILockManager, LockManager>()
-                    .AddScoped<IDataAccess, Cosmos>();
-            }).ConfigureLogging(lg => _ = lg
-                .ClearProviders()
-                .AddSimpleConsole(o =>
-                {
-                    o.SingleLine = true;
-                    o.TimestampFormat = "[HH:mm:ss:fff] ";
-                })
-            ).Build();
+        if (!string.IsNullOrEmpty(opts.DesUrl))
+        {
+            _ = services
+                .AddSingleton<DesClient>()
+                .AddSingleton<IDesClient>(
+                    sp => new CachingDesClient(sp.GetRequiredService<DesClient>()));
+        }
+        else
+        {
+            _logger!.LogWarning("Using DES client from environment");
+            _ = services.AddSingleton<IDesClient, DesClientFromEnv>();
+        }
 
-        await host.RunAsync();
+        _ = services
+            .AddSingleton<CosmosClientFactory>()
+            .AddSingleton<ICosmosClientFactory>(
+                sp => new CachingCosmosClientFactory(sp.GetRequiredService<CosmosClientFactory>()));
+
+        _ = services
+            .AddSingleton<BlobClientFactory>()
+            .AddSingleton<IBlobClientFactory>(
+                sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
+
+        _ = services
+            .AddSingleton<RedisConnectionFactory>()
+            .AddSingleton<IRedisConnectionFactory>(sp =>
+                new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
+
+        _ = services
+            .AddSingleton<IOptions>(opts)
+            .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
+            .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
+            .AddSingleton<IBlobClientFactory, BlobClientFactory>()
+            .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
+            .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
+            .AddHostedService<DeletionOperationService>()
+            .AddSingleton<ILockManager, LockManager>()
+            .AddScoped<IDataAccess, Cosmos>();   
+                
+        services
+            .AddHealthChecks()
+            .AddCheck<TaskQueueExistenceCheck>(
+                "task-queue-existence-check",
+                timeout: TimeSpan.FromMinutes(1))
+            .AddRedis(
+                sp => sp.GetRequiredService<RedisConnectionFactory>().GetRedisForLocks().GetConnection(),
+                name: "redis-locks-connectivity-check",
+                timeout: TimeSpan.FromMinutes(1))
+            .AddRedis(
+                sp => sp.GetRequiredService<RedisConnectionFactory>().GetRedisForQueue().GetConnection(),
+                name: "redis-queue-connectivity-check",
+                timeout: TimeSpan.FromMinutes(1));
     }
 
     private static async Task Main(string[] args)

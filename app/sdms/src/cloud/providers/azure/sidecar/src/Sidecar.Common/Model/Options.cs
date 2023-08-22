@@ -23,6 +23,9 @@ using Interface;
 
 public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount, IOptionsDataEcosystemService
 {
+    [Option("port", Required = false, Default = 6000, HelpText = "Port on which to expose the endpoints")]
+    public int WebHostPort { get; set; }
+
     [Option("keyVaultUrl", Required = true, HelpText = "KeyVault endpoint URL, e.g. https://mytestkv.vault.azure.net/")]
     public string KeyVaultUrl { get; set; }
 

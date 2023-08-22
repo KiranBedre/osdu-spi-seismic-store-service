@@ -34,6 +34,8 @@ public class RedisHandler : IRedisHandler
         _client = connectionMultiplexer;
     }
 
+    public IConnectionMultiplexer GetConnection() => _client;
+
     public IDatabase GetDatabase()
     {
         try

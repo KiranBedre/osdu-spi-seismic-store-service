@@ -20,6 +20,7 @@ using StackExchange.Redis;
 
 public interface IRedisHandler
 {
+    public IConnectionMultiplexer GetConnection();
     public IDatabase GetDatabase();
     public Task<string?> GetAsync(string key);
     public Task<bool> SetAsync(string key, string value);
