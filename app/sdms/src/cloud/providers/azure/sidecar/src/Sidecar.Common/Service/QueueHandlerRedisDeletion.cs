@@ -25,7 +25,7 @@ namespace Sidecar.Common.Service
 
     public class QueueHandlerRedisDeletion : QueueHandlerRedis<IOptionsQueueRedis>, IQueueHandlerDeletion<IOptionsQueueRedis, IDeleteionOperationMessage>
     {
-        public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IOptionsQueueRedis options) : base(logger, options)
+        public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer) : base(logger, options, connectionMultiplexer)
         {
 
         }

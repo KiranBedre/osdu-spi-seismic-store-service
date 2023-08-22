@@ -28,26 +28,15 @@ namespace Sidecar.Common.Service
     {
         protected readonly ILogger<QueueHandlerRedis<TOptions>> Logger;
         protected readonly Model.IOptionsQueueRedis Options;
-        protected ConnectionMultiplexer Client;
+        protected IConnectionMultiplexer Client;
 
-        public QueueHandlerRedis(ILogger<QueueHandlerRedis<TOptions>> logger, Model.IOptionsQueueRedis options)
+        public QueueHandlerRedis(ILogger<QueueHandlerRedis<TOptions>> logger, Model.IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer)
         {
             Logger = logger;
             Options = options;
             ValidateOptions();
-            Client = PrepareClient();
+            Client = connectionMultiplexer;
         }
-
-        protected ConnectionMultiplexer PrepareClient()
-        {
-            Logger.LogInformation("Establishing Redis Connection...");
-
-            var client = ConnectionMultiplexer.Connect(Options.QueueConnectionString!);
-
-            Logger.LogInformation("Established Redis Connection ");
-            return client;
-        }
-
         protected virtual void ValidateOptions()
         {
             ArgumentNullException.ThrowIfNull(Options, nameof(Options));
