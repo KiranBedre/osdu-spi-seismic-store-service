@@ -49,7 +49,7 @@ export class GoogleDataEcosystemServices extends AbstractDataEcosystemCore {
     }
 
     public tenantNameAndDataPartitionIDShouldMatch() {
-        return false;
+        return true;
     }
 
 }
