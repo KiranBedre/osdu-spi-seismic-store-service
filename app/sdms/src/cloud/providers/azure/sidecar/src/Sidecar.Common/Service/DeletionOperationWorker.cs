@@ -21,6 +21,7 @@ namespace Sidecar.Common.Service
     using System.Diagnostics;
     using Model;
     using System.Globalization;
+    using System.Drawing.Printing;
 
     public class DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage> : BackgroundService
         where TStorageOptions : class
@@ -32,6 +33,9 @@ namespace Sidecar.Common.Service
         private readonly IQueueHandlerDeletion<TQueueOptions, IDeleteOperationMessage> Queue;
         private readonly IItemsRetriever<TCosmosOptions> ItemsRetriever;
         private readonly IBulkDeletionWorker<TStorageOptions> BulkDeletionWorker;
+
+        private int ConsecutiveFailures = 0;
+        private const int MaxConsecutiveFailures = 10;
 
         public DeletionOperationService(ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> logger,
             IQueueHandlerDeletion<TQueueOptions, IDeleteOperationMessage> queue,
@@ -48,28 +52,32 @@ namespace Sidecar.Common.Service
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             do{
-                //todo: add try catch with consecutive retries
+                try {
+                    var op = await Queue.CheckForDeletionOperationAsync();
+                    if (op is not null) {
+                        //---start the deletion process
+                        Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-                var op = await Queue.CheckForDeletionOperationAsync();
-                if(op is not null){
-                    //---start the deletion process
-                    Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
-                    
-                    
-                    var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
-                    var items = paginatedRecords.records;
-                    // todo: add total number in Redis operation
-                    Logger.LogInformation("Found {0} items to delete", items.Count.ToString(CultureInfo.InvariantCulture));
 
-                    //todo: lock
+                        var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
+                        var items = paginatedRecords.records;
+                        // todo: add total number in Redis operation
+                        Logger.LogInformation("Found {0} items to delete", items.Count.ToString(CultureInfo.InvariantCulture));
 
-                    //---start the deletion process
-                    
-                    await BulkDeletionWorker.RunBulkDeletion(items);
+                        //todo: lock all found items
 
+                        //---start the deletion process
+                        await BulkDeletionWorker.RunBulkDeletion(items);
+                    }
+                    ConsecutiveFailures = 0;
                 }
+                catch(Exception ex)
+                {
+                    Logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {ConsecutiveFailures}/{MaxConsecutiveFailures}");
+                    ConsecutiveFailures++;
+                }                
                 await Task.Delay(1000,cancellationToken);
-            }while(!cancellationToken.IsCancellationRequested);
+            }while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
         }
     }
 }

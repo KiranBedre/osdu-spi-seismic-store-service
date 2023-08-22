@@ -116,7 +116,7 @@ namespace Sidecar.Common.Service
                     , incBy!.Value);
 
             }catch(Exception ex){
-                Logger.LogError(ex,"Unable to decrement hash for key {key} and field {field}",key,field);
+                Logger.LogError(ex,"Unable to increment hash for key {key} and field {field}",key,field);
                 throw;
             }
         }
@@ -128,7 +128,7 @@ namespace Sidecar.Common.Service
                     , incBy!.Value);
 
             }catch(Exception ex){
-                Logger.LogError(ex,"Unable to decrement hash for key {key} and field {field}",key,field);
+                Logger.LogError(ex,"Unable to increment hash for key {key} and field {field}",key,field);
                 throw;
             }
         }
@@ -141,7 +141,7 @@ namespace Sidecar.Common.Service
                     , new RedisValue(value));
 
             }catch(Exception ex){
-                Logger.LogError(ex,"Unable to decrement hash for key {key} and field {field}",key,field);
+                Logger.LogError(ex,"Unable to set hash for key {key} and field {field}",key,field);
                 throw;
             }
         }
@@ -154,7 +154,7 @@ namespace Sidecar.Common.Service
                     , new RedisValue(value));
 
             }catch(Exception ex){
-                Logger.LogError(ex,"Unable to decrement hash for key {key} and field {field}",key,field);
+                Logger.LogError(ex,"Unable to set hash for key {key} and field {field}",key,field);
                 throw;
             }
         }

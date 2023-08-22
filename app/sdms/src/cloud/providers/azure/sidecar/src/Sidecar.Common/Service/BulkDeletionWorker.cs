@@ -68,7 +68,7 @@ namespace Sidecar.Common.Service
 
                 _logger.LogInformation($"Deleting blobs in {datasetGcsUrl}");
                 var itemParts = datasetGcsUrl.Split('/');
-/*                if (itemParts.Length != 2)
+                /*if (itemParts.Length != 2)
                 {
                     _logger.LogError($"Dataset GCS URL {datasetGcsUrl} is not valid. It should be in the format <container>/<virtual folder name>.");
                     return;
@@ -104,31 +104,33 @@ namespace Sidecar.Common.Service
                         _ = await containerClient.DeleteAsync();
                     } catch (Azure.RequestFailedException e)
                     {
-                        if (e.ErrorCode != "ContainerNotFound")
+                        if (e.ErrorCode == "ContainerNotFound")
                         {
-                            _logger.LogError($"Could not delete container {containerName}: {e.Message}");
-                            _errors.Add(e.Message);
+                            // we assume this was previously deleted and continue ignorint this exception
+                            _logger.LogInformation($"Could not find container {containerName}");
                         }
                         else
                         {
-                            // we assume this was previously deleted
-                            _logger.LogInformation($"Could not find container {containerName}");
+                            _logger.LogError($"Could not delete container {containerName}: {e.Message}");
+                            _errors.Add(e.Message);
                         }
                         
                     }
                 }
 
                 _logger.LogInformation($"Errors {_errors.Count}");
+                //get gcsurl from the item
+                string datasetId = jsonObject["id"].ToString();
 
                 if (_errors.Count == 0)
                 {
-                    _logger.LogInformation($"No errors, will delete metadata");
+                    _logger.LogInformation($"No errors, will delete metadata for {datasetId}");
                     //delete metadata
                     
                 }
                 else
                 {
-                    _logger.LogInformation($"Errors, will not delete metadata");
+                    _logger.LogInformation($"Errors, will not delete metadata for {datasetId}");
                 }
 
                 _deletedDatasetTotalCount++;
