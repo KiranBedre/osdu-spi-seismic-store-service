@@ -29,10 +29,9 @@ import { TenantAuth, TenantModel, TenantGroups } from '../tenant';
 import { TenantDAO } from '../tenant/dao';
 import { SubProjectDAO } from './dao';
 import { SubprojectGroups } from './groups';
+import { IDeleteOperationQueueTaskModel } from './model';
 import { SubProjectOP } from './optype';
 import { SubProjectParser } from './parser';
-import { IDeleteOperationQueueTaskModel } from './model';
-import { UnauthorizedError } from 'express-jwt';
 
 export class SubProjectHandler {
 
@@ -274,7 +273,7 @@ export class SubProjectHandler {
 
     }
 
-    // delete datasets in a given path within the subproject 
+    // trigger bulk delete operation for datasets in a given path within the subproject 
     private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationModel> {
         
         const subprojectName = req.params.subprojectid;
