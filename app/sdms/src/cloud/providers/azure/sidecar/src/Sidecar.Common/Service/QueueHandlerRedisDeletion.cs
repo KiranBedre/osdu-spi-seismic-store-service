@@ -23,34 +23,10 @@ namespace Sidecar.Common.Service
     using Utilitiy;
     using System.Threading.Tasks;
 
-    public class QueueHandlerRedisDeletion : QueueHanderRedis<IRedisQueueOptions>, IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>
+    public class QueueHandlerRedisDeletion : QueueHandlerRedis<IRedisQueueOptions>, IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>
     {
         public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IRedisQueueOptions options) : base(logger, options)
         {
-
-        }
-
-        protected override void ValidateOptions()
-        {
-            ArgumentNullException.ThrowIfNull(Options, nameof(Options));
-            var exceptions = new List<Exception>();
-
-            if (string.IsNullOrEmpty(Options.QueueConnectionString))
-            {
-                exceptions.Add(new ArgumentException("Redis connection string is required."));
-            }
-
-            if (string.IsNullOrEmpty(Options.QueueName))
-            {
-                exceptions.Add(new ArgumentException("Queue Name is required."));
-            }
-
-            if (exceptions.Count == 0)
-            {
-                return;
-            }
-
-            throw new AggregateException(exceptions);
 
         }
 
