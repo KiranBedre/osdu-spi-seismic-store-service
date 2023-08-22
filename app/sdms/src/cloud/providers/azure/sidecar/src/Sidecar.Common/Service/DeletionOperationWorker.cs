@@ -27,10 +27,10 @@ namespace Sidecar.Common.Service
         where TStorageOptions : class
         where TQueueOptions : class
         where TCosmosOptions : class
-        where TQueueMessage : class,  IDeleteOperationMessage
+        where TQueueMessage : class,  IDeleteionOperationMessage
     {
         private readonly ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> Logger;
-        private readonly IQueueHandlerDeletion<TQueueOptions, IDeleteOperationMessage> Queue;
+        private readonly IQueueHandlerDeletion<TQueueOptions, IDeleteionOperationMessage> Queue;
         private readonly IItemsRetriever<TCosmosOptions> ItemsRetriever;
         private readonly IBulkDeletionWorker<TStorageOptions> BulkDeletionWorker;
 
@@ -38,7 +38,7 @@ namespace Sidecar.Common.Service
         private const int MaxConsecutiveFailures = 10;
 
         public DeletionOperationService(ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> logger,
-            IQueueHandlerDeletion<TQueueOptions, IDeleteOperationMessage> queue,
+            IQueueHandlerDeletion<TQueueOptions, IDeleteionOperationMessage> queue,
             IItemsRetriever<TCosmosOptions> itemsRetriever,
             IBulkDeletionWorker<TStorageOptions> bulkDeletionWorker)
         {
@@ -75,7 +75,7 @@ namespace Sidecar.Common.Service
                 {
                     Logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {ConsecutiveFailures}/{MaxConsecutiveFailures}");
                     ConsecutiveFailures++;
-                }                
+                }
                 await Task.Delay(1000,cancellationToken);
             }while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
         }

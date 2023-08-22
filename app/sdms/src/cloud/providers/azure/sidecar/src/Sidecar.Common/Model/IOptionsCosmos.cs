@@ -16,10 +16,10 @@
 
 namespace Sidecar.Common.Model
 {
-    public interface IOptionsRedisQueue
+    public interface IOptionsCosmos
     {
-        string QueueConnectionString { get; set; }
-        string QueueName { get; set; }
-    }
+        string CosmosEndpoint { get; set; }
 
+        string CosmosKey { get; set; }
+    }
 }

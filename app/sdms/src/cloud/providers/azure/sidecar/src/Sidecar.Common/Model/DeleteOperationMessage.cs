@@ -16,7 +16,7 @@
 
 namespace Sidecar.Common.Model{
 
-    public class DeleteOperationMessage : IDeleteOperationMessage
+    public class DeleteOperationMessage : IDeleteionOperationMessage
     {
         public string OperationId{get;set;} = "";
 

@@ -17,7 +17,7 @@
 namespace Sidecar.Common.Model{
     using System.Text.Json.Serialization;
 
-    public interface IDeleteOperationStatus : IDeleteOperationMessage
+    public interface IDeleteOperationStatus : IDeleteionOperationMessage
     {
         [JsonPropertyName("createdAt")]
         DateTime CreatedAt { get; set; }

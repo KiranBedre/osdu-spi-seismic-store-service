@@ -30,15 +30,15 @@ public class Program
         var host = Host.CreateDefaultBuilder()
            .ConfigureServices(services => _ = services
                .AddSingleton<IOptions>(opts)
-               .AddSingleton<ICosmosOptions>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IRedisQueueOptions>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IStorageAcountOptions>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IItemsRetriever<ICosmosOptions>, ItemsRetriever>()
+               .AddSingleton<IOptionsCosmos>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IOptionsQueueRedis>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IOptionsStorageAcount>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IItemsRetriever<IOptionsCosmos>, ItemsRetriever>()
                //.AddSingleton<IBulkDeletionWorker<IOptions, IDeleteOperationStatus>>()
-               .AddSingleton<IBulkDeletionWorker<IStorageAcountOptions>, BulkDeletionWorker>()
-               .AddSingleton<IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>, QueueHandlerRedisDeletion>()
-               .AddSingleton<IQueueHandler<IRedisQueueOptions>>(sp => sp.GetRequiredService<IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>>())
-               .AddHostedService<DeletionOperationService<IStorageAcountOptions, IRedisQueueOptions, ICosmosOptions, IDeleteOperationStatus>>()
+               .AddSingleton<IBulkDeletionWorker<IOptionsStorageAcount>, BulkDeletionWorker>()
+               .AddSingleton<IQueueHandlerDeletion<IOptionsQueueRedis, IDeleteionOperationMessage>, QueueHandlerRedisDeletion>()
+               .AddSingleton<IQueueHandler<IOptionsQueueRedis>>(sp => sp.GetRequiredService<IQueueHandlerDeletion<IOptionsQueueRedis, IDeleteionOperationMessage>>())
+               .AddHostedService<DeletionOperationService<IOptionsStorageAcount, IOptionsQueueRedis, IOptionsCosmos, IDeleteOperationStatus>>()
                .AddScoped<IDataAccess, Cosmos>()
 
 
