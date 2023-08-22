@@ -32,7 +32,7 @@ info:
 # ===========================================================================
 
 servers:
-  - url: "#{SDMS_PREFIX}#"
+  - url: "/seistore-svc/api/v3"
 
 paths:
   /svcstatus:
@@ -2964,13 +2964,7 @@ components:
     DeleteOperationStatus:
       required:
         - operation_id
-        - created_at
-        - created_by
-        - last_updated_at
         - status
-        - dataset_cnt
-        - deleted_cnt
-        - failed_cnt
       properties:
         operation_id:
           type: string
