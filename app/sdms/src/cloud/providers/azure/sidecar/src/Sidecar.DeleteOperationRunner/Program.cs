@@ -28,15 +28,19 @@ public class Program
     private static async Task RunAsync(Options opts)
     {
         var host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services => _ = services
-                .AddSingleton<TOptions>(opts)
-                .AddSingleton<IItemsRetriever<TOptions>, ItemsRetriever>()
-                //.AddSingleton<IBulkDeletionWorker<TOptions, IDeleteOperationStatus>>()
-                .AddSingleton<IBulkDeletionWorker<TOptions>, BulkDeletionWorker<TOptions>>()
-                .AddSingleton<IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>,QueueHandlerRedisDeletion>()
-                .AddSingleton<IQueueHandler<TOptions>>(sp => sp.GetRequiredService<IQueueHandlerDeletion<TOptions, IDeleteOperationMessage>>())
-                .AddHostedService<DeletionOperationService<TOptions, IDeleteOperationStatus>>()
-                .AddScoped<IDataAccess, Cosmos>()
+           .ConfigureServices(services => _ = services
+               .AddSingleton<IOptions>(opts)
+               .AddSingleton<ICosmosOptions>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IRedisQueueOptions>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IStorageAcountOptions>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IItemsRetriever<ICosmosOptions>, ItemsRetriever>()
+               //.AddSingleton<IBulkDeletionWorker<IOptions, IDeleteOperationStatus>>()
+               .AddSingleton<IBulkDeletionWorker<IStorageAcountOptions>, BulkDeletionWorker>()
+               .AddSingleton<IQueueHandlerDeletion<IRedisQueueOptions, IDeleteOperationMessage>, QueueHandlerRedisDeletion>()
+               .AddSingleton<IQueueHandler<IOptions>>(sp => sp.GetRequiredService<IQueueHandlerDeletion<IOptions, IDeleteOperationMessage>>())
+               .AddHostedService<DeletionOperationService<IStorageAcountOptions, IRedisQueueOptions, ICosmosOptions, IDeleteOperationStatus>>()
+               .AddScoped<IDataAccess, Cosmos>()
+
 
             ).ConfigureLogging(lg => _ = lg
                 .ClearProviders()

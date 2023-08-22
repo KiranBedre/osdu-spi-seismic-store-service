@@ -23,10 +23,10 @@ namespace Sidecar.Common.Service
     using Utilitiy;
     using System.Data.Common;
 
-    public class QueueHanderRedis<TOptions> : IQueueHandler<Model.IRedisQueueOptions>
+    public class QueueHandlerRedis<TOptions> : IQueueHandler<Model.IRedisQueueOptions>
         where TOptions : Model.IRedisQueueOptions
     {
-        protected readonly ILogger<QueueHanderRedis<TOptions>> Logger;
+        protected readonly ILogger<QueueHandlerRedis<TOptions>> Logger;
         protected readonly Model.IRedisQueueOptions Options;
         protected ConnectionMultiplexer Client;
 
@@ -53,7 +53,7 @@ namespace Sidecar.Common.Service
             ArgumentNullException.ThrowIfNull(Options, nameof(Options));
             var exceptions = new List<Exception>();
 
-            if (string.IsNullOrEmpty(Options.RedisQueueConnectionString))
+            if (string.IsNullOrEmpty(Options.QueueConnectionString))
             {
                 exceptions.Add(new ArgumentException("Redis connection string is required."));
             }
