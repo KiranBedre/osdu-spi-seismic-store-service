@@ -27,14 +27,9 @@ export class SubProjectPath {
     public folder?: string | undefined;
 
     public constructor(path: string) {
-        if (path.includes(GCS_URL_SEPARATOR)) {
-            const splitPath = path.split(GCS_URL_SEPARATOR);
-            this.bucket = splitPath[0];
-            this.folder = splitPath[1];
-        } else {
-            this.bucket = path;
-            this.folder = undefined;
-        }
+        const splitPath = path.split('/');
+        this.bucket = splitPath[0];
+        this.folder = splitPath.slice(1).join('/');
     }
 
 }

@@ -62,16 +62,11 @@ export class SubProjectPath {
      * @returns
      */
     public static async create(gcsPath: string): Promise<SubProjectPath> {
-        if (!gcsPath.includes(GCS_URL_SEPARATOR)) {
-            const bucketname = gcsPath;
-            return new SubProjectPath(bucketname, '', '');
-        } else {
-            const splittedBucketName = gcsPath.split(GCS_URL_SEPARATOR);
+
+            const splittedBucketName = gcsPath.split('/');
             const bucketName = splittedBucketName[0];
-            const subprojectFolder = splittedBucketName[1];
-            // const bucketname = await SubProjectPath.getBucketNameFromPartitionService(dataPartitionId);
+            const subprojectFolder = splittedBucketName.slice(1).join('/');
             return new SubProjectPath(bucketName, subprojectFolder);
-        }
     }
 
     private static async getBucketNameFromPartitionService(dataPartitionId: string) {
@@ -117,7 +112,7 @@ export class GCS extends AbstractStorage {
             await DataPartitionInfo.fromDataPartitionId(this.dataPartitionId)
         ).bucket;
 
-        return bucket + GCS_URL_SEPARATOR + randomFolderName;
+        return path_join(bucket, '/', randomFolderName);
     }
 
     // Create a new folder for the subproject, not a bucket.
@@ -164,7 +159,6 @@ export class GCS extends AbstractStorage {
         const subprojectPath = await this.getSubprojectPath(subprojectURI);
         const bucket = this.getStorageClient().bucket(subprojectPath.bucketname);
         const datasetObjectsPath = path_join(subprojectPath.subprojectFolder, datasetFolder, '/');
-
         const deleteQuery = { prefix: datasetObjectsPath, force: true };
         // tslint:disable-next-line: no-floating-promises
         await bucket.deleteFiles(deleteQuery).catch(
