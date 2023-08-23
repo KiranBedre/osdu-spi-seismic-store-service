@@ -39,12 +39,58 @@ public class QueueHandlerRedisTests
             , ConnectionMultiplexer.Object);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData(1)]
+    [InlineData(10)]
+    [InlineData(int.MaxValue)]
+    public void HashSet_HashIncrement_Success(int? inc){
+        // Arrange
+        var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
+        var queueHandler = GetQueueHander();
+        var key = "HashSet_IncrHash_Success:inc";
+        var field = "cnt";
+        var initialValue = 6;
+
+        // Act
+        var result = queueHandler.HashSet(key, field, initialValue.ToString());
+        var returned = queueHandler.HashIncrement(key, field, inc);
+
+        // Assert
+        Assert.True(result); //---item should be added, not updated
+
+        Assert.Equal(initialValue + linc.GetValueOrDefault(1), returned);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(1)]
+    [InlineData(10)]
+    [InlineData(int.MaxValue)]
+    public void HashSet_HashDecrement_Success(int? inc){
+        // Arrange
+        var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
+        var queueHandler = GetQueueHander();
+        var key = "HashSet_HashDecrement_Success:dec";
+        var field = "cnt";
+        var initialValue = 10;
+
+        // Act
+        var result = queueHandler.HashSet(key, field, initialValue.ToString());
+        var returned = queueHandler.HashDecrement(key, field, inc);
+
+        // Assert
+        Assert.True(result); //---item should be added, not updated
+
+        Assert.Equal(initialValue - linc.GetValueOrDefault(1), returned);
+    }
+
     [Fact]
     public void HashSet_HashGet_Success()
     {
         // Arrange
         var queueHandler = GetQueueHander();
-        var key = "HashSet_HashGet_Success:inc0";
+        var key = "HashSet_HashGet_Success:hs";
         var field = "cnt";
         var initialValue = 1;
 
@@ -62,7 +108,7 @@ public class QueueHandlerRedisTests
     {
         // Arrange
         var queueHandler = GetQueueHander();
-        var key = "HashSetAsync_Success:inc0";
+        var key = "HashSetAsync_Success:hsa";
         var field = "cnt";
         var initialValue = 1;
 

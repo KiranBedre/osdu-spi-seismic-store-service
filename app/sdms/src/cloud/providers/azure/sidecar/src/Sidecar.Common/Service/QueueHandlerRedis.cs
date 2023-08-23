@@ -69,13 +69,14 @@ namespace Sidecar.Common.Service
             throw new NotImplementedException();
         }
 
-        public virtual long HashDecrement(string key, string field, int? decBy = 1)
+        public virtual long HashDecrement(string key, string field, long? decBy = 1)
         {
             try
             {
+                var dec = decBy ?? 1;
                 return Client.GetDatabase().HashDecrement(new RedisKey(key)
                     , new RedisValue(field)
-                    , decBy!.Value);
+                    , dec);
 
             }
             catch (Exception ex)
@@ -85,13 +86,14 @@ namespace Sidecar.Common.Service
             }
         }
 
-        public virtual async Task<long> HashDecrementAsync(string key, string field, int? decBy = 1)
+        public virtual async Task<long> HashDecrementAsync(string key, string field, long? decBy = 1)
         {
             try
             {
+                var dec = decBy ?? 1 ;
                 return await Client.GetDatabase().HashDecrementAsync(new RedisKey(key)
                     , new RedisValue(field)
-                    , decBy!.Value);
+                    , dec);
 
             }
             catch (Exception ex)
@@ -102,13 +104,14 @@ namespace Sidecar.Common.Service
 
         }
 
-        public virtual async Task<long> HashIncrementAsync(string key, string field, int? incBy = 1)
+        public virtual async Task<long> HashIncrementAsync(string key, string field, long? incBy = 1)
         {
             try
             {
+                var inc = incBy ?? 1 ;
                 return await Client.GetDatabase().HashIncrementAsync(new RedisKey(key)
                     , new RedisValue(field)
-                    , incBy!.Value);
+                    , inc);
 
             }
             catch (Exception ex)
@@ -117,13 +120,14 @@ namespace Sidecar.Common.Service
                 throw;
             }
         }
-        public virtual long HashIncrement(string key, string field, int? incBy = 1)
+        public virtual long HashIncrement(string key, string field, long? incBy = 1)
         {
             try
             {
+                var inc = incBy ?? 1 ;
                 return Client.GetDatabase().HashIncrement(new RedisKey(key)
                     , new RedisValue(field)
-                    , incBy!.Value);
+                    , inc);
 
             }
             catch (Exception ex)

@@ -17,16 +17,16 @@
 namespace Sidecar.Common.Tests;
 internal static partial class TestingHelpers
 {
-    private class InMemoryCache<V>
+    private class InMemoryCache
     {
-        private Dictionary<string, V> Cache = new Dictionary<string, V>();
+        private Dictionary<string, RedisValue> Cache = new Dictionary<string, RedisValue>();
 
         private string GetKey(RedisKey key, RedisValue field)
         {
             return $"{key.ToString()}:{field.ToString()}:";
         }
 
-        public V? HashGet(RedisKey key, RedisValue field)
+        public RedisValue HashGet(RedisKey key, RedisValue field)
         {
             key = GetKey(key, field);
 
@@ -34,16 +34,16 @@ internal static partial class TestingHelpers
             {
                 return Cache[key!];
             }
-            return default(V);
+            return RedisValue.EmptyString;
 
         }
 
-        public async Task<V?> HashGetAsync(RedisKey key, RedisValue field)
+        public async Task<RedisValue> HashGetAsync(RedisKey key, RedisValue field)
         {
             return await Task.FromResult(HashGet(key, field));
         }
 
-        public bool HashSet(RedisKey key, RedisValue field, V value)
+        public bool HashSet(RedisKey key, RedisValue field, RedisValue value)
         {
             key = GetKey(key, field);
             if (Cache.ContainsKey(key!))
@@ -55,7 +55,21 @@ internal static partial class TestingHelpers
             return true;
         }
 
-        public async Task<bool> HashSetAsync(RedisKey key, RedisValue field, V value)
+        public long HashDecrement(RedisKey key, RedisValue field, long? decrement){
+            var initVal = long.Parse(HashGet(key, field)!.ToString()!);
+            initVal -= (long)decrement.GetValueOrDefault(1);
+            HashSet(key, field, initVal);
+            return initVal;
+        }
+
+        public long HashIncrement(RedisKey key, RedisValue field, long? increment){
+            var initVal = long.Parse(HashGet(key, field)!.ToString()!);
+            initVal += (long)increment.GetValueOrDefault(1);
+            HashSet(key, field, initVal);
+            return initVal;
+        }
+
+        public async Task<bool> HashSetAsync(RedisKey key, RedisValue field, RedisValue value)
         {
             return await Task.FromResult(HashSet(key, field, value));
         }

@@ -23,12 +23,12 @@ namespace Sidecar.Common.Service
         void Enqueue<TMessage>(string key,TMessage  value) where TMessage : class, IQueueMessage;
         TMessage Dequeue<TMessage>(string key) where TMessage : class, IQueueMessage;
 
-        long HashIncrement(string key, string field, int? incBy = 1);
+        long HashIncrement(string key, string field, long? incBy = 1);
 
-        Task<long> HashIncrementAsync(string key, string field, int? incBy = 1);
+        Task<long> HashIncrementAsync(string key, string field, long? incBy = 1);
 
-        long HashDecrement(string key, string field, int? decBy = 1);
-        Task<long> HashDecrementAsync(string key, string field, int? incBy = 1);
+        long HashDecrement(string key, string field, long? decBy = 1);
+        Task<long> HashDecrementAsync(string key, string field, long? incBy = 1);
 
         bool HashSet(string key, string field, string value);
 

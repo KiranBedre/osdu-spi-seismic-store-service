@@ -52,8 +52,7 @@ internal static partial class TestingHelpers
 
     internal static Mock<IDatabase> GetDatabase(){
         var db = new Mock<IDatabase>();
-        var cache = new InMemoryCache<RedisValue>();
-
+        var cache = new InMemoryCache();
         db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, RedisValue, When, CommandFlags>((key, field, value, when, flags) =>
             {
@@ -77,6 +76,20 @@ internal static partial class TestingHelpers
             .Returns<RedisKey, RedisValue, CommandFlags>((key, field, flags) =>
             {
                 return cache.HashGet(key, field);
+
+            }).Verifiable();
+
+        db.Setup(d => d.HashIncrement(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<long>(), It.IsAny<CommandFlags>()))
+            .Returns<RedisKey, RedisValue, long?, CommandFlags>((key, field, inc, flags) =>
+            {
+                return cache.HashIncrement(key, field, inc);
+
+            }).Verifiable();
+
+        db.Setup(d => d.HashDecrement(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<long>(), It.IsAny<CommandFlags>()))
+            .Returns<RedisKey, RedisValue, long?, CommandFlags>((key, field, inc, flags) =>
+            {
+                return cache.HashDecrement(key, field, inc);
 
             }).Verifiable();
 
