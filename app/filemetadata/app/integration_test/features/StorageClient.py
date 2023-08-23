@@ -17,7 +17,7 @@ class StorageClient:
         record_resp = requests.get(url, headers=self.headers)
         record_resp.raise_for_status()
 
-        logging.info(f"record resp = {record_resp.text}")
+        logging.debug(f"record resp = {record_resp.text}")
 
         return record_resp.json()
 
@@ -26,7 +26,7 @@ class StorageClient:
         record_resp = requests.put(url, json=record_payload, headers=self.headers)
         record_resp.raise_for_status()
         
-        logging.info(f"record_resp = {record_resp.text}")
+        logging.debug(f"record_resp = {record_resp.text}")
 
         return record_resp.json()
 
@@ -34,7 +34,7 @@ class StorageClient:
         url = f'{self.context.storage_url}/records/{record_id}:delete'
         record_resp = requests.post(url, json={}, headers=self.headers)
 
-        logging.info(f"record delete resp = {record_resp.text}")
+        logging.debug(f"record delete resp = {record_resp.text}")
 
     @staticmethod
     def store_blob(url, file):

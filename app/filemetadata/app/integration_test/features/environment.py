@@ -17,7 +17,7 @@ from core.config import Settings
 def before_feature(context, feature):
     apply_test_settings()
     context.dir_path = os.path.dirname(os.path.realpath(__file__))
-    context.subproject_name = f"integration-{uuid.uuid4().hex}"
+    context.subproject_name = f"integration{uuid.uuid4().hex}"
     context.project_name = context.subproject_name
     context.storage_url = Settings.STORAGE_SVC_URL
     context.gcs_token_url = f'{Settings.SEISTORE_SVC_URL}/utility/gcs-access-token'

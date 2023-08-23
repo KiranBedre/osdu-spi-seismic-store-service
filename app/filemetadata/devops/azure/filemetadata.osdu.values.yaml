@@ -27,7 +27,7 @@ configuration:
       image: seismic-file-metadata
       tag: latest
       containerPort: 8000
-    path: /seismic-file-metadata/api/v1
+    path: /seismic-file-metadata/api
 #    autoscale:
 #      minReplicas: 1
 #      maxReplicas: 3
@@ -40,9 +40,10 @@ configuration:
       disable:
         - "/seismic-file-metadata/api/v1/swagger-ui.html*"
         - "/seismic-file-metadata/api/v1/service-status"
+        - "/seismic-file-metadata/api/service-status"
     config:
       CLOUDPROVIDER: "azure"
-      SDMS_SERVICE_HOST: "http://seismic-ddms/seistore-svc/api/v3"
+      SDMS_SERVICE_HOST: "http://seismic-ddms-service/seistore-svc/api/v3"
     request:
       cpu: 0.3
       memory: 1Gi
