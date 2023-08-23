@@ -1,0 +1,78 @@
+// ============================================================================
+// Copyright 2017-2023, Microsoft
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+using System.Reflection.Metadata.Ecma335;
+
+namespace Sidecar.Common.Tests;
+
+public class QueueHandlerRedisTests
+{
+    private readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
+
+    public QueueHandlerRedisTests()
+    {
+        ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
+    }
+
+    private QueueHandlerRedis<IOptionsQueueRedis> GetQueueHander()
+    {
+        return new QueueHandlerRedis<IOptionsQueueRedis>(
+            TestingHelpers.GetLogger<QueueHandlerRedis<IOptionsQueueRedis>>().Object
+            , new Options
+            {
+                QueueConnectionString = "somehost:1234",
+                QueueName = "somequeue"
+            }
+            , ConnectionMultiplexer.Object);
+    }
+
+    [Fact]
+    public void HashSet_HashGet_Success()
+    {
+        // Arrange
+        var queueHandler = GetQueueHander();
+        var key = "HashSet_HashGet_Success:inc0";
+        var field = "cnt";
+        var initialValue = 1;
+
+        // Act
+        var result = queueHandler.HashSet(key, field, initialValue.ToString());
+        var returned = queueHandler.HashGet<long>(key, field);
+
+        // Assert
+        Assert.True(result); //---item should be added, not updated
+        Assert.Equal(initialValue, returned); //---rexpected should be the same as the initial value;
+    }
+
+    [Fact]
+    public async Task HashSetAsync_HashGetAsync_Success()
+    {
+        // Arrange
+        var queueHandler = GetQueueHander();
+        var key = "HashSetAsync_Success:inc0";
+        var field = "cnt";
+        var initialValue = 1;
+
+        // Act
+        var result = await queueHandler.HashSetAsync(key, field, initialValue.ToString());
+        var returned = await queueHandler.HashGetAsync<long>(key, field);
+
+        // Assert
+        Assert.True(result); //---item should be added, not updated
+        Assert.Equal(initialValue, returned); //---rexpected should be the same as the initial value;
+    }
+
+}

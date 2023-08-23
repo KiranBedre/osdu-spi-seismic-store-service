@@ -58,11 +58,10 @@ namespace Sidecar.Common.Service
                         //---start the deletion process
                         Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-
                         var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
                         var items = paginatedRecords.records;
                         // todo: add total number in Redis operation
-                        Logger.LogInformation("Found {0} items to delete", items.Count.ToString(CultureInfo.InvariantCulture));
+                        Logger.LogInformation("Found {0} items to delete", items!.Count.ToString(CultureInfo.InvariantCulture));
 
                         //todo: lock all found items
 

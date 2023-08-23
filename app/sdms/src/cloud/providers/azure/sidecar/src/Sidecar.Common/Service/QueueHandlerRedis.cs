@@ -18,6 +18,7 @@ namespace Sidecar.Common.Service
 {
     using Microsoft.Extensions.Logging;
     using StackExchange.Redis;
+    using Newtonsoft.Json;
 
     using Model;
 
@@ -70,26 +71,32 @@ namespace Sidecar.Common.Service
 
         public virtual long HashDecrement(string key, string field, int? decBy = 1)
         {
-            try{
+            try
+            {
                 return Client.GetDatabase().HashDecrement(new RedisKey(key)
                     , new RedisValue(field)
                     , decBy!.Value);
 
-            }catch(Exception ex){
-                Logger.LogError(ex,"Unable to decrement hash for key {key} and field {field}",key,field);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
                 throw;
             }
         }
 
         public virtual async Task<long> HashDecrementAsync(string key, string field, int? decBy = 1)
         {
-            try{
+            try
+            {
                 return await Client.GetDatabase().HashDecrementAsync(new RedisKey(key)
                     , new RedisValue(field)
                     , decBy!.Value);
 
-            }catch(Exception ex){
-                Logger.LogError(ex,"Unable to decrement hash for key {key} and field {field}",key,field);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
                 throw;
             }
 
@@ -97,51 +104,93 @@ namespace Sidecar.Common.Service
 
         public virtual async Task<long> HashIncrementAsync(string key, string field, int? incBy = 1)
         {
-            try{
+            try
+            {
                 return await Client.GetDatabase().HashIncrementAsync(new RedisKey(key)
                     , new RedisValue(field)
                     , incBy!.Value);
 
-            }catch(Exception ex){
-                Logger.LogError(ex,"Unable to increment hash for key {key} and field {field}",key,field);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
                 throw;
             }
         }
         public virtual long HashIncrement(string key, string field, int? incBy = 1)
         {
-            try{
+            try
+            {
                 return Client.GetDatabase().HashIncrement(new RedisKey(key)
                     , new RedisValue(field)
                     , incBy!.Value);
 
-            }catch(Exception ex){
-                Logger.LogError(ex,"Unable to increment hash for key {key} and field {field}",key,field);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
                 throw;
             }
         }
 
         public virtual bool HashSet(string key, string field, string value)
         {
-            try{
+            try
+            {
                 return Client.GetDatabase().HashSet(new RedisKey(key)
                     , new RedisValue(field)
                     , new RedisValue(value));
 
-            }catch(Exception ex){
-                Logger.LogError(ex,"Unable to set hash for key {key} and field {field}",key,field);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
                 throw;
             }
         }
 
         public virtual async Task<bool> HashSetAsync(string key, string field, string value)
         {
-            try{
+            try
+            {
                 return await Client.GetDatabase().HashSetAsync(new RedisKey(key)
                     , new RedisValue(field)
                     , new RedisValue(value));
 
-            }catch(Exception ex){
-                Logger.LogError(ex,"Unable to set hash for key {key} and field {field}",key,field);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+                throw;
+            }
+        }
+
+        public async Task<T> HashGetAsync<T>(string key, string field) where T : unmanaged
+        {
+            try
+            {
+                var res =  await Client.GetDatabase().HashGetAsync(new RedisKey(key)
+                    , new RedisValue(field));
+                return JsonConvert.DeserializeObject<T>(res.ToString());
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+                throw;
+            }
+        }
+
+        public T HashGet<T>(string key, string field) where T : unmanaged
+        {
+            try
+            {
+                var res =  Client.GetDatabase().HashGet(new RedisKey(key)
+                        , new RedisValue(field));
+                return JsonConvert.DeserializeObject<T>(res.ToString());
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
                 throw;
             }
         }

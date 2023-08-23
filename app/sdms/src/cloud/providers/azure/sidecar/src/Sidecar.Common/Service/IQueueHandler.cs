@@ -23,16 +23,19 @@ namespace Sidecar.Common.Service
         void Enqueue<TMessage>(string key,TMessage  value) where TMessage : class, IQueueMessage;
         TMessage Dequeue<TMessage>(string key) where TMessage : class, IQueueMessage;
 
-        long HashIncrement(string key, string hashField, int? incBy = 1);
+        long HashIncrement(string key, string field, int? incBy = 1);
 
-        Task<long> HashIncrementAsync(string key, string hashField, int? incBy = 1);
+        Task<long> HashIncrementAsync(string key, string field, int? incBy = 1);
 
-        long HashDecrement(string key, string hashField, int? decBy = 1);
-        Task<long> HashDecrementAsync(string key, string hashField, int? incBy = 1);
+        long HashDecrement(string key, string field, int? decBy = 1);
+        Task<long> HashDecrementAsync(string key, string field, int? incBy = 1);
 
-        bool HashSet(string key, string hashField, string value);
+        bool HashSet(string key, string field, string value);
 
-        Task<bool> HashSetAsync(string key, string hashField, string value);
+        Task<bool> HashSetAsync(string key, string field, string value);
+
+        T HashGet<T>(string key, string field) where T : unmanaged;
+        Task<T> HashGetAsync<T>(string key, string field) where T : unmanaged;
     }
 
 }
