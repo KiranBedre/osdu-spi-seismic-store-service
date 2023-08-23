@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/mirror/docker/library/ubuntu:20.04
+FROM mcr.microsoft.com/mirror/docker/library/ubuntu:22.04
 
 RUN apt-get update \
     && apt-get install -y python3-pip python3-dev curl \
@@ -15,9 +15,9 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 # Install node js
-ENV NODE_VERSION 14.17.4
+ENV NODE_VERSION 18.17.0
 
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.39.3/install.sh | bash
 ENV NVM_DIR=/root/.nvm
 RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
