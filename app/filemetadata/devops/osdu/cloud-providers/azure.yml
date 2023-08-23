@@ -112,9 +112,9 @@ filemetadata_azure_integration_test:
     DNS: https://${AZURE_DNS_NAME}
     SVC_API_KEY: $AZURE_SVC_API_KEY
   script:
-    - pip3 install virtualenv --break-system-packages
-    - virtualenv venv
-    - source venv/bin/activate
+    - apt-get install python3-venv -y
+    - python3 -m venv seimicenv
+    - source seimicenv/bin/activate
     - pip3 install -Iv pytest==6.2.4 jsonschema==3.2.0 requests~=2.26.0 requests-mock==1.7.0 behave==1.2.6 python-dotenv==0.19.0 charset_normalizer chardet
     - cd app/$FILEMETADATA_SERVICE/app/integration_test
     - python3 -m behave -v
