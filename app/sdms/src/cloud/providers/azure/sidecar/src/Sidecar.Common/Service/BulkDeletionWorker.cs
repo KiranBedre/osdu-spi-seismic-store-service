@@ -34,7 +34,7 @@ namespace Sidecar.Common.Service
 
         private BlobServiceClient CreateClient(string storageAccountConnectionString)
         {
-            Logger!.LogInformation("Establishing Storage account connection ...");
+            Logger.LogInformation("Establishing Storage account connection ...");
             var clientOptions = new BlobClientOptions();
             var blobServiceClient = new BlobServiceClient(storageAccountConnectionString, clientOptions);
             return blobServiceClient;
@@ -181,7 +181,7 @@ namespace Sidecar.Common.Service
             return task;
         }
 
-        private static async Task<int> SendBlobDeleteBatch(BlobBatchClient blobBatchClient, List<string> errors, List<Tuple<string, string>> blobs, int batchNr)
+        private async Task<int> SendBlobDeleteBatch(BlobBatchClient blobBatchClient, List<string> errors, List<Tuple<string, string>> blobs, int batchNr)
         {
             var blobBatch = blobBatchClient.CreateBatch();
             blobs.ForEach(x => blobBatch.DeleteBlob(x.Item1, x.Item2));

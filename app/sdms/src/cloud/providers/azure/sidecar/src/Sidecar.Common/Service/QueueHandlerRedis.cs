@@ -137,6 +137,34 @@ namespace Sidecar.Common.Service
             }
         }
 
+        // public virtual bool StringSetAsync(string key, string value){
+        //     try
+        //     {
+        //         return Client.GetDatabase().StringSet(new RedisKey(key)
+        //             , new RedisValue(value));
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+        //         throw;
+        //     }
+        // }
+
+        // public virtual bool HashSetSet<T>(string key, T value ){
+        //     try
+        //     {
+        //         return Client.GetDatabase().HashSet(new RedisKey(key)
+        //             , new HashEntry[]()));
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+        //         throw;
+        //     }
+        // }
+
         public virtual bool HashSet(string key, string field, string value)
         {
             try

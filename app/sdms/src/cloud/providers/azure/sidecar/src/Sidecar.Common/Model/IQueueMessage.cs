@@ -16,7 +16,7 @@
 
 namespace Sidecar.Common.Model
 {
-    public interface IQueueMessage
+    public interface IQueueMessage : ISupportsRedisHashEntry
     {
 
     }

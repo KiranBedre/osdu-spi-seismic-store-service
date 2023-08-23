@@ -14,16 +14,22 @@
 // limitations under the License.
 // ============================================================================
 
+using System.Text.Json.Serialization;
+
 namespace Sidecar.Common.Model{
 
     public class DeleteOperationMessage : IDeletionOperationMessage
     {
+        [JsonPropertyName("operation_id")]
         public string OperationId{get;set;} = "";
 
+        [JsonPropertyName("tenant")]
         public string Tenant { get; set; } = "";
 
+        [JsonPropertyName("subproject")]
         public string Subproject {get;  set;} = "";
 
+        [JsonPropertyName("path")]
         public string Path { get; set; } = "";
 
     }

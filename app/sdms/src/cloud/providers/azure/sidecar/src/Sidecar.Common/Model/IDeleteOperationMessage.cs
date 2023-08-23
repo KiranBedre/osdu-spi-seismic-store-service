@@ -16,17 +16,14 @@
 
 namespace Sidecar.Common.Model
 {
-    using System.Text.Json.Serialization;
-
     public interface IDeletionOperationMessage : IQueueMessage
     {
-        [JsonPropertyName("operation_id")]
         string OperationId { get; set; }
-        [JsonPropertyName("tenant")]
+
         string Tenant { get; set; }
-        [JsonPropertyName("subproject")]
+
         string Subproject { get; set; }
-        [JsonPropertyName("path")]
+
         string Path { get; set; }
 
     }

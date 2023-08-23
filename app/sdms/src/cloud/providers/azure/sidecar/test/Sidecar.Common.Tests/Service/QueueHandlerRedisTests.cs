@@ -14,8 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-using System.Reflection.Metadata.Ecma335;
-
 namespace Sidecar.Common.Tests;
 
 public class QueueHandlerRedisTests

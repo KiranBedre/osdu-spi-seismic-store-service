@@ -14,24 +14,13 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model{
+using StackExchange.Redis;
 
-    public interface IDeleteOperationStatus : IDeletionOperationMessage
+namespace Sidecar.Common.Model
+{
+    public interface ISupportsRedisHashEntry
     {
-        DateTime CreatedAt { get; set; }
 
-        DateTime LastUpdatedAt { get; set; }
-
-        string CreatedBy { get; set; }
-
-        string Status {get;  set;}
-
-        string StatusDescription {get;  set;}
-
-        long DatasetsCnt{get;set;}
-
-        long DeletedCnt{get;set;}
-
-        long FailedCnt{get;set;}
     }
+
 }
