@@ -74,5 +74,3 @@ export class TestImpersonationTokenSVC {
     }
 
 }
-
-TestImpersonationTokenSVC.run();

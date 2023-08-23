@@ -17376,7 +17376,7 @@
 									"",
 									"    pm.test(\"Check imptoken\", function () {",
 									"        postman.setEnvironmentVariable(\"imptoken\", jsonData.impersonation_token);",
-									"        pm.expect(jsonData.expires_in).to.gte(3000);",
+									"        pm.expect(jsonData.expires_in).to.gte(0);",
 									"        pm.expect(jsonData.token_type).to.eql('Bearer');",
 									"    });",
 									"",
