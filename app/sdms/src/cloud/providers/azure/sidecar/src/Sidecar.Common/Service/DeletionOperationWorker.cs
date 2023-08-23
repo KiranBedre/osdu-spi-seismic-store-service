@@ -27,10 +27,10 @@ namespace Sidecar.Common.Service
         where TStorageOptions : class
         where TQueueOptions : class
         where TCosmosOptions : class
-        where TQueueMessage : class,  IDeleteionOperationMessage
+        where TQueueMessage : class,  IDeletionOperationMessage
     {
         private readonly ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> Logger;
-        private readonly IQueueHandlerDeletion<TQueueOptions, IDeleteionOperationMessage> Queue;
+        private readonly IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> Queue;
         private readonly IItemsRetriever<TCosmosOptions> ItemsRetriever;
         private readonly IBulkDeletionWorker<TStorageOptions, TCosmosOptions> BulkDeletionWorker;
 
@@ -38,7 +38,7 @@ namespace Sidecar.Common.Service
         private const int MaxConsecutiveFailures = 10;
 
         public DeletionOperationService(ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> logger,
-            IQueueHandlerDeletion<TQueueOptions, IDeleteionOperationMessage> queue,
+            IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> queue,
             IItemsRetriever<TCosmosOptions> itemsRetriever,
             IBulkDeletionWorker<TStorageOptions, TCosmosOptions> bulkDeletionWorker)
         {

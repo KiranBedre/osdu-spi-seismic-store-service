@@ -23,14 +23,14 @@ namespace Sidecar.Common.Service
     using Utilitiy;
     using System.Threading.Tasks;
 
-    public class QueueHandlerRedisDeletion : QueueHandlerRedis<IOptionsQueueRedis>, IQueueHandlerDeletion<IOptionsQueueRedis, IDeleteionOperationMessage>
+    public class QueueHandlerRedisDeletion : QueueHandlerRedis<IOptionsQueueRedis>, IQueueHandlerDeletion<IOptionsQueueRedis, IDeletionOperationMessage>
     {
         public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer) : base(logger, options, connectionMultiplexer)
         {
 
         }
 
-        public async Task<IDeleteionOperationMessage?> CheckForDeletionOperationAsync()
+        public async Task<IDeletionOperationMessage?> CheckForDeletionOperationAsync()
         {
             IDatabase db;
             try

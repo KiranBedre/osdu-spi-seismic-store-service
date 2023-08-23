@@ -18,7 +18,7 @@ namespace Sidecar.Common.Model
 {
     using System.Text.Json.Serialization;
 
-    public interface IDeleteionOperationMessage : IQueueMessage
+    public interface IDeletionOperationMessage : IQueueMessage
     {
         [JsonPropertyName("operation_id")]
         string OperationId { get; set; }

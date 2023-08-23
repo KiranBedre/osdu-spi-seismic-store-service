@@ -55,10 +55,10 @@ public class Program
                .AddSingleton<IMetadataDeletionWorker<IOptionsCosmos>, MetadataDeletionWorker>()
                //.AddSingleton<IBulkDeletionWorker<IOptions, IDeleteOperationStatus>>()
                .AddSingleton<IBulkDeletionWorker<IOptionsStorageAcount, IOptionsCosmos>, BulkDeletionWorker>()
-               .AddSingleton<IQueueHandlerDeletion<IOptionsQueueRedis, IDeleteionOperationMessage>, QueueHandlerRedisDeletion>()
-               .AddSingleton<IQueueHandler<IOptionsQueueRedis>>(sp => sp.GetRequiredService<IQueueHandlerDeletion<IOptionsQueueRedis, IDeleteionOperationMessage>>())
-                .AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(sp.GetService<IOptionsQueueRedis>()!.QueueConnectionString))
-                .AddHostedService<DeletionOperationService<IOptionsStorageAcount, IOptionsQueueRedis, IOptionsCosmos, IDeleteOperationStatus>>()
+               .AddSingleton<IQueueHandlerDeletion<IOptionsQueueRedis, IDeletionOperationMessage>, QueueHandlerRedisDeletion>()
+               .AddSingleton<IQueueHandler<IOptionsQueueRedis>>(sp => sp.GetRequiredService<IQueueHandlerDeletion<IOptionsQueueRedis, IDeletionOperationMessage>>())
+               .AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(sp.GetService<IOptionsQueueRedis>()!.QueueConnectionString))
+               .AddHostedService<DeletionOperationService<IOptionsStorageAcount, IOptionsQueueRedis, IOptionsCosmos, IDeleteOperationStatus>>()
                .AddScoped<IDataAccess, Cosmos>()
 
             ).ConfigureLogging(lg => _ = lg

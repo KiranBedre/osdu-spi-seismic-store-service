@@ -20,8 +20,6 @@ namespace Sidecar.Common.Service
     using StackExchange.Redis;
 
     using Model;
-    using Utilitiy;
-    using System.Data.Common;
 
     public class QueueHandlerRedis<TOptions> : IQueueHandler<Model.IOptionsQueueRedis>
         where TOptions : Model.IOptionsQueueRedis

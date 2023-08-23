@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Sidecar.Common.Service
 {
-    public class MetadataDeletionWorker : IMetadataDeletionWorker<IOptionsCosmos>
+   public class MetadataDeletionWorker : IMetadataDeletionWorker<IOptionsCosmos>
     {
         private readonly IDataAccess DataAccess;
         private readonly Model.IOptionsCosmos Options;
