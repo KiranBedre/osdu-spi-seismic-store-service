@@ -14,7 +14,7 @@ namespace Sidecar.Common.Service
     {
         private readonly int _batchSize = 100;
 
-        private static ILogger<BulkDeletionWorker> Logger;
+        private readonly ILogger<BulkDeletionWorker> Logger;
         private readonly IMetadataDeletionWorker<Model.IOptionsCosmos> MetadataDeletionWorker;
 
         private int DeletedDatasetTotalCount = 0;
@@ -27,7 +27,7 @@ namespace Sidecar.Common.Service
             IMetadataDeletionWorker<Model.IOptionsCosmos> metadataDeletionWorker)
         {
             Logger = logger;
-            MetadataDeletionWorker = metadataDeletionWorker;            
+            MetadataDeletionWorker = metadataDeletionWorker;
             StorageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
             BlobStorageClient = CreateClient(StorageAccountConnectionString);
         }
@@ -96,7 +96,7 @@ namespace Sidecar.Common.Service
                     }
                 }
             }
-            
+
             // removing the metadata
             string datasetId = jsonItem["id"].ToString();
             if (errors.Count == 0)
@@ -105,7 +105,7 @@ namespace Sidecar.Common.Service
 
                 try
                 {
-                    await MetadataDeletionWorker.DeleteMetadata(datasetId);                    
+                    await MetadataDeletionWorker.DeleteMetadata(datasetId);
                 }
                 catch (Exception e)
                 {
@@ -122,7 +122,6 @@ namespace Sidecar.Common.Service
             Interlocked.Increment(ref DeletedDatasetTotalCount);
             Interlocked.Increment(ref DeletedDatasetInABatchCount);
             Logger.LogInformation($"Current progress: processed dataset total count / total dataset count -- {DeletedDatasetTotalCount} / {totalCount}");
-
 
         }
 
@@ -145,7 +144,6 @@ namespace Sidecar.Common.Service
             }
         }
 
-      
         private BatchBlock<Tuple<string, string>> CreateBatchForBlobsDeletion(BlobServiceClient client, List<string> errors, out ActionBlock<Tuple<string, string>[]> importer)
         {
             var blobBatchClient = client.GetBlobBatchClient();
