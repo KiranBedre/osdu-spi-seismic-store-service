@@ -38,6 +38,7 @@ export interface IJournal {
     getMetaDataSizesByKeys(keys: any[]): Promise<Map<string, number>>
     save(entity: any): Promise<void>;
     delete(key: any): Promise<void>;
+    deleteMulti(keys: string[]): Promise<void>;
     createQuery(namespace: string, kind: string): IJournalQueryModel;
     runQuery(query: IJournalQueryModel): Promise<[any[], {endCursor?: string}]>;
     createKey(specs: any): object;
@@ -104,7 +105,7 @@ export abstract class AbstractJournal implements IJournal {
             query = query.limit(pagination.limit);
         }
 
-        if (dataset.gtags !== undefined || dataset.gtags.length !== 0) {
+        if (dataset.gtags?.length) {
             // filter based on gtags if parsed dataset model has gtags
             for (const gtag of dataset.gtags) {
                 query = query.filter('gtags', this.getQueryFilterSymbolContains(), gtag);
@@ -121,7 +122,9 @@ export abstract class AbstractJournal implements IJournal {
         return await this.runQuery(query);
     }
 
-
+    public deleteMulti(keys: string[]): Promise<void> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    }
     public getIdByKeys(keys: any[]): Promise<string[]> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
@@ -160,3 +163,4 @@ export class JournalFactoryTenantClient {
         return JournalFactory.build(Config.CLOUDPROVIDER, tenant) as IJournal;
     }
 }
+

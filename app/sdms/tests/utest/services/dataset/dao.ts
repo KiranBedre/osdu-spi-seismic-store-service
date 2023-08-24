@@ -123,6 +123,9 @@ export class DatasetDAOTest {
                              selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
                     return Promise.resolve([[datasetModel], {}]);
                 },
+                deleteMulti(keys: string[]): Promise<void> {
+                    return Promise.resolve();
+                },
                 KEY: undefined
             };
 
