@@ -26,13 +26,13 @@ using System.Threading.Tasks.Dataflow;
 
 using Interface;
 
-public class BulkDeletionWorker : IBulkDeletionWorker<IOptionsStorageAcount, IOptionsQueueRedis, IOptionsCosmos>
+public class BulkDeletionWorker : IBulkDeletionWorker
 {
     private readonly int _batchSize = 100;
 
     private readonly ILogger<BulkDeletionWorker> Logger;
-    private readonly IQueueHandlerDeletion<IOptionsQueueRedis, IDeletionOperationMessage> Queue;
-    private readonly IMetadataDeletionWorker<IOptionsCosmos> MetadataDeletionWorker;
+    private readonly IQueueHandlerDeletion Queue;
+    private readonly IMetadataDeletionWorker MetadataDeletionWorker;
 
     private int DeletedDatasetTotalCount = 0;
     private int DeletedDatasetInABatchCount = 0;
@@ -40,9 +40,10 @@ public class BulkDeletionWorker : IBulkDeletionWorker<IOptionsStorageAcount, IOp
     private string StorageAccountConnectionString;
     private readonly BlobServiceClient BlobStorageClient;
 
-    public BulkDeletionWorker(IOptionsStorageAcount options, ILogger<BulkDeletionWorker> logger,
-        IQueueHandlerDeletion<IOptionsQueueRedis, IDeletionOperationMessage> queue,
-        IMetadataDeletionWorker<IOptionsCosmos> metadataDeletionWorker)
+    public BulkDeletionWorker(IOptionsStorageAcount options,
+        ILogger<BulkDeletionWorker> logger,
+        IQueueHandlerDeletion queue,
+        IMetadataDeletionWorker metadataDeletionWorker)
     {
         Logger = logger;
         Queue = queue;

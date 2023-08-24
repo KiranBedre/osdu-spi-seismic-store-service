@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 
 using Interface;
 
-public class MetadataDeletionWorker : IMetadataDeletionWorker<IOptionsCosmos>
+public class MetadataDeletionWorker : IMetadataDeletionWorker
 {
     private readonly IDataAccess DataAccess;
     private readonly IOptionsCosmos Options;

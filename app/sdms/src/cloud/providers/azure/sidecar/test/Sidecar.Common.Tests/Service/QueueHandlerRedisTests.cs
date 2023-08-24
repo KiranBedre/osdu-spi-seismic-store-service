@@ -25,8 +25,8 @@ public class QueueHandlerRedisTests
         ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
     }
 
-    private QueueHandlerRedis<IOptionsQueueRedis> GetQueueHander() => new QueueHandlerRedis<IOptionsQueueRedis>(
-            TestingHelpers.GetLogger<QueueHandlerRedis<IOptionsQueueRedis>>().Object
+    private QueueHandlerRedis GetQueueHander() => new QueueHandlerRedis(
+            TestingHelpers.GetLogger<QueueHandlerRedis>().Object
             , new Options
             {
                 QueueConnectionString = "somehost:1234",

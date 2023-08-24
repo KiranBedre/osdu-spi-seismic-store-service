@@ -30,6 +30,7 @@ public class QueueHandlerRedisDeletionTests : QueueHandlerRedisTests
                 QueueName = "somequeue"
             }
             , ConnectionMultiplexer.Object);
+
     [Fact]
     private void IncrementCountAsync_Success()
     {

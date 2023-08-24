@@ -15,10 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
-public interface IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions>
-    where TStorageOptions : class
-    where TQueueOptions : class
-    where TCosmosOptions : class
+public interface IBulkDeletionWorker
 {
     Task RunBulkDeletion(string operationId, List<Object> items);
 }

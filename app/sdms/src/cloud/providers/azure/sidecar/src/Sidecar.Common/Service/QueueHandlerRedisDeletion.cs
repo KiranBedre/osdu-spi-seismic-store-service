@@ -24,7 +24,7 @@ using Interface;
 using Model;
 using Utilitiy;
 
-public class QueueHandlerRedisDeletion : QueueHandlerRedis<IOptionsQueueRedis>, IQueueHandlerDeletion<IOptionsQueueRedis, IDeletionOperationMessage>
+public class QueueHandlerRedisDeletion : QueueHandlerRedis, IQueueHandlerDeletion
 {
     public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer) : base(logger, options, connectionMultiplexer)
     {

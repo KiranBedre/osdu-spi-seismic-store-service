@@ -18,10 +18,9 @@ namespace Sidecar.Common.Interface;
 
 using System.Threading.Tasks;
 
-public interface IQueueHandlerDeletion<TOptions, TMessage> : IQueueHandler<TOptions>
-    where TOptions : class
+public interface IQueueHandlerDeletion : IQueueHandler
 {
-    Task<TMessage?> CheckForDeletionOperationAsync();
+    Task<IDeletionOperationMessage?> CheckForDeletionOperationAsync();
     Task IncrementCountAsync(string operationId, string field);
     Task UpdateStatusAsync(string operationId, int count);
 }

@@ -22,24 +22,20 @@ using System.Globalization;
 
 using Interface;
 
-public class DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage> : BackgroundService
-    where TStorageOptions : class
-    where TQueueOptions : class
-    where TCosmosOptions : class
-    where TQueueMessage : class,  IDeletionOperationMessage
+public class DeletionOperationService : BackgroundService
 {
-    private readonly ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> Logger;
-    private readonly IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> Queue;
-    private readonly IItemsRetriever<TCosmosOptions> ItemsRetriever;
-    private readonly IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions> BulkDeletionWorker;
+    private readonly ILogger<DeletionOperationService> Logger;
+    private readonly IQueueHandlerDeletion Queue;
+    private readonly IItemsRetriever ItemsRetriever;
+    private readonly IBulkDeletionWorker BulkDeletionWorker;
 
     private int ConsecutiveFailures = 0;
     private const int MaxConsecutiveFailures = 10;
 
-    public DeletionOperationService(ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> logger,
-        IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> queue,
-        IItemsRetriever<TCosmosOptions> itemsRetriever,
-        IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions> bulkDeletionWorker)
+    public DeletionOperationService(ILogger<DeletionOperationService> logger,
+        IQueueHandlerDeletion queue,
+        IItemsRetriever itemsRetriever,
+        IBulkDeletionWorker bulkDeletionWorker)
     {
         Logger = logger;
         Queue = queue;

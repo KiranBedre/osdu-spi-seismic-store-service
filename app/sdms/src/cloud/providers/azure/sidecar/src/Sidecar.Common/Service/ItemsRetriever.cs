@@ -18,7 +18,7 @@ namespace Sidecar.Common.Service;
 
 using Interface;
 
-public class ItemsRetriever: IItemsRetriever<IOptionsCosmos>
+public class ItemsRetriever: IItemsRetriever
 {
     private readonly IDataAccess DataAccess;
     private readonly IOptionsCosmos Options;

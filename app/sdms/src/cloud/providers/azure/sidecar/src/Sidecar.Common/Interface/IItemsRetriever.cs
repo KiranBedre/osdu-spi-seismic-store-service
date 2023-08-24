@@ -15,7 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
-public interface IItemsRetriever<TOptions> where TOptions : class
+public interface IItemsRetriever
 {
     Task<IPaginatedRecords> GetItems(string subproject, string path);
 }

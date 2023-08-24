@@ -15,7 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
-public interface IMetadataDeletionWorker<TOptions> where TOptions : class
+public interface IMetadataDeletionWorker
 {
     Task DeleteMetadata(string id);
 }

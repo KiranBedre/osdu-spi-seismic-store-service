@@ -16,7 +16,7 @@
 
 namespace Sidecar.Common.Interface;
 
-public interface IQueueHandler<TOptions> where TOptions : class
+public interface IQueueHandler
 {
     long HashIncrement(string key, string field, long? incBy = 1);
 
