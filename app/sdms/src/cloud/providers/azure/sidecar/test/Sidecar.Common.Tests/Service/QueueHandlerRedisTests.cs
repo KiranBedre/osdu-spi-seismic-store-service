@@ -55,9 +55,12 @@ public class QueueHandlerRedisTests
         var returned = queueHandler.HashIncrement(key, field, inc);
 
         // Assert
-        Assert.True(result); //---item should be added, not updated
-
-        Assert.Equal(initialValue + linc.GetValueOrDefault(1), returned);
+        result
+            .Should()
+            .BeTrue();
+        returned
+            .Should()
+            .Be(initialValue + linc.GetValueOrDefault(1));
     }
 
     [Theory]
@@ -78,9 +81,12 @@ public class QueueHandlerRedisTests
         var returned = queueHandler.HashDecrement(key, field, inc);
 
         // Assert
-        Assert.True(result); //---item should be added, not updated
-
-        Assert.Equal(initialValue - linc.GetValueOrDefault(1), returned);
+        result
+            .Should()
+            .BeTrue();
+        returned
+            .Should()
+            .Be(initialValue - linc.GetValueOrDefault(1));
     }
 
     [Fact]
@@ -97,8 +103,12 @@ public class QueueHandlerRedisTests
         var returned = queueHandler.HashGet<long>(key, field);
 
         // Assert
-        Assert.True(result); //---item should be added, not updated
-        Assert.Equal(initialValue, returned); //---rexpected should be the same as the initial value;
+        result
+            .Should()
+            .BeTrue();
+        returned
+            .Should()
+            .Be(initialValue);
     }
 
     [Fact]
@@ -115,8 +125,12 @@ public class QueueHandlerRedisTests
         var returned = await queueHandler.HashGetAsync<long>(key, field);
 
         // Assert
-        Assert.True(result); //---item should be added, not updated
-        Assert.Equal(initialValue, returned); //---rexpected should be the same as the initial value;
+        result
+            .Should()
+            .BeTrue();
+        returned
+            .Should()
+            .Be(initialValue);
     }
 
 }
