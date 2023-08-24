@@ -10,11 +10,12 @@ using System.Collections.Concurrent;
 
 namespace Sidecar.Common.Service
 {
-    public class BulkDeletionWorker: IBulkDeletionWorker<Model.IOptionsStorageAcount, Model.IOptionsCosmos>
+    public class BulkDeletionWorker : IBulkDeletionWorker<Model.IOptionsStorageAcount, Model.IOptionsQueueRedis, Model.IOptionsCosmos>
     {
         private readonly int _batchSize = 100;
 
         private readonly ILogger<BulkDeletionWorker> Logger;
+        private readonly IQueueHandlerDeletion<Model.IOptionsQueueRedis, IDeletionOperationMessage> Queue;
         private readonly IMetadataDeletionWorker<Model.IOptionsCosmos> MetadataDeletionWorker;
 
         private int DeletedDatasetTotalCount = 0;
@@ -23,10 +24,12 @@ namespace Sidecar.Common.Service
         private string StorageAccountConnectionString;
         private readonly BlobServiceClient BlobStorageClient;
 
-        public BulkDeletionWorker(IOptionsStorageAcount options, ILogger<BulkDeletionWorker> logger,
+        public BulkDeletionWorker(Model.IOptionsStorageAcount options, ILogger<BulkDeletionWorker> logger,
+            IQueueHandlerDeletion<Model.IOptionsQueueRedis, IDeletionOperationMessage> queue,
             IMetadataDeletionWorker<Model.IOptionsCosmos> metadataDeletionWorker)
         {
             Logger = logger;
+            Queue = queue;
             MetadataDeletionWorker = metadataDeletionWorker;
             StorageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
             BlobStorageClient = CreateClient(StorageAccountConnectionString);
@@ -40,17 +43,17 @@ namespace Sidecar.Common.Service
             return blobServiceClient;
         }
 
-        public async Task RunBulkDeletion(List<Object> itemsToDelete)
+        public async Task RunBulkDeletion(string operationId, List<Object> itemsToDelete)
         {
             Logger.LogInformation($"Started blob deletion, it will delete {itemsToDelete.Count} items");
 
             await Parallel.ForEachAsync(itemsToDelete,
                 new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
-                async (item, ct) => await processItemDeletion(item, ct, itemsToDelete.Count)
+                async (item, ct) => await processItemDeletion(operationId, item, ct, itemsToDelete.Count)
               );
         }
 
-        private async Task processItemDeletion(object item, CancellationToken cancellationToken, int totalCount)
+        private async Task processItemDeletion(string operationId, object item, CancellationToken cancellationToken, int totalCount)
         {
             JObject jsonItem = JsonConvert.DeserializeObject<JObject>(item.ToString());
             (string containerName, string? virtualFolderName) = ParseContainerAndFolderName(jsonItem);
@@ -76,7 +79,6 @@ namespace Sidecar.Common.Service
             }
             else
             {
-                // removing the container itself
                 Logger.LogDebug($"Deleting container {containerName}");
                 try
                 {
@@ -112,11 +114,13 @@ namespace Sidecar.Common.Service
                     Logger.LogError($"Could not delete metadata for {datasetId}: {e.Message}");
 
                 }
+                await Queue.IncrementCountAsync(operationId, "DeletedCnt");
             }
             else
             {
                 var allErrors = string.Join(" ", errors);
                 Logger.LogInformation($"Will not delete metadata for {datasetId} due to {allErrors}");
+                await Queue.IncrementCountAsync(operationId, "FailedCnt");
             }
 
             Interlocked.Increment(ref DeletedDatasetTotalCount);

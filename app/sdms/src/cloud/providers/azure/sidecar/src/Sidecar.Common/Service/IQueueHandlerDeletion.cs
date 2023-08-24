@@ -23,5 +23,7 @@ namespace Sidecar.Common.Service
         where TOptions : class
     {
         Task<TMessage?> CheckForDeletionOperationAsync();
+        Task IncrementCountAsync(string operationId, string field);
+        Task UpdateStatusAsync(string operationId, int count);
     }
 }

@@ -104,5 +104,19 @@ namespace Sidecar.Common.Service
             await db.HashSetAsync(statusKey, statusHash);
             return status!;
         }
+
+        public async Task IncrementCountAsync(string operationId, string field)
+        {
+            var statusKey = Options.QueueName + ":status:" + operationId.ToLower();
+            await HashIncrementAsync(statusKey, field);
+            await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+        }
+
+        public async Task UpdateStatusAsync(string operationId, int count)
+        {
+            var statusKey = Options.QueueName + ":status:" + operationId.ToLower();
+            await HashSetAsync(statusKey, "DatasetsCnt", count.ToString());
+            await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+         }
     }
 }
