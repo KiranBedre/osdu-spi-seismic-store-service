@@ -19,8 +19,6 @@ using Microsoft.Azure.Cosmos;
 
 namespace Sidecar.Controllers
 {
-    using Sidecar.Common.Model;
-    using Sidecar.Common.Service;
     [Route("api/[controller]")]
     [ApiController]
     public class CosmosController : ControllerBase

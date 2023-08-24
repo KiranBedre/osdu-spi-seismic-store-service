@@ -1,5 +1,5 @@
-// ============================================================================
-// Copyright 2017-2023, Microsoft
+﻿
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,24 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model{
-
-    public interface IDeleteOperationStatus : IDeletionOperationMessage
-    {
-        DateTime CreatedAt { get; set; }
-
-        DateTime LastUpdatedAt { get; set; }
-
-        string CreatedBy { get; set; }
-
-        string Status {get;  set;}
-
-        string StatusDescription {get;  set;}
-
-        long DatasetsCnt{get;set;}
-
-        long DeletedCnt{get;set;}
-
-        long FailedCnt{get;set;}
-    }
+namespace Sidecar.Common.Interface;
+public interface IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions>
+    where TStorageOptions : class
+    where TQueueOptions : class
+    where TCosmosOptions : class
+{
+    Task RunBulkDeletion(string operationId, List<Object> items);
 }

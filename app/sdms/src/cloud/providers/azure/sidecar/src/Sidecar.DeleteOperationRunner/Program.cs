@@ -20,9 +20,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-using Sidecar.Common.Model;
-using Sidecar.Common.Service;
-
 public class Program
 {
     private static ILogger<Program>? Logger;

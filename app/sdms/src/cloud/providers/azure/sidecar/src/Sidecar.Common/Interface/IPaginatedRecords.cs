@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model
-{
-    public interface IOptionsQueueRedis
-    {
-        string QueueConnectionString { get; set; }
-        string QueueName { get; set; }
-    }
+namespace Sidecar.Common.Interface;
 
+public interface IPaginatedRecords
+{
+    List<Object>? records { get; set; }
+    string? continuationToken { get; set; }
 }

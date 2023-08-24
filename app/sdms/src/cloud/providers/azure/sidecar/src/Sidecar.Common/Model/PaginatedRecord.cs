@@ -14,19 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model{
-    public class QueryPaginatedRequestBody
-    {
-        public string? cs { get; set; }
-        public string? sql { get; set; }
-        public string? ctoken { get; set; }
-        public int? limit { get; set; }
-    }
+namespace Sidecar.Common.Model;
+using Interface;
+public class PaginatedRecords : IPaginatedRecords
+{
+    public List<Object>? records { get; set; }
+    public string? continuationToken { get; set; }
 
-    public class PaginatedRecords
-    {
-        public List<Object>? records { get; set; }
-        public string? continuationToken { get; set; }
-
-    }
 }

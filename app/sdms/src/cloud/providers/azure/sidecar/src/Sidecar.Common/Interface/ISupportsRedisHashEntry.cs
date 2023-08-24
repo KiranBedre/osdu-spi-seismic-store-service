@@ -1,6 +1,5 @@
-﻿
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,14 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
-using Sidecar.Common.Model;
-
-namespace Sidecar.Common.Service
+namespace Sidecar.Common.Interface;
+public interface ISupportsRedisHashEntry
 {
-    public interface IDataAccess
-    {
-        Task<string> Query(string cs, string sql, string? ctoken, int? limit);
-        Task<PaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit);
-        Task<bool> DeleteMetadata(string cs, string id);
-    }
+
 }

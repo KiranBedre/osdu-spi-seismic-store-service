@@ -14,21 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
-using CommandLine;
-
-namespace Sidecar.Common.Model
+namespace Sidecar.Common.Interface;
+public interface IQueueMessage : ISupportsRedisHashEntry
 {
-    public interface IOptions : IOptionsCosmos, IOptionsQueueRedis, IOptionsStorageAcount
-    {
-/*        string QueueConnectionString { get; set; }
-
-        string QueueName { get; set; }
-
-        public string CosmosEndpoint { get; set; }
-
-        public string CosmosKey { get; set; }
-
-        string StorageAccountConnectionString { get; set; }*/
-    }
 
 }

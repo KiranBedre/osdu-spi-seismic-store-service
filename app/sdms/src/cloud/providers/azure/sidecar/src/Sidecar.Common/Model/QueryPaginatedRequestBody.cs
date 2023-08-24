@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Microsoft
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,12 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model
+namespace Sidecar.Common.Model;
+using Interface;
+public class QueryPaginatedRequestBody : IQueryPaginatedRequestBody
 {
-    public interface IDeletionOperationMessage : IQueueMessage
-    {
-        string OperationId { get; set; }
-
-        string Tenant { get; set; }
-
-        string Subproject { get; set; }
-
-        string Path { get; set; }
-
-    }
+    public string? cs { get; set; }
+    public string? sql { get; set; }
+    public string? ctoken { get; set; }
+    public int? limit { get; set; }
 }

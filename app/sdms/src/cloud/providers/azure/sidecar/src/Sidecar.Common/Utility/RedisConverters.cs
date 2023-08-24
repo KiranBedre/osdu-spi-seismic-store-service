@@ -14,56 +14,56 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Utilitiy
+namespace Sidecar.Common.Utilitiy;
+
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using StackExchange.Redis;
+
+using Interface;
+
+public static class RedisConverters
 {
-    using System.Reflection;
-    using System.Text.Json;
-    using System.Text.Json.Serialization;
-    using Sidecar.Common.Model;
-    using StackExchange.Redis;
-
-    public static class RedisConverters
+    public static HashEntry[] ToHashEntries(this ISupportsRedisHashEntry obj, bool useJsonPropertyNames = false)
     {
-        public static HashEntry[] ToHashEntries(this ISupportsRedisHashEntry obj, bool useJsonPropertyNames = false)
-        {
-            var properties = obj.GetType().GetProperties();
-            return properties
-                .Where(x => x.GetValue(obj) != null)
-                .Select(p =>
-                {
-                    var propertyValue = p.GetValue(obj)!;
-                    string hashValue;
-
-                    if (propertyValue is IEnumerable<object>)
-                    {
-                        hashValue = JsonSerializer.Serialize(propertyValue);
-                    }
-                    else
-                    {
-                        hashValue = propertyValue.ToString()!;
-                    }
-
-                    var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
-                    var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
-                    return new HashEntry(propName, hashValue);
-                })
-                .ToArray();
-        }
-
-        public static T FromHashEntries<T>(this HashEntry[] hashEntries, bool useJsonPropertyNames = false) where T : ISupportsRedisHashEntry
-        {
-            var obj = Activator.CreateInstance(typeof(T));
-            foreach (var p in typeof(T).GetProperties())
+        var properties = obj.GetType().GetProperties();
+        return properties
+            .Where(x => x.GetValue(obj) != null)
+            .Select(p =>
             {
+                var propertyValue = p.GetValue(obj)!;
+                string hashValue;
+
+                if (propertyValue is IEnumerable<object>)
+                {
+                    hashValue = JsonSerializer.Serialize(propertyValue);
+                }
+                else
+                {
+                    hashValue = propertyValue.ToString()!;
+                }
 
                 var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
                 var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
+                return new HashEntry(propName, hashValue);
+            })
+            .ToArray();
+    }
 
-                var entry = hashEntries.FirstOrDefault(he => he.Name.ToString().Equals(propName));
-                if (entry.Equals(new HashEntry())) continue;
-                p.SetValue(obj, Convert.ChangeType(entry.Value.ToString(), p.PropertyType));
-            }
-            return (T)obj!;
+    public static T FromHashEntries<T>(this HashEntry[] hashEntries, bool useJsonPropertyNames = false) where T : ISupportsRedisHashEntry
+    {
+        var obj = Activator.CreateInstance(typeof(T));
+        foreach (var p in typeof(T).GetProperties())
+        {
+
+            var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
+            var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
+
+            var entry = hashEntries.FirstOrDefault(he => he.Name.ToString().Equals(propName));
+            if (entry.Equals(new HashEntry())) continue;
+            p.SetValue(obj, Convert.ChangeType(entry.Value.ToString(), p.PropertyType));
         }
+        return (T)obj!;
     }
 }

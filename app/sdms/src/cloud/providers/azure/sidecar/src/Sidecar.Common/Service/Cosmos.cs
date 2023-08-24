@@ -14,86 +14,85 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Service;
+
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 
-namespace Sidecar.Common.Service
+using Interface;
+using Model;
+
+public class Cosmos : IDataAccess
 {
-    using Sidecar.Common.Model;
+    private readonly string databaseId = "sdms-db";
+    private readonly string containerId = "data";
+    private static Dictionary<string, CosmosClient> cosmosClients = new Dictionary<string, CosmosClient>();
 
-    public class Cosmos : IDataAccess
+    public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
     {
-        private readonly string databaseId = "sdms-db";
-        private readonly string containerId = "data";
-        private static Dictionary<string, CosmosClient> cosmosClients = new Dictionary<string, CosmosClient>();
+        IPaginatedRecords paginatedRecords = await GetRecords(cs, sql, ctoken, limit);
+        return JsonConvert.SerializeObject(paginatedRecords);
+    }
 
-
-        public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
+    public async Task<IPaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit)
+    {
+        this.initCosmosClient(cs);
+        Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
+        Container container = database.GetContainer(this.containerId);
+        List<Object> records = new List<Object>();
+        IPaginatedRecords paginatedRecords = new PaginatedRecords();
+        QueryRequestOptions options = new QueryRequestOptions() { MaxItemCount = limit != null ? limit : 100 };
+        FeedIterator<Object> query = container.GetItemQueryIterator<Object>(
+            sql,
+            continuationToken: ctoken,
+            requestOptions: options);
+        if (ctoken == null && limit == null) // fetch all
         {
-            PaginatedRecords paginatedRecords = await GetRecords(cs, sql, ctoken, limit);
-            return JsonConvert.SerializeObject(paginatedRecords);
-        }
-
-        public async Task<PaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit)
-        {
-            this.initCosmosClient(cs);
-            Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-            Container container = database.GetContainer(this.containerId);
-            List<Object> records = new List<Object>();
-            PaginatedRecords paginatedRecords = new PaginatedRecords();
-            QueryRequestOptions options = new QueryRequestOptions() { MaxItemCount = limit != null ? limit : 100 };
-            FeedIterator<Object> query = container.GetItemQueryIterator<Object>(
-                sql,
-                continuationToken: ctoken,
-                requestOptions: options);
-            if (ctoken == null && limit == null) // fetch all
-            {
-                while (query.HasMoreResults)
-                {
-                    var results = await query.ReadNextAsync();
-                    foreach (Object record in results)
-                    {
-                        records.Add(record);
-                    }
-                }
-                paginatedRecords.continuationToken = null;
-            }
-            else // fetch next page
+            while (query.HasMoreResults)
             {
                 var results = await query.ReadNextAsync();
                 foreach (Object record in results)
                 {
                     records.Add(record);
                 }
-                paginatedRecords.continuationToken = results.ContinuationToken;
-
             }
-            paginatedRecords.records = records;
-            return paginatedRecords;
+            paginatedRecords.continuationToken = null;
         }
-
-        public async Task<bool> DeleteMetadata(string cs, string id)
-        {   
-            this.initCosmosClient(cs);
-            Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-            Container container = database.GetContainer(this.containerId);
-            var itemResponse = await container.DeleteItemAsync<Object>(id, new PartitionKey(id));
-            return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
-        }
-
-        private void initCosmosClient(string cs)
+        else // fetch next page
         {
-            if (!Cosmos.cosmosClients.ContainsKey(cs))
+            var results = await query.ReadNextAsync();
+            foreach (Object record in results)
             {
-                Cosmos.cosmosClients[cs] = new CosmosClient(cs, new CosmosClientOptions()
-                {
-                    SerializerOptions = new CosmosSerializationOptions()
-                    {
-                        IgnoreNullValues = true
-                    },
-                    ConnectionMode = ConnectionMode.Direct,
-                });
+                records.Add(record);
             }
+            paginatedRecords.continuationToken = results.ContinuationToken;
+
+        }
+        paginatedRecords.records = records;
+        return paginatedRecords;
+    }
+
+    public async Task<bool> DeleteMetadata(string cs, string id)
+    {
+        this.initCosmosClient(cs);
+        Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
+        Container container = database.GetContainer(this.containerId);
+        var itemResponse = await container.DeleteItemAsync<Object>(id, new PartitionKey(id));
+        return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
+    }
+
+    private void initCosmosClient(string cs)
+    {
+        if (!Cosmos.cosmosClients.ContainsKey(cs))
+        {
+            Cosmos.cosmosClients[cs] = new CosmosClient(cs, new CosmosClientOptions()
+            {
+                SerializerOptions = new CosmosSerializationOptions()
+                {
+                    IgnoreNullValues = true
+                },
+                ConnectionMode = ConnectionMode.Direct,
+            });
         }
     }
 }

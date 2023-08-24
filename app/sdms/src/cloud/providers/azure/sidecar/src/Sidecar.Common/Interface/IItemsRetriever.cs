@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model
+namespace Sidecar.Common.Interface;
+public interface IItemsRetriever<TOptions> where TOptions : class
 {
-    public interface IQueueMessage : ISupportsRedisHashEntry
-    {
-
-    }
+    Task<IPaginatedRecords> GetItems(string subproject, string path);
 }

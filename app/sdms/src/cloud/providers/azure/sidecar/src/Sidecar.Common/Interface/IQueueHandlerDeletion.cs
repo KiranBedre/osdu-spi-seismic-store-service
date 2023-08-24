@@ -14,16 +14,14 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Service
+namespace Sidecar.Common.Interface;
+
+using System.Threading.Tasks;
+
+public interface IQueueHandlerDeletion<TOptions, TMessage> : IQueueHandler<TOptions>
+    where TOptions : class
 {
-    using Model;
-    using System.Diagnostics;
-    using System.Threading.Tasks;
-    public interface IQueueHandlerDeletion<TOptions, TMessage> : IQueueHandler<TOptions>
-        where TOptions : class
-    {
-        Task<TMessage?> CheckForDeletionOperationAsync();
-        Task IncrementCountAsync(string operationId, string field);
-        Task UpdateStatusAsync(string operationId, int count);
-    }
+    Task<TMessage?> CheckForDeletionOperationAsync();
+    Task IncrementCountAsync(string operationId, string field);
+    Task UpdateStatusAsync(string operationId, int count);
 }

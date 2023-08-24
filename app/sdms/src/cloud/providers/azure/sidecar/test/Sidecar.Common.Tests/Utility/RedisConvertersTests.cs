@@ -14,10 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-//using Newtonsoft.Json;
-using System.Dynamic;
-using System.Text.Json;
-
 namespace Sidecar.Common.Tests;
 
 public class RedisConvertersTests

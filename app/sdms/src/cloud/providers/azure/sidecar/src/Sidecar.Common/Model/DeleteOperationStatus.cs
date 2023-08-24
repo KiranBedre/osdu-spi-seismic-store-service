@@ -14,35 +14,34 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Model;
+
 using System.Text.Json.Serialization;
-using StackExchange.Redis;
+using Interface;
 
-namespace Sidecar.Common.Model{
+public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationStatus
+{
+    [JsonPropertyName("createdAt")]
+    public DateTime CreatedAt { get;set; } = DateTime.UtcNow;
 
-    public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationStatus
-    {
-        [JsonPropertyName("createdAt")]
-        public DateTime CreatedAt { get;set; } = DateTime.UtcNow;
+    [JsonPropertyName("lastUpdatedAt")]
+    public DateTime LastUpdatedAt { get;set; } = DateTime.UtcNow;
 
-        [JsonPropertyName("lastUpdatedAt")]
-        public DateTime LastUpdatedAt { get;set; } = DateTime.UtcNow;
+    [JsonPropertyName("createdBy")]
+    public string CreatedBy { get;set; } = "";
 
-        [JsonPropertyName("createdBy")]
-        public string CreatedBy { get;set; } = "";
+    [JsonPropertyName("status")]
+    public string Status { get;set; } = "";
 
-        [JsonPropertyName("status")]
-        public string Status { get;set; } = "";
+    [JsonPropertyName("statusDescription")]
+    public string StatusDescription { get;set; } = "";
 
-        [JsonPropertyName("statusDescription")]
-        public string StatusDescription { get;set; } = "";
+    [JsonPropertyName("datasetsCnt")]
+    public long DatasetsCnt { get;set; } = 0;
 
-        [JsonPropertyName("datasetsCnt")]
-        public long DatasetsCnt { get;set; } = 0;
+    [JsonPropertyName("deletedCnt")]
+    public long DeletedCnt { get;set; } = 0;
 
-        [JsonPropertyName("deletedCnt")]
-        public long DeletedCnt { get;set; } = 0;
-
-        [JsonPropertyName("failedCnt")]
-        public long FailedCnt { get;set; } = 0;
-    }
+    [JsonPropertyName("failedCnt")]
+    public long FailedCnt { get;set; } = 0;
 }

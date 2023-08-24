@@ -14,190 +14,189 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Service
-{
+namespace Sidecar.Common.Service;
+
     using Microsoft.Extensions.Logging;
     using StackExchange.Redis;
     using Newtonsoft.Json;
 
-    using Model;
+    using Interface;
 
-    public class QueueHandlerRedis<TOptions> : IQueueHandler<Model.IOptionsQueueRedis>
-        where TOptions : Model.IOptionsQueueRedis
+public class QueueHandlerRedis<TOptions> : IQueueHandler<IOptionsQueueRedis>
+    where TOptions : IOptionsQueueRedis
+{
+    protected readonly ILogger<QueueHandlerRedis<TOptions>> Logger;
+    protected readonly IOptionsQueueRedis Options;
+    protected IConnectionMultiplexer Client;
+
+    public QueueHandlerRedis(ILogger<QueueHandlerRedis<TOptions>> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer)
     {
-        protected readonly ILogger<QueueHandlerRedis<TOptions>> Logger;
-        protected readonly Model.IOptionsQueueRedis Options;
-        protected IConnectionMultiplexer Client;
+        Logger = logger;
+        Options = options;
+        ValidateOptions();
+        Client = connectionMultiplexer;
+    }
 
-        public QueueHandlerRedis(ILogger<QueueHandlerRedis<TOptions>> logger, Model.IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer)
+    protected virtual void ValidateOptions()
+    {
+        ArgumentNullException.ThrowIfNull(Options, nameof(Options));
+        var exceptions = new List<Exception>();
+
+        if (string.IsNullOrEmpty(Options.QueueConnectionString))
         {
-            Logger = logger;
-            Options = options;
-            ValidateOptions();
-            Client = connectionMultiplexer;
+            exceptions.Add(new ArgumentException("Redis connection string is required."));
         }
 
-        protected virtual void ValidateOptions()
+        if (string.IsNullOrEmpty(Options.QueueName))
         {
-            ArgumentNullException.ThrowIfNull(Options, nameof(Options));
-            var exceptions = new List<Exception>();
-
-            if (string.IsNullOrEmpty(Options.QueueConnectionString))
-            {
-                exceptions.Add(new ArgumentException("Redis connection string is required."));
-            }
-
-            if (string.IsNullOrEmpty(Options.QueueName))
-            {
-                exceptions.Add(new ArgumentException("Queue Name is required."));
-            }
-
-            if (exceptions.Count == 0)
-            {
-                return;
-            }
-
-            throw new AggregateException(exceptions);
+            exceptions.Add(new ArgumentException("Queue Name is required."));
         }
 
-        public virtual T Dequeue<T>(string key) where T : class, IQueueMessage
+        if (exceptions.Count == 0)
         {
-            throw new NotImplementedException();
+            return;
         }
 
-        public virtual void Enqueue<T>(string key, T value) where T : class, IQueueMessage
+        throw new AggregateException(exceptions);
+    }
+
+    public virtual T Dequeue<T>(string key) where T : class, IQueueMessage
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual void Enqueue<T>(string key, T value) where T : class, IQueueMessage
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual long HashDecrement(string key, string field, long? decBy = 1)
+    {
+        try
         {
-            throw new NotImplementedException();
-        }
-
-        public virtual long HashDecrement(string key, string field, long? decBy = 1)
-        {
-            try
-            {
-                var dec = decBy ?? 1;
-                return Client.GetDatabase().HashDecrement(new RedisKey(key)
-                    , new RedisValue(field)
-                    , dec);
-
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
-                throw;
-            }
-        }
-
-        public virtual async Task<long> HashDecrementAsync(string key, string field, long? decBy = 1)
-        {
-            try
-            {
-                var dec = decBy ?? 1 ;
-                return await Client.GetDatabase().HashDecrementAsync(new RedisKey(key)
-                    , new RedisValue(field)
-                    , dec);
-
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
-                throw;
-            }
+            var dec = decBy ?? 1;
+            return Client.GetDatabase().HashDecrement(new RedisKey(key)
+                , new RedisValue(field)
+                , dec);
 
         }
-
-        public virtual async Task<long> HashIncrementAsync(string key, string field, long? incBy = 1)
+        catch (Exception ex)
         {
-            try
-            {
-                var inc = incBy ?? 1 ;
-                return await Client.GetDatabase().HashIncrementAsync(new RedisKey(key)
-                    , new RedisValue(field)
-                    , inc);
-
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
-                throw;
-            }
+            Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
+            throw;
         }
-        public virtual long HashIncrement(string key, string field, long? incBy = 1)
-        {
-            try
-            {
-                var inc = incBy ?? 1 ;
-                return Client.GetDatabase().HashIncrement(new RedisKey(key)
-                    , new RedisValue(field)
-                    , inc);
+    }
 
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
-                throw;
-            }
+    public virtual async Task<long> HashDecrementAsync(string key, string field, long? decBy = 1)
+    {
+        try
+        {
+            var dec = decBy ?? 1 ;
+            return await Client.GetDatabase().HashDecrementAsync(new RedisKey(key)
+                , new RedisValue(field)
+                , dec);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
+            throw;
         }
 
-        public virtual bool HashSet(string key, string field, string value)
-        {
-            try
-            {
-                return Client.GetDatabase().HashSet(new RedisKey(key)
-                    , new RedisValue(field)
-                    , new RedisValue(value));
+    }
 
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
-                throw;
-            }
+    public virtual async Task<long> HashIncrementAsync(string key, string field, long? incBy = 1)
+    {
+        try
+        {
+            var inc = incBy ?? 1 ;
+            return await Client.GetDatabase().HashIncrementAsync(new RedisKey(key)
+                , new RedisValue(field)
+                , inc);
+
         }
-
-        public virtual async Task<bool> HashSetAsync(string key, string field, string value)
+        catch (Exception ex)
         {
-            try
-            {
-                return await Client.GetDatabase().HashSetAsync(new RedisKey(key)
-                    , new RedisValue(field)
-                    , new RedisValue(value));
-
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
-                throw;
-            }
+            Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
+            throw;
         }
-
-        public async Task<T> HashGetAsync<T>(string key, string field) where T : unmanaged
+    }
+    public virtual long HashIncrement(string key, string field, long? incBy = 1)
+    {
+        try
         {
-            try
-            {
-                var res =  await Client.GetDatabase().HashGetAsync(new RedisKey(key)
+            var inc = incBy ?? 1 ;
+            return Client.GetDatabase().HashIncrement(new RedisKey(key)
+                , new RedisValue(field)
+                , inc);
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
+            throw;
+        }
+    }
+
+    public virtual bool HashSet(string key, string field, string value)
+    {
+        try
+        {
+            return Client.GetDatabase().HashSet(new RedisKey(key)
+                , new RedisValue(field)
+                , new RedisValue(value));
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            throw;
+        }
+    }
+
+    public virtual async Task<bool> HashSetAsync(string key, string field, string value)
+    {
+        try
+        {
+            return await Client.GetDatabase().HashSetAsync(new RedisKey(key)
+                , new RedisValue(field)
+                , new RedisValue(value));
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            throw;
+        }
+    }
+
+    public async Task<T> HashGetAsync<T>(string key, string field) where T : unmanaged
+    {
+        try
+        {
+            var res =  await Client.GetDatabase().HashGetAsync(new RedisKey(key)
+                , new RedisValue(field));
+            return JsonConvert.DeserializeObject<T>(res.ToString());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            throw;
+        }
+    }
+
+    public T HashGet<T>(string key, string field) where T : unmanaged
+    {
+        try
+        {
+            var res =  Client.GetDatabase().HashGet(new RedisKey(key)
                     , new RedisValue(field));
-                return JsonConvert.DeserializeObject<T>(res.ToString());
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
-                throw;
-            }
+            return JsonConvert.DeserializeObject<T>(res.ToString());
         }
-
-        public T HashGet<T>(string key, string field) where T : unmanaged
+        catch (Exception ex)
         {
-            try
-            {
-                var res =  Client.GetDatabase().HashGet(new RedisKey(key)
-                        , new RedisValue(field));
-                return JsonConvert.DeserializeObject<T>(res.ToString());
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
-                throw;
-            }
+            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            throw;
         }
     }
 }

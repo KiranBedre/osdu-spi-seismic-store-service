@@ -14,65 +14,65 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Service
+namespace Sidecar.Common.Service;
+
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System.Globalization;
+
+using Interface;
+
+public class DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage> : BackgroundService
+    where TStorageOptions : class
+    where TQueueOptions : class
+    where TCosmosOptions : class
+    where TQueueMessage : class,  IDeletionOperationMessage
 {
-    using Microsoft.Extensions.Hosting;
-    using Microsoft.Extensions.Logging;
-    using Model;
-    using System.Globalization;
+    private readonly ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> Logger;
+    private readonly IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> Queue;
+    private readonly IItemsRetriever<TCosmosOptions> ItemsRetriever;
+    private readonly IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions> BulkDeletionWorker;
 
-    public class DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage> : BackgroundService
-        where TStorageOptions : class
-        where TQueueOptions : class
-        where TCosmosOptions : class
-        where TQueueMessage : class,  IDeletionOperationMessage
+    private int ConsecutiveFailures = 0;
+    private const int MaxConsecutiveFailures = 10;
+
+    public DeletionOperationService(ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> logger,
+        IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> queue,
+        IItemsRetriever<TCosmosOptions> itemsRetriever,
+        IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions> bulkDeletionWorker)
     {
-        private readonly ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> Logger;
-        private readonly IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> Queue;
-        private readonly IItemsRetriever<TCosmosOptions> ItemsRetriever;
-        private readonly IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions> BulkDeletionWorker;
+        Logger = logger;
+        Queue = queue;
+        ItemsRetriever = itemsRetriever;
+        BulkDeletionWorker = bulkDeletionWorker;
+    }
 
-        private int ConsecutiveFailures = 0;
-        private const int MaxConsecutiveFailures = 10;
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        do{
+            try {
+                var op = await Queue.CheckForDeletionOperationAsync();
+                if (op is not null) {
+                    //---start the deletion process
+                    Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-        public DeletionOperationService(ILogger<DeletionOperationService<TStorageOptions, TQueueOptions, TCosmosOptions, TQueueMessage>> logger,
-            IQueueHandlerDeletion<TQueueOptions, IDeletionOperationMessage> queue,
-            IItemsRetriever<TCosmosOptions> itemsRetriever,
-            IBulkDeletionWorker<TStorageOptions, TQueueOptions, TCosmosOptions> bulkDeletionWorker)
-        {
-            Logger = logger;
-            Queue = queue;
-            ItemsRetriever = itemsRetriever;
-            BulkDeletionWorker = bulkDeletionWorker;
-        }
+                    var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
+                    var items = paginatedRecords.records;
 
-        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
-        {
-            do{
-                try {
-                    var op = await Queue.CheckForDeletionOperationAsync();
-                    if (op is not null) {
-                        //---start the deletion process
-                        Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
+                    Logger.LogInformation("Found {0} items to delete", items!.Count.ToString(CultureInfo.InvariantCulture));
+                    await Queue.UpdateStatusAsync(op.OperationId, items.Count);
+                    //todo: lock all found items
 
-                        var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
-                        var items = paginatedRecords.records;
-
-                        Logger.LogInformation("Found {0} items to delete", items!.Count.ToString(CultureInfo.InvariantCulture));
-                        await Queue.UpdateStatusAsync(op.OperationId, items.Count);
-                        //todo: lock all found items
-
-                        await BulkDeletionWorker.RunBulkDeletion(op.OperationId, items);
-                    }
-                    ConsecutiveFailures = 0;
+                    await BulkDeletionWorker.RunBulkDeletion(op.OperationId, items);
                 }
-                catch(Exception ex)
-                {
-                    Logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {ConsecutiveFailures}/{MaxConsecutiveFailures}");
-                    ConsecutiveFailures++;
-                }
-                await Task.Delay(1000,cancellationToken);
-            }while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
-        }
+                ConsecutiveFailures = 0;
+            }
+            catch(Exception ex)
+            {
+                Logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {ConsecutiveFailures}/{MaxConsecutiveFailures}");
+                ConsecutiveFailures++;
+            }
+            await Task.Delay(1000,cancellationToken);
+        }while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
     }
 }

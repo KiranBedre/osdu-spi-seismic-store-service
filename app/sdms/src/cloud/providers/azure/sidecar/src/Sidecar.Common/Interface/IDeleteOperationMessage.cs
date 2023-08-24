@@ -14,13 +14,15 @@
 // limitations under the License.
 // ============================================================================
 
-using StackExchange.Redis;
+namespace Sidecar.Common.Interface;
 
-namespace Sidecar.Common.Model
+public interface IDeletionOperationMessage : IQueueMessage
 {
-    public interface ISupportsRedisHashEntry
-    {
+    string OperationId { get; set; }
 
-    }
+    string Tenant { get; set; }
 
+    string Subproject { get; set; }
+
+    string Path { get; set; }
 }

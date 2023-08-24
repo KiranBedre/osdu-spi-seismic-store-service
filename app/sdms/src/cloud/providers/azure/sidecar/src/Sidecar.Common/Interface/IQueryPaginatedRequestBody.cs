@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Microsoft
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,23 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model;
-
-using System.Text.Json.Serialization;
-using Interface;
-
-public class DeleteOperationMessage : IDeletionOperationMessage
+namespace Sidecar.Common.Interface;
+public interface IQueryPaginatedRequestBody
 {
-    [JsonPropertyName("operation_id")]
-    public string OperationId{get;set;} = "";
-
-    [JsonPropertyName("tenant")]
-    public string Tenant { get; set; } = "";
-
-    [JsonPropertyName("subproject")]
-    public string Subproject {get;  set;} = "";
-
-    [JsonPropertyName("path")]
-    public string Path { get; set; } = "";
-
+    string? cs { get; set; }
+    string? sql { get; set; }
+    string? ctoken { get; set; }
+    int? limit { get; set; }
 }

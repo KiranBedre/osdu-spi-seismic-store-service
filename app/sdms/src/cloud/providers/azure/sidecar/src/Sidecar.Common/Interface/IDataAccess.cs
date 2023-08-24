@@ -1,5 +1,5 @@
 ﻿// ============================================================================
-// Copyright 2017-2023, Microsoft
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model
+namespace Sidecar.Common.Interface;
+public interface IDataAccess
 {
-    public interface IOptionsStorageAcount
-    {
-        string StorageAccountConnectionString { get; set; }
-    }
+    Task<string> Query(string cs, string sql, string? ctoken, int? limit);
+    Task<IPaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit);
+    Task<bool> DeleteMetadata(string cs, string id);
 }
