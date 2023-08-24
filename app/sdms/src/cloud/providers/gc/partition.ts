@@ -20,7 +20,7 @@ export class DataPartitionInfo {
         const partitionUrl = new url.URL(ConfigGoogle.DES_SERVICE_HOST_PARTITION);
         partitionUrl.pathname = path_join(
             partitionUrl.pathname,
-            'v1/partitions',
+            'api/partition/v1/partitions',
             dataPartitionId
         );
         const partitionResponse = await axios.get(partitionUrl.toString());
