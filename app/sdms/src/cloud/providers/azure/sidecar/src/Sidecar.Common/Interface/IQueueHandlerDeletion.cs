@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 public interface IQueueHandlerDeletion : IQueueHandler
 {
-    Task<IDeletionOperationMessage?> CheckForDeletionOperationAsync();
+    Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync();
     Task IncrementCountAsync(string operationId, string field);
     Task UpdateStatusAsync(string operationId, int count);
 }

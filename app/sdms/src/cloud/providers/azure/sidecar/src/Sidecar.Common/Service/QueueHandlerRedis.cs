@@ -36,6 +36,18 @@ public class QueueHandlerRedis : IQueueHandler
         Client = connectionMultiplexer;
     }
 
+    protected IDatabase GetDatabase(){
+        try
+        {
+            return Client.GetDatabase();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error connecting to Redis database");
+            throw;
+        }
+    }
+
     protected virtual void ValidateOptions()
     {
         ArgumentNullException.ThrowIfNull(Options, nameof(Options));

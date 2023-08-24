@@ -31,22 +31,22 @@ public class QueueHandlerRedisDeletion : QueueHandlerRedis, IQueueHandlerDeletio
 
     }
 
-    public async Task<IDeletionOperationMessage?> CheckForDeletionOperationAsync()
+    public async Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync()
     {
-        IDatabase db;
-        try
-        {
-            db = Client.GetDatabase();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error connecting to Redis database");
-            throw;
+        var db = GetDatabase();
+
+        var opMsg = await GetDeletionOperationMessage(db);
+        if(opMsg == null){
+            return null;
         }
 
-        //var trans = db.CreateTransaction();
-        //trans.AddCondition(Condition.KeyNotExists(statusKey));
+        var statusMsg = await CreateDeletionOperationStatus(db,opMsg);
 
+        return statusMsg;
+
+    }
+
+    private async Task<DeleteOperationMessage?> GetDeletionOperationMessage(IDatabase db){
         var delQ = Options.QueueName;
         if (!await db.KeyExistsAsync(delQ))
         {
@@ -63,33 +63,24 @@ public class QueueHandlerRedisDeletion : QueueHandlerRedis, IQueueHandlerDeletio
         }
 
         var opDataKey = Options.QueueName + ":" + op.ToString();
-
         var delOpData = await db.HashGetAllAsync(opDataKey);
+
         if (delOpData.Length == 0)
         {
             Logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
             throw new RedisException("Failed to get operation data from queue");
         }
+        return delOpData.FromHashEntries<DeleteOperationMessage>(true);
+    }
 
-        //---not the best approach but works for now...can revisit with an extension method later
-        var msgValues = delOpData.ToDictionary(x => x.Name, x => x.Value);
-
-        //---make sure that the expected values are present
-        if (!msgValues.ContainsKey("operation_id") ||
-            !msgValues.ContainsKey("subproject") ||
-            !msgValues.ContainsKey("tenant") ||
-            !msgValues.ContainsKey("path"))
-        {
-            Logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
-            throw new RedisException("Failed to get operation data from queue");
-        }
+    private async Task<DeleteOperationStatus> CreateDeletionOperationStatus(IDatabase db, DeleteOperationMessage opMsg){
 
         var status = new DeleteOperationStatus
         {
-            OperationId = msgValues["operation_id"].ToString(),
-            Tenant = msgValues["tenant"].ToString(),
-            Subproject = msgValues["subproject"].ToString(),
-            Path = msgValues["path"].ToString(),
+            OperationId = opMsg.OperationId,
+            Tenant = opMsg.Tenant,
+            Subproject = opMsg.Subproject,
+            Path = opMsg.Path,
             CreatedAt = DateTime.UtcNow,
             LastUpdatedAt = DateTime.UtcNow,
             CreatedBy = "Sidecar.QueueHanderRedis",
@@ -99,10 +90,13 @@ public class QueueHandlerRedisDeletion : QueueHandlerRedis, IQueueHandlerDeletio
             DeletedCnt = 0,
             FailedCnt = 0
         };
+
         var statusHash = status.ToHashEntries();
 
         var statusKey = Options.QueueName + ":status:" + status.OperationId.ToLower();
+
         await db.HashSetAsync(statusKey, statusHash);
+
         return status!;
     }
 
