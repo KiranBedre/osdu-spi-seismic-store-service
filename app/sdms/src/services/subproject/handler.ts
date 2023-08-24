@@ -220,25 +220,21 @@ export class SubProjectHandler {
     // required roles: [tenant.admin]
     private static async delete(req: expRequest, tenant: TenantModel) {
 
-        // request inputs
-        const subprojectName = req.params.subprojectid;
-
         const journalClient = JournalFactoryTenantClient.get(tenant);
-        const subproject = await SubProjectDAO.get(journalClient, tenant.name, subprojectName);
+        const subproject = await SubProjectDAO.get(journalClient, tenant.name, req.params.subprojectid);
 
         // auth check: tenant.admin
         await Auth.isUserAuthorized(
             req.headers.authorization, TenantAuth.getAuthGroups(tenant),
             tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
+        // 1. delete datasets metadata
+        await DatasetDAO.deleteAll(journalClient, tenant.name, subproject.name);
 
-        // 1. delete subproject and dataset metadata
-        await Promise.all([
-            SubProjectDAO.delete(journalClient, tenant.name, subproject.name),
-            DatasetDAO.deleteAll(journalClient, tenant.name, subproject.name),
-        ]);
+        // 2. delete subproject metadata
+        await SubProjectDAO.delete(journalClient, tenant.name, subproject.name);
 
-        // 2. delete default authorization groups
+        // 3. delete default authorization groups
         const dataGroupRegex = SubprojectGroups.dataGroupNameRegExp(tenant.name, subproject.name);
         const adminSubprojectDataGroups = subproject.acls.admins.filter((group) => group.match(dataGroupRegex));
         const viewerSubprojectDataGroups = subproject.acls.viewers.filter(group => group.match(dataGroupRegex));
@@ -249,12 +245,10 @@ export class SubProjectHandler {
                 req[Config.DE_FORWARD_APPKEY])).catch((error)=>{
                     console.error(error);
                 });
-
         }
 
-
-        // 3. delete the storage resources (files and bucket)
-        SeistoreFactory.build(Config.CLOUDPROVIDER).deleteStorageResources(tenant, subproject).catch((error) => {
+        // 4. delete the storage resources (files and bucket)
+        await SeistoreFactory.build(Config.CLOUDPROVIDER).deleteStorageResources(tenant, subproject).catch((error) => {
             LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
         });
 

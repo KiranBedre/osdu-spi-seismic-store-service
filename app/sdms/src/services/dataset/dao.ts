@@ -132,17 +132,25 @@ export class DatasetDAO {
     public static async deleteAll(
         journalClient: IJournal, tenantName: string, subprojectName: string) {
 
-        const query = journalClient.createQuery(
-            Config.SEISMIC_STORE_NS + '-' + tenantName + '-' + subprojectName, Config.DATASETS_KIND);
+        if(Config.CLOUDPROVIDER === 'azure') {
 
-        const [entities] = await journalClient.runQuery(query);
+            const [entities] = await journalClient.listDatasets({
+                tenant: tenantName,
+                subproject: subprojectName
+            } as DatasetModel, undefined, undefined, ['id']);
+            await journalClient.deleteMulti(entities.map((item)=>{return item.id}))
 
-        const datasetsToDelete = [];
-        for (const entity of entities) {
-            datasetsToDelete.push(journalClient.delete(entity[journalClient.KEY]));
+        } else {
+
+            const query = journalClient.createQuery(
+                Config.SEISMIC_STORE_NS + '-' + tenantName + '-' + subprojectName, Config.DATASETS_KIND);
+            const [entities] = await journalClient.runQuery(query);
+            const datasetsToDelete = [];
+            for (const entity of entities) {
+                datasetsToDelete.push(journalClient.delete(entity[journalClient.KEY]));
+            }
+            await Promise.all(datasetsToDelete);
         }
-
-        await Promise.all(datasetsToDelete);
     }
 
     public static async delete(journalClient: IJournal, dataset: DatasetModel) {

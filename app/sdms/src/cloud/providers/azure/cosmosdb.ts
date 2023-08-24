@@ -16,7 +16,7 @@
 
 import crypto from 'crypto';
 
-import { CosmosClient, Container, FeedResponse, ItemResponse } from '@azure/cosmos';
+import { CosmosClient, Container, FeedResponse, ItemResponse, OperationInput, BulkOperationType } from '@azure/cosmos';
 import { AbstractJournal, AbstractJournalTransaction, IJournalQueryModel, IJournalTransaction, JournalFactory } from '../../journal';
 import { TenantModel } from '../../../services/tenant';
 import { AzureDataEcosystemServices } from './dataecosystem';
@@ -169,6 +169,30 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             }
         }
         return sizes;
+    }
+
+    public async deleteMulti(keys: string[]): Promise<void> {
+
+        if (!keys) { return; }
+
+        const container = await this.getCosmoContainer();
+        const operations: OperationInput[] = [];
+        for (let ii=0; ii<keys.length; ii++) {
+            operations.push({
+                operationType: BulkOperationType.Delete,
+                id: keys[ii],
+                partitionKey: keys[ii],
+            });
+            if ((ii+1)%100 === 0) {
+                await container.items.bulk(operations);
+                operations.length = 0;
+            }
+        }
+
+        if(operations.length) {
+            await container.items.bulk(operations);
+        }
+
     }
 
     public async delete(key: any): Promise<void> {
@@ -348,7 +372,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                     if (fieldList) {
                         fieldList += ', ';
                     }
-                    fieldList += 'c.data.' + field;
+                    fieldList += ((field === 'id') ? 'c.' : 'c.data.') + field;
                 }
                 sqlQuery = 'SELECT ' + fieldList
             } else {
