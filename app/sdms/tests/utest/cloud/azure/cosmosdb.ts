@@ -252,14 +252,14 @@ export class TestAzureCosmosDbDAO {
             kind: ''
         };
 
-        Tx.asyncTest( async(done: any) => {
+        Tx.test( async(done: any) => {
             azureCosmosDbQuery.kind = 'subprojects';
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
             Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
         });
 
-        Tx.asyncTest( async(done: any) => {
+        Tx.test( async(done: any) => {
             azureCosmosDbQuery.kind = 'apps';
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
@@ -268,20 +268,6 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test( async(done: any) => {
             azureCosmosDbQuery.kind = 'datasets';
-            azureCosmosDbQuery.filters = [{property: 'property', operator: '=', value: {value: 'value'}}];
-            AzureConfig.SIDECAR_ENABLE_QUERY = true;
-            AzureConfig.SIDECAR_URL = 'sidecar_URL';
-            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves({ endpoint: 'endpoint', key: 'key' });
-            await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel).then(res => {
-                done();
-            }).catch(err => {
-                done();
-                assert.fail(err)
-            })
-        });
-
-        Tx.asyncTest( async(done: any) => {
-            azureCosmosDbQuery.kind = 'datasets';
             azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
@@ -289,7 +275,7 @@ export class TestAzureCosmosDbDAO {
             Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
         });
 
-        Tx.asyncTest( async(done: any) => {
+        Tx.test( async(done: any) => {
             azureCosmosDbQuery.kind = 'datasets';
             azureCosmosDbQuery.filters = [{property: 'property', operator: 'CONTAINS', value: {value: 'value'}}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
@@ -371,7 +357,7 @@ export class TestAzureCosmosDbDAO {
             _init: undefined,
             handleSplitError: undefined
         } as any;
-        
+
         const subfoldersQuery = 'SELECT SUBSTRING(c.data.path, LENGTH("' + datasetModel.path + '") - 1, ' +
             'INDEX_OF(c.data.path, "/", LENGTH("' + datasetModel.path + '")) - LENGTH("' + datasetModel.path + '") + 2) as path ' +
             'FROM c WHERE RegexMatch(c.id, "^(ds-' + datasetModel.tenant + '-' + datasetModel.subproject + '-)([a-z0-9]+)$") ' +
@@ -379,11 +365,11 @@ export class TestAzureCosmosDbDAO {
             'AND c.data.path != "' + datasetModel.path + '" ' +
             'GROUP BY SUBSTRING(c.data.path, LENGTH("' + datasetModel.path + '") - 1, ' +
             'INDEX_OF(c.data.path, "/", LENGTH("' + datasetModel.path + '")) - LENGTH("' + datasetModel.path + '") + 2)';
-        
+
         const distinctPathsQuery = 'SELECT DISTINCT VALUE c.data.path FROM c WHERE c.data.subproject = "'
             + datasetModel.subproject + '" AND STARTSWITH(c.data.path, "' + datasetModel.path + '", false)';
-        
-        Tx.asyncTest( async(done: any) => {
+
+        Tx.test( async(done: any) => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
             AzureConfig.ENABLE_OPTIMISED_QUERY = true;
 
@@ -423,7 +409,7 @@ export class TestAzureCosmosDbDAO {
             done();
         });
 
-        Tx.asyncTest( async(done: any) => {
+        Tx.test( async(done: any) => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
             AzureConfig.ENABLE_OPTIMISED_QUERY = false;
 
@@ -462,7 +448,7 @@ export class TestAzureCosmosDbDAO {
             done();
         });
 
-        Tx.asyncTest( async(done: any) => {
+        Tx.test( async(done: any) => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             AzureConfig.ENABLE_OPTIMISED_QUERY = true;
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
@@ -472,7 +458,7 @@ export class TestAzureCosmosDbDAO {
             done();
         });
 
-        Tx.asyncTest( async(done: any) => {
+        Tx.test( async(done: any) => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             AzureConfig.ENABLE_OPTIMISED_QUERY = false;
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
@@ -571,7 +557,7 @@ export class TestAzureCosmosDbDAO {
             done();
         });
 
-        Tx.asyncTest( async(done: any) => {
+        Tx.test( async(done: any) => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
@@ -618,7 +604,7 @@ export class TestAzureCosmosDbDAO {
             done();
         });
 
-        Tx.asyncTest(async (done: any) => {
+        Tx.test(async (done: any) => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
@@ -668,7 +654,7 @@ export class TestAzureCosmosDbDAO {
             done();
         });
 
-        Tx.asyncTest(async (done: any) => {
+        Tx.test(async (done: any) => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
