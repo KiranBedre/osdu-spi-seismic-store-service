@@ -60,16 +60,6 @@ public class QueueHandlerRedis<TOptions> : IQueueHandler<IOptionsQueueRedis>
         throw new AggregateException(exceptions);
     }
 
-    public virtual T Dequeue<T>(string key) where T : class, IQueueMessage
-    {
-        throw new NotImplementedException();
-    }
-
-    public virtual void Enqueue<T>(string key, T value) where T : class, IQueueMessage
-    {
-        throw new NotImplementedException();
-    }
-
     public virtual long HashDecrement(string key, string field, long? decBy = 1)
     {
         try

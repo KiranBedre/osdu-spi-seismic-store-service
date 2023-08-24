@@ -14,21 +14,29 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
+namespace Sidecar.Common.Tests;
 
-public interface IQueueHandler<TOptions> where TOptions : class
+public class QueueHandlerRedisDeletionTests : QueueHandlerRedisTests
 {
-    long HashIncrement(string key, string field, long? incBy = 1);
+    public QueueHandlerRedisDeletionTests() : base(){
 
-    Task<long> HashIncrementAsync(string key, string field, long? incBy = 1);
+    }
 
-    long HashDecrement(string key, string field, long? decBy = 1);
-    Task<long> HashDecrementAsync(string key, string field, long? incBy = 1);
+    private QueueHandlerRedisDeletion GetQueueHander() => new QueueHandlerRedisDeletion(
+            TestingHelpers.GetLogger<QueueHandlerRedisDeletion>().Object
+            , new Options
+            {
+                QueueConnectionString = "somehost:1234",
+                QueueName = "somequeue"
+            }
+            , ConnectionMultiplexer.Object);
+    [Fact]
+    private void IncrementCountAsync_Success()
+    {
+        // Arrange
 
-    bool HashSet(string key, string field, string value);
+        // Act
 
-    Task<bool> HashSetAsync(string key, string field, string value);
-
-    T HashGet<T>(string key, string field) where T : unmanaged;
-    Task<T> HashGetAsync<T>(string key, string field) where T : unmanaged;
+        // Assert
+    }
 }

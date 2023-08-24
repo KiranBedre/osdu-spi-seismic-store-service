@@ -18,16 +18,14 @@ namespace Sidecar.Common.Tests;
 
 public class QueueHandlerRedisTests
 {
-    private readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
+    protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
 
     public QueueHandlerRedisTests()
     {
         ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
     }
 
-    private QueueHandlerRedis<IOptionsQueueRedis> GetQueueHander()
-    {
-        return new QueueHandlerRedis<IOptionsQueueRedis>(
+    private QueueHandlerRedis<IOptionsQueueRedis> GetQueueHander() => new QueueHandlerRedis<IOptionsQueueRedis>(
             TestingHelpers.GetLogger<QueueHandlerRedis<IOptionsQueueRedis>>().Object
             , new Options
             {
@@ -35,14 +33,13 @@ public class QueueHandlerRedisTests
                 QueueName = "somequeue"
             }
             , ConnectionMultiplexer.Object);
-    }
 
     [Theory]
     [InlineData(null)]
     [InlineData(1)]
     [InlineData(10)]
     [InlineData(int.MaxValue)]
-    public void HashSet_HashIncrement_Success(int? inc){
+    private void HashSet_HashIncrement_Success(int? inc){
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
         var queueHandler = GetQueueHander();
@@ -68,7 +65,7 @@ public class QueueHandlerRedisTests
     [InlineData(1)]
     [InlineData(10)]
     [InlineData(int.MaxValue)]
-    public void HashSet_HashDecrement_Success(int? inc){
+    private void HashSet_HashDecrement_Success(int? inc){
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
         var queueHandler = GetQueueHander();
@@ -90,7 +87,7 @@ public class QueueHandlerRedisTests
     }
 
     [Fact]
-    public void HashSet_HashGet_Success()
+    private void HashSet_HashGet_Success()
     {
         // Arrange
         var queueHandler = GetQueueHander();
@@ -112,7 +109,7 @@ public class QueueHandlerRedisTests
     }
 
     [Fact]
-    public async Task HashSetAsync_HashGetAsync_Success()
+    private async Task HashSetAsync_HashGetAsync_Success()
     {
         // Arrange
         var queueHandler = GetQueueHander();
