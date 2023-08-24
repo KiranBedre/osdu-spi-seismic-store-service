@@ -1707,7 +1707,7 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?path=/test/",
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?path={{testPath01}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -1722,7 +1722,7 @@
 							"query": [
 								{
 									"key": "path",
-									"value": "/test/"
+									"value": "{{testPath01}}"
 								}
 							]
 						}
