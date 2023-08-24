@@ -75,13 +75,8 @@ export class Tx {
 
     public static test(cb: any) {
         it(this.getTag(), (done) => {
-            cb(done);
-        });
-    }
-
-    public static asyncTest(cb: (done: Mocha.Done) => Promise<void>) {
-        it(this.getTag(), (done) => {
-            cb(done).catch(done);  // ensure done is called on exceptions
+            cb(done)
+                .catch(done);  // interpret exceptions as test failures
         });
     }
 
