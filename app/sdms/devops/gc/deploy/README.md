@@ -42,23 +42,12 @@ First you need to set variables in **values.yaml** file using any code editor. S
 **data.logLevel** | logging level | string | "ERROR" | yes
 **data.cloudProvider** | cloud provider | string | "google" | yes
 **data.port** | port | string | "5000" | yes
-**data.desServiceHost** | base url of host | string | "https://des" | yes
 **data.partitionHost** | partition service endpoint | string | "http://partition" | yes
-**data.entitlementBaseUrlPath** | url path for entitlements | string | "/entitlements/v2" | yes
-**data.dataPartitionRestHeaderKey** | REST header key for data partition | string | "data-partition-id" | yes
 **data.storageHost** | storage service endpoint | string | "http://storage" | yes
 **data.legalHost** | legal service endpoint | string | "http://legal" | yes
-**data.appEnvironmentIdentifier** | app environment | string | "dev" | yes
 **data.entitlementsHost** | entitlements service endpoint | string | "http://entitlements" | yes
-**data.redisDdmsHost** |  redis instance address | string| "redis-cache-ddms.redis.svc.cluster.local" | yes
-**data.redisPort** | redis instance port | string | "6379" | yes
 **data.redisSdmsHost** | The host for redis instance. If empty (by default), helm installs an internal redis instance | string | - | yes
 **data.redisSdmsPort** | redis instance port | string | "6379" | yes
-**data.urlPrefix** | url prefix for seismic-store | string | "/api/seismic-store/v3" | yes
-**data.impServiceAccountSigner** | imp SA signer | string | "NA" | yes
-**data.seistoreDesAppkey** | seismic-store app key | string | "NA" | yes
-**data.serviceCloudProject** | project ID of service | string | - | yes
-**data.googleAudiences** | your Google Cloud client ID | string | - | yes
 **data.apiBasePath** | base api url path | string | "/api/v3" | yes
 **data.serviceEnv** | service environment | string | "dev" | yes
 

@@ -6,26 +6,15 @@ global:
 data:
   # Configmap
   logLevel: "ERROR"
-  cloudProvider: "google"
+  cloudProvider: "gc"
   port: "5000"
-  desServiceHost: "https://des"
   partitionHost: "http://partition"
-  entitlementBaseUrlPath: "/entitlements/v2"
-  dataPartitionRestHeaderKey: "data-partition-id"
   storageHost: "http://storage"
   legalHost: "http://legal"
-  appEnvironmentIdentifier: "dev"
   entitlementsHost: "http://entitlements"
-  redisDdmsHost: "redis-ddms-master.redis.svc.cluster.local"
-  redisPort: "6379"
   redisSdmsHost: ""
   redisSdmsPort: "6379"
   redisSdmsTlsDisabled: true
-  urlPrefix: "/api/seismic-store/v3"
-  impServiceAccountSigner: "NA"
-  seistoreDesAppkey: "NA"
-  serviceCloudProject: ""
-  googleAudiences: ""
   apiBasePath: "/api/v3"
   serviceEnv: "dev"
   # Deployment
