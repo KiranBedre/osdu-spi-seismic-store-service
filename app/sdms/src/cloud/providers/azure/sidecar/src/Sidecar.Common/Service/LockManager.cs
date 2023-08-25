@@ -15,6 +15,7 @@
 // ============================================================================
 
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Service;
 using Sidecar.Common.Utility;
@@ -35,22 +36,6 @@ namespace Sidecar.DeleteOperationRunner.Services
         {
             var entity = await GetAsync(key);
             return entity != null ? entity.StartsWith("rms") ? entity[4..].Split(':') : entity : null;
-        }
-
-        private async Task<bool> SetLock(string key, object value)
-        {
-            if (value != null)
-            {
-                if (value is string)
-                {
-                    return await SetAsync(key, (string)value);
-                }
-                else
-                {
-                    return await SetAsync(key, "rms:" + string.Join(":", value));
-                }
-            }
-            return false;
         }
 
         private async Task AcquireMutex(string key)
@@ -94,28 +79,9 @@ namespace Sidecar.DeleteOperationRunner.Services
                 return ((string)lockValue).StartsWith("WDELETE");
             }
 
-            var result =  await SetLock(key, Utils.GenerateDeleteLockID());
+            var result =  await SetAsync(key, Utils.GenerateDeleteLockID());
             await ReleaseMutex(key);
             return result;
-        }
-
-        public async Task<bool> CleanupDeleteLock(string key)
-        {
-            try
-            {
-                await AcquireMutex(key);
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Cannot aquire mutex {key}. Please try again shortly. {e.Message} ");
-            }
-
-            var lockValue = await GetLock(key);
-            if (lockValue != null && lockValue is string && ((string)lockValue).StartsWith("WDELETE"))
-            {
-                return await DeleteAsync(key);
-            }
-            return false;
         }
     }
 }

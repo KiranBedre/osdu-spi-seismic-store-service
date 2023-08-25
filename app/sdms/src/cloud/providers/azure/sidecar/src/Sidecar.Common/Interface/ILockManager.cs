@@ -19,6 +19,5 @@ namespace Sidecar.DeleteOperationRunner.Services
     public interface ILockManager
     {
         Task<bool> AcquireDeleteLock(string key);
-        Task<bool> CleanupDeleteLock(string key);
     }
 }
