@@ -24,14 +24,8 @@ public class RedisHandlerTests
     {
         ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
     }
-    private RedisHandler GetQueueHander() => new RedisHandler(
-            TestingHelpers.GetLogger<RedisHandler>().Object
-
-            , new Options
-            {
-                QueueConnectionString = "somehost:1234",
-                QueueName = "somequeue"
-            }
+    private RedisHandler GetQueueHander() => new RedisHandler(TestingHelpers.GetLogger<RedisHandler>().Object
+            , TestingHelpers.GetAllOptions()
             , ConnectionMultiplexer.Object);
 
     [Theory]

@@ -17,7 +17,6 @@
 namespace Sidecar.Common.Tests;
 
 using System.Data.Common;
-using Microsoft.Extensions.Logging;
 
 #pragma warning disable CS8600
 internal static partial class TestingHelpers
@@ -48,6 +47,18 @@ internal static partial class TestingHelpers
             }));
 
         return logger;
+    }
+
+    internal static IOptions GetAllOptions(){
+        return new Options
+        {
+            QueueConnectionString = "somehost:1234",
+            QueueName = "somequeue",
+            ConnectionString = "someredislockshost:1234",
+            CosmosEndpoint = "https://somecosmosinstance.documents.azure.com:443/",
+            CosmosKey = "somecosmosauthkey",
+            StorageAccountConnectionString = ""
+        };
     }
 
     internal static Mock<IDatabase> GetDatabase(){
