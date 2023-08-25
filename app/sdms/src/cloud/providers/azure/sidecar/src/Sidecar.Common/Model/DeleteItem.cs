@@ -14,9 +14,20 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
-public interface IOptionsQueueRedis : IOptionsRedis
+using Newtonsoft.Json;
+
+namespace Sidecar.Common.Model
 {
-    string QueueConnectionString { get; set; }
-    string QueueName { get; set; }
+
+    public class DeleteItem
+    {
+
+        [JsonProperty(PropertyName = "id")]
+        public string? Id { get; set; }
+
+
+        [JsonProperty(PropertyName = "gcsurl")]
+        public string? gcsurl { get; set; }
+
+    }
 }

@@ -22,13 +22,14 @@ namespace Sidecar.Common.Service;
 
     using Interface;
 
-public class QueueHandlerRedis : IQueueHandler
+public class RedisHandler : IRedisHandler
 {
-    protected readonly ILogger<QueueHandlerRedis> Logger;
-    protected readonly IOptionsQueueRedis Options;
+    protected readonly ILogger<RedisHandler> Logger;
+    protected readonly IOptionsRedis Options;
     protected IConnectionMultiplexer Client;
 
-    public QueueHandlerRedis(ILogger<QueueHandlerRedis> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer)
+    public RedisHandler(ILogger<RedisHandler> logger, IOptionsRedis options, IConnectionMultiplexer connectionMultiplexer)
+
     {
         Logger = logger;
         Options = options;
@@ -53,14 +54,9 @@ public class QueueHandlerRedis : IQueueHandler
         ArgumentNullException.ThrowIfNull(Options, nameof(Options));
         var exceptions = new List<Exception>();
 
-        if (string.IsNullOrEmpty(Options.QueueConnectionString))
+        if (string.IsNullOrEmpty(Options.ConnectionString))
         {
             exceptions.Add(new ArgumentException("Redis connection string is required."));
-        }
-
-        if (string.IsNullOrEmpty(Options.QueueName))
-        {
-            exceptions.Add(new ArgumentException("Queue Name is required."));
         }
 
         if (exceptions.Count == 0)
@@ -199,5 +195,20 @@ public class QueueHandlerRedis : IQueueHandler
             Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
+    }
+
+    public async Task<string?> GetAsync(string key)
+    {
+        return await Client.GetDatabase().StringGetAsync(key);
+    }
+
+    public async Task<bool> SetAsync(string key, string value)
+    {
+        return await Client.GetDatabase().StringSetAsync(key, value);
+    }
+
+    public async Task<bool> DeleteAsync(string key)
+    {
+        return await Client.GetDatabase().KeyDeleteAsync(key);
     }
 }

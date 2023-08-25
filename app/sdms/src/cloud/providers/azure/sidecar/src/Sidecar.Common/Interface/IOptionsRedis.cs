@@ -15,8 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
-public interface IOptionsQueueRedis : IOptionsRedis
+public interface IOptionsRedis
 {
-    string QueueConnectionString { get; set; }
-    string QueueName { get; set; }
+    string ConnectionString { get; set; }
 }

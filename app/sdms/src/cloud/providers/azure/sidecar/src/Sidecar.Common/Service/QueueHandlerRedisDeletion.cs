@@ -24,11 +24,12 @@ using Interface;
 using Model;
 using Utilitiy;
 
-public class QueueHandlerRedisDeletion : QueueHandlerRedis, IQueueHandlerDeletion
+public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 {
-    public QueueHandlerRedisDeletion(ILogger<QueueHandlerRedisDeletion> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer) : base(logger, options, connectionMultiplexer)
+    new readonly IOptionsQueueRedis Options;
+    public RedisHandlerDeletion(ILogger<RedisHandlerDeletion> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer) : base(logger, options, connectionMultiplexer)
     {
-
+        Options = options;
     }
 
     public async Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync()

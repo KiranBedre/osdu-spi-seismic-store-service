@@ -32,7 +32,7 @@ public class ItemsRetriever: IItemsRetriever
     public async Task<IPaginatedRecords> GetItems(string subproject, string path)
     {
         var cs = $"AccountEndpoint={Options.CosmosEndpoint};AccountKey={Options.CosmosKey};";
-        var sql = $"SELECT c.id, c.data.gcsurl FROM c WHERE c.data.subproject = \"{subproject}\" AND startswith(c.data.path, \"{path}\", false) ";
+        var sql = $"SELECT c.id, c.data.gcsurl, c.data.path, c.data.name FROM c WHERE c.data.subproject = \"{subproject}\" AND startswith(c.data.path, \"{path}\", false) ";
         return await DataAccess.GetRecords(cs, sql, null, null);
     }
 }

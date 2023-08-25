@@ -21,6 +21,9 @@ using Microsoft.Extensions.Logging;
 using System.Globalization;
 
 using Interface;
+using Sidecar.DeleteOperationRunner.Services;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 public class DeletionOperationService : BackgroundService
 {
@@ -28,6 +31,7 @@ public class DeletionOperationService : BackgroundService
     private readonly IQueueHandlerDeletion Queue;
     private readonly IItemsRetriever ItemsRetriever;
     private readonly IBulkDeletionWorker BulkDeletionWorker;
+    private readonly ILockManager LockManager;
 
     private int ConsecutiveFailures = 0;
     private const int MaxConsecutiveFailures = 10;
@@ -35,12 +39,14 @@ public class DeletionOperationService : BackgroundService
     public DeletionOperationService(ILogger<DeletionOperationService> logger,
         IQueueHandlerDeletion queue,
         IItemsRetriever itemsRetriever,
-        IBulkDeletionWorker bulkDeletionWorker)
+        IBulkDeletionWorker bulkDeletionWorker,
+        ILockManager lockManager)
     {
         Logger = logger;
         Queue = queue;
         ItemsRetriever = itemsRetriever;
         BulkDeletionWorker = bulkDeletionWorker;
+        LockManager = lockManager;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -58,6 +64,19 @@ public class DeletionOperationService : BackgroundService
                     Logger.LogInformation("Found {0} items to delete", items!.Count.ToString(CultureInfo.InvariantCulture));
                     await Queue.UpdateStatusAsync(op.OperationId, items.Count);
                     //todo: lock all found items
+                    
+                    foreach (var item in items)
+                    {
+                        JObject jsonItem = JsonConvert.DeserializeObject<JObject>(item.ToString());
+                        var datasetName = jsonItem["path"].ToString() + jsonItem["name"].ToString();
+                        Logger.LogInformation("Acquiring lock for {0}", datasetName);
+                        var locked = await LockManager.AcquireDeleteLock(datasetName);
+                        Logger.LogInformation("Is locked {0} - {1}", datasetName, locked);
+                        if (!locked)
+                        {
+                            items.Remove(item);
+                        }
+                    }
 
                     await BulkDeletionWorker.RunBulkDeletion(op.OperationId, items);
                 }

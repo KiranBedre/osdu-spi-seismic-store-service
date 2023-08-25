@@ -16,7 +16,7 @@
 
 namespace Sidecar.Common.Interface;
 
-public interface IQueueHandler
+public interface IRedisHandler
 {
     long HashIncrement(string key, string field, long? incBy = 1);
 

@@ -16,17 +16,17 @@
 
 namespace Sidecar.Common.Tests;
 
-public class QueueHandlerRedisTests
+public class RedisHandlerTests
 {
     protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
 
-    public QueueHandlerRedisTests()
+    public RedisHandlerTests()
     {
         ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
     }
+    private RedisHandler GetQueueHander() => new RedisHandler(
+            TestingHelpers.GetLogger<RedisHandler>().Object
 
-    private QueueHandlerRedis GetQueueHander() => new QueueHandlerRedis(
-            TestingHelpers.GetLogger<QueueHandlerRedis>().Object
             , new Options
             {
                 QueueConnectionString = "somehost:1234",

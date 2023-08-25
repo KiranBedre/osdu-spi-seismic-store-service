@@ -14,9 +14,23 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
-public interface IOptionsQueueRedis : IOptionsRedis
+
+namespace Sidecar.Common.Utility
 {
-    string QueueConnectionString { get; set; }
-    string QueueName { get; set; }
+    public class Utils
+    {
+        private static Random random = new Random();
+
+        private static string MakeID(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        public static string GenerateDeleteLockID()
+        {
+            return "WDELETE" + MakeID(9);
+        }
+    }
 }

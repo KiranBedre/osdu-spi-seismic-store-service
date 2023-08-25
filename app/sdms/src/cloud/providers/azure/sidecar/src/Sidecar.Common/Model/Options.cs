@@ -23,10 +23,10 @@ using Interface;
 
 public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAcount
 {
-    [Option('c', "conn", Required = true, HelpText = "Redis Connection String.")]
+    [Option('c', "conn", Required = true, HelpText = "Redis Queue Connection String.")]
     public string QueueConnectionString {get; set;}
 
-    [Option('q', "queue", Required = true, HelpText = "Queue name.")]
+    [Option('q', "queue", Required = true, HelpText = "Redis Queue name.")]
     public string QueueName { get; set; }
 
     [Option('u', "url", Required = true, HelpText = "Cosmos endpoint URL.")]
@@ -37,4 +37,7 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option('s', "storageAccountConnectionString", Required = true, HelpText = "storageAccountConnectionString.")]
     public string StorageAccountConnectionString { get; set; }
+
+    [Option('l', "locks", Required = true, HelpText = "Redis Locks Connection String.")]
+    public string ConnectionString { get; set; }
 }

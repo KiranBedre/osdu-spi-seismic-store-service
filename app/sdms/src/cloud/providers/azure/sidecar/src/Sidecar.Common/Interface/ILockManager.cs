@@ -14,9 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
-public interface IOptionsQueueRedis : IOptionsRedis
+namespace Sidecar.DeleteOperationRunner.Services
 {
-    string QueueConnectionString { get; set; }
-    string QueueName { get; set; }
+    public interface ILockManager
+    {
+        Task<bool> AcquireDeleteLock(string key);
+        Task<bool> CleanupDeleteLock(string key);
+    }
 }

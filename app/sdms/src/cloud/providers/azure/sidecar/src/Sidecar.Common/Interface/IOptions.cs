@@ -15,7 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
-public interface IOptions : IOptionsCosmos, IOptionsQueueRedis, IOptionsStorageAcount
+public interface IOptions : IOptionsCosmos, IOptionsQueueRedis, IOptionsStorageAcount, IOptionsRedis
 {
 
 }

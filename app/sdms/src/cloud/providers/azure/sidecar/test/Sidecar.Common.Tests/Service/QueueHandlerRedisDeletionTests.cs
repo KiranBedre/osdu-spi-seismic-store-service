@@ -16,14 +16,14 @@
 
 namespace Sidecar.Common.Tests;
 
-public class QueueHandlerRedisDeletionTests : QueueHandlerRedisTests
+public class RedisHandlerDeletionTests : RedisHandlerTests
 {
-    public QueueHandlerRedisDeletionTests() : base(){
+    public RedisHandlerDeletionTests() : base(){
 
     }
 
-    private QueueHandlerRedisDeletion GetQueueHander() => new QueueHandlerRedisDeletion(
-            TestingHelpers.GetLogger<QueueHandlerRedisDeletion>().Object
+    private RedisHandlerDeletion GetQueueHander() => new RedisHandlerDeletion(
+            TestingHelpers.GetLogger<RedisHandlerDeletion>().Object
             , new Options
             {
                 QueueConnectionString = "somehost:1234",

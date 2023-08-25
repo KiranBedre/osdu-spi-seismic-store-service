@@ -18,6 +18,7 @@ using CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sidecar.DeleteOperationRunner.Services;
 using StackExchange.Redis;
 
 public class Program
@@ -38,6 +39,8 @@ public class Program
         opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
 
         opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
+
+        opts.ConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_LOCKS_CONNSTR")!;
     }
 
     private static async Task RunAsync(Options opts)
@@ -46,15 +49,18 @@ public class Program
            .ConfigureServices(services => _ = services
                .AddSingleton<IOptions>(opts)
                .AddSingleton<IOptionsCosmos>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IOptionsRedis>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IOptionsQueueRedis>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IOptionsStorageAcount>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IItemsRetriever, ItemsRetriever>()
                .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
                .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-               .AddSingleton<IQueueHandlerDeletion, QueueHandlerRedisDeletion>()
-               .AddSingleton<IQueueHandler>(sp => sp.GetRequiredService<IQueueHandlerDeletion>())
+               .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
+               .AddSingleton<IRedisHandler>(sp => sp.GetRequiredService<IQueueHandlerDeletion>())
                .AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(sp.GetService<IOptionsQueueRedis>()!.QueueConnectionString))
                .AddHostedService<DeletionOperationService>()
+               .AddSingleton<ILockManager, LockManager>()
+
                .AddScoped<IDataAccess, Cosmos>()
 
             ).ConfigureLogging(lg => _ = lg
