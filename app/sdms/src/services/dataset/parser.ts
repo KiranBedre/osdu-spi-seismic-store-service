@@ -126,7 +126,9 @@ export class DatasetParser {
     }
 
     public static list(req: expRequest): DatasetListRequest {
-        return req.method === 'POST' ? this.listPost(req) : this.listGet(req);
+        const res = req.method === 'POST' ? this.listPost(req) : this.listGet(req);
+        delete res.dataset.path;
+        return res;
     }
 
     public static listGet(req: expRequest): DatasetListRequest {
