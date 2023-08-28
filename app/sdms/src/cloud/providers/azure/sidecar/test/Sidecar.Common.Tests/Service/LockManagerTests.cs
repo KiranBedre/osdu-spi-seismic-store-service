@@ -21,14 +21,15 @@ namespace Sidecar.Common.Tests.Service
     public class LockManagerTests
     {
         private LockManager LockManager;
-        protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
+        protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer = new ();
 
         public LockManagerTests()
         {
             ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
+            var factoryMock = new Mock<IRedisConnectionFactory>();
+            factoryMock.Setup(m => m.GetRedisForLocks()).Returns(ConnectionMultiplexer.Object);
             var Logger = new Mock<ILogger<LockManager>>();
-            var Options = TestingHelpers.GetAllOptions();
-            LockManager = new LockManager(Logger.Object, Options, ConnectionMultiplexer.Object);
+            LockManager = new LockManager(Logger.Object, factoryMock.Object);
         }
 
 

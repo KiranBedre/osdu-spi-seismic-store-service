@@ -14,12 +14,15 @@
 // limitations under the License.
 // ============================================================================
 
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using CommandLine;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sidecar.Common.Utility;
 using Sidecar.DeleteOperationRunner.Services;
-using StackExchange.Redis;
 
 public class Program
 {
@@ -32,39 +35,79 @@ public class Program
 
     private static void AttemptOptionsFromEnv(Options opts)
     {
-        opts.QueueConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
-        opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
-        
+        Logger?.LogWarning("Checking environment variables for options...");
+
         opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
         opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
 
         opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
 
-        opts.ConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_LOCKS_CONNSTR")!;
+        opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
+
+        opts.RedisQueueHostname ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_HOSTNAME")!;
+        opts.RedisQueuePassword ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_PASSWORD")!;
+        opts.RedisQueuePort ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_PORT")!;
+
+        opts.RedisLocksHostname ??= Environment.GetEnvironmentVariable("SDMS_REDIS_LOCKS_HOSTNAME")!;
+        opts.RedisLocksPassword ??= Environment.GetEnvironmentVariable("SDMS_REDIS_LOCKS_PASSWORD")!;
+        opts.RedisLocksPort ??= Environment.GetEnvironmentVariable("SDMS_REDIS_LOCKS_PORT")!;
+
+        opts.KeyVaultUrl ??= Environment.GetEnvironmentVariable("SDMS_KEYVAULT_URL")!;
+    }
+
+    private static async Task AttemptOptionsFromKeyVault(Options opts)
+    {
+        var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), new DefaultAzureCredential());
+
+        Logger?.LogInformation("Checking KeyVault variables for options...");
+        var secretResponses = await Task.WhenAll(
+            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_HOSTNAME),
+            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_PASSWORD),
+            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_HOSTNAME),
+            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_PASSWORD));
+            
+        Logger?.LogInformation("Got variables from Key Vault...");
+
+        var secrets = secretResponses.Select(s => s.Value.Value).ToArray();
+
+        opts.RedisLocksHostname ??= secrets[0];
+        opts.RedisLocksPassword ??= secrets[1];
+        opts.RedisQueueHostname ??= secrets[2];
+        opts.RedisQueuePassword ??= secrets[3];
     }
 
     private static async Task RunAsync(Options opts)
     {
+
         var host = Host.CreateDefaultBuilder()
-           .ConfigureServices(services => _ = services
-               .AddSingleton<IOptions>(opts)
-               .AddSingleton<IOptionsCosmos>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IOptionsRedis>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IOptionsQueueRedis>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IOptionsStorageAccount>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
-               .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
-               .AddSingleton<IBlobClient, BlobClient>()
-               .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-               .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
-               .AddSingleton<IRedisHandler>(sp => sp.GetRequiredService<IQueueHandlerDeletion>())
-               .AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(sp.GetService<IOptionsQueueRedis>()!.QueueConnectionString))
-               .AddHostedService<DeletionOperationService>()
-               .AddSingleton<ILockManager, LockManager>()
+           .ConfigureServices(services =>
+           {
+               services.AddAzureClients(builder =>
+               {
+                   builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
+               });
+               services
+                   .AddSingleton<IOptions>(opts)
+                   .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
+                   .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
+                   .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
+                   .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
+                   .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
+                   .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
+                   .AddSingleton<IBlobClient, BlobClient>()
+                   .AddSingleton<IBulkDeletionWorker,
+                       BulkDeletionWorker>()
+                   .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
+                   .AddSingleton<IRedisHandler>(sp =>
+                       sp.GetRequiredService<IQueueHandlerDeletion>())
+                   .AddSingleton<RedisConnectionFactory>()
+                   .AddSingleton<IRedisConnectionFactory>(sp =>
+                       new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()))
+                   .AddHostedService<DeletionOperationService>()
+                   .AddSingleton<ILockManager, LockManager>()
+                   .AddScoped<IDataAccess, Cosmos>();
 
-               .AddScoped<IDataAccess, Cosmos>()
-
-            ).ConfigureLogging(lg => _ = lg
+           }).ConfigureLogging(lg => _ = lg
                 .ClearProviders()
                 .AddSimpleConsole(o =>
                 {
@@ -98,9 +141,9 @@ public class Program
         //---if parsing did not succeed, try to read from env for values instead
         if (res.Errors.Any())
         {
-            Logger?.LogWarning("Checking environment variables for options...");
             var opts = res.Value ?? new Options();
             AttemptOptionsFromEnv(opts);
+            await AttemptOptionsFromKeyVault(opts);
 
             //---update the args to include the env vars
             args = parser.FormatCommandLine(opts).Split(' ');

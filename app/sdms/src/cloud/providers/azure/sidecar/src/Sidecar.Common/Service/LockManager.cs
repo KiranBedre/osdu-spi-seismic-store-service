@@ -27,7 +27,8 @@ namespace Sidecar.DeleteOperationRunner.Services
     {
         private static TimeSpan TTL = TimeSpan.FromSeconds(6);
 
-        public LockManager(ILogger<LockManager> logger, IOptionsRedis options, IConnectionMultiplexer connectionMultiplexer) : base(logger, options, connectionMultiplexer)
+        public LockManager(ILogger<LockManager> logger, IRedisConnectionFactory redisConnectionFactory) 
+            : base(logger, redisConnectionFactory.GetRedisForLocks())
         {
 
         }

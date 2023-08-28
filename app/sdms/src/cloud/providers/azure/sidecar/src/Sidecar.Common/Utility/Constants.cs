@@ -1,0 +1,43 @@
+// ============================================================================
+// Copyright 2017-2023, Microsoft
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+namespace Sidecar.Common.Utility;
+
+public static class Constants
+{
+    public static class SecretNames
+    {
+        /// <summary>
+        /// Hostname of the redis instance that stores the locks and the queues. 
+        /// </summary>
+        public const string REDIS_LOCKS_HOSTNAME = "redis-hostname";
+
+        /// <summary>
+        /// Password of the redis instance that stores the locks and the queues. 
+        /// </summary>
+        public const string REDIS_LOCKS_PASSWORD = "redis-password";
+        
+        /// <summary>
+        /// Hostname of the redis instance that stores the locks and the queues. 
+        /// </summary>
+        public const string REDIS_QUEUE_HOSTNAME = "redis-queue-hostname";
+
+        /// <summary>
+        /// Password of the redis instance that stores the locks and the queues. 
+        /// </summary>
+        public const string REDIS_QUEUE_PASSWORD = "redis-queue-password";
+    }
+}

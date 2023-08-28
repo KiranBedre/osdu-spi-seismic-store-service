@@ -14,8 +14,31 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
-public interface IOptions : IOptionsCosmos, IOptionsQueueRedis, IOptionsLocksRedis, IOptionsStorageAccount
+namespace Sidecar.Common.Service;
+
+using StackExchange.Redis;
+using Interface;
+using System.Net;
+
+public class CachingRedisConnectionFactory : IRedisConnectionFactory
 {
+    private readonly Lazy<IConnectionMultiplexer> _locksRedis;
+    private readonly Lazy<IConnectionMultiplexer> _queueRedis;
+    
+    public CachingRedisConnectionFactory(IRedisConnectionFactory source)
+    {
+        _locksRedis = new(source.GetRedisForLocks);
+        _queueRedis = new(source.GetRedisForQueue);
+    }
+
+    public IConnectionMultiplexer GetRedisForQueue()
+    {
+        return _locksRedis.Value;
+    }
+
+    public IConnectionMultiplexer GetRedisForLocks()
+    {
+        return _queueRedis.Value;
+    }
 
 }

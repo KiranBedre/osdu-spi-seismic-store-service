@@ -19,13 +19,14 @@ namespace Sidecar.Common.Tests;
 public class RedisHandlerTests
 {
     protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
+    protected readonly Mock<IRedisConnectionFactory> RedisConnectionFactory;
 
     public RedisHandlerTests()
     {
         ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
+        RedisConnectionFactory = new Mock<IRedisConnectionFactory>();
     }
     private RedisHandler GetQueueHander() => new RedisHandler(TestingHelpers.GetLogger<RedisHandler>().Object
-            , TestingHelpers.GetAllOptions()
             , ConnectionMultiplexer.Object);
 
     [Theory]

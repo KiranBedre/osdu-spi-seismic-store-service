@@ -25,19 +25,16 @@ namespace Sidecar.Common.Service;
 public class RedisHandler : IRedisHandler
 {
     protected readonly ILogger<RedisHandler> Logger;
-    protected readonly IOptionsRedis Options;
     protected IConnectionMultiplexer Client;
 
-    public RedisHandler(ILogger<RedisHandler> logger, IOptionsRedis options, IConnectionMultiplexer connectionMultiplexer)
+    public RedisHandler(ILogger<RedisHandler> logger, IConnectionMultiplexer connectionMultiplexer)
 
     {
         Logger = logger;
-        Options = options;
-        ValidateOptions();
         Client = connectionMultiplexer;
     }
 
-    protected IDatabase GetDatabase(){
+    protected IDatabase GetDatabase() {
         try
         {
             return Client.GetDatabase();
@@ -47,24 +44,6 @@ public class RedisHandler : IRedisHandler
             Logger.LogError(ex, "Error connecting to Redis database");
             throw;
         }
-    }
-
-    protected virtual void ValidateOptions()
-    {
-        ArgumentNullException.ThrowIfNull(Options, nameof(Options));
-        var exceptions = new List<Exception>();
-
-        if (string.IsNullOrEmpty(Options.ConnectionString))
-        {
-            exceptions.Add(new ArgumentException("Redis connection string is required."));
-        }
-
-        if (exceptions.Count == 0)
-        {
-            return;
-        }
-
-        throw new AggregateException(exceptions);
     }
 
     public virtual long HashDecrement(string key, string field, long? decBy = 1)

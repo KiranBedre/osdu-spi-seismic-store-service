@@ -26,8 +26,10 @@ using Utilitiy;
 
 public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 {
-    new readonly IOptionsQueueRedis Options;
-    public RedisHandlerDeletion(ILogger<RedisHandlerDeletion> logger, IOptionsQueueRedis options, IConnectionMultiplexer connectionMultiplexer) : base(logger, options, connectionMultiplexer)
+    readonly IOptionsQueueRedis Options;
+
+    public RedisHandlerDeletion(ILogger<RedisHandlerDeletion> logger, IOptionsQueueRedis options, IRedisConnectionFactory redisConnectionFactory)
+        : base(logger, redisConnectionFactory.GetRedisForQueue())
     {
         Options = options;
     }

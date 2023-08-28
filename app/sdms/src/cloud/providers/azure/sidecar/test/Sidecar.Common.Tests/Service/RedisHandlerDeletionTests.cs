@@ -18,18 +18,19 @@ namespace Sidecar.Common.Tests;
 
 public class RedisHandlerDeletionTests : RedisHandlerTests
 {
-    public RedisHandlerDeletionTests() : base(){
-
+    public RedisHandlerDeletionTests() : base()
+    {
+        RedisConnectionFactory.Setup(m => m.GetRedisForQueue()).Returns(ConnectionMultiplexer.Object);
     }
 
     private RedisHandlerDeletion GetQueueHander() => new RedisHandlerDeletion(
             TestingHelpers.GetLogger<RedisHandlerDeletion>().Object
             , new Options
             {
-                QueueConnectionString = "somehost:1234",
+                RedisQueueHostname = "somehost:1234",
                 QueueName = "somequeue"
             }
-            , ConnectionMultiplexer.Object);
+            , RedisConnectionFactory.Object);
 
     [Fact]
     private void IncrementCountAsync_Success()
