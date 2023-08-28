@@ -22,8 +22,6 @@ using System.Globalization;
 
 using Interface;
 using Sidecar.DeleteOperationRunner.Services;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 
 public class DeletionOperationService : BackgroundService
 {
@@ -68,9 +66,9 @@ public class DeletionOperationService : BackgroundService
                         var datasetName = item.Path + item.Name;
                         Logger.LogInformation("Acquiring lock for {0}", datasetName);
                         var locked = await LockManager.AcquireDeleteLock(datasetName);
-                        Logger.LogInformation("Is locked {0} - {1}", datasetName, locked);
                         if (!locked)
                         {
+                            Logger.LogInformation("Could not acquire lock for {0}", datasetName);
                             items.Remove(item);
                         }
                     }

@@ -14,10 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
-
 namespace Sidecar.Common.Tests.Service
 {
     public class BulkDeletionWorkerTests
@@ -50,6 +46,37 @@ namespace Sidecar.Common.Tests.Service
             Assert.Null(virtualFolderName);
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("/a/b/c")]
+        public async Task ProcessItemDeletion_WithNullGcsUrl_IncrementsFailedCount(string gcsurl)
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
+            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
+            var blobClientMock = new Mock<IBlobClient>();
+
+            var deletionWorker = new BulkDeletionWorker(
+                loggerMock.Object,
+                queueMock.Object,
+                metadataDeletionWorkerMock.Object,
+                blobClientMock.Object
+            );
+
+            var operationId = "123";
+            var item = new DeleteItem { Id = "item123" };
+            item.Gcsurl = gcsurl;
+            var itemsToDelete = new List<DeleteItem> { item };
+
+            // Act
+            await deletionWorker.RunBulkDeletion(operationId, itemsToDelete);
+
+            // Assert
+            queueMock.Verify(q => q.IncrementCountAsync(operationId, "FailedCnt"), Times.Once);
+        }
+
+
 
         [Fact]
         public async Task RunBulkDeletion_Should_Work_With_EmptyItems()
@@ -59,8 +86,6 @@ namespace Sidecar.Common.Tests.Service
             var queueMock = new Mock<IQueueHandlerDeletion>();
             var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
             var blobClientMock = new Mock<IBlobClient>();
-            var blobServiceClientMock = new Mock<BlobServiceClient>();
-            var blobBatchClientMock = new Mock<BlobBatchClient>();
 
             var bulkDeletionWorker = new BulkDeletionWorker(
                 loggerMock.Object,

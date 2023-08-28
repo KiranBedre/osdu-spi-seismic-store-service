@@ -17,21 +17,27 @@
 namespace Sidecar.Common.Service;
 
 using Interface;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Sidecar.Common.Model;
+
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type
+#pragma warning disable CS8604 // Possible null reference argument for parameter.
 
 public class DeleteItemsRetriever: IItemsRetriever
 {
+    private readonly ILogger<DeleteItemsRetriever> Logger;
     private readonly IDataAccess DataAccess;
     private readonly IOptionsCosmos Options;
 
-    public DeleteItemsRetriever(IDataAccess dataAccess, IOptionsCosmos options)
+    public DeleteItemsRetriever(ILogger<DeleteItemsRetriever> logger, IDataAccess dataAccess, IOptionsCosmos options)
     {
+        Logger = logger;
         DataAccess = dataAccess;
         Options = options;
     }
 
-    public async Task<List<DeleteItem?>?> GetItems(string subproject, string path)
+    public async Task<List<DeleteItem>?> GetItems(string subproject, string path)
     {
         var sql = $"SELECT c.id, c.data.gcsurl, c.data.path, c.data.name " +
             $"FROM c " +
@@ -41,19 +47,15 @@ public class DeleteItemsRetriever: IItemsRetriever
         var cs = $"AccountEndpoint={Options.CosmosEndpoint};AccountKey={Options.CosmosKey};";
         var paginatedRecords = await DataAccess.GetRecords(cs, sql, null, null);
 
-        if (paginatedRecords.records == null)
-        {
-            return null;
-        }
         return paginatedRecords.records.Select(item =>
         {
             try
             {
-                return JsonConvert.DeserializeObject<DeleteItem>(item.ToString());
+                return JsonSerializer.Deserialize<DeleteItem>(item.ToString());
             }
             catch (Exception)
             {
-                return null; // Return default value if deserialization fails
+                return null;
             }
         }).Where(deserializedObject => deserializedObject != null) // Filter out failed deserializations
         .ToList();

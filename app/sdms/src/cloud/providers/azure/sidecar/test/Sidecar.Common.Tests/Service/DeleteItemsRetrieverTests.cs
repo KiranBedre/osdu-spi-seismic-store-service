@@ -1,0 +1,53 @@
+﻿// ============================================================================
+// Copyright 2017-2023, Microsoft
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+namespace Sidecar.Common.Tests.Service
+{
+    public class DeleteItemsRetrieverTests
+    {
+        [Fact]
+        public async Task GetItems_WithValidData_ReturnsListOfDeleteItems()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<DeleteItemsRetriever>>();
+            var dataAccessMock = new Mock<IDataAccess>();
+            var optionsMock = new Mock<IOptions>();
+
+            var deleteItemsRetriever = new DeleteItemsRetriever(loggerMock.Object, dataAccessMock.Object, optionsMock.Object);
+
+            var subproject = "subproj";
+            var path = "path/";
+            var records = new List<object>
+            {
+                @"{ ""id"": ""1"", ""gcsurl"": ""url1"", ""path"": ""path1"", ""name"": ""name1"" }",
+                @"{ ""id"": ""2"", ""gcsurl"": ""url2"", ""path"": ""path2"", ""name"": ""name2"" }",
+            };
+            var paginatedRecords = new PaginatedRecords { records = records };
+
+            dataAccessMock.Setup(d => d.GetRecords(It.IsAny<string>(), It.IsAny<string>(), null, null))
+                .ReturnsAsync(paginatedRecords);
+
+            // Act
+            var result = await deleteItemsRetriever.GetItems(subproject, path);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            Assert.Equal("url1", result[0].Gcsurl);
+            Assert.Equal("url2", result[1].Gcsurl);
+        }
+    }
+}

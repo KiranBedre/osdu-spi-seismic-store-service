@@ -14,24 +14,23 @@
 // limitations under the License.
 // ============================================================================
 
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Sidecar.Common.Model
 {
-
     public class DeleteItem
     {
-        [JsonProperty(PropertyName = "id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; } = "";
 
-        [JsonProperty(PropertyName = "gcsurl")]
-        public string Gcsurl { get; set; } = "";
+        [JsonPropertyName("gcsurl")]
+        public string? Gcsurl { get; set; }
 
 
-        [JsonProperty(PropertyName = "path")]
+        [JsonPropertyName("path")]
         public string Path { get; set; } = "";
 
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; } = "";
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
     }
 }
