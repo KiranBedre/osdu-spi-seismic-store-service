@@ -59,8 +59,7 @@ namespace Sidecar.DeleteOperationRunner.Services
             await Client.GetDatabase().LockReleaseAsync(lockKey, Environment.MachineName);
         }
 
-        // this should return true if the lock was set successfully (no existing read or write lock is there, but a delete lock is allowed), false otherwise
-        // a delete lock is similar to a write lock, the value starts with WDELETE instead of W.
+        /// <inheritdoc cref="ILockManager.AcquireDeleteLock"/>
         public async Task<bool> AcquireDeleteLock(string key)
         {
             try
