@@ -21,7 +21,7 @@ using Interface;
 
 # pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
-public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAcount
+public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount
 {
     [Option('c', "conn", Required = true, HelpText = "Redis Queue Connection String.")]
     public string QueueConnectionString {get; set;}

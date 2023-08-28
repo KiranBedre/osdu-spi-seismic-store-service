@@ -26,7 +26,7 @@ namespace Sidecar.Common.Service
         private string StorageAccountConnectionString;
         private BlobServiceClient BlobServiceClient;
 
-        public BlobClient(ILogger<BlobClient> logger, IOptionsStorageAcount options)
+        public BlobClient(ILogger<BlobClient> logger, IOptionsStorageAccount options)
         {
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             StorageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
