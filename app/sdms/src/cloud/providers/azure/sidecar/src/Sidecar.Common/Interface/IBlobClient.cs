@@ -21,7 +21,7 @@ namespace Sidecar.Common.Interface
 {
     public interface IBlobClient
     {
-        BlobBatchClient GetBlobBatchClient();
-        BlobServiceClient GetBlobServiceClient();
+        public BlobContainerClient GetContainerClient(string containerName);
+        public BlobBatchClient GetBatchClient();
     }
 }

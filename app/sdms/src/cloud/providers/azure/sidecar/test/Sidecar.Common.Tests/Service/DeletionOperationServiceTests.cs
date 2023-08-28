@@ -63,7 +63,7 @@ namespace Sidecar.Common.Tests.Service
 
 
             queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
-            itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Subproject, deletionOperation.Path))
+            itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                               .ReturnsAsync(itemsToDelete);
 
             lockManagerMock.Setup(manager => manager.AcquireDeleteLock(It.IsAny<string>()))
@@ -75,9 +75,9 @@ namespace Sidecar.Common.Tests.Service
             var result = methodInfo.Invoke(service, new object[] { cancellationSource.Token });
 
             // Assert
-            itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Subproject, deletionOperation.Path), Times.Once);
+            itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
             lockManagerMock.Verify(manager => manager.AcquireDeleteLock(It.IsAny<string>()), Times.Exactly(itemsToDelete.Count));
-            bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.OperationId, itemsToDelete), Times.Once);
+            bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
             Assert.Equal(2, itemsToDelete.Count);
         }
 
@@ -122,7 +122,7 @@ namespace Sidecar.Common.Tests.Service
 
 
             queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
-            itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Subproject, deletionOperation.Path))
+            itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                               .ReturnsAsync(itemsToDelete);
 
             lockManagerMock.Setup(manager => manager.AcquireDeleteLock("/some/path1/Example1"))
@@ -138,9 +138,9 @@ namespace Sidecar.Common.Tests.Service
             var result = methodInfo.Invoke(service, new object[] { cancellationSource.Token });
 
             // Assert
-            itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Subproject, deletionOperation.Path), Times.Once);
+            itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
             lockManagerMock.Verify(manager => manager.AcquireDeleteLock(It.IsAny<string>()), Times.Exactly(2));
-            bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.OperationId, itemsToDelete), Times.Once);
+            bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
             Assert.Single(itemsToDelete);
         }
 
@@ -184,7 +184,7 @@ namespace Sidecar.Common.Tests.Service
             };
 
             queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
-            itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Subproject, deletionOperation.Path))
+            itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                               .ReturnsAsync(itemsToDelete);
 
             lockManagerMock.Setup(manager => manager.AcquireDeleteLock("/some/path1/Example1"))

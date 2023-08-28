@@ -14,10 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
-using Sidecar.Common.Model;
-
 namespace Sidecar.Common.Interface;
-public interface IItemsRetriever
+public interface IOptionsDataEcosystemService
 {
-    Task<List<DeleteItem>?> GetItems(string dataPartitionId, string subproject, string path, CancellationToken ct = default);
+    string DesUrl { get; set; }
 }

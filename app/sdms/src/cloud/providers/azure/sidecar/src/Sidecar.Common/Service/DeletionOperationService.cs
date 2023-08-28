@@ -57,7 +57,7 @@ public class DeletionOperationService : BackgroundService
                     //---start the deletion process
                     Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-                    var itemsToDelete = await ItemsRetriever.GetItems(op.Subproject, op.Path);
+                    var itemsToDelete = await ItemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
 
                     Logger.LogInformation("Found {0} items to delete", itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
                     await Queue.UpdateFieldStatusOperation(op.OperationId, "DatasetsCnt", itemsToDelete.Count.ToString());
@@ -76,7 +76,7 @@ public class DeletionOperationService : BackgroundService
                         }
                     }
 
-                    await BulkDeletionWorker.RunBulkDeletion(op.OperationId, itemsToDelete);
+                    await BulkDeletionWorker.RunBulkDeletion(op.Tenant, op.OperationId, itemsToDelete, cancellationToken);
                 }
                 ConsecutiveFailures = 0;
             }
@@ -85,8 +85,8 @@ public class DeletionOperationService : BackgroundService
                 Logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {ConsecutiveFailures}/{MaxConsecutiveFailures}");
                 ConsecutiveFailures++;
             }
-            await Task.Delay(1000,cancellationToken);
-        }while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
+            await Task.Delay(1000, cancellationToken);
+        } while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
     }
 
     private static string GetDatasetName(DeleteItem item)

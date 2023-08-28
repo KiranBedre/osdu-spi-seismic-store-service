@@ -21,19 +21,22 @@ using Interface;
 
 # pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
-public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount
+public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount, IOptionsDataEcosystemService
 {
-    [Option('k', "keyVaultUrl", Required = true, HelpText = "KeyVault endpoint URL, e.g. https://mytestkv.vault.azure.net/")]
+    [Option("keyVaultUrl", Required = true, HelpText = "KeyVault endpoint URL, e.g. https://mytestkv.vault.azure.net/")]
     public string KeyVaultUrl {get; set;}
 
-    [Option('u', "url", Required = true, HelpText = "Cosmos endpoint URL.")]
+    [Option("desUrl", Required = false, HelpText = "Data Ecosystem Service url.")]
+    public string DesUrl {get; set;}
+
+    [Option("cosmosUrl", Required = false, HelpText = "Cosmos endpoint URL (if DES unavailable)")]
     public string CosmosEndpoint { get; set; }
 
-    [Option('a', "AuthorizationKey", Required = true, HelpText = "Authorization Key for Cosmos.")]
+    [Option("cosmosPrimaryKey", Required = false, HelpText = "Primary Key for Cosmos (if DES unavailable)")]
     public string CosmosKey { get; set; }
 
-    [Option('s', "storageAccountConnectionString", Required = true, HelpText = "storageAccountConnectionString.")]
-    public string StorageAccountConnectionString { get; set; }
+    [Option("storageAccountName", Required = true, HelpText = "Storage account name (if DES unavailable)")]
+    public string StorageAccountName { get; set; }
 
     [Option("taskQueueName", Required = true, HelpText = "Key name of the list with the tasks in Redis")]
     public string QueueName { get; set; }
@@ -44,7 +47,7 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
     [Option("redisQueuePassword", Required = false, HelpText = "Password of the Redis instance that contains the task queue ")]
     public string RedisQueuePassword {get; set;}
 
-    [Option("RedisQueuePort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the task queue ")]
+    [Option("redisQueuePort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the task queue ")]
     public string RedisQueuePort {get; set;}
 
     [Option("redisLocksHostname", Required = false, HelpText = "Hostname of the Redis instance that contains the locks ")]
@@ -53,6 +56,6 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
     [Option("redisLocksPassword", Required = false, HelpText = "Password of the Redis instance that contains the locks ")]
     public string RedisLocksPassword {get; set;}
 
-    [Option("RedisLocksPort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the locks ")]
+    [Option("redisLocksPort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the locks ")]
     public string RedisLocksPort {get; set;}
 }

@@ -14,6 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
+using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using CommandLine;
@@ -40,7 +41,7 @@ public class Program
         opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
         opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
 
-        opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
+        opts.StorageAccountName ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_ACCOUNT_NAME")!;
 
         opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
 
@@ -53,6 +54,8 @@ public class Program
         opts.RedisLocksPort ??= Environment.GetEnvironmentVariable("SDMS_REDIS_LOCKS_PORT")!;
 
         opts.KeyVaultUrl ??= Environment.GetEnvironmentVariable("SDMS_KEYVAULT_URL")!;
+
+        opts.DesUrl ??= Environment.GetEnvironmentVariable("DES_SERVICE_HOST")!;
     }
 
     private static async Task AttemptOptionsFromKeyVault(Options opts)
@@ -86,6 +89,41 @@ public class Program
                {
                    builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
                });
+
+               // From the local machine, the user is expected to az login and have access to all dependencies
+               // such as Key Vault, CosmosDB, Storage accounts.
+               // When deployed, there will be a pod identity with access to these dependencies.
+               // DefaultAzureCredential works in both cases.
+               services.AddSingleton<TokenCredential, DefaultAzureCredential>(); 
+               
+               if (!string.IsNullOrEmpty(opts.DesUrl))
+               {
+                   services
+                       .AddSingleton<DesClient>()
+                       .AddSingleton<IDesClient>(
+                           sp => new CachingDesClient(sp.GetRequiredService<DesClient>()));
+               }
+               else
+               {
+                   Logger.LogWarning("Using DES client from environment");
+                   services.AddSingleton<IDesClient, DesClientFromEnv>();
+               }
+
+               services
+                   .AddSingleton<CosmosClientFactory>()
+                   .AddSingleton<ICosmosClientFactory>(
+                       sp => new CachingCosmosClientFactory(sp.GetRequiredService<CosmosClientFactory>()));
+
+               services
+                   .AddSingleton<BlobClientFactory>()
+                   .AddSingleton<IBlobClientFactory>(
+                       sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
+               
+               services
+                   .AddSingleton<RedisConnectionFactory>()
+                   .AddSingleton<IRedisConnectionFactory>(sp =>
+                       new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
+               
                services
                    .AddSingleton<IOptions>(opts)
                    .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
@@ -94,19 +132,15 @@ public class Program
                    .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
                    .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
                    .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
-                   .AddSingleton<IBlobClient, BlobClient>()
+                   .AddSingleton<IBlobClientFactory, BlobClientFactory>()
                    .AddSingleton<IBulkDeletionWorker,
                        BulkDeletionWorker>()
                    .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
                    .AddSingleton<IRedisHandler>(sp =>
                        sp.GetRequiredService<IQueueHandlerDeletion>())
-                   .AddSingleton<RedisConnectionFactory>()
-                   .AddSingleton<IRedisConnectionFactory>(sp =>
-                       new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()))
                    .AddHostedService<DeletionOperationService>()
                    .AddSingleton<ILockManager, LockManager>()
                    .AddScoped<IDataAccess, Cosmos>();
-
            }).ConfigureLogging(lg => _ = lg
                 .ClearProviders()
                 .AddSimpleConsole(o =>

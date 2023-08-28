@@ -28,23 +28,27 @@ public class DeleteItemsRetriever: IItemsRetriever
 {
     private readonly ILogger<DeleteItemsRetriever> Logger;
     private readonly IDataAccess DataAccess;
-    private readonly IOptionsCosmos Options;
+    private readonly ICosmosClientFactory _cosmosClientFactory;
 
-    public DeleteItemsRetriever(ILogger<DeleteItemsRetriever> logger, IDataAccess dataAccess, IOptionsCosmos options)
+    public DeleteItemsRetriever(
+        ILogger<DeleteItemsRetriever> logger, 
+        IDataAccess dataAccess, 
+        ICosmosClientFactory cosmosClientFactory)
     {
         Logger = logger;
         DataAccess = dataAccess;
-        Options = options;
+        _cosmosClientFactory = cosmosClientFactory;
     }
 
-    public async Task<List<DeleteItem>?> GetItems(string subproject, string path)
+    public async Task<List<DeleteItem>?> GetItems(string dataPartitionId, string subproject, string path, CancellationToken ct = default)
     {
         var sql = $"SELECT c.id, c.data.gcsurl, c.data.path, c.data.name " +
             $"FROM c " +
             $"WHERE c.data.subproject = \"{subproject}\" " +
             $"AND startswith(c.data.path, \"{path}\", false) ";
 
-        var cs = $"AccountEndpoint={Options.CosmosEndpoint};AccountKey={Options.CosmosKey};";
+        var cs = await _cosmosClientFactory.GetCosmosConnectionString(dataPartitionId, ct);
+
         var paginatedRecords = await DataAccess.GetRecords(cs, sql, null, null);
 
         return paginatedRecords.records.Select(item =>

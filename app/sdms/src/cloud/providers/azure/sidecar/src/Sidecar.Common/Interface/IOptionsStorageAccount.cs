@@ -18,5 +18,5 @@ namespace Sidecar.Common.Interface;
 
 public interface IOptionsStorageAccount
 {
-    string StorageAccountConnectionString { get; set; }
+    string StorageAccountName { get; set; }
 }

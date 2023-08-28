@@ -60,7 +60,7 @@ namespace Sidecar.Common.Tests.Service
             var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
             var queueMock = new Mock<IQueueHandlerDeletion>();
             var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
-            var blobClientMock = new Mock<IBlobClient>();
+            var blobClientMock = new Mock<IBlobClientFactory>();
 
             var deletionWorker = new BulkDeletionWorker(
                 loggerMock.Object,
@@ -69,13 +69,14 @@ namespace Sidecar.Common.Tests.Service
                 blobClientMock.Object
             );
 
+            var tenant = "asda";
             var operationId = "123";
             var item = new DeleteItem { Id = "item123" };
             item.Gcsurl = gcsurl;
             var itemsToDelete = new List<DeleteItem> { item };
 
             // Act
-            await deletionWorker.RunBulkDeletion(operationId, itemsToDelete);
+            await deletionWorker.RunBulkDeletion(tenant, operationId, itemsToDelete, CancellationToken.None);
 
             // Assert
             queueMock.Verify(q => q.IncrementCountAsync(operationId, "FailedCnt"), Times.Once);
@@ -92,7 +93,7 @@ namespace Sidecar.Common.Tests.Service
             var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
             var queueMock = new Mock<IQueueHandlerDeletion>();
             var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
-            var blobClientMock = new Mock<IBlobClient>();
+            var blobClientMock = new Mock<IBlobClientFactory>();
 
             var bulkDeletionWorker = new BulkDeletionWorker(
                 loggerMock.Object,
@@ -102,9 +103,11 @@ namespace Sidecar.Common.Tests.Service
             );
 
             var itemsToDelete = new List<DeleteItem> { };
+
+            var tenant = "opendes";
             
             // Act
-            await bulkDeletionWorker.RunBulkDeletion("operationId", itemsToDelete);
+            await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
 
             queueMock.Verify(
                 queue => queue.IncrementCountAsync("operationId", It.IsAny<string>()),
@@ -122,17 +125,18 @@ namespace Sidecar.Common.Tests.Service
             var queueMock = new Mock<IQueueHandlerDeletion>();
             var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
             var blobClientMock = new Mock<IBlobClient>();
-            var blobServiceClientMock = new Mock<BlobServiceClient>();
+            var blobClientFactoryMock = new Mock<IBlobClientFactory>();
             var blobBatchClientMock = new Mock<BlobBatchClient>();
             var blobContainerClientMock = new Mock<BlobContainerClient>();
             var blobBatchMock = new Mock<BlobBatch>();
 
-
+            var tenant = "mytenant";
+            
             var bulkDeletionWorker = new BulkDeletionWorker(
                 loggerMock.Object,
                 queueMock.Object,
                 metadataDeletionWorkerMock.Object,
-                blobClientMock.Object
+                blobClientFactoryMock.Object
             );
 
             var itemsToDelete = new List<DeleteItem> {
@@ -153,24 +157,24 @@ namespace Sidecar.Common.Tests.Service
             };
 
             blobClientMock
-                .Setup(client => client.GetBlobServiceClient())
-                .Returns(blobServiceClientMock.Object);
-
-            blobServiceClientMock
-                .Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Setup(client => client.GetContainerClient(It.IsAny<string>()))
                 .Returns(blobContainerClientMock.Object);
 
             blobClientMock
-                .Setup(client => client.GetBlobBatchClient())
+                .Setup(client => client.GetBatchClient())
                 .Returns(blobBatchClientMock.Object);
 
-            blobBatchClientMock
-                .Setup(blobBatchClientMock => blobBatchClientMock.CreateBatch())
-                .Returns(blobBatchMock.Object);
+            blobClientFactoryMock
+                .Setup(clientFactory => clientFactory.GetBlobClient(tenant, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(blobClientMock.Object);
 
             blobBatchMock
                 .Setup(b => b.DeleteBlob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>()));
 
+            blobBatchClientMock
+                .Setup(blobBatchClientMock => blobBatchClientMock.CreateBatch())
+                .Returns(blobBatchMock.Object);
+            
             var mockedBlobs = Page<BlobItem>.FromValues(new List<BlobItem>
             {
                 BlobsModelFactory.BlobItem("mocked1"),
@@ -180,11 +184,11 @@ namespace Sidecar.Common.Tests.Service
             var mockedBlobsPages = AsyncPageable<BlobItem>.FromPages(new[] { mockedBlobs });
 
             blobContainerClientMock
-                .Setup(client => client.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Setup(clientFactory => clientFactory.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(mockedBlobsPages);
 
             // Act
-            await bulkDeletionWorker.RunBulkDeletion("operationId", itemsToDelete);
+            await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
 
             queueMock.Verify(
                 queue => queue.IncrementCountAsync("operationId", "DeletedCnt"),

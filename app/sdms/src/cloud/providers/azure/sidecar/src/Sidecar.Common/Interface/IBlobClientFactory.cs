@@ -14,10 +14,12 @@
 // limitations under the License.
 // ============================================================================
 
-using Sidecar.Common.Model;
+using Azure.Storage.Blobs;
 
-namespace Sidecar.Common.Interface;
-public interface IItemsRetriever
+namespace Sidecar.Common.Interface
 {
-    Task<List<DeleteItem>?> GetItems(string dataPartitionId, string subproject, string path, CancellationToken ct = default);
+    public interface IBlobClientFactory
+    {
+        Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default);
+    }
 }

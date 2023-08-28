@@ -24,10 +24,11 @@ namespace Sidecar.Common.Tests.Service
             // Arrange
             var loggerMock = new Mock<ILogger<DeleteItemsRetriever>>();
             var dataAccessMock = new Mock<IDataAccess>();
-            var optionsMock = new Mock<IOptions>();
+            var cosmosFactoryMock = new Mock<ICosmosClientFactory>();
 
-            var deleteItemsRetriever = new DeleteItemsRetriever(loggerMock.Object, dataAccessMock.Object, optionsMock.Object);
+            var deleteItemsRetriever = new DeleteItemsRetriever(loggerMock.Object, dataAccessMock.Object, cosmosFactoryMock.Object);
 
+            var tenant = "mytenant";
             var subproject = "subproj";
             var path = "path/";
             var records = new List<object>
@@ -41,7 +42,7 @@ namespace Sidecar.Common.Tests.Service
                 .ReturnsAsync(paginatedRecords);
 
             // Act
-            var result = await deleteItemsRetriever.GetItems(subproject, path);
+            var result = await deleteItemsRetriever.GetItems(tenant, subproject, path);
 
             // Assert
             Assert.NotNull(result);

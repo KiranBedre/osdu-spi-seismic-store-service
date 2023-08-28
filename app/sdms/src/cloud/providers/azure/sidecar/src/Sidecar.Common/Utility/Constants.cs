@@ -39,5 +39,7 @@ public static class Constants
         /// Password of the redis instance that stores the locks and the queues. 
         /// </summary>
         public const string REDIS_QUEUE_PASSWORD = "redis-queue-password";  // pragma: allowlist secret
+
+        public const string APP_RESOURCE_ID = "aad-clientFactory-id";
     }
 }

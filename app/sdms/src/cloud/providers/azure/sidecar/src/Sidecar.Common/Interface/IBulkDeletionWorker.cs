@@ -20,5 +20,5 @@ using Sidecar.Common.Model;
 namespace Sidecar.Common.Interface;
 public interface IBulkDeletionWorker
 {
-    Task RunBulkDeletion(string operationId, List<DeleteItem> items);
+    Task RunBulkDeletion(string dataPartitionId, string operationId, List<DeleteItem> items, CancellationToken ct = default);
 }

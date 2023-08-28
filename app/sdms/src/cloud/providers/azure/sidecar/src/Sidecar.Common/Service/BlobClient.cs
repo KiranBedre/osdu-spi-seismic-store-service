@@ -15,41 +15,37 @@
 // ============================================================================
 
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
-using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 
 namespace Sidecar.Common.Service
 {
+    using Azure.Storage.Blobs.Specialized;
+
+    /// <summary>
+    /// Mockable alternative to the raw BlobServiceClient
+    /// </summary>
     public class BlobClient : IBlobClient
     {
-        private readonly ILogger<BlobClient> Logger;
-        private string StorageAccountConnectionString;
-        private BlobServiceClient BlobServiceClient;
+        private readonly BlobServiceClient _client;
 
-        public BlobClient(ILogger<BlobClient> logger, IOptionsStorageAccount options)
+        public BlobClient(BlobServiceClient client)
         {
-            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            StorageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
-            BlobServiceClient = CreateClient(StorageAccountConnectionString);
+            _client = client;
         }
 
-        private BlobServiceClient CreateClient(string storageAccountConnectionString)
+        public BlobContainerClient GetContainerClient(string containerName)
         {
-            Logger.LogInformation("Establishing Storage account connection ...");
-            var clientOptions = new BlobClientOptions();
-            var blobServiceClient = new BlobServiceClient(storageAccountConnectionString, clientOptions);
-            return blobServiceClient;
+            return _client.GetBlobContainerClient(containerName);
         }
 
-        public BlobServiceClient GetBlobServiceClient()
+        public BlobBatchClient GetBatchClient()
         {
-            return BlobServiceClient;
-        }
-
-        public BlobBatchClient GetBlobBatchClient()
-        {
-            return BlobServiceClient.GetBlobBatchClient();
+            // Calls to "new" aren't mockable.
+            // This is the reason to have this class: to hide the allocation in this method
+            // and mock this method instead.
+            // note: there's extension method BlobServiceClient.GetBlobBatchClient(), but it's not
+            // mockable either.
+            return new(_client);
         }
     }
 }
