@@ -38,7 +38,8 @@ public class DeleteItemsRetriever: IItemsRetriever
             $"WHERE c.data.subproject = \"{subproject}\" " +
             $"AND startswith(c.data.path, \"{path}\", false) ";
 
-        var paginatedRecords = await DataAccess.GetRecords(Options.CosmosDBConnectionString, sql, null, null);
+        var cs = $"AccountEndpoint={Options.CosmosEndpoint};AccountKey={Options.CosmosKey};";
+        var paginatedRecords = await DataAccess.GetRecords(cs, sql, null, null);
 
         if (paginatedRecords.records == null)
         {

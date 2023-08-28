@@ -43,7 +43,8 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
         {
             try
             {
-                success = await DataAccess.DeleteMetadata(Options.CosmosDBConnectionString, id);
+                var cs = $"AccountEndpoint={Options.CosmosEndpoint};AccountKey={Options.CosmosKey};";
+                success = await DataAccess.DeleteMetadata(cs, id);
                 ConsecutiveFailures = 0;
             }
             catch (CosmosException ex)

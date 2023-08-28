@@ -17,5 +17,6 @@
 namespace Sidecar.Common.Interface;
 public interface IOptionsCosmos
 {
-    string CosmosDBConnectionString { get; set; }
+    string CosmosEndpoint { get; set; }
+    string CosmosKey { get; set; }
 }
