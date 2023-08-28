@@ -29,6 +29,9 @@ sdms_ibm-deploy:
       - app/sdms/src/cloud/shared/**/*
       - app/sdms/src/cloud/providers/*.ts
       - app/sdms/src/cloud/providers/ibm/**/*
+      - app/sdms/**/*.json
+      - app/sdms/**/*.yml
+      - app/sdms/**/*.md
     refs:
       - branches
       - merge_requests
@@ -63,6 +66,9 @@ sdms_ibm-deploy-devpri:
         - app/sdms/src/cloud/shared/**/*
         - app/sdms/src/cloud/providers/*.ts
         - app/sdms/src/cloud/providers/ibm/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms_ibm-test-py:
   image: node:18
@@ -101,6 +107,9 @@ sdms_ibm-test-py:
       - app/sdms/src/cloud/shared/**/*
       - app/sdms/src/cloud/providers/*.ts
       - app/sdms/src/cloud/providers/ibm/**/*
+      - app/sdms/**/*.json
+      - app/sdms/**/*.yml
+      - app/sdms/**/*.md
     refs:
       - branches
       - merge_requests
@@ -131,6 +140,9 @@ sdms_ibm-preship-promote:
         - app/sdms/src/cloud/shared/**/*
         - app/sdms/src/cloud/providers/*.ts
         - app/sdms/src/cloud/providers/ibm/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms_ibm-preship-promote-release:
   extends: .ibm-preship-promote-release
@@ -158,3 +170,6 @@ sdms_ibm-preship-promote-release:
         - app/sdms/src/cloud/shared/**/*
         - app/sdms/src/cloud/providers/*.ts
         - app/sdms/src/cloud/providers/ibm/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md

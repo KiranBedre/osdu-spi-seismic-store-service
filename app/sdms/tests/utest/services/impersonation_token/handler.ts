@@ -1,14 +1,12 @@
 import sinon from 'sinon';
 import { Request as expRequest, Response as expResponse } from 'express';
-import { Auth, AuthProviderFactory, AuthRoles } from '../../../../src/auth';
+import { Auth, AuthProviderFactory } from '../../../../src/auth';
 import { IAuthProvider } from '../../../../src/auth/auth';
-import { Config, JournalFactoryTenantClient } from '../../../../src/cloud';
-import { SeistoreFactory } from '../../../../src/cloud/seistore';
-import { Error, Feature, FeatureFlags, Response, Utils } from '../../../../src/shared';
-import { SubprojectAuth, SubProjectDAO, SubProjectModel } from '../../../../src/services/subproject';
+import { Error, FeatureFlags, Utils } from '../../../../src/shared';
+import { SubProjectDAO, SubProjectModel } from '../../../../src/services/subproject';
 import { TenantDAO } from '../../../../src/services/tenant';
 import { ITenantModel } from '../../../../src/services/tenant/model';
-import { ImpersonationTokenContextModel, ImpersonationTokenModel, ImpersonationTokenRequestBodyModel } from '../../../../src/services/impersonation_token/model';
+import { ImpersonationTokenModel, ImpersonationTokenRequestBodyModel } from '../../../../src/services/impersonation_token/model';
 import { ImpersonationTokenOps } from '../../../../src/services/impersonation_token/optype';
 import { ImpersonationTokenParser } from '../../../../src/services/impersonation_token/parser';
 import { ImpersonationTokenHandler as Handler } from '../../../../src/services/impersonation_token/handler';
@@ -93,9 +91,6 @@ export class TestImpersonationTokenHandler {
             req.body.resources = "resources";
             req.body.metadata = "metadata";
 
-            //
-            //
-
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(Auth, 'isAppAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
@@ -104,6 +99,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
+            this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
             await Handler.handler(req, res, op);
             Tx.check200(res.statusCode, done)
 
@@ -156,6 +152,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
+            this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
             await Handler.handler(req, res, op);
             impersonationTokenRequestBodyModel.resources[0].readonly = false;
             Tx.check200(res.statusCode, done)
@@ -230,6 +227,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Auth, 'isAppAuthorized').resolves(true);
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
+            this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
             this.sandbox.stub(Utils, "decrypt").returns('{"resources":[{"resource": "name/resource", "readonly": false}], "metadata":{}, "user": "user", "impersonated_by": "impersonation-token"}');
             await Handler.handler(req, res, op);
             Tx.check200(res.statusCode, done);

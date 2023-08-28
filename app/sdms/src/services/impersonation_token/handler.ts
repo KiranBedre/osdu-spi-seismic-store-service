@@ -27,7 +27,6 @@ import { ImpersonationTokenParser } from './parser';
 
 export class ImpersonationTokenHandler {
 
-    private static impersonationTokenTTL = 3300;
     private static cacheKey = 'sdms-auth-token';
 
     // handler for the [ /impersonation-token ] endpoints
@@ -122,29 +121,7 @@ export class ImpersonationTokenHandler {
                 requestBody.resources[index].resource + ' subproject resource.'));
         }
 
-        // generate the impersonation token credential token (the auth credential)
-        const inMemoryCache = getInMemoryCacheInstance();
-        let impersonationToken = inMemoryCache.get<ImpersonationTokenModel>(this.cacheKey);
-        if (!impersonationToken) {
-            impersonationToken = (await cacheShared.get(this.cacheKey)) as ImpersonationTokenModel;
-            if (!impersonationToken) {
-                const authProvider = AuthProviderFactory.build(Config.SERVICE_AUTH_PROVIDER);
-                const scopes = [authProvider.getClientID()];
-                if (Config.DES_TARGET_AUDIENCE) {
-                    scopes.push(Config.DES_TARGET_AUDIENCE);
-                }
-                impersonationToken = authProvider.convertToImpersonationTokenModel(
-                    await authProvider.generateScopedAuthCredential(scopes));
-                await cacheShared.set(this.cacheKey, impersonationToken, this.impersonationTokenTTL);
-                inMemoryCache.set<ImpersonationTokenModel>(
-                    this.cacheKey, impersonationToken, this.impersonationTokenTTL);
-            }
-            else {
-                const ttlInShared = await cacheShared.getTTL(this.cacheKey);
-                inMemoryCache.set<ImpersonationTokenModel>(this.cacheKey, impersonationToken, ttlInShared);
-            }
-        }
-
+        const impersonationToken = await this.getImpersonationToken();
         const impersonatedBy = await Utils.getUserId(
             req.headers.authorization);
 
@@ -171,7 +148,7 @@ export class ImpersonationTokenHandler {
 
         if (!FeatureFlags.isEnabled(Feature.IMPTOKEN)) return {} as ImpersonationTokenModel;
 
-        // parse the request input and retrieve the token
+        // parse the request input and retrieve the token.
         const requestParams = ImpersonationTokenParser.refresh(req);
 
         const authClientSecret = AuthProviderFactory.build(
@@ -205,19 +182,49 @@ export class ImpersonationTokenHandler {
             }
         }
 
-        // generate the impersonation token credential token (the auth credential)
-        const authProvider = AuthProviderFactory.build(Config.SERVICE_AUTH_PROVIDER);
-        const scopes = [authProvider.getClientID()];
-        if (Config.DES_TARGET_AUDIENCE) {
-            scopes.push(Config.DES_TARGET_AUDIENCE);
-        }
-        const impersonationToken = authProvider.convertToImpersonationTokenModel(
-            await authProvider.generateScopedAuthCredential(scopes));
-
+        const impersonationToken = await this.getImpersonationToken();
         impersonationToken.context = requestParams.tokenContext;
-
         return impersonationToken;
+    }
 
+    private static async getImpersonationToken(): Promise<ImpersonationTokenModel>{
+        // check both local and shared cache for impersonation token
+        let expireIn = 0;
+        const inMemoryCache = getInMemoryCacheInstance();
+        let impersonationToken = inMemoryCache.get<ImpersonationTokenModel>(this.cacheKey);
+        if (!impersonationToken) {
+            impersonationToken = (await cacheShared.get(this.cacheKey)) as ImpersonationTokenModel;
+            if (!impersonationToken) {
+                // generate the impersonation token credential token (the auth credential)
+                const authProvider = AuthProviderFactory.build(Config.SERVICE_AUTH_PROVIDER);
+                const scopes = [authProvider.getClientID()];
+                if (Config.DES_TARGET_AUDIENCE) {
+                    scopes.push(Config.DES_TARGET_AUDIENCE);
+                }
+                impersonationToken = authProvider.convertToImpersonationTokenModel(
+                    await authProvider.generateScopedAuthCredential(scopes));
+
+                expireIn = this.getTokenExpireInSec(impersonationToken.impersonation_token);
+                const cacheTTL = expireIn - Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN;
+                if(cacheTTL < 0) {
+                    throw Error.make(Error.Status.UNKNOWN,
+                        'An error occurred while generating the auth credential. ' +
+                        'The credential expiration time is ' + expireIn + ' seconds. ' +
+                        'The minimum acceptable expiration time by the service is ' +
+                        Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN + ' seconds.');
+                }
+                await cacheShared.set(this.cacheKey, impersonationToken, cacheTTL);
+                inMemoryCache.set<ImpersonationTokenModel>(
+                    this.cacheKey, impersonationToken, cacheTTL);
+            }
+            else {
+                const ttlInShared = await cacheShared.getTTL(this.cacheKey);
+                inMemoryCache.set<ImpersonationTokenModel>(this.cacheKey, impersonationToken, ttlInShared);
+            }
+        }
+        // recompute the expiration time
+        impersonationToken.expires_in = expireIn || this.getTokenExpireInSec(impersonationToken.impersonation_token);
+        return impersonationToken;
     }
 
     public static decodeContext(tokenContext: string): ImpersonationTokenContextModel {
@@ -231,5 +238,8 @@ export class ImpersonationTokenHandler {
             authClientSecret)) as ImpersonationTokenContextModel;
     }
 
+    private static getTokenExpireInSec(token: string) {
+        return Math.floor(Utils.getExpTimeFromPayload(token) - Date.now()/1000);
+    }
 
 }

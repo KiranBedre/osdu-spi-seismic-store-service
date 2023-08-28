@@ -1,1 +1,34 @@
-"{\n  \"P6BinGridOriginI\": 500.0,\n  \"P6BinGridOriginJ\": 360.0,\n  \"P6BinGridOriginEasting\": 1598582.0,\n  \"P6BinGridOriginNorthing\": -170134.0,\n  \"P6BinNodeIncrementOnIaxis\": 1.0,\n  \"P6BinNodeIncrementOnJaxis\": 1.0,\n  \"P6BinWidthOnIaxis\": 55,\n  \"P6BinWidthOnJaxis\": 55,\n  \"P6TransformationMethod\": 1049,\n  \"P6MapGridBearingOfBinGridJaxis\": 90.0,\n  \"BinGridLocalCoordinates\": [\n    {\n      \"X\": 500.0,\n      \"Y\": 360.0\n    },\n    {\n      \"X\": 500.0,\n      \"Y\": 365.0\n    },\n    {\n      \"X\": 505.0,\n      \"Y\": 360.0\n    },\n    {\n      \"X\": 505.0,\n      \"Y\": 365.0\n    }\n  ]\n}"
+{
+    "P6BinGridOriginI": 500.0,
+    "P6BinGridOriginJ": 360.0,
+    "P6BinGridOriginEasting": 1598582.0,
+    "P6BinGridOriginNorthing": -170134.0,
+    "P6BinNodeIncrementOnIaxis": 1.0,
+    "P6BinNodeIncrementOnJaxis": 1.0,
+    "P6BinWidthOnIaxis": 55,
+    "P6BinWidthOnJaxis": 55,
+    "P6TransformationMethod": 1049,
+    "P6MapGridBearingOfBinGridJaxis": 90.0,
+    "BinGridLocalCoordinates": [
+        {
+            "X": 1598582.0,
+            "Y": -170134.0
+        },
+        {
+            "X": 1598857.0,
+            "Y": -170134.0
+        },
+        {
+            "X": 1598857.0,
+            "Y": -170409.0
+        },
+        {
+            "X": 1598582.0,
+            "Y": -170409.0
+        },
+        {
+            "X": 1598582.0,
+            "Y": -170134.0
+        }
+    ]
+}

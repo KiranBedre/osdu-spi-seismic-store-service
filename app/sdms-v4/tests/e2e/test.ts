@@ -90,6 +90,11 @@ const testSchemasArgs = [
         tag: 'Notional Seismic Line',
         model: 'NotionalSeismicLine.1.1.0.json',
     },
+    {
+        endpoint: 'fault',
+        tag: 'Seismic Fault',
+        model: 'SeismicFault.1.2.0.json',
+    },
 ] as TestSchemaArgs[];
 
 class Test {
