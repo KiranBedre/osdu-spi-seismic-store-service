@@ -29,11 +29,8 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
     [Option('q', "queue", Required = true, HelpText = "Redis Queue name.")]
     public string QueueName { get; set; }
 
-    [Option('u', "url", Required = true, HelpText = "Cosmos endpoint URL.")]
-    public string CosmosEndpoint { get; set; }
-
-    [Option('a', "AuthorizationKey", Required = true, HelpText = "Authorization Key for Cosmos.")]
-    public string CosmosKey { get; set; }
+    [Option('d', "url", Required = true, HelpText = "CosmosDB Connection String.")]
+    public string CosmosDBConnectionString { get; set; }
 
     [Option('s', "storageAccountConnectionString", Required = true, HelpText = "storageAccountConnectionString.")]
     public string StorageAccountConnectionString { get; set; }

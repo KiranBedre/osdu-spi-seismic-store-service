@@ -1,5 +1,5 @@
-﻿
-// Copyright 2017-2023, Schlumberger
+﻿// ============================================================================
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
+
+using Sidecar.Common.Model;
+
 namespace Sidecar.Common.Interface;
 public interface IBulkDeletionWorker
 {
-    Task RunBulkDeletion(string operationId, List<Object> items);
+    Task RunBulkDeletion(string operationId, List<DeleteItem> items);
 }

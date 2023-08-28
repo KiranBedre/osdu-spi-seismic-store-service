@@ -55,9 +55,8 @@ internal static partial class TestingHelpers
             QueueConnectionString = "somehost:1234",
             QueueName = "somequeue",
             ConnectionString = "someredislockshost:1234",
-            CosmosEndpoint = "https://somecosmosinstance.documents.azure.com:443/",
-            CosmosKey = "somecosmosauthkey",
-            StorageAccountConnectionString = ""
+            CosmosDBConnectionString = "AccountEndpoint=https://somecosmosinstance.documents.azure.com:443/;AccountKey=pass;",
+            StorageAccountConnectionString = "DefaultEndpointsProtocol=https;AccountName=anaccountname;AccountKey=apass"
         };
     }
 

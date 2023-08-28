@@ -16,41 +16,45 @@
 
 namespace Sidecar.Common.Service;
 
-using Microsoft.Azure.Cosmos;
-using System;
-using System.Threading.Tasks;
-
 using Interface;
+using Newtonsoft.Json;
+using Sidecar.Common.Model;
 
-public class MetadataDeletionWorker : IMetadataDeletionWorker
+public class DeleteItemsRetriever: IItemsRetriever
 {
     private readonly IDataAccess DataAccess;
     private readonly IOptionsCosmos Options;
 
-    private int ConsecutiveFailures = 0;
-    private const int MaxRetries = 5;
-
-    public MetadataDeletionWorker(IDataAccess dataAccess, IOptionsCosmos options)
+    public DeleteItemsRetriever(IDataAccess dataAccess, IOptionsCosmos options)
     {
         DataAccess = dataAccess;
         Options = options;
     }
 
-    public async Task DeleteMetadata(string id)
+    public async Task<List<DeleteItem?>?> GetItems(string subproject, string path)
     {
-        bool success = false;
-        do
+        var sql = $"SELECT c.id, c.data.gcsurl, c.data.path, c.data.name " +
+            $"FROM c " +
+            $"WHERE c.data.subproject = \"{subproject}\" " +
+            $"AND startswith(c.data.path, \"{path}\", false) ";
+
+        var paginatedRecords = await DataAccess.GetRecords(Options.CosmosDBConnectionString, sql, null, null);
+
+        if (paginatedRecords.records == null)
+        {
+            return null;
+        }
+        return paginatedRecords.records.Select(item =>
         {
             try
             {
-                success = await DataAccess.DeleteMetadata(Options.CosmosDBConnectionString, id);
-                ConsecutiveFailures = 0;
+                return JsonConvert.DeserializeObject<DeleteItem>(item.ToString());
             }
-            catch (CosmosException ex)
+            catch (Exception)
             {
-                ConsecutiveFailures++;
-                Console.WriteLine(ex.Message);
+                return null; // Return default value if deserialization fails
             }
-        } while (!success && ConsecutiveFailures < MaxRetries);
+        }).Where(deserializedObject => deserializedObject != null) // Filter out failed deserializations
+        .ToList();
     }
 }

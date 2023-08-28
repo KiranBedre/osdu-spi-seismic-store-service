@@ -58,17 +58,14 @@ public class DeletionOperationService : BackgroundService
                     //---start the deletion process
                     Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-                    var paginatedRecords = await ItemsRetriever.GetItems(op.Subproject, op.Path);
-                    var items = paginatedRecords.records;
+                    var items = await ItemsRetriever.GetItems(op.Subproject, op.Path);
 
                     Logger.LogInformation("Found {0} items to delete", items!.Count.ToString(CultureInfo.InvariantCulture));
                     await Queue.UpdateStatusAsync(op.OperationId, items.Count);
-                    //todo: lock all found items
-                    
+                   
                     foreach (var item in items)
                     {
-                        JObject jsonItem = JsonConvert.DeserializeObject<JObject>(item.ToString());
-                        var datasetName = jsonItem["path"].ToString() + jsonItem["name"].ToString();
+                        var datasetName = item.Path + item.Name;
                         Logger.LogInformation("Acquiring lock for {0}", datasetName);
                         var locked = await LockManager.AcquireDeleteLock(datasetName);
                         Logger.LogInformation("Is locked {0} - {1}", datasetName, locked);

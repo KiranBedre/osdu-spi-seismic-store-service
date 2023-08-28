@@ -14,8 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
+using Sidecar.Common.Model;
+
 namespace Sidecar.Common.Interface;
 public interface IItemsRetriever
 {
-    Task<IPaginatedRecords> GetItems(string subproject, string path);
+    Task<List<DeleteItem>> GetItems(string subproject, string path);
 }

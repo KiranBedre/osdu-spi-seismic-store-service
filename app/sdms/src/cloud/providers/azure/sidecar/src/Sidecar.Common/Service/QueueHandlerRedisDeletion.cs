@@ -55,7 +55,8 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
             throw new RedisException("Queue does not exist");
         }
 
-        var op = await db.ListLeftPopAsync(delQ);
+        // var op = await db.ListLeftPopAsync(delQ);
+        var op = await db.ListGetByIndexAsync(delQ, 0);
 
         if (!op.HasValue)
         {

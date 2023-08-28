@@ -20,11 +20,11 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
 
 using Interface;
+using Sidecar.Common.Model;
 
 public class BulkDeletionWorker : IBulkDeletionWorker
 {
@@ -33,34 +33,25 @@ public class BulkDeletionWorker : IBulkDeletionWorker
     private readonly ILogger<BulkDeletionWorker> Logger;
     private readonly IQueueHandlerDeletion Queue;
     private readonly IMetadataDeletionWorker MetadataDeletionWorker;
+    private readonly IBlobClient BlobClient;
 
     private int DeletedDatasetTotalCount = 0;
     private int DeletedDatasetInABatchCount = 0;
     private int BatchNr = 1;
-    private string StorageAccountConnectionString;
-    private readonly BlobServiceClient BlobStorageClient;
 
-    public BulkDeletionWorker(IOptionsStorageAcount options,
-        ILogger<BulkDeletionWorker> logger,
+    public BulkDeletionWorker(ILogger<BulkDeletionWorker> logger,
         IQueueHandlerDeletion queue,
-        IMetadataDeletionWorker metadataDeletionWorker)
+        IMetadataDeletionWorker metadataDeletionWorker,
+        IBlobClient blobClient)
     {
         Logger = logger;
         Queue = queue;
         MetadataDeletionWorker = metadataDeletionWorker;
-        StorageAccountConnectionString = options.StorageAccountConnectionString ?? throw new ArgumentNullException(options.StorageAccountConnectionString);
-        BlobStorageClient = CreateClient(StorageAccountConnectionString);
+        BlobClient = blobClient;
+        Debug.Assert(blobClient != null);
     }
 
-    private BlobServiceClient CreateClient(string storageAccountConnectionString)
-    {
-        Logger.LogInformation("Establishing Storage account connection ...");
-        var clientOptions = new BlobClientOptions();
-        var blobServiceClient = new BlobServiceClient(storageAccountConnectionString, clientOptions);
-        return blobServiceClient;
-    }
-
-    public async Task RunBulkDeletion(string operationId, List<Object> itemsToDelete)
+    public async Task RunBulkDeletion(string operationId, List<DeleteItem> itemsToDelete)
     {
         Logger.LogInformation($"Started blob deletion, it will delete {itemsToDelete.Count} items");
 
@@ -70,17 +61,16 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             );
     }
 
-    private async Task processItemDeletion(string operationId, object item, CancellationToken cancellationToken, int totalCount)
+    private async Task processItemDeletion(string operationId, DeleteItem item, CancellationToken cancellationToken, int totalCount)
     {
-        JObject jsonItem = JsonConvert.DeserializeObject<JObject>(item.ToString());
-        (string containerName, string? virtualFolderName) = ParseContainerAndFolderName(jsonItem);
+        (string containerName, string? virtualFolderName) = ParseContainerAndFolderName(item.Gcsurl);
 
-        var containerClient = BlobStorageClient.GetBlobContainerClient(containerName);
+        var containerClient = BlobClient.GetBlobServiceClient().GetBlobContainerClient(containerName);
         var errors = new List<string>();
 
         if (virtualFolderName is not null)
         {
-            var batchBlock = CreateBatchForBlobsDeletion(BlobStorageClient, errors, out ActionBlock<Tuple<string, string>[]> importer);
+            var batchBlock = CreateBatchForBlobsDeletion(BlobClient.GetBlobServiceClient(), errors, out ActionBlock<Tuple<string, string>[]> importer);
             var blobs = containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: virtualFolderName + "/");
             Logger.LogDebug($"Deleting blobs in container {containerName} with prefix {virtualFolderName}");
             await foreach (var pages in blobs.AsPages())
@@ -117,7 +107,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         }
 
         // removing the metadata
-        string datasetId = jsonItem["id"].ToString();
+        string datasetId = item.Id;
         if (errors.Count == 0)
         {
             Logger.LogInformation($"No errors, will delete metadata for {datasetId}");
@@ -146,10 +136,9 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
     }
 
-    private static (string containerName, string? virtualFolderName) ParseContainerAndFolderName(JObject jsonObject)
+    public static (string containerName, string? virtualFolderName) ParseContainerAndFolderName(string gcsurl)
     {
-        string datasetGcsUrl = jsonObject["gcsurl"].ToString();
-        string[] parts = datasetGcsUrl.Split('/');
+        string[] parts = gcsurl.Split('/');
 
         if (parts.Length == 1)
         {
@@ -161,7 +150,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         }
         else
         {
-            throw new ArgumentException($"Invalid input format for $jsonObject. Could not extract gcsurl in the format <container>/<folder name> ");
+            throw new ArgumentException($"Invalid item: {gcsurl} Could not extract gcsurl in the format <container>/<folder name> ");
         }
     }
 

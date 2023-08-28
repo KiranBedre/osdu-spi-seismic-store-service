@@ -204,7 +204,8 @@ public class RedisHandler : IRedisHandler
 
     public async Task<bool> SetAsync(string key, string value)
     {
-        return await Client.GetDatabase().StringSetAsync(key, value);
+        var db = Client.GetDatabase();
+        return await db.StringSetAsync(key, value);
     }
 
     public async Task<bool> DeleteAsync(string key)

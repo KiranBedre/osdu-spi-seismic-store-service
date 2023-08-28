@@ -17,7 +17,6 @@
 namespace Sidecar.Common
 {
     using System.ComponentModel;
-    using System.Reflection;
 
     public static class EnumExtensionMethods
     {

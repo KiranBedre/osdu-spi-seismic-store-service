@@ -21,10 +21,7 @@ namespace Sidecar.Common.Tests.Service
     public class LockManagerTests
     {
         private LockManager LockManager;
-
-        //protected readonly Mock<ILogger<LockManager>> Logger;
         protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
-
 
         public LockManagerTests()
         {
@@ -72,6 +69,34 @@ namespace Sidecar.Common.Tests.Service
 
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task AcquireDeleteLock_WithoutLock_ReturnsTrue()
+        {
+            // Arrange
+            var databaseMock = new Mock<IDatabase>();
+            ConnectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+            var key = "/path/file.tst";
+            databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+                .ReturnsAsync(true);
+            databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync((string?)null);
+            databaseMock
+               .Setup(client => client.StringSetAsync(
+                   It.IsAny<RedisKey>(),
+                   It.IsAny<RedisValue>(),
+                   It.IsAny<TimeSpan?>(),
+                   It.IsAny<bool>(),
+                   It.IsAny<When>(),
+                   It.IsAny<CommandFlags>()
+               ))
+               .ReturnsAsync(true);
+
+            // Act
+            var result = await LockManager.AcquireDeleteLock(key);
+
+            // Assert
+            Assert.True(result);
         }
 
         [Fact]

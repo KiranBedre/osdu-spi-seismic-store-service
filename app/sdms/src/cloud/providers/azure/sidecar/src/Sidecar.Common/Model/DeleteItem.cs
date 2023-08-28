@@ -21,13 +21,17 @@ namespace Sidecar.Common.Model
 
     public class DeleteItem
     {
-
         [JsonProperty(PropertyName = "id")]
-        public string? Id { get; set; }
-
+        public string Id { get; set; } = "";
 
         [JsonProperty(PropertyName = "gcsurl")]
-        public string? gcsurl { get; set; }
+        public string Gcsurl { get; set; } = "";
 
+
+        [JsonProperty(PropertyName = "path")]
+        public string Path { get; set; } = "";
+
+        [JsonProperty(PropertyName = "name")]
+        public string Name { get; set; } = "";
     }
 }

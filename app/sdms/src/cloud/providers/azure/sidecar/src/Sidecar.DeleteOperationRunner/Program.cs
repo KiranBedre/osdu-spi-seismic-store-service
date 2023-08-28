@@ -35,8 +35,7 @@ public class Program
         opts.QueueConnectionString ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_CONNSTR")!;
         opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
 
-        opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
-        opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
+        opts.CosmosDBConnectionString ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_CONNSTR")!;
 
         opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
 
@@ -52,8 +51,9 @@ public class Program
                .AddSingleton<IOptionsRedis>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IOptionsQueueRedis>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IOptionsStorageAcount>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IItemsRetriever, ItemsRetriever>()
+               .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
                .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
+               .AddSingleton<IBlobClient, BlobClient>()
                .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
                .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
                .AddSingleton<IRedisHandler>(sp => sp.GetRequiredService<IQueueHandlerDeletion>())
