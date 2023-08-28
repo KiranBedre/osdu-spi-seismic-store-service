@@ -14,11 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-import { Config } from './config';
-import { CloudFactory } from './cloud';
-import { TenantModel } from '../services/tenant';
-import { DatasetModel } from '../services/dataset';
-import { Error } from '../shared';
+import {Config} from './config';
+import {CloudFactory} from './cloud';
+import {TenantModel} from '../services/tenant';
+import {DatasetModel, PaginationModel} from '../services/dataset';
+import {Error} from '../shared';
 
 export interface IJournalQueryModel {
     filter(property: string, value: {}): IJournalQueryModel;
@@ -38,12 +38,18 @@ export interface IJournal {
     getMetaDataSizesByKeys(keys: any[]): Promise<Map<string, number>>
     save(entity: any): Promise<void>;
     delete(key: any): Promise<void>;
+    deleteMulti(keys: string[]): Promise<void>;
     createQuery(namespace: string, kind: string): IJournalQueryModel;
     runQuery(query: IJournalQueryModel): Promise<[any[], {endCursor?: string}]>;
     createKey(specs: any): object;
     getTransaction(): IJournalTransaction;
     getQueryFilterSymbolContains(): string;
     listFolders(dataset: DatasetModel): Promise<any[]>;
+    listDatasets(
+        dataset: DatasetModel,
+        pagination?: PaginationModel,
+        searchParam?: string,
+        selectParam?: string[]): Promise<[any[], { endCursor?: string }]>;
     KEY: symbol;
 }
 
@@ -78,6 +84,47 @@ export abstract class AbstractJournal implements IJournal {
         const [res] = [await this.runQuery(query)];
         return res;
     }
+    public async listDatasets(
+        dataset: DatasetModel,
+        pagination?: PaginationModel,
+        searchParam?: string,
+        selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
+
+        let query: any;
+        query = this.createQuery(
+            Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND);
+
+        if (dataset.path) {
+            query = query.filter('path', dataset.path);
+        }
+
+        if (pagination && pagination.cursor) {
+            query = query.start(pagination.cursor);
+        }
+        if (pagination && pagination.limit) {
+            query = query.limit(pagination.limit);
+        }
+
+        if (dataset.gtags?.length) {
+            // filter based on gtags if parsed dataset model has gtags
+            for (const gtag of dataset.gtags) {
+                query = query.filter('gtags', this.getQueryFilterSymbolContains(), gtag);
+            }
+        }
+
+        if (searchParam) {
+            const [variable, value] = searchParam.split('=');
+            query = query.filter(variable, 'LIKE', value);
+        }
+
+        if (selectParam){ query = query.select(selectParam); }
+
+        return await this.runQuery(query);
+    }
+
+    public deleteMulti(keys: string[]): Promise<void> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    }
     public getIdByKeys(keys: any[]): Promise<string[]> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
@@ -88,7 +135,7 @@ export abstract class AbstractJournal implements IJournal {
 
 export abstract class AbstractJournalTransaction implements IJournalTransaction {
     public abstract KEY: symbol;
-    public abstract get(key: any): Promise<[any | any[]]>;;
+    public abstract get(key: any): Promise<[any | any[]]>;
     public abstract save(entity: any): Promise<void>;
     public abstract delete(key: any): Promise<void>;
     public abstract createQuery(namespace: string, kind: string): IJournalQueryModel;
@@ -116,3 +163,4 @@ export class JournalFactoryTenantClient {
         return JournalFactory.build(Config.CLOUDPROVIDER, tenant) as IJournal;
     }
 }
+

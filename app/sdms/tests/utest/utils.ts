@@ -75,7 +75,8 @@ export class Tx {
 
     public static test(cb: any) {
         it(this.getTag(), (done) => {
-            cb(done);
+            cb(done)
+                .catch(done);  // interpret exceptions as test failures
         });
     }
 
@@ -92,7 +93,6 @@ export class Tx {
     public static check423(val: number, done: any) { this.check(val, 423, done); }
     public static check500(val: number, done: any) { this.check(val, 500, done); }
     public static check501(val: number, done: any) { this.check(val, 501, done); }
-
     public static checkTrue(val: boolean, done: any) { this.check(val, true, done); }
     public static checkFalse(val: boolean, done: any) { this.check(val, false, done); }
 

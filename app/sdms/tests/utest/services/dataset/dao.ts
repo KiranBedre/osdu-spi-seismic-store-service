@@ -117,6 +117,15 @@ export class DatasetDAOTest {
                 listFolders(dataset: DatasetModel): Promise<any[]> {
                     return Promise.resolve([]);
                 },
+                listDatasets(dataset: DatasetModel,
+                             pagination?: PaginationModel,
+                             searchParam?: string,
+                             selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
+                    return Promise.resolve([[datasetModel], {}]);
+                },
+                deleteMulti(keys: string[]): Promise<void> {
+                    return Promise.resolve();
+                },
                 KEY: undefined
             };
 

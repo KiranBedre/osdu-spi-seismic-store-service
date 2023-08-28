@@ -95,27 +95,32 @@ export class TestDESEntitlement {
       Tx.test(async (done: any) => {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.resolves();
+
+         Config.DES_SERVICE_HOST_ENTITLEMENT = 'testEntitlement';
+
          await DESEntitlement.addUserToGroup('usertoken', 'group-a', 'tenant-a', 'user@email', 'role-a','appkey');
-         done()
-         const options = {
+
+         const expectedOptions = {
             headers: {
                'Accept': 'application/json',
                'AppKey': 'appkey',
                'Authorization': 'Bearer usertoken',
                'Content-Type': 'application/json',
                'data-partition-id': 'tenant-a',
-            },
-            data: JSON.stringify({
-               email: 'user@email',
-               role: 'role-a',
-            })
+            }
          };
-         const url = Config.DES_SERVICE_HOST_ENTITLEMENT + '/entitlements' + '/groups' + '/group-a' + '/members';
 
-         Tx.checkTrue(requestStub.calledWith(url, options), done);
+         const expectedData = JSON.stringify({
+            email: 'user@email',
+            role: 'role-a',
+         });
 
+         const expectedUrl = 'testEntitlement' + '/entitlements' + '/groups' + '/group-a' + '/members';
+
+         this.sandbox.assert.calledOnceWithExactly(requestStub, expectedUrl, expectedData, expectedOptions);
+         done();
       });
- 
+
       // Tx.test(async (done: any) => {
       //    this.sandbox.stub(axios, 'post').throws();
 

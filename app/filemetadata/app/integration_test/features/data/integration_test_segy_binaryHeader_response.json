@@ -1,1 +1,180 @@
-"{'header': '{\\n\\t\"BinaryHeaders\" : \\n\\t[\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3204,\\n\\t\\t\\t\"Id\" : \"JobIdentificationNumber\",\\n\\t\\t\\t\"Start\" : 3201,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3208,\\n\\t\\t\\t\"Id\" : \"LineNumber\",\\n\\t\\t\\t\"Start\" : 3205,\\n\\t\\t\\t\"Value\" : 65536.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3212,\\n\\t\\t\\t\"Id\" : \"ReelNumber\",\\n\\t\\t\\t\"Start\" : 3209,\\n\\t\\t\\t\"Value\" : 65536.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3214,\\n\\t\\t\\t\"Id\" : \"DataTracesPerEnsemble\",\\n\\t\\t\\t\"Start\" : 3213,\\n\\t\\t\\t\"Value\" : 2.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3216,\\n\\t\\t\\t\"Id\" : \"NumberOfAuxillaryTracesPerEnsemble\",\\n\\t\\t\\t\"Start\" : 3215,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3218,\\n\\t\\t\\t\"Id\" : \"SampleInterval\",\\n\\t\\t\\t\"Start\" : 3217,\\n\\t\\t\\t\"Value\" : 500.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3220,\\n\\t\\t\\t\"Id\" : \"SampleIntervalField\",\\n\\t\\t\\t\"Start\" : 3219,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3222,\\n\\t\\t\\t\"Id\" : \"SamplesPerTrace\",\\n\\t\\t\\t\"Start\" : 3221,\\n\\t\\t\\t\"Value\" : 10000.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3224,\\n\\t\\t\\t\"Id\" : \"SampleIntervalField\",\\n\\t\\t\\t\"Start\" : 3223,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3226,\\n\\t\\t\\t\"Id\" : \"DataSampleFormatCode\",\\n\\t\\t\\t\"Start\" : 3225,\\n\\t\\t\\t\"Value\" : 3.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3228,\\n\\t\\t\\t\"Id\" : \"EnsembleFold\",\\n\\t\\t\\t\"Start\" : 3227,\\n\\t\\t\\t\"Value\" : 1.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3230,\\n\\t\\t\\t\"Id\" : \"TraceSortingCode\",\\n\\t\\t\\t\"Start\" : 3229,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3232,\\n\\t\\t\\t\"Id\" : \"VerticalSumCode\",\\n\\t\\t\\t\"Start\" : 3231,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3234,\\n\\t\\t\\t\"Id\" : \"SweepFrequencyStart\",\\n\\t\\t\\t\"Start\" : 3233,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3236,\\n\\t\\t\\t\"Id\" : \"SweepFrequencyEnd\",\\n\\t\\t\\t\"Start\" : 3235,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3238,\\n\\t\\t\\t\"Id\" : \"SweepLength\",\\n\\t\\t\\t\"Start\" : 3237,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3240,\\n\\t\\t\\t\"Id\" : \"SweepTypeCode\",\\n\\t\\t\\t\"Start\" : 3239,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3242,\\n\\t\\t\\t\"Id\" : \"TraceNumberSweepChannel\",\\n\\t\\t\\t\"Start\" : 3241,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3244,\\n\\t\\t\\t\"Id\" : \"SweepTraceTaperLengthStart\",\\n\\t\\t\\t\"Start\" : 3243,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3246,\\n\\t\\t\\t\"Id\" : \"SweepTraceTaperLengthEnd\",\\n\\t\\t\\t\"Start\" : 3245,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3248,\\n\\t\\t\\t\"Id\" : \"TaperType\",\\n\\t\\t\\t\"Start\" : 3247,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3250,\\n\\t\\t\\t\"Id\" : \"CorrelatedDataTraces\",\\n\\t\\t\\t\"Start\" : 3249,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3252,\\n\\t\\t\\t\"Id\" : \"BinaryGainRecovered\",\\n\\t\\t\\t\"Start\" : 3251,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3254,\\n\\t\\t\\t\"Id\" : \"AmplitudeRecoveryMethod\",\\n\\t\\t\\t\"Start\" : 3253,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3256,\\n\\t\\t\\t\"Id\" : \"MeasurementSystem\",\\n\\t\\t\\t\"Start\" : 3255,\\n\\t\\t\\t\"Value\" : 1.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3258,\\n\\t\\t\\t\"Id\" : \"ImpulseSignalPolarity\",\\n\\t\\t\\t\"Start\" : 3257,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3260,\\n\\t\\t\\t\"Id\" : \"VibratorPolarityCode\",\\n\\t\\t\\t\"Start\" : 3259,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t},\\n\\t\\t{\\n\\t\\t\\t\"End\" : 3502,\\n\\t\\t\\t\"Id\" : \"SEGYFormatRevisionNumber\",\\n\\t\\t\\t\"Start\" : 3501,\\n\\t\\t\\t\"Value\" : 0.0\\n\\t\\t}\\n\\t],\\n\\t\"metadata\" : \\n\\t{\\n\\t\\t\"Filenames\" : \\n\\t\\t[\\n\\t\\t\\t\"sd://opendes//integration_test_dataset.sgy\"\\n\\t\\t],\\n\\t\\t\"SegyRevision\" : 0\\n\\t}\\n}\\n'}"
+{
+    "header": {
+        "BinaryHeaders": [
+            {
+                "End": 3204,
+                "Id": "JobIdentificationNumber",
+                "Start": 3201,
+                "Value": 0.0
+            },
+            {
+                "End": 3208,
+                "Id": "LineNumber",
+                "Start": 3205,
+                "Value": 65536.0
+            },
+            {
+                "End": 3212,
+                "Id": "ReelNumber",
+                "Start": 3209,
+                "Value": 65536.0
+            },
+            {
+                "End": 3214,
+                "Id": "DataTracesPerEnsemble",
+                "Start": 3213,
+                "Value": 2.0
+            },
+            {
+                "End": 3216,
+                "Id": "NumberOfAuxillaryTracesPerEnsemble",
+                "Start": 3215,
+                "Value": 0.0
+            },
+            {
+                "End": 3218,
+                "Id": "SampleInterval",
+                "Start": 3217,
+                "Value": 500.0
+            },
+            {
+                "End": 3220,
+                "Id": "SampleIntervalField",
+                "Start": 3219,
+                "Value": 0.0
+            },
+            {
+                "End": 3222,
+                "Id": "SamplesPerTrace",
+                "Start": 3221,
+                "Value": 10000.0
+            },
+            {
+                "End": 3224,
+                "Id": "SampleIntervalField",
+                "Start": 3223,
+                "Value": 0.0
+            },
+            {
+                "End": 3226,
+                "Id": "DataSampleFormatCode",
+                "Start": 3225,
+                "Value": 3.0
+            },
+            {
+                "End": 3228,
+                "Id": "EnsembleFold",
+                "Start": 3227,
+                "Value": 1.0
+            },
+            {
+                "End": 3230,
+                "Id": "TraceSortingCode",
+                "Start": 3229,
+                "Value": 0.0
+            },
+            {
+                "End": 3232,
+                "Id": "VerticalSumCode",
+                "Start": 3231,
+                "Value": 0.0
+            },
+            {
+                "End": 3234,
+                "Id": "SweepFrequencyStart",
+                "Start": 3233,
+                "Value": 0.0
+            },
+            {
+                "End": 3236,
+                "Id": "SweepFrequencyEnd",
+                "Start": 3235,
+                "Value": 0.0
+            },
+            {
+                "End": 3238,
+                "Id": "SweepLength",
+                "Start": 3237,
+                "Value": 0.0
+            },
+            {
+                "End": 3240,
+                "Id": "SweepTypeCode",
+                "Start": 3239,
+                "Value": 0.0
+            },
+            {
+                "End": 3242,
+                "Id": "TraceNumberSweepChannel",
+                "Start": 3241,
+                "Value": 0.0
+            },
+            {
+                "End": 3244,
+                "Id": "SweepTraceTaperLengthStart",
+                "Start": 3243,
+                "Value": 0.0
+            },
+            {
+                "End": 3246,
+                "Id": "SweepTraceTaperLengthEnd",
+                "Start": 3245,
+                "Value": 0.0
+            },
+            {
+                "End": 3248,
+                "Id": "TaperType",
+                "Start": 3247,
+                "Value": 0.0
+            },
+            {
+                "End": 3250,
+                "Id": "CorrelatedDataTraces",
+                "Start": 3249,
+                "Value": 0.0
+            },
+            {
+                "End": 3252,
+                "Id": "BinaryGainRecovered",
+                "Start": 3251,
+                "Value": 0.0
+            },
+            {
+                "End": 3254,
+                "Id": "AmplitudeRecoveryMethod",
+                "Start": 3253,
+                "Value": 0.0
+            },
+            {
+                "End": 3256,
+                "Id": "MeasurementSystem",
+                "Start": 3255,
+                "Value": 1.0
+            },
+            {
+                "End": 3258,
+                "Id": "ImpulseSignalPolarity",
+                "Start": 3257,
+                "Value": 0.0
+            },
+            {
+                "End": 3260,
+                "Id": "VibratorPolarityCode",
+                "Start": 3259,
+                "Value": 0.0
+            },
+            {
+                "End": 3502,
+                "Id": "SEGYFormatRevisionNumber",
+                "Start": 3501,
+                "Value": 0.0
+            }
+        ],
+        "metadata": {
+            "Filenames": [
+                "sd://opendes//integration_test_dataset.sgy"
+            ],
+            "SegyRevision": 0
+        }
+    }
+}

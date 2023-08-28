@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "e4133f2d-ce03-450f-b3d0-0fa73da6dd4c",
+		"_postman_id": "4e8191e1-3fec-496c-a9f7-6cfce422eaa2",
 		"name": "SDMS-E2E ver.M20 - Release 0.23",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11702291"
 	},
 	"item": [
 		{
@@ -1756,6 +1757,12 @@
 									"console.log(pm.response.text())",
 									"_.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
 									"} else {",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"    //---",
+									"",
 									"    var jsonData = pm.response.json();",
 									"",
 									"    pm.test(\"Status code is 200\", function () {",
@@ -1802,11 +1809,6 @@
 									"    }else{",
 									"        pm.environment.unset('CurrentFiles');",
 									"    }",
-									"",
-									"    // Reset environment variables if _.retryOnFailure function was used before",
-									"    var key = request.name + '_counter';",
-									"    pm.environment.unset(key);",
-									"    postman.setEnvironmentVariable('execCounter', 1)",
 									"}"
 								],
 								"type": "text/javascript"
@@ -1817,13 +1819,16 @@
 							"script": {
 								"exec": [
 									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
+									"\r",
 									"if(!CurrentFiles) {\r",
 									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
 									"}\r",
-									"let Current = CurrentFiles.pop();\r",
 									"\r",
-									"pm.environment.set(\"randomfile\", Current);\r",
-									"pm.environment.set(\"CurrentFiles\", CurrentFiles);"
+									"if(pm.environment.get(\"execCounter\") === '1') {\r",
+									"    let Current = CurrentFiles.pop();\r",
+									"    pm.environment.set(\"randomfile\", Current);\r",
+									"    pm.environment.set(\"CurrentFiles\", CurrentFiles);\r",
+									"}"
 								],
 								"type": "text/javascript"
 							}
@@ -3971,6 +3976,12 @@
 									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
 									"",
 									"} else {",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"    //---",
+									"",
 									"    pm.test(\"Status code is 200\", function () {",
 									"        pm.response.to.have.status(200);",
 									"    });",
@@ -3981,11 +3992,6 @@
 									"    }else{",
 									"        pm.environment.unset('CurrentFiles')",
 									"    }",
-									"",
-									"    // Reset environment variables if _.retryOnFailure function was used before",
-									"    var key = request.name + '_counter';",
-									"    pm.environment.unset(key);",
-									"    postman.setEnvironmentVariable('execCounter', 1)",
 									"}",
 									""
 								],
@@ -3997,13 +4003,16 @@
 							"script": {
 								"exec": [
 									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
+									"\r",
 									"if(!CurrentFiles) {\r",
 									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
 									"}\r",
-									"let Current = CurrentFiles.pop();\r",
 									"\r",
-									"pm.environment.set(\"randomfile\", Current);\r",
-									"pm.environment.set(\"CurrentFiles\", CurrentFiles);"
+									"if(pm.environment.get(\"execCounter\") === '1') {\r",
+									"    let Current = CurrentFiles.pop();\r",
+									"    pm.environment.set(\"randomfile\", Current);\r",
+									"    pm.environment.set(\"CurrentFiles\", CurrentFiles);\r",
+									"}"
 								],
 								"type": "text/javascript"
 							}
@@ -17367,7 +17376,7 @@
 									"",
 									"    pm.test(\"Check imptoken\", function () {",
 									"        postman.setEnvironmentVariable(\"imptoken\", jsonData.impersonation_token);",
-									"        pm.expect(jsonData.expires_in).to.gte(3000);",
+									"        pm.expect(jsonData.expires_in).to.gte(0);",
 									"        pm.expect(jsonData.token_type).to.eql('Bearer');",
 									"    });",
 									"",

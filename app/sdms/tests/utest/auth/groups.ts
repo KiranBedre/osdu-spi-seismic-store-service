@@ -79,15 +79,23 @@ export class TestAuthGroups {
 
       Tx.sectionInit('delete group');
       Tx.test(async (done: any) => {
-         const deleteGroupstub = this.spy.stub(DESEntitlement, 'deleteGroup');
-         deleteGroupstub.resolves();
+         const deleteGroupstub = this.spy.stub(DESEntitlement, 'deleteGroup')
+             .resolves();
 
-         this.spy.stub(DESUtils, 'getDataPartitionID').returns('partition-a');
+         const getDataPartitionIDStub = this.spy.stub(DESUtils, 'getDataPartitionID')
+             .returns('partition-a');
+
          await AuthGroups.deleteGroup(undefined, 'group-a', 'esd', 'appkey');
+
+         this.spy.assert.calledOnceWithExactly(
+             getDataPartitionIDStub, 'esd'
+         );
+
+         this.spy.assert.calledWithExactly(
+             deleteGroupstub,
+             undefined, 'group-a', 'partition-a', 'appkey',
+         )
          done();
-         const calldedWithResult = deleteGroupstub.calledWith(undefined, 'group-a', 'esd', 'appkey')
-         Tx.checkTrue(calldedWithResult === true, done);
-         
       });
    }
 

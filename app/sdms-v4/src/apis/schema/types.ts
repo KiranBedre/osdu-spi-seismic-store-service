@@ -105,4 +105,10 @@ export const SchemaEndpoints = [
         docDataType: 'Notional Seismic Line',
         hasBulks: false,
     },
+    {
+        name: 'fault',
+        kind: 'osdu:wks:work-product-component--SeismicFault:1.2.0',
+        docDataType: 'Seismic Fault',
+        hasBulks: false,
+    },
 ] as SchemaEndpoint[];

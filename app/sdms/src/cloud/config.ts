@@ -236,6 +236,9 @@ export abstract class Config implements IConfig {
 
     public static USER_ID_FROM_PROVIDER_API: boolean;
 
+    // ImpersonationToken cache expire margin
+    public static IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN: number;
+
     public static setCloudProvider(cloudProvider: string) {
         Config.CLOUDPROVIDER = cloudProvider;
         if (Config.CLOUDPROVIDER === undefined) {
@@ -368,6 +371,10 @@ export abstract class Config implements IConfig {
 
         // OSDU x-user-id header
         Config.USER_ID_HEADER_KEY_NAME = process.env.USER_ID_HEADER_KEY_NAME || 'x-user-id';
+
+        // ImpersonationToken cache expire margin
+        Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN = +(
+            process.env.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN || (8 * 60))
 
     }
 

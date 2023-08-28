@@ -18,10 +18,10 @@ def step_impl(context):
 def step_impl(context):
     headers = context.headers.copy()
     headers['ltag'] = context.legal_tag
+
     resp = requests.post(context.subproject_url, json={}, headers=headers)
-    resp.raise_for_status()
-    assert resp.status_code == 200
-    logging.info(f"Create subproject response={resp.text}")
+    
+    assert resp.status_code == 200, f"Creating subproject {context.subproject_url} -> {resp.status_code} - {resp.text}"
 
 
 @given('create dataset with id {dataset_id}')
@@ -29,9 +29,7 @@ def step_impl(context, dataset_id: str):
     context.dataset_id = dataset_id
     context.dataset_url = f'{Settings.SEISTORE_SVC_URL}/dataset/tenant/{context.sdms_tenant}/subproject/{context.subproject_name}/dataset/{dataset_id}'
     create_resp = requests.post(context.dataset_url, json={}, headers=context.headers)
-    create_resp.raise_for_status()
-    assert create_resp.status_code == 200
-    logging.info(f"Create dataset response={create_resp.text}")
+    assert create_resp.status_code == 200, f"Creating dataset {context.dataset_url} -> {create_resp.status_code} - {create_resp.text}"
 
 
 @given('upload dataset with id {dataset_id}')
@@ -48,13 +46,13 @@ def step_impl(context, dataset_id):
         storage_client.store_blob(url=gcs_token_url_1, file=data_1)
         storage_client.store_blob(url=gcs_token_url_2, file=data_2)
         blob_content_1 = storage_client.get_blob(url=gcs_token_url_1)
-        assert data_1 == blob_content_1
+        assert data_1 == blob_content_1, "First blob is corrupted."
         blob_content_2 = storage_client.get_blob(url=gcs_token_url_2)
-        assert data_2 == blob_content_2
+        assert data_2 == blob_content_2, "Last blob is corrupted."
 
         # patch dataset
         seismic_client.patch_dataset(len(data), 2)
-        requests.put(
+        unlock_response = requests.put(
             f'{Settings.SEISTORE_SVC_URL}/dataset/tenant/{context.sdms_tenant}/subproject/{context.subproject_name}/dataset/{dataset_id}/unlock?path=%2F',
             headers=context.headers)
-        logging.info(seismic_client.get_dataset())
+        assert unlock_response.status_code == 200, f"Unlocking dataset: {unlock_response.status_code} - {unlock_response.text}"

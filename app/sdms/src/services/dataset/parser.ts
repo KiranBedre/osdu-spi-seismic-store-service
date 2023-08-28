@@ -30,7 +30,7 @@ export class DatasetParser {
 
         Params.checkString(req.query.ctag, 'ctag');
 
-        if (req.query.ctag.length < 19) { // ctag (16) + project(3 at least)
+        if ((req.query.ctag as string).length < 19) { // ctag (16) + project(3 at least)
             throw (Error.make(Error.Status.BAD_REQUEST, 'The \'ctag\' query parameter is in a wrong format.'));
         }
 
