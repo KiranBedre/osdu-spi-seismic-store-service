@@ -23,7 +23,7 @@ namespace Sidecar.Common.Tests.Service
     public class DeletionOperationServiceTests
     {
         [Fact]
-        public async void ExecuteAsync_Should_Process_Deletion_Operation()
+        public void ExecuteAsync_Should_Process_Deletion_Operation()
         {
             // Arrange
             var loggerMock = new Mock<ILogger<DeletionOperationService>>();
@@ -79,6 +79,7 @@ namespace Sidecar.Common.Tests.Service
             queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
             itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Subproject, deletionOperation.Path))
                               .ReturnsAsync(itemsToDelete);
+
             lockManagerMock.Setup(manager => manager.AcquireDeleteLock(It.IsAny<string>()))
                            .ReturnsAsync(true);
 

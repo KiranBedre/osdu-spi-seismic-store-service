@@ -27,7 +27,8 @@ namespace Sidecar.Common.Tests.Service
             dataAccessMock.Setup(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
             var optionsMock = new Mock<IOptionsCosmos>();
-            optionsMock.Setup(o => o.CosmosDBConnectionString).Returns("connstr");
+            optionsMock.Setup(o => o.CosmosEndpoint).Returns("endpoint");
+            optionsMock.Setup(o => o.CosmosKey).Returns("key");
 
             var deletionWorker = new MetadataDeletionWorker(dataAccessMock.Object, optionsMock.Object);
 
@@ -46,9 +47,10 @@ namespace Sidecar.Common.Tests.Service
             dataAccessMock.SetupSequence(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()))
                 .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0))
                 .ReturnsAsync(true);
-
+            
             var optionsMock = new Mock<IOptionsCosmos>();
-            optionsMock.Setup(o => o.CosmosDBConnectionString).Returns("connstr");
+            optionsMock.Setup(o => o.CosmosEndpoint).Returns("endpoint");
+            optionsMock.Setup(o => o.CosmosKey).Returns("key");
 
             var deletionWorker = new MetadataDeletionWorker(dataAccessMock.Object, optionsMock.Object);
 

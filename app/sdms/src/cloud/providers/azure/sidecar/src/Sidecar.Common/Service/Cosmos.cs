@@ -41,7 +41,15 @@ public class Cosmos : IDataAccess
         Container container = database.GetContainer(this.containerId);
         List<Object> records = new List<Object>();
         IPaginatedRecords paginatedRecords = new PaginatedRecords();
-        QueryRequestOptions options = new QueryRequestOptions() { MaxItemCount = limit != null ? limit : 100 };
+        QueryRequestOptions options = new QueryRequestOptions()
+        {
+            // MaxItemCount set to -1 lets CosmosDB decide on the optimal returned item count
+            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v2&pivots=programming-language-csharp#tune-the-page-size
+            MaxItemCount = limit ?? -1,
+            // number of parallel tasks is min(32, number of partitions that needs to be visited for answering a query)
+            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v3&pivots=programming-language-csharp#tune-the-degree-of-parallelism
+            MaxConcurrency = 32
+        };
         FeedIterator<Object> query = container.GetItemQueryIterator<Object>(
             sql,
             continuationToken: ctoken,

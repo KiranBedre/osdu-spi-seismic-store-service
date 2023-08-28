@@ -49,18 +49,21 @@ internal static partial class TestingHelpers
         return logger;
     }
 
-    internal static IOptions GetAllOptions(){
+    internal static IOptions GetAllOptions()
+    {
         return new Options
         {
             QueueConnectionString = "somehost:1234",
             QueueName = "somequeue",
             ConnectionString = "someredislockshost:1234",
-            CosmosDBConnectionString = "AccountEndpoint=https://somecosmosinstance.documents.azure.com:443/;AccountKey=pass;",
-            StorageAccountConnectionString = "DefaultEndpointsProtocol=https;AccountName=anaccountname;AccountKey=apass"
+            CosmosEndpoint = "https://somecosmosinstance.documents.azure.com:443/",
+            CosmosKey = "somecosmosauthkey",
+            StorageAccountConnectionString = ""
         };
     }
 
-    internal static Mock<IDatabase> GetDatabase(){
+    internal static Mock<IDatabase> GetDatabase()
+    {
         var db = new Mock<IDatabase>();
         var cache = new InMemoryCache();
         db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
@@ -106,7 +109,8 @@ internal static partial class TestingHelpers
         return db;
     }
 
-    internal static Mock<IConnectionMultiplexer> GetConnectionMultiplexer(IDatabase db){
+    internal static Mock<IConnectionMultiplexer> GetConnectionMultiplexer(IDatabase db)
+    {
         var cm = new Mock<IConnectionMultiplexer>();
 
         _ = cm.Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(db);
