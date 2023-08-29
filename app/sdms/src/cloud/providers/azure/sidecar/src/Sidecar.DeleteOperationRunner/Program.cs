@@ -131,6 +131,7 @@ public class Program
                    .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
                    .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
                    .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
+                   .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
                    .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
                    .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
                    .AddSingleton<IBlobClientFactory, BlobClientFactory>()
