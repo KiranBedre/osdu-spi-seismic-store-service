@@ -50,34 +50,11 @@ public class DeletionOperationService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        do {
-            try {
-                var op = await _deletionTasks.CheckForDeletionOperationAsync();
-                if (op is not null) {
-                    //---start the deletion process
-                    _logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
-
-                    var itemsToDelete = await _itemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
-
-                    _logger.LogInformation("Found {0} items to delete", itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
-                    await _deletionTasks.UpdateFieldStatusOperation(op.OperationId, Constants.DeleteOperationStatus.DatasetsCnt, itemsToDelete.Count.ToString());
-
-                    for (int i = itemsToDelete.Count - 1; i >= 0; i--)
-                    {
-                        var item = itemsToDelete[i];
-                        string datasetName = GetDatasetName(item);
-                        _logger.LogDebug("Acquiring lock for {0}", datasetName);
-                        var locked = await _lockManager.AcquireDeleteLock(datasetName);
-                        if (!locked)
-                        {
-                            _logger.LogInformation("Could not acquire lock for {0}", datasetName);
-                            await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FailedCnt);
-                            itemsToDelete.Remove(item);
-                        }
-                    }
-
-                    await _bulkDeletionWorker.RunBulkDeletion(op.Tenant, op.OperationId, itemsToDelete, cancellationToken);
-                }
+        while(!cancellationToken.IsCancellationRequested && _consecutiveFailures < MAX_CONSECUTIVE_FAILURES)
+        {
+            try
+            {
+                await TryFetchAndExecuteTask(cancellationToken);
                 _consecutiveFailures = 0;
             }
             catch(Exception ex)
@@ -85,8 +62,51 @@ public class DeletionOperationService : BackgroundService
                 _logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {_consecutiveFailures}/{MAX_CONSECUTIVE_FAILURES}");
                 _consecutiveFailures++;
             }
+
             await Task.Delay(1000, cancellationToken);
-        } while(!cancellationToken.IsCancellationRequested && _consecutiveFailures < MAX_CONSECUTIVE_FAILURES);
+        }
+    }
+
+    private async Task TryFetchAndExecuteTask(CancellationToken cancellationToken)
+    {
+        var op = await _deletionTasks.CheckForDeletionOperationAsync();
+        if (op is null)
+        {
+            return;
+        }
+
+        //---start the deletion process
+        _logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
+
+        var itemsToDelete = await _itemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
+
+        _logger.LogInformation("Found {0} items to delete",
+            itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
+
+        await _deletionTasks.UpdateFieldStatusOperation(
+            op.OperationId, 
+            Constants.DeleteOperationStatus.DatasetsCnt,
+            itemsToDelete.Count.ToString());
+
+        var successfullyLocked = new List<DeleteItem>();
+        
+        foreach (var item in itemsToDelete)
+        {
+            string datasetName = GetDatasetName(item);
+            _logger.LogDebug("Acquiring lock for {0}", datasetName);
+            var locked = await _lockManager.AcquireDeleteLock(datasetName);
+            if (locked)
+            {
+                successfullyLocked.Add(item);
+            }
+            else
+            {
+                _logger.LogInformation("Could not acquire lock for {0}", datasetName);
+                await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FailedCnt);
+            }
+        }
+
+        await _bulkDeletionWorker.RunBulkDeletion(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
     }
 
     private static string GetDatasetName(DeleteItem item)
