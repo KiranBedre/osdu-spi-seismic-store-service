@@ -22,6 +22,7 @@ using System.Globalization;
 
 using Interface;
 using Sidecar.DeleteOperationRunner.Services;
+using Sidecar.Common.Model;
 
 public class DeletionOperationService : BackgroundService
 {
@@ -56,24 +57,26 @@ public class DeletionOperationService : BackgroundService
                     //---start the deletion process
                     Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-                    var items = await ItemsRetriever.GetItems(op.Subproject, op.Path);
+                    var itemsToDelete = await ItemsRetriever.GetItems(op.Subproject, op.Path);
 
-                    Logger.LogInformation("Found {0} items to delete", items!.Count.ToString(CultureInfo.InvariantCulture));
-                    await Queue.UpdateStatusAsync(op.OperationId, items.Count);
-                   
-                    foreach (var item in items)
+                    Logger.LogInformation("Found {0} items to delete", itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
+                    await Queue.UpdateStatusAsync(op.OperationId, itemsToDelete.Count);
+
+
+                    for (int i = itemsToDelete.Count - 1; i >= 0; i--)
                     {
-                        var datasetName = item.Path + item.Name;
-                        Logger.LogInformation("Acquiring lock for {0}", datasetName);
+                        var item = itemsToDelete[i];
+                        string datasetName = GetDatasetName(item);
+                        Logger.LogDebug("Acquiring lock for {0}", datasetName);
                         var locked = await LockManager.AcquireDeleteLock(datasetName);
                         if (!locked)
                         {
                             Logger.LogInformation("Could not acquire lock for {0}", datasetName);
-                            items.Remove(item);
+                            itemsToDelete.Remove(item);
                         }
                     }
 
-                    await BulkDeletionWorker.RunBulkDeletion(op.OperationId, items);
+                    await BulkDeletionWorker.RunBulkDeletion(op.OperationId, itemsToDelete);
                 }
                 ConsecutiveFailures = 0;
             }
@@ -84,5 +87,17 @@ public class DeletionOperationService : BackgroundService
             }
             await Task.Delay(1000,cancellationToken);
         }while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
+    }
+
+    private static string GetDatasetName(DeleteItem item)
+    {
+        if (item.Path.EndsWith("/"))
+        {
+            return item.Path + item.Name;
+        }
+        else
+        {
+            return item.Path + "/" + item.Name;
+        }
     }
 }
