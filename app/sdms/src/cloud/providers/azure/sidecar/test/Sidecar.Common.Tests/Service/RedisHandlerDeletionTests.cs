@@ -18,9 +18,12 @@ namespace Sidecar.Common.Tests;
 
 public class RedisHandlerDeletionTests : RedisHandlerTests
 {
+    public const string QueueName = "somequeue";
+    private readonly RedisHandlerDeletion QueueHandler;
     public RedisHandlerDeletionTests() : base()
     {
         RedisConnectionFactory.Setup(m => m.GetRedisForQueue()).Returns(ConnectionMultiplexer.Object);
+        QueueHandler = GetQueueHander();
     }
 
     private RedisHandlerDeletion GetQueueHander() => new RedisHandlerDeletion(
@@ -28,17 +31,66 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
             , new Options
             {
                 RedisQueueHostname = "somehost:1234",
-                QueueName = "somequeue"
+                QueueName = QueueName
             }
             , RedisConnectionFactory.Object);
 
+    protected async Task<DeleteOperationMessage> PushDeleteOperationMessage()
+    {
+        var expectedMsg = TestingHelpers.GetDelOpMsg();
+        //-- The queue is a List, make sure it exists and push the operation id
+        _ = await QueueHandler.ListLeftPushAsync(QueueName, expectedMsg.OperationId);
+
+        //---add the id to the queue of del operations
+        var he = TestingHelpers.GetDelOpMsgHashEntry(expectedMsg, true);
+
+        //---add the del operations payload to the queue
+        var key = QueueName + ":" + expectedMsg.OperationId;
+        QueueHandler.Set(new RedisKey(key), he);
+
+        return expectedMsg;
+    }
+
     [Fact]
-    private void IncrementCountAsync_Success()
+    private async Task CheckForDeletionOperationAsync_Success()
     {
         // Arrange
+        var expectedMsg = await PushDeleteOperationMessage();
 
         // Act
+        var statusMsg = await QueueHandler.CheckForDeletionOperationAsync();
 
         // Assert
+        statusMsg.Should()
+            .NotBeNull();
+
+        statusMsg!.OperationId
+            .Should()
+            .Be(expectedMsg.OperationId);
+        statusMsg!.Tenant
+            .Should()
+            .Be(expectedMsg.Tenant);
+        statusMsg!.Path
+            .Should()
+            .Be(expectedMsg.Path);
+        statusMsg!.Subproject
+            .Should()
+            .Be(expectedMsg.Subproject);
+
+        statusMsg!.Status
+            .Should()
+            .Be(Status.Started.ToString());
+        statusMsg!.StatusDescription
+            .Should()
+            .Be(Status.Started.Description());
+        statusMsg!.DatasetsCnt
+            .Should()
+            .Be(0);
+        statusMsg!.DeletedCnt
+            .Should()
+            .Be(0);
+        statusMsg!.FailedCnt
+            .Should()
+            .Be(0);
     }
 }

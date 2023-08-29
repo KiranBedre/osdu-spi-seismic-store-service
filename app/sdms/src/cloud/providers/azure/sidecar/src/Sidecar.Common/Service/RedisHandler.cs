@@ -45,7 +45,6 @@ public class RedisHandler : IRedisHandler
             throw;
         }
     }
-
     public virtual long HashDecrement(string key, string field, long? decBy = 1)
     {
         try
@@ -185,6 +184,40 @@ public class RedisHandler : IRedisHandler
     {
         var db = Client.GetDatabase();
         return await db.StringSetAsync(key, value);
+    }
+
+    public async Task SetAsync(RedisKey key, HashEntry[] hash)
+    {
+        var db = Client.GetDatabase();
+        await db.HashSetAsync(key, hash);
+    }
+
+    public long ListLeftPush(RedisKey key, RedisValue val)
+    {
+        var db = Client.GetDatabase();
+        return db.ListLeftPush(key, new RedisValue(val!));
+    }
+
+    public long ListLeftPush(RedisKey key, string val)
+    {
+        return ListLeftPush(key, new RedisValue(val));
+    }
+
+    public async Task<long> ListLeftPushAsync(RedisKey key, RedisValue val)
+    {
+        var db = Client.GetDatabase();
+        return await db.ListLeftPushAsync(key, new RedisValue(val!));
+    }
+
+    public async Task<long> ListLeftPushAsync(RedisKey key, string val)
+    {
+        return await ListLeftPushAsync(key, new RedisValue(val));
+    }
+
+    public void Set(RedisKey key, HashEntry[] hashes)
+    {
+        var db = Client.GetDatabase();
+        db.HashSet(key, hashes);
     }
 
     public async Task<bool> DeleteAsync(string key)
