@@ -26,17 +26,19 @@ namespace Sidecar.Common.Tests.Service
             var dataAccessMock = new Mock<IDataAccess>();
             dataAccessMock.Setup(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
-            var optionsMock = new Mock<IOptionsCosmos>();
-            optionsMock.Setup(o => o.CosmosEndpoint).Returns("endpoint");
-            optionsMock.Setup(o => o.CosmosKey).Returns("key");
+            var tenant = "tenant";
+            var cs = "booboo";
+            
+            var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
+            cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 
-            var deletionWorker = new MetadataDeletionWorker(dataAccessMock.Object, optionsMock.Object);
+            var deletionWorker = new MetadataDeletionWorker(dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
             // Act
-            await deletionWorker.DeleteMetadata("metadataId");
+            await deletionWorker.DeleteMetadata(tenant, "metadataId");
 
             // Assert
-            dataAccessMock.Verify(d => d.DeleteMetadata(It.IsAny<string>(), "metadataId"), Times.Once);
+            dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Once);
         }
 
         [Fact]
@@ -48,17 +50,19 @@ namespace Sidecar.Common.Tests.Service
                 .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0))
                 .ReturnsAsync(true);
             
-            var optionsMock = new Mock<IOptionsCosmos>();
-            optionsMock.Setup(o => o.CosmosEndpoint).Returns("endpoint");
-            optionsMock.Setup(o => o.CosmosKey).Returns("key");
+            var tenant = "tenant";
+            var cs = "booboo";
+            
+            var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
+            cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 
-            var deletionWorker = new MetadataDeletionWorker(dataAccessMock.Object, optionsMock.Object);
+            var deletionWorker = new MetadataDeletionWorker(dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
             // Act
-            await deletionWorker.DeleteMetadata("metadataId");
+            await deletionWorker.DeleteMetadata(tenant, "metadataId");
 
             // Assert
-            dataAccessMock.Verify(d => d.DeleteMetadata(It.IsAny<string>(), "metadataId"), Times.Exactly(2));
+            dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Exactly(2));
         }
     }
 }

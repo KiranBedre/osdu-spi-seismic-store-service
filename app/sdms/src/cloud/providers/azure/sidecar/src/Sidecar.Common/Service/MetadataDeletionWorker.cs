@@ -25,25 +25,25 @@ using Interface;
 public class MetadataDeletionWorker : IMetadataDeletionWorker
 {
     private readonly IDataAccess DataAccess;
-    private readonly IOptionsCosmos Options;
+    private readonly ICosmosClientFactory _cosmosClientFactory;
 
     private int ConsecutiveFailures = 0;
     private const int MaxRetries = 5;
 
-    public MetadataDeletionWorker(IDataAccess dataAccess, IOptionsCosmos options)
+    public MetadataDeletionWorker(IDataAccess dataAccess, ICosmosClientFactory cosmosClientFactory)
     {
         DataAccess = dataAccess;
-        Options = options;
+        _cosmosClientFactory = cosmosClientFactory;
     }
 
-    public async Task DeleteMetadata(string id)
+    public async Task DeleteMetadata(string dataPartitionId, string id)
     {
         bool success = false;
         do
         {
             try
             {
-                var cs = $"AccountEndpoint={Options.CosmosEndpoint};AccountKey={Options.CosmosKey};";
+                var cs = await _cosmosClientFactory.GetCosmosConnectionString(dataPartitionId);
                 success = await DataAccess.DeleteMetadata(cs, id);
                 ConsecutiveFailures = 0;
             }

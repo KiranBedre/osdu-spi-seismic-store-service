@@ -59,7 +59,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
         await Parallel.ForEachAsync(itemsToDelete,
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
-            async (item, innerCt) => await processItemDeletion(blobClient, operationId, item, innerCt)
+            async (item, innerCt) => await processItemDeletion(dataPartitionId, blobClient, operationId, item, innerCt)
             );
 
         if (FoundErrors)
@@ -77,7 +77,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
     }
 
-    private async Task processItemDeletion(IBlobClient blobClient, string operationId, DeleteItem item, CancellationToken cancellationToken)
+    private async Task processItemDeletion(string dataPartitionId, IBlobClient blobClient, string operationId, DeleteItem item, CancellationToken cancellationToken)
     {
         if (item.Gcsurl is null)
         {
@@ -134,10 +134,10 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         }
 
         // removing the metadata
-        await RemoveMetadata(operationId, item.Id, errors);
+        await RemoveMetadata(dataPartitionId, operationId, item.Id, errors);
     }
 
-    private async Task RemoveMetadata(string operationId, string datasetId, List<string> errors)
+    private async Task RemoveMetadata(string dataPartitionId, string operationId, string datasetId, List<string> errors)
     {
         if (errors.Count == 0)
         {
@@ -145,7 +145,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
             try
             {
-                await MetadataDeletionWorker.DeleteMetadata(datasetId);
+                await MetadataDeletionWorker.DeleteMetadata(dataPartitionId, datasetId);
             }
             catch (Exception e)
             {

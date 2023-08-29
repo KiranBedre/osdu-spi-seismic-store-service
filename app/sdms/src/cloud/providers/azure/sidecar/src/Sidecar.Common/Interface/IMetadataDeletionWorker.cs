@@ -17,5 +17,5 @@
 namespace Sidecar.Common.Interface;
 public interface IMetadataDeletionWorker
 {
-    Task DeleteMetadata(string id);
+    Task DeleteMetadata(string dataPartitionId, string id);
 }
