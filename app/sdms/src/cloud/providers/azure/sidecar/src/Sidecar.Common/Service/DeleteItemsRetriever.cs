@@ -31,8 +31,8 @@ public class DeleteItemsRetriever: IItemsRetriever
     private readonly ICosmosClientFactory _cosmosClientFactory;
 
     public DeleteItemsRetriever(
-        ILogger<DeleteItemsRetriever> logger, 
-        IDataAccess dataAccess, 
+        ILogger<DeleteItemsRetriever> logger,
+        IDataAccess dataAccess,
         ICosmosClientFactory cosmosClientFactory)
     {
         Logger = logger;

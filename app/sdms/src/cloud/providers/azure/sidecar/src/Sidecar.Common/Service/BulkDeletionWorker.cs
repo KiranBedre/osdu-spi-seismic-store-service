@@ -16,13 +16,10 @@
 
 namespace Sidecar.Common.Service;
 
-using Azure.Core;
-using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using System.Threading.Tasks.Dataflow;
 
 using Interface;
@@ -36,8 +33,8 @@ public class BulkDeletionWorker : IBulkDeletionWorker
     private readonly IQueueHandlerDeletion Queue;
     private readonly IMetadataDeletionWorker MetadataDeletionWorker;
     private readonly IBlobClientFactory _blobClientFactory;
-    private static int BatchIndex = 0;
-    private static bool FoundErrors  = false;
+    private int BatchIndex = 0;
+    private bool FoundErrors  = false;
 
     public BulkDeletionWorker(ILogger<BulkDeletionWorker> logger,
         IQueueHandlerDeletion queue,
