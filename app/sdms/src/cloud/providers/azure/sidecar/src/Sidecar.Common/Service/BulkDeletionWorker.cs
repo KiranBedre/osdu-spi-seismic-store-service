@@ -102,11 +102,11 @@ public class BulkDeletionWorker : IBulkDeletionWorker
                 if (e.ErrorCode == "ContainerNotFound")
                 {
                     // we assume this was previously deleted and continue ignoring this exception
-                    Logger.LogInformation($"Could not find container {containerName}. Ignoring as it is assumed to have already been deleted");
+                    Logger.LogInformation("Could not find container \'{ContainerName}\'. Ignoring as it is assumed to have already been deleted", containerName);
                 }
                 else
                 {
-                    Logger.LogError($"Could not delete container {containerName}: {e.Message}");
+                    Logger.LogError("Could not delete container \'{ContainerName}\': {EMessage}", containerName, e.Message);
                     errors.Add(e.Message);
                 }
             }
