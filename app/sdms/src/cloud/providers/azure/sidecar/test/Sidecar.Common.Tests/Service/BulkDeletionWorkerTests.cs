@@ -14,6 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
+using Azure;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
+
 namespace Sidecar.Common.Tests.Service
 {
     public class BulkDeletionWorkerTests
@@ -103,5 +108,84 @@ namespace Sidecar.Common.Tests.Service
                 queue => queue.IncrementCountAsync("operationId", It.IsAny<string>()),
                Times.Never);
         }
+
+
+        [Fact]
+        public async Task RunBulkDeletion_Should_Work()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
+            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
+            var blobClientMock = new Mock<IBlobClient>();
+            var blobServiceClientMock = new Mock<BlobServiceClient>();
+            var blobBatchClientMock = new Mock<BlobBatchClient>();
+            var blobContainerClientMock = new Mock<BlobContainerClient>();
+            var blobBatchMock = new Mock<BlobBatch>();
+
+
+            var bulkDeletionWorker = new BulkDeletionWorker(
+                loggerMock.Object,
+                queueMock.Object,
+                metadataDeletionWorkerMock.Object,
+                blobClientMock.Object
+            );
+
+            var itemsToDelete = new List<DeleteItem> {
+                new DeleteItem
+                    {
+                        Id = "123",
+                        Gcsurl = "container/folder1",
+                        Path = "/some/path",
+                        Name = "Example"
+                    },
+                new DeleteItem
+                    {
+                        Id = "456",
+                        Gcsurl = "container/folder2",
+                        Path = "/some/path",
+                        Name = "Example"
+                    }
+            };
+
+            blobClientMock
+                .Setup(client => client.GetBlobServiceClient())
+                .Returns(blobServiceClientMock.Object);
+
+            blobServiceClientMock
+                .Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(blobContainerClientMock.Object);
+
+            blobClientMock
+                .Setup(client => client.GetBlobBatchClient())
+                .Returns(blobBatchClientMock.Object);
+
+            blobBatchClientMock
+                .Setup(blobBatchClientMock => blobBatchClientMock.CreateBatch())
+                .Returns(blobBatchMock.Object);
+
+            blobBatchMock
+                .Setup(b => b.DeleteBlob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>()));
+
+            var mockedBlobs = Page<BlobItem>.FromValues(new List<BlobItem>
+            {
+                BlobsModelFactory.BlobItem("mocked1"),
+                BlobsModelFactory.BlobItem("mocked2")
+            }, continuationToken: null, new Mock<Response>().Object);
+            
+            var mockedBlobsPages = AsyncPageable<BlobItem>.FromPages(new[] { mockedBlobs });
+
+            blobContainerClientMock
+                .Setup(client => client.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Returns(mockedBlobsPages);
+
+            // Act
+            await bulkDeletionWorker.RunBulkDeletion("operationId", itemsToDelete);
+
+            queueMock.Verify(
+                queue => queue.IncrementCountAsync("operationId", It.IsAny<string>()),
+                Times.Exactly(itemsToDelete.Count));
+        }
+
     }
 }

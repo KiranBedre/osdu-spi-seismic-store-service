@@ -15,6 +15,7 @@
 // ============================================================================
 
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 
@@ -44,6 +45,11 @@ namespace Sidecar.Common.Service
         public BlobServiceClient GetBlobServiceClient()
         {
             return BlobServiceClient;
+        }
+
+        public BlobBatchClient GetBlobBatchClient()
+        {
+            return BlobServiceClient.GetBlobBatchClient();
         }
     }
 }

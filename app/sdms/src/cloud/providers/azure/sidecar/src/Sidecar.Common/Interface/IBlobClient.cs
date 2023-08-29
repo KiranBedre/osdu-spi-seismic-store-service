@@ -15,11 +15,13 @@
 // ============================================================================
 
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
 
 namespace Sidecar.Common.Interface
 {
     public interface IBlobClient
     {
+        BlobBatchClient GetBlobBatchClient();
         BlobServiceClient GetBlobServiceClient();
     }
 }

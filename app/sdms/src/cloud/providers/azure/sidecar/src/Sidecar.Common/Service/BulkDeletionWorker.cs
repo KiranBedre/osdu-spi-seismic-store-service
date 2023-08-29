@@ -164,7 +164,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
     private async Task DeleteBlobsInBulk(string containerName, string? virtualFolderName, BlobContainerClient containerClient, List<string> errors)
     {
         BatchIndex = 0;
-        var batchBlock = CreateBatchForBlobsDeletion(BlobClient.GetBlobServiceClient(), errors, out ActionBlock<Tuple<string, string>[]> processItems);
+        var batchBlock = CreateBatchForBlobsDeletion(BlobClient, errors, out ActionBlock<Tuple<string, string>[]> processItems);
         var blobs = containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: virtualFolderName + "/");
 
         await foreach (var pages in blobs.AsPages())
@@ -179,7 +179,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         await processItems.Completion;
     }
 
-    private BatchBlock<Tuple<string, string>> CreateBatchForBlobsDeletion(BlobServiceClient client, List<string> errors, out ActionBlock<Tuple<string, string>[]> processItems)
+    private BatchBlock<Tuple<string, string>> CreateBatchForBlobsDeletion(IBlobClient client, List<string> errors, out ActionBlock<Tuple<string, string>[]> processItems)
     {
         var blobBatchClient = client.GetBlobBatchClient();
         var batchBlock = new BatchBlock<Tuple<string, string>>(_batchSize);
