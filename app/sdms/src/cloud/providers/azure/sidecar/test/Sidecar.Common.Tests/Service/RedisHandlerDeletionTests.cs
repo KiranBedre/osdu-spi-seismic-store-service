@@ -23,10 +23,10 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
     public RedisHandlerDeletionTests() : base()
     {
         RedisConnectionFactory.Setup(m => m.GetRedisForQueue()).Returns(ConnectionMultiplexer.Object);
-        QueueHandler = GetQueueHander();
+        QueueHandler = GetQueueHandler();
     }
 
-    private RedisHandlerDeletion GetQueueHander() => new RedisHandlerDeletion(
+    private RedisHandlerDeletion GetQueueHandler() => new RedisHandlerDeletion(
             TestingHelpers.GetLogger<RedisHandlerDeletion>().Object
             , new Options
             {
@@ -49,6 +49,31 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
         QueueHandler.Set(new RedisKey(key), he);
 
         return expectedMsg;
+    }
+
+    [Fact]
+    public async Task CheckForDeletionOperationAsync_QueueDoesNotExist_RedisException()
+    {
+        // Arrange
+
+        // Act and Assert
+        await Assert.ThrowsAsync<RedisException>(() => QueueHandler.CheckForDeletionOperationAsync());
+    }
+
+
+    [Fact]
+    public async Task CheckForDeletionOperationAsync_QueueIsEmpty_ReturnsNull()
+    {
+        // Arrange
+        var expectedMsg = await PushDeleteOperationMessage();
+
+
+        // Act
+        var statusMsg = await QueueHandler.CheckForDeletionOperationAsync();
+        statusMsg = await QueueHandler.CheckForDeletionOperationAsync();
+
+        // Assert
+        Assert.Null(statusMsg);
     }
 
     [Fact]

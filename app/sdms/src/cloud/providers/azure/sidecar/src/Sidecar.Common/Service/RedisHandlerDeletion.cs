@@ -105,15 +105,15 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 
     public async Task IncrementCountAsync(string operationId, string field)
     {
-        var statusKey = Options.QueueName + ":status:" + operationId.ToLower();
+        var statusKey = $"{Options.QueueName}:status:{operationId.ToLower()}";
         await HashIncrementAsync(statusKey, field);
         await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
     public async Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue)
     {
-        var statusKey = Options.QueueName + ":status:" + operationId.ToLower();
+        var statusKey = $"{Options.QueueName}:status:{operationId.ToLower()}";
         await HashSetAsync(statusKey, keyName, keyValue);
         await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
-        }
+    }
 }

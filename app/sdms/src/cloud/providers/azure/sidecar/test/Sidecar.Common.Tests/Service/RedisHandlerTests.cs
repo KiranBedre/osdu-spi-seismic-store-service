@@ -26,7 +26,7 @@ public class RedisHandlerTests
         ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
         RedisConnectionFactory = new Mock<IRedisConnectionFactory>();
     }
-    private RedisHandler GetQueueHander() => new RedisHandler(TestingHelpers.GetLogger<RedisHandler>().Object
+    private RedisHandler GetQueueHandler() => new RedisHandler(TestingHelpers.GetLogger<RedisHandler>().Object
             , ConnectionMultiplexer.Object);
 
     [Theory]
@@ -37,7 +37,7 @@ public class RedisHandlerTests
     private void HashSet_HashIncrement_Success(int? inc){
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
-        var queueHandler = GetQueueHander();
+        var queueHandler = GetQueueHandler();
         var key = "HashSet_IncrHash_Success:inc";
         var field = "cnt";
         var initialValue = 6;
@@ -63,7 +63,7 @@ public class RedisHandlerTests
     private void HashSet_HashDecrement_Success(int? inc){
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
-        var queueHandler = GetQueueHander();
+        var queueHandler = GetQueueHandler();
         var key = "HashSet_HashDecrement_Success:dec";
         var field = "cnt";
         var initialValue = 10;
@@ -85,7 +85,7 @@ public class RedisHandlerTests
     private void HashSet_HashGet_Success()
     {
         // Arrange
-        var queueHandler = GetQueueHander();
+        var queueHandler = GetQueueHandler();
         var key = "HashSet_HashGet_Success:hs";
         var field = "cnt";
         var initialValue = 1;
@@ -107,7 +107,7 @@ public class RedisHandlerTests
     private async Task HashSetAsync_HashGetAsync_Success()
     {
         // Arrange
-        var queueHandler = GetQueueHander();
+        var queueHandler = GetQueueHandler();
         var key = "HashSetAsync_Success:hsa";
         var field = "cnt";
         var initialValue = 1;
