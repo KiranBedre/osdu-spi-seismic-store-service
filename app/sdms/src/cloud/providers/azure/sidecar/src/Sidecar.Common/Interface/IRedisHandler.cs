@@ -23,7 +23,7 @@ public interface IRedisHandler
     Task<long> HashIncrementAsync(string key, string field, long? incBy = 1);
 
     long HashDecrement(string key, string field, long? decBy = 1);
-    Task<long> HashDecrementAsync(string key, string field, long? incBy = 1);
+    Task<long> HashDecrementAsync(string key, string field, long? decBy = 1);
 
     bool HashSet(string key, string field, string value);
 
