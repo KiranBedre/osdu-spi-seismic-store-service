@@ -60,8 +60,7 @@ public class DeletionOperationService : BackgroundService
                     var itemsToDelete = await ItemsRetriever.GetItems(op.Subproject, op.Path);
 
                     Logger.LogInformation("Found {0} items to delete", itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
-                    await Queue.UpdateStatusAsync(op.OperationId, itemsToDelete.Count);
-
+                    await Queue.UpdateFieldStatusOperation(op.OperationId, "DatasetsCnt", itemsToDelete.Count.ToString());
 
                     for (int i = itemsToDelete.Count - 1; i >= 0; i--)
                     {

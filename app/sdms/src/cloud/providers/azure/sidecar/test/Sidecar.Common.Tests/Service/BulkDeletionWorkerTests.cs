@@ -79,6 +79,8 @@ namespace Sidecar.Common.Tests.Service
 
             // Assert
             queueMock.Verify(q => q.IncrementCountAsync(operationId, "FailedCnt"), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, "Status", Status.InProgress.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, "Status", Status.CompletedWithErrors.ToString()), Times.Once);
         }
 
 
@@ -107,6 +109,8 @@ namespace Sidecar.Common.Tests.Service
             queueMock.Verify(
                 queue => queue.IncrementCountAsync("operationId", It.IsAny<string>()),
                Times.Never);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", "Status", Status.Completed.ToString()), Times.Once);
+
         }
 
 
@@ -183,8 +187,12 @@ namespace Sidecar.Common.Tests.Service
             await bulkDeletionWorker.RunBulkDeletion("operationId", itemsToDelete);
 
             queueMock.Verify(
-                queue => queue.IncrementCountAsync("operationId", It.IsAny<string>()),
+                queue => queue.IncrementCountAsync("operationId", "DeletedCnt"),
                 Times.Exactly(itemsToDelete.Count));
+
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", "Status", Status.InProgress.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", "Status", Status.Completed.ToString()), Times.Once);
+
         }
 
     }

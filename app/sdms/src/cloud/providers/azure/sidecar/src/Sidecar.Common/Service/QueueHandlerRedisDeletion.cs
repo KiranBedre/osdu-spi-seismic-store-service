@@ -110,10 +110,10 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
         await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
-    public async Task UpdateStatusAsync(string operationId, int count)
+    public async Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue)
     {
         var statusKey = Options.QueueName + ":status:" + operationId.ToLower();
-        await HashSetAsync(statusKey, "DatasetsCnt", count.ToString());
+        await HashSetAsync(statusKey, keyName, keyValue);
         await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
         }
 }

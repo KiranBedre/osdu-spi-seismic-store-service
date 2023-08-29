@@ -40,7 +40,7 @@ namespace Sidecar.Common
         [Description("Started")]
         Started = 0,
         [Description("In Progress")]
-        Inprogress = 1,
+        InProgress = 1,
         [Description("Completed")]
         Completed = 2,
         [Description("Completed With Errors")]
