@@ -24,22 +24,25 @@ using Interface;
 using Model;
 using Sidecar.Common.Utility;
 
-public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
+public class RedisDeletionTasksStorage : IDeletionTasksStorage
 {
-    readonly IOptionsQueueRedisQueueName _options;
+    private readonly ILogger<RedisDeletionTasksStorage> _logger;
+    private readonly IOptionsQueueRedisQueueName _options;
+    private readonly IRedisHandler _queue;
 
-    public RedisHandlerDeletion(
-        ILogger<RedisHandlerDeletion> logger, 
+    public RedisDeletionTasksStorage(
+        ILogger<RedisDeletionTasksStorage> logger, 
         IOptionsQueueRedisQueueName options, 
         IRedisConnectionFactory redisConnectionFactory)
-        : base(logger, redisConnectionFactory.GetRedisForQueue())
     {
+        _logger = logger;
         _options = options;
+        _queue = redisConnectionFactory.GetRedisForQueue();
     }
 
     public async Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync()
     {
-        var db = GetDatabase();
+        var db = _queue.GetDatabase();
 
         var opMsg = await GetDeletionOperationMessage(db);
         if(opMsg == null){
@@ -56,7 +59,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
         var delQ = _options.QueueName;
         if (!await db.KeyExistsAsync(delQ))
         {
-            Logger.LogError("Queue {q} does not exist", delQ);
+            _logger.LogError("Queue {q} does not exist", delQ);
             throw new RedisException("Queue does not exist");
         }
 
@@ -64,7 +67,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 
         if (!op.HasValue)
         {
-            Logger.LogDebug("Deletion queue {q} is empty", delQ);
+            _logger.LogDebug("Deletion queue {q} is empty", delQ);
             return null;
         }
 
@@ -73,7 +76,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 
         if (delOpData.Length == 0)
         {
-            Logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
+            _logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
             throw new RedisException("Failed to get operation data from queue");
         }
         return delOpData.FromHashEntries<DeleteOperationMessage>(true);
@@ -89,7 +92,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
             Path = opMsg.Path,
             CreatedAt = DateTime.UtcNow,
             LastUpdatedAt = DateTime.UtcNow,
-            CreatedBy = "Sidecar.QueueHanderRedis",
+            CreatedBy = "Sidecar.QueueHandlerRedis",
             Status = Status.Started.ToString(),
             StatusDescription = Status.Started.Description(),
             DatasetsCnt = 0,
@@ -109,14 +112,14 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
     public async Task IncrementCountAsync(string operationId, string field)
     {
         var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
-        await HashIncrementAsync(statusKey, field);
-        await HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+        await _queue.HashIncrementAsync(statusKey, field);
+        await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
     public async Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue)
     {
         var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
-        await HashSetAsync(statusKey, keyName, keyValue);
-        await HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+        await _queue.HashSetAsync(statusKey, keyName, keyValue);
+        await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 }

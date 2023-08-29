@@ -27,7 +27,7 @@ using Sidecar.Common.Utility;
 public class DeletionOperationService : BackgroundService
 {
     private readonly ILogger<DeletionOperationService> _logger;
-    private readonly IQueueHandlerDeletion _queue;
+    private readonly IDeletionTasksStorage _deletionTasks;
     private readonly IItemsRetriever _itemsRetriever;
     private readonly IBulkDeletionWorker _bulkDeletionWorker;
     private readonly ILockManager _lockManager;
@@ -36,13 +36,13 @@ public class DeletionOperationService : BackgroundService
     private const int MAX_CONSECUTIVE_FAILURES = 10;
 
     public DeletionOperationService(ILogger<DeletionOperationService> logger,
-        IQueueHandlerDeletion queue,
+        IDeletionTasksStorage deletionTasks,
         IItemsRetriever itemsRetriever,
         IBulkDeletionWorker bulkDeletionWorker,
         ILockManager lockManager)
     {
         _logger = logger;
-        _queue = queue;
+        _deletionTasks = deletionTasks;
         _itemsRetriever = itemsRetriever;
         _bulkDeletionWorker = bulkDeletionWorker;
         _lockManager = lockManager;
@@ -50,9 +50,9 @@ public class DeletionOperationService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        do{
+        do {
             try {
-                var op = await _queue.CheckForDeletionOperationAsync();
+                var op = await _deletionTasks.CheckForDeletionOperationAsync();
                 if (op is not null) {
                     //---start the deletion process
                     _logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
@@ -60,7 +60,7 @@ public class DeletionOperationService : BackgroundService
                     var itemsToDelete = await _itemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
 
                     _logger.LogInformation("Found {0} items to delete", itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
-                    await _queue.UpdateFieldStatusOperation(op.OperationId, Constants.DeleteOperationStatus.DatasetsCnt, itemsToDelete.Count.ToString());
+                    await _deletionTasks.UpdateFieldStatusOperation(op.OperationId, Constants.DeleteOperationStatus.DatasetsCnt, itemsToDelete.Count.ToString());
 
                     for (int i = itemsToDelete.Count - 1; i >= 0; i--)
                     {
@@ -71,7 +71,7 @@ public class DeletionOperationService : BackgroundService
                         if (!locked)
                         {
                             _logger.LogInformation("Could not acquire lock for {0}", datasetName);
-                            await _queue.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FailedCnt);
+                            await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FailedCnt);
                             itemsToDelete.Remove(item);
                         }
                     }
@@ -95,9 +95,7 @@ public class DeletionOperationService : BackgroundService
         {
             return item.Path + item.Name;
         }
-        else
-        {
-            return item.Path + "/" + item.Name;
-        }
+
+        return item.Path + "/" + item.Name;
     }
 }

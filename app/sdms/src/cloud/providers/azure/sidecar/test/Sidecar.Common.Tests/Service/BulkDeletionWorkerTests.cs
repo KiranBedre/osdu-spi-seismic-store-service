@@ -59,7 +59,7 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var queueMock = new Mock<IDeletionTasksStorage>();
             var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
             var blobClientMock = new Mock<IBlobClientFactory>();
 
@@ -94,7 +94,7 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var queueMock = new Mock<IDeletionTasksStorage>();
             var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
             var blobClientMock = new Mock<IBlobClientFactory>();
 
@@ -126,7 +126,7 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var queueMock = new Mock<IDeletionTasksStorage>();
             var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
             var blobClientMock = new Mock<IBlobClient>();
             var blobClientFactoryMock = new Mock<IBlobClientFactory>();

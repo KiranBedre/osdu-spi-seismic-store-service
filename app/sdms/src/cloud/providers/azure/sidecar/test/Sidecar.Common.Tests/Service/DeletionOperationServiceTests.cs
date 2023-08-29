@@ -16,7 +16,6 @@
 
 
 using Sidecar.Common.Utility;
-using Sidecar.DeleteOperationRunner.Services;
 using System.Reflection;
 
 namespace Sidecar.Common.Tests.Service
@@ -28,7 +27,7 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var loggerMock = new Mock<ILogger<DeletionOperationService>>();
-            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var queueMock = new Mock<IDeletionTasksStorage>();
             var itemsRetrieverMock = new Mock<IItemsRetriever>();
             var bulkDeletionWorkerMock = new Mock<IBulkDeletionWorker>();
             var lockManagerMock = new Mock<ILockManager>();
@@ -88,7 +87,7 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var loggerMock = new Mock<ILogger<DeletionOperationService>>();
-            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var queueMock = new Mock<IDeletionTasksStorage>();
             var itemsRetrieverMock = new Mock<IItemsRetriever>();
             var bulkDeletionWorkerMock = new Mock<IBulkDeletionWorker>();
             var lockManagerMock = new Mock<ILockManager>();
@@ -152,7 +151,7 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var loggerMock = new Mock<ILogger<DeletionOperationService>>();
-            var queueMock = new Mock<IQueueHandlerDeletion>();
+            var queueMock = new Mock<IDeletionTasksStorage>();
             var itemsRetrieverMock = new Mock<IItemsRetriever>();
             var bulkDeletionWorkerMock = new Mock<IBulkDeletionWorker>();
             var lockManagerMock = new Mock<ILockManager>();

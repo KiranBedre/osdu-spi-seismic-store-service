@@ -23,7 +23,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Utility;
-using Sidecar.DeleteOperationRunner.Services;
 
 namespace Sidecar.DeleteOperationRunner;
 
@@ -141,9 +140,7 @@ public class Program
                     .AddSingleton<IBlobClientFactory, BlobClientFactory>()
                     .AddSingleton<IBulkDeletionWorker,
                         BulkDeletionWorker>()
-                    .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
-                    .AddSingleton<IRedisHandler>(sp =>
-                        sp.GetRequiredService<IQueueHandlerDeletion>())
+                    .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
                     .AddHostedService<DeletionOperationService>()
                     .AddSingleton<ILockManager, LockManager>()
                     .AddScoped<IDataAccess, Cosmos>();

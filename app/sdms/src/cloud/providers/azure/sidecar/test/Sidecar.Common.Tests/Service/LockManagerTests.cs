@@ -14,22 +14,27 @@
 // limitations under the License.
 // ============================================================================
 
-using Sidecar.DeleteOperationRunner.Services;
-
 namespace Sidecar.Common.Tests.Service
 {
     public class LockManagerTests
     {
-        private LockManager LockManager;
-        protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer = new ();
+        private readonly LockManager _lockManager;
+        private readonly Mock<IConnectionMultiplexer> _connectionMultiplexer;
+        private readonly Mock<IDatabase> _dbMock;
 
         public LockManagerTests()
         {
-            ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
+            _dbMock = TestingHelpers.GetDatabase();
+            _connectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: _dbMock.Object);
+            
             var factoryMock = new Mock<IRedisConnectionFactory>();
-            factoryMock.Setup(m => m.GetRedisForLocks()).Returns(ConnectionMultiplexer.Object);
-            var Logger = new Mock<ILogger<LockManager>>();
-            LockManager = new LockManager(Logger.Object, factoryMock.Object);
+            factoryMock.Setup(m => m.GetRedisForLocks()).Returns(
+                new RedisHandler(
+                    TestingHelpers.GetLogger<RedisHandler>().Object,
+                    _connectionMultiplexer.Object));
+            
+            var loggerFactory = new Mock<ILoggerFactory>();
+            _lockManager = new(factoryMock.Object);
         }
 
 
@@ -39,14 +44,14 @@ namespace Sidecar.Common.Tests.Service
             // Arrange
 
             var databaseMock = new Mock<IDatabase>();
-            ConnectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
             var key = "/path/file.tst";
             databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
                 .ReturnsAsync(true);
             databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("WDELETE:lockValue");
 
             // Act
-            var result = await LockManager.AcquireDeleteLock(key);
+            var result = await _lockManager.AcquireDeleteLock(key);
 
             // Assert
             Assert.True(result);
@@ -59,14 +64,14 @@ namespace Sidecar.Common.Tests.Service
             // Arrange
 
             var databaseMock = new Mock<IDatabase>();
-            ConnectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
             var key = "/path/file.tst";
             databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
                 .ReturnsAsync(true);
             databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("RLockValue");
 
             // Act
-            var result = await LockManager.AcquireDeleteLock(key);
+            var result = await _lockManager.AcquireDeleteLock(key);
 
             // Assert
             Assert.False(result);
@@ -77,7 +82,7 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var databaseMock = new Mock<IDatabase>();
-            ConnectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
             var key = "/path/file.tst";
             databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
                 .ReturnsAsync(true);
@@ -94,7 +99,7 @@ namespace Sidecar.Common.Tests.Service
                .ReturnsAsync(true);
 
             // Act
-            var result = await LockManager.AcquireDeleteLock(key);
+            var result = await _lockManager.AcquireDeleteLock(key);
 
             // Assert
             Assert.True(result);
@@ -105,13 +110,13 @@ namespace Sidecar.Common.Tests.Service
         {
             // Arrange
             var databaseMock = new Mock<IDatabase>();
-            ConnectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
 
             databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
                         .ThrowsAsync(new Exception("Lock take failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => LockManager.AcquireDeleteLock("testKey"));
+            await Assert.ThrowsAsync<Exception>(() => _lockManager.AcquireDeleteLock("testKey"));
         }
     }
 }

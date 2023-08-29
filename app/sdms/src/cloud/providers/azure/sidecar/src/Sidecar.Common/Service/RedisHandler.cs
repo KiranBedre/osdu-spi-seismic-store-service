@@ -24,24 +24,24 @@ using Interface;
 
 public class RedisHandler : IRedisHandler
 {
-    protected readonly ILogger<RedisHandler> Logger;
-    protected readonly IConnectionMultiplexer Client;
+    private readonly ILogger<RedisHandler> _logger;
+    private readonly IConnectionMultiplexer _client;
 
     public RedisHandler(ILogger<RedisHandler> logger, IConnectionMultiplexer connectionMultiplexer)
 
     {
-        Logger = logger;
-        Client = connectionMultiplexer;
+        _logger = logger;
+        _client = connectionMultiplexer;
     }
 
-    protected IDatabase GetDatabase() {
+    public IDatabase GetDatabase() {
         try
         {
-            return Client.GetDatabase();
+            return _client.GetDatabase();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error connecting to Redis database");
+            _logger.LogError(ex, "Error connecting to Redis database");
             throw;
         }
     }
@@ -58,7 +58,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -75,7 +75,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
             throw;
         }
 
@@ -93,7 +93,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -109,7 +109,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -125,7 +125,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -141,7 +141,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -156,7 +156,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -171,7 +171,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }

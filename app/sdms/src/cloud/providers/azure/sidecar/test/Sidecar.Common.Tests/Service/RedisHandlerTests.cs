@@ -14,20 +14,22 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Tests;
+namespace Sidecar.Common.Tests.Service;
 
 public class RedisHandlerTests
 {
+    protected readonly Mock<IDatabase> DbMock = TestingHelpers.GetDatabase();
     protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
-    protected readonly Mock<IRedisConnectionFactory> RedisConnectionFactory;
+    protected readonly Mock<IRedisConnectionFactory> RedisConnectionFactory = new();
 
     public RedisHandlerTests()
     {
-        ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
-        RedisConnectionFactory = new Mock<IRedisConnectionFactory>();
+        ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: DbMock.Object);;
     }
-    private RedisHandler GetQueueHandler() => new RedisHandler(TestingHelpers.GetLogger<RedisHandler>().Object
-            , ConnectionMultiplexer.Object);
+        
+    private RedisHandler GetQueueHandler() => new RedisHandler(
+        TestingHelpers.GetLogger<RedisHandler>().Object,
+        ConnectionMultiplexer.Object);
 
     [Theory]
     [InlineData(null)]

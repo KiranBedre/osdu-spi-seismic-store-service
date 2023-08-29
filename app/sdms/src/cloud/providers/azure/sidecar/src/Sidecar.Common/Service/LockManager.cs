@@ -14,27 +14,24 @@
 // limitations under the License.
 // ============================================================================
 
-using Microsoft.Extensions.Logging;
-using Sidecar.Common.Service;
-using Sidecar.Common.Utility;
-
-namespace Sidecar.DeleteOperationRunner.Services
+namespace Sidecar.Common.Service
 {
     using Sidecar.Common.Interface;
+    using Sidecar.Common.Utility;
 
-    public class LockManager : RedisHandler, ILockManager
+    public class LockManager : ILockManager
     {
         private static readonly TimeSpan _ttl = TimeSpan.FromSeconds(6);
+        private readonly IRedisHandler _locksRedis;
 
-        public LockManager(ILogger<LockManager> logger, IRedisConnectionFactory redisConnectionFactory) 
-            : base(logger, redisConnectionFactory.GetRedisForLocks())
+        public LockManager(IRedisConnectionFactory redisConnectionFactory)
         {
-
+            _locksRedis = redisConnectionFactory.GetRedisForLocks();
         }
 
         private async Task<object?> GetLock(string key)
         {
-            var entity = await GetAsync(key);
+            var entity = await _locksRedis.GetAsync(key);
             return entity != null ? entity.StartsWith("rms") ? entity[4..].Split(':') : entity : null;
         }
 
@@ -42,7 +39,7 @@ namespace Sidecar.DeleteOperationRunner.Services
         {
             var lockKey = "locks:" + key;
 
-            var acquired = await Client.GetDatabase().LockTakeAsync(lockKey, Environment.MachineName, _ttl);
+            var acquired = await _locksRedis.GetDatabase().LockTakeAsync(lockKey, Environment.MachineName, _ttl);
             if (acquired)
             {
                 return;
@@ -56,7 +53,7 @@ namespace Sidecar.DeleteOperationRunner.Services
         private async Task ReleaseMutex(string key)
         {
             var lockKey = "locks:" + key;
-            await Client.GetDatabase().LockReleaseAsync(lockKey, Environment.MachineName);
+            await _locksRedis.GetDatabase().LockReleaseAsync(lockKey, Environment.MachineName);
         }
 
         /// <inheritdoc cref="ILockManager.AcquireDeleteLock"/>
@@ -78,7 +75,7 @@ namespace Sidecar.DeleteOperationRunner.Services
                 return ((string)lockValue).StartsWith("WDELETE");
             }
 
-            var result =  await SetAsync(key, Utils.GenerateDeleteLockId());
+            var result =  await _locksRedis.SetAsync(key, Utils.GenerateDeleteLockId());
             await ReleaseMutex(key);
             return result;
         }
