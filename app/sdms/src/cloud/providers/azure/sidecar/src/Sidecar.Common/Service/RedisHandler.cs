@@ -16,11 +16,11 @@
 
 namespace Sidecar.Common.Service;
 
-    using Microsoft.Extensions.Logging;
-    using StackExchange.Redis;
-    using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
+using Newtonsoft.Json;
 
-    using Interface;
+using Interface;
 
 public class RedisHandler : IRedisHandler
 {
@@ -45,12 +45,13 @@ public class RedisHandler : IRedisHandler
             throw;
         }
     }
-    public virtual long HashDecrement(string key, string field, long? decBy = 1)
+
+    public long HashDecrement(string key, string field, long? decBy = 1)
     {
         try
         {
             var dec = decBy ?? 1;
-            return Client.GetDatabase().HashDecrement(new RedisKey(key)
+            return GetDatabase().HashDecrement(new RedisKey(key)
                 , new RedisValue(field)
                 , dec);
 
@@ -62,12 +63,12 @@ public class RedisHandler : IRedisHandler
         }
     }
 
-    public virtual async Task<long> HashDecrementAsync(string key, string field, long? decBy = 1)
+    public async Task<long> HashDecrementAsync(string key, string field, long? decBy = 1)
     {
         try
         {
             var dec = decBy ?? 1 ;
-            return await Client.GetDatabase().HashDecrementAsync(new RedisKey(key)
+            return await GetDatabase().HashDecrementAsync(new RedisKey(key)
                 , new RedisValue(field)
                 , dec);
 
@@ -85,7 +86,7 @@ public class RedisHandler : IRedisHandler
         try
         {
             var inc = incBy ?? 1 ;
-            return await Client.GetDatabase().HashIncrementAsync(new RedisKey(key)
+            return await GetDatabase().HashIncrementAsync(new RedisKey(key)
                 , new RedisValue(field)
                 , inc);
 
@@ -101,7 +102,7 @@ public class RedisHandler : IRedisHandler
         try
         {
             var inc = incBy ?? 1 ;
-            return Client.GetDatabase().HashIncrement(new RedisKey(key)
+            return GetDatabase().HashIncrement(new RedisKey(key)
                 , new RedisValue(field)
                 , inc);
 
@@ -117,7 +118,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            return Client.GetDatabase().HashSet(new RedisKey(key)
+            return GetDatabase().HashSet(new RedisKey(key)
                 , new RedisValue(field)
                 , new RedisValue(value));
 
@@ -133,7 +134,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            return await Client.GetDatabase().HashSetAsync(new RedisKey(key)
+            return await GetDatabase().HashSetAsync(new RedisKey(key)
                 , new RedisValue(field)
                 , new RedisValue(value));
 
@@ -149,7 +150,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var res =  await Client.GetDatabase().HashGetAsync(new RedisKey(key)
+            var res =  await GetDatabase().HashGetAsync(new RedisKey(key)
                 , new RedisValue(field));
             return JsonConvert.DeserializeObject<T>(res.ToString());
         }
@@ -164,7 +165,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var res =  Client.GetDatabase().HashGet(new RedisKey(key)
+            var res =  GetDatabase().HashGet(new RedisKey(key)
                     , new RedisValue(field));
             return JsonConvert.DeserializeObject<T>(res.ToString());
         }
@@ -177,25 +178,22 @@ public class RedisHandler : IRedisHandler
 
     public async Task<string?> GetAsync(string key)
     {
-        return await Client.GetDatabase().StringGetAsync(key);
+        return await GetDatabase().StringGetAsync(key);
     }
 
     public async Task<bool> SetAsync(string key, string value)
     {
-        var db = Client.GetDatabase();
-        return await db.StringSetAsync(key, value);
+        return await GetDatabase().StringSetAsync(key, value);
     }
 
     public async Task SetAsync(RedisKey key, HashEntry[] hash)
     {
-        var db = Client.GetDatabase();
-        await db.HashSetAsync(key, hash);
+        await GetDatabase().HashSetAsync(key, hash);
     }
 
     public long ListLeftPush(RedisKey key, RedisValue val)
     {
-        var db = Client.GetDatabase();
-        return db.ListLeftPush(key, new RedisValue(val!));
+        return GetDatabase().ListLeftPush(key, new RedisValue(val!));
     }
 
     public long ListLeftPush(RedisKey key, string val)
@@ -205,8 +203,7 @@ public class RedisHandler : IRedisHandler
 
     public async Task<long> ListLeftPushAsync(RedisKey key, RedisValue val)
     {
-        var db = Client.GetDatabase();
-        return await db.ListLeftPushAsync(key, new RedisValue(val!));
+        return await GetDatabase().ListLeftPushAsync(key, new RedisValue(val!));
     }
 
     public async Task<long> ListLeftPushAsync(RedisKey key, string val)
@@ -216,12 +213,11 @@ public class RedisHandler : IRedisHandler
 
     public void Set(RedisKey key, HashEntry[] hashes)
     {
-        var db = Client.GetDatabase();
-        db.HashSet(key, hashes);
+        GetDatabase().HashSet(key, hashes);
     }
 
     public async Task<bool> DeleteAsync(string key)
     {
-        return await Client.GetDatabase().KeyDeleteAsync(key);
+        return await GetDatabase().KeyDeleteAsync(key);
     }
 }
