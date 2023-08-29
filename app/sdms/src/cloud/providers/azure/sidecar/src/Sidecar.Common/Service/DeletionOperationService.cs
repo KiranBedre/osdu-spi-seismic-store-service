@@ -72,6 +72,7 @@ public class DeletionOperationService : BackgroundService
                         if (!locked)
                         {
                             Logger.LogInformation("Could not acquire lock for {0}", datasetName);
+                            await Queue.IncrementCountAsync(op.OperationId, "FailedCnt");
                             itemsToDelete.Remove(item);
                         }
                     }
