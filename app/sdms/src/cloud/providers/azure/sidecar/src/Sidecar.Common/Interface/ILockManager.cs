@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.DeleteOperationRunner.Services
+namespace Sidecar.Common.Interface
 {
     public interface ILockManager
     {

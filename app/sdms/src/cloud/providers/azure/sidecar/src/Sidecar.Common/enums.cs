@@ -23,12 +23,10 @@ namespace Sidecar.Common
         public static string Description(this Enum enumVal)
         {
             var field = enumVal.GetType().GetField(enumVal.ToString());
-            if (field != null)
+            if (field == null) return enumVal.ToString();
+            if (Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute attribute)
             {
-                if (Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute attribute)
-                {
-                    return attribute.Description;
-                }
+                return attribute.Description;
             }
             return enumVal.ToString();
         }

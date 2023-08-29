@@ -22,12 +22,11 @@ using System.Threading.Tasks;
 
 using Interface;
 using Model;
-using Utilitiy;
 using Sidecar.Common.Utility;
 
 public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 {
-    readonly IOptionsQueueRedisQueueName Options;
+    readonly IOptionsQueueRedisQueueName _options;
 
     public RedisHandlerDeletion(
         ILogger<RedisHandlerDeletion> logger, 
@@ -35,7 +34,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
         IRedisConnectionFactory redisConnectionFactory)
         : base(logger, redisConnectionFactory.GetRedisForQueue())
     {
-        Options = options;
+        _options = options;
     }
 
     public async Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync()
@@ -54,7 +53,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
     }
 
     private async Task<DeleteOperationMessage?> GetDeletionOperationMessage(IDatabase db){
-        var delQ = Options.QueueName;
+        var delQ = _options.QueueName;
         if (!await db.KeyExistsAsync(delQ))
         {
             Logger.LogError("Queue {q} does not exist", delQ);
@@ -69,7 +68,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
             return null;
         }
 
-        var opDataKey = Options.QueueName + ":" + op.ToString();
+        var opDataKey = _options.QueueName + ":" + op.ToString();
         var delOpData = await db.HashGetAllAsync(opDataKey);
 
         if (delOpData.Length == 0)
@@ -100,7 +99,7 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 
         var statusHash = status.ToHashEntries();
 
-        var statusKey = Options.QueueName + ":status:" + status.OperationId.ToLower();
+        var statusKey = _options.QueueName + ":status:" + status.OperationId.ToLower();
 
         await db.HashSetAsync(statusKey, statusHash);
 
@@ -109,14 +108,14 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 
     public async Task IncrementCountAsync(string operationId, string field)
     {
-        var statusKey = $"{Options.QueueName}:status:{operationId.ToLower()}";
+        var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
         await HashIncrementAsync(statusKey, field);
         await HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
     public async Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue)
     {
-        var statusKey = $"{Options.QueueName}:status:{operationId.ToLower()}";
+        var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
         await HashSetAsync(statusKey, keyName, keyValue);
         await HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }

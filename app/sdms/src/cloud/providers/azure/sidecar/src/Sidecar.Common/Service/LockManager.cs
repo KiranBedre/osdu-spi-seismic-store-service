@@ -15,17 +15,16 @@
 // ============================================================================
 
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using Sidecar.Common.Interface;
 using Sidecar.Common.Service;
 using Sidecar.Common.Utility;
-using StackExchange.Redis;
 
 namespace Sidecar.DeleteOperationRunner.Services
 {
+    using Sidecar.Common.Interface;
+
     public class LockManager : RedisHandler, ILockManager
     {
-        private static TimeSpan TTL = TimeSpan.FromSeconds(6);
+        private static readonly TimeSpan _ttl = TimeSpan.FromSeconds(6);
 
         public LockManager(ILogger<LockManager> logger, IRedisConnectionFactory redisConnectionFactory) 
             : base(logger, redisConnectionFactory.GetRedisForLocks())
@@ -43,7 +42,7 @@ namespace Sidecar.DeleteOperationRunner.Services
         {
             var lockKey = "locks:" + key;
 
-            var acquired = await Client.GetDatabase().LockTakeAsync(lockKey, Environment.MachineName, TTL);
+            var acquired = await Client.GetDatabase().LockTakeAsync(lockKey, Environment.MachineName, _ttl);
             if (acquired)
             {
                 return;
@@ -79,7 +78,7 @@ namespace Sidecar.DeleteOperationRunner.Services
                 return ((string)lockValue).StartsWith("WDELETE");
             }
 
-            var result =  await SetAsync(key, Utils.GenerateDeleteLockID());
+            var result =  await SetAsync(key, Utils.GenerateDeleteLockId());
             await ReleaseMutex(key);
             return result;
         }

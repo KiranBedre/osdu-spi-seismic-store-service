@@ -18,7 +18,6 @@ namespace Sidecar.Common.Service;
 
 using StackExchange.Redis;
 using Interface;
-using System.Net;
 
 public class CachingRedisConnectionFactory : IRedisConnectionFactory
 {

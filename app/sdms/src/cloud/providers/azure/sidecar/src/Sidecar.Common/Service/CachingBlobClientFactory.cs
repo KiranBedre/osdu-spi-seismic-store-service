@@ -14,15 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
-using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 
 namespace Sidecar.Common.Service
 {
-    using Azure.Core;
-    using Azure.Security.KeyVault.Secrets;
     using System.Collections.Concurrent;
 
     public class CachingBlobClientFactory : IBlobClientFactory

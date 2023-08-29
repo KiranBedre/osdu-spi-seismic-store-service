@@ -26,8 +26,7 @@ using Sidecar.Common.Model;
 
 public class DeleteItemsRetriever: IItemsRetriever
 {
-    private readonly ILogger<DeleteItemsRetriever> Logger;
-    private readonly IDataAccess DataAccess;
+    private readonly IDataAccess _dataAccess;
     private readonly ICosmosClientFactory _cosmosClientFactory;
 
     public DeleteItemsRetriever(
@@ -35,8 +34,7 @@ public class DeleteItemsRetriever: IItemsRetriever
         IDataAccess dataAccess,
         ICosmosClientFactory cosmosClientFactory)
     {
-        Logger = logger;
-        DataAccess = dataAccess;
+        _dataAccess = dataAccess;
         _cosmosClientFactory = cosmosClientFactory;
     }
 
@@ -49,7 +47,7 @@ public class DeleteItemsRetriever: IItemsRetriever
 
         var cs = await _cosmosClientFactory.GetCosmosConnectionString(dataPartitionId, ct);
 
-        var paginatedRecords = await DataAccess.GetRecords(cs, sql, null, null);
+        var paginatedRecords = await _dataAccess.GetRecords(cs, sql, null, null);
 
         return paginatedRecords.records.Select(item =>
         {

@@ -1,4 +1,4 @@
-namespace Sidecar.Common.Service;
+namespace Sidecar.Common.Interface;
 
 using StackExchange.Redis;
 

@@ -19,18 +19,18 @@ namespace Sidecar.Common.Utility
 {
     public class Utils
     {
-        private static Random random = new Random();
+        private static readonly Random _random = new Random();
 
-        private static string MakeID(int length)
+        private static string MakeId(int length)
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
+            const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            return new string(Enumerable.Repeat(CHARS, length)
+                .Select(s => s[_random.Next(s.Length)]).ToArray());
         }
 
-        public static string GenerateDeleteLockID()
+        public static string GenerateDeleteLockId()
         {
-            return "WDELETE" + MakeID(9);
+            return "WDELETE" + MakeId(9);
         }
     }
 }

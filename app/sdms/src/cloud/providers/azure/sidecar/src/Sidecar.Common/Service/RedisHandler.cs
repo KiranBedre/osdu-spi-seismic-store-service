@@ -25,7 +25,7 @@ using Interface;
 public class RedisHandler : IRedisHandler
 {
     protected readonly ILogger<RedisHandler> Logger;
-    protected IConnectionMultiplexer Client;
+    protected readonly IConnectionMultiplexer Client;
 
     public RedisHandler(ILogger<RedisHandler> logger, IConnectionMultiplexer connectionMultiplexer)
 

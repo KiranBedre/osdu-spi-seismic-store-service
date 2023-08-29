@@ -25,9 +25,11 @@ using Microsoft.Extensions.Logging;
 using Sidecar.Common.Utility;
 using Sidecar.DeleteOperationRunner.Services;
 
+namespace Sidecar.DeleteOperationRunner;
+
 public class Program
 {
-    private static ILogger<Program>? Logger;
+    private static ILogger<Program>? _logger;
     private static void HandleOptionsParserError(IEnumerable<Error> errs)
     {
         var errorMessage = errs.Select(err => err.ToString()).Where(x => x is not null)!.Aggregate((x, y) => x + Environment.NewLine + y);
@@ -36,7 +38,7 @@ public class Program
 
     private static void AttemptOptionsFromEnv(Options opts)
     {
-        Logger?.LogWarning("Checking environment variables for options...");
+        _logger?.LogWarning("Checking environment variables for options...");
 
         opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
         opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
@@ -63,7 +65,7 @@ public class Program
     {
         var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), new DefaultAzureCredential());
 
-        Logger?.LogInformation("Checking KeyVault variables for options...");
+        _logger?.LogInformation("Checking KeyVault variables for options...");
         var secretResponses = await Task.WhenAll(
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_PASSWORD),
@@ -71,7 +73,7 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID));
             
-        Logger?.LogInformation("Got variables from Key Vault...");
+        _logger?.LogInformation("Got variables from Key Vault...");
 
         var secrets = secretResponses.Select(s => s.Value.Value).ToArray();
 
@@ -86,66 +88,66 @@ public class Program
     {
 
         var host = Host.CreateDefaultBuilder()
-           .ConfigureServices(services =>
-           {
-               services.AddAzureClients(builder =>
-               {
-                   builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
-               });
+            .ConfigureServices(services =>
+            {
+                services.AddAzureClients(builder =>
+                {
+                    builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
+                });
 
-               // From the local machine, the user is expected to az login and have access to all dependencies
-               // such as Key Vault, CosmosDB, Storage accounts.
-               // When deployed, there will be a pod identity with access to these dependencies.
-               // DefaultAzureCredential works in both cases.
-               services.AddSingleton<TokenCredential, DefaultAzureCredential>(); 
+                // From the local machine, the user is expected to az login and have access to all dependencies
+                // such as Key Vault, CosmosDB, Storage accounts.
+                // When deployed, there will be a pod identity with access to these dependencies.
+                // DefaultAzureCredential works in both cases.
+                services.AddSingleton<TokenCredential, DefaultAzureCredential>(); 
                
-               if (!string.IsNullOrEmpty(opts.DesUrl))
-               {
-                   services
-                       .AddSingleton<DesClient>()
-                       .AddSingleton<IDesClient>(
-                           sp => new CachingDesClient(sp.GetRequiredService<DesClient>()));
-               }
-               else
-               {
-                   Logger.LogWarning("Using DES client from environment");
-                   services.AddSingleton<IDesClient, DesClientFromEnv>();
-               }
+                if (!string.IsNullOrEmpty(opts.DesUrl))
+                {
+                    services
+                        .AddSingleton<DesClient>()
+                        .AddSingleton<IDesClient>(
+                            sp => new CachingDesClient(sp.GetRequiredService<DesClient>()));
+                }
+                else
+                {
+                    _logger.LogWarning("Using DES client from environment");
+                    services.AddSingleton<IDesClient, DesClientFromEnv>();
+                }
 
-               services
-                   .AddSingleton<CosmosClientFactory>()
-                   .AddSingleton<ICosmosClientFactory>(
-                       sp => new CachingCosmosClientFactory(sp.GetRequiredService<CosmosClientFactory>()));
+                services
+                    .AddSingleton<CosmosClientFactory>()
+                    .AddSingleton<ICosmosClientFactory>(
+                        sp => new CachingCosmosClientFactory(sp.GetRequiredService<CosmosClientFactory>()));
 
-               services
-                   .AddSingleton<BlobClientFactory>()
-                   .AddSingleton<IBlobClientFactory>(
-                       sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
+                services
+                    .AddSingleton<BlobClientFactory>()
+                    .AddSingleton<IBlobClientFactory>(
+                        sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
                
-               services
-                   .AddSingleton<RedisConnectionFactory>()
-                   .AddSingleton<IRedisConnectionFactory>(sp =>
-                       new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
+                services
+                    .AddSingleton<RedisConnectionFactory>()
+                    .AddSingleton<IRedisConnectionFactory>(sp =>
+                        new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
                
-               services
-                   .AddSingleton<IOptions>(opts)
-                   .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
-                   .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
-                   .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
-                   .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
-                   .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
-                   .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
-                   .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
-                   .AddSingleton<IBlobClientFactory, BlobClientFactory>()
-                   .AddSingleton<IBulkDeletionWorker,
-                       BulkDeletionWorker>()
-                   .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
-                   .AddSingleton<IRedisHandler>(sp =>
-                       sp.GetRequiredService<IQueueHandlerDeletion>())
-                   .AddHostedService<DeletionOperationService>()
-                   .AddSingleton<ILockManager, LockManager>()
-                   .AddScoped<IDataAccess, Cosmos>();
-           }).ConfigureLogging(lg => _ = lg
+                services
+                    .AddSingleton<IOptions>(opts)
+                    .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
+                    .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
+                    .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
+                    .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
+                    .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
+                    .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
+                    .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
+                    .AddSingleton<IBlobClientFactory, BlobClientFactory>()
+                    .AddSingleton<IBulkDeletionWorker,
+                        BulkDeletionWorker>()
+                    .AddSingleton<IQueueHandlerDeletion, RedisHandlerDeletion>()
+                    .AddSingleton<IRedisHandler>(sp =>
+                        sp.GetRequiredService<IQueueHandlerDeletion>())
+                    .AddHostedService<DeletionOperationService>()
+                    .AddSingleton<ILockManager, LockManager>()
+                    .AddScoped<IDataAccess, Cosmos>();
+            }).ConfigureLogging(lg => _ = lg
                 .ClearProviders()
                 .AddSimpleConsole(o =>
                 {
@@ -166,7 +168,7 @@ public class Program
             o.TimestampFormat = "[HH:mm:ss:fff] ";
         }));
 
-        Logger = loggerFactory.CreateLogger<Program>();
+        _logger = loggerFactory.CreateLogger<Program>();
 
         var parser = new Parser(settings =>
         {

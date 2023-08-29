@@ -24,9 +24,9 @@ using Model;
 
 public class Cosmos : IDataAccess
 {
-    private readonly string databaseId = "sdms-db";
-    private readonly string containerId = "data";
-    private static Dictionary<string, CosmosClient> cosmosClients = new Dictionary<string, CosmosClient>();
+    private const string DATABASE_ID = "sdms-db";
+    private const string CONTAINER_ID = "data";
+    private static readonly Dictionary<string, CosmosClient> _cosmosClients = new Dictionary<string, CosmosClient>();
 
     public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
     {
@@ -37,8 +37,8 @@ public class Cosmos : IDataAccess
     public async Task<IPaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit)
     {
         this.initCosmosClient(cs);
-        Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-        Container container = database.GetContainer(this.containerId);
+        Database database = Cosmos._cosmosClients[cs].GetDatabase(DATABASE_ID);
+        Container container = database.GetContainer(CONTAINER_ID);
         List<Object> records = new List<Object>();
         IPaginatedRecords paginatedRecords = new PaginatedRecords();
         QueryRequestOptions options = new QueryRequestOptions()
@@ -83,17 +83,17 @@ public class Cosmos : IDataAccess
     public async Task<bool> DeleteMetadata(string cs, string id)
     {
         this.initCosmosClient(cs);
-        Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-        Container container = database.GetContainer(this.containerId);
+        Database database = Cosmos._cosmosClients[cs].GetDatabase(DATABASE_ID);
+        Container container = database.GetContainer(CONTAINER_ID);
         var itemResponse = await container.DeleteItemAsync<Object>(id, new PartitionKey(id));
         return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
     }
 
     private void initCosmosClient(string cs)
     {
-        if (!Cosmos.cosmosClients.ContainsKey(cs))
+        if (!Cosmos._cosmosClients.ContainsKey(cs))
         {
-            Cosmos.cosmosClients[cs] = new CosmosClient(cs, new CosmosClientOptions()
+            Cosmos._cosmosClients[cs] = new CosmosClient(cs, new CosmosClientOptions()
             {
                 SerializerOptions = new CosmosSerializationOptions()
                 {

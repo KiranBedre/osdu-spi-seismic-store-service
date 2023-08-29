@@ -24,15 +24,15 @@ using Interface;
 
 public class MetadataDeletionWorker : IMetadataDeletionWorker
 {
-    private readonly IDataAccess DataAccess;
+    private readonly IDataAccess _dataAccess;
     private readonly ICosmosClientFactory _cosmosClientFactory;
 
-    private int ConsecutiveFailures = 0;
-    private const int MaxRetries = 5;
+    private int _consecutiveFailures = 0;
+    private const int MAX_RETRIES = 5;
 
     public MetadataDeletionWorker(IDataAccess dataAccess, ICosmosClientFactory cosmosClientFactory)
     {
-        DataAccess = dataAccess;
+        _dataAccess = dataAccess;
         _cosmosClientFactory = cosmosClientFactory;
     }
 
@@ -44,14 +44,14 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
             try
             {
                 var cs = await _cosmosClientFactory.GetCosmosConnectionString(dataPartitionId);
-                success = await DataAccess.DeleteMetadata(cs, id);
-                ConsecutiveFailures = 0;
+                success = await _dataAccess.DeleteMetadata(cs, id);
+                _consecutiveFailures = 0;
             }
             catch (CosmosException ex)
             {
-                ConsecutiveFailures++;
+                _consecutiveFailures++;
                 Console.WriteLine(ex.Message);
             }
-        } while (!success && ConsecutiveFailures < MaxRetries);
+        } while (!success && _consecutiveFailures < MAX_RETRIES);
     }
 }

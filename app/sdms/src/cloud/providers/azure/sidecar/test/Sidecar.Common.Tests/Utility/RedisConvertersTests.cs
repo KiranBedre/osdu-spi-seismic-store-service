@@ -16,6 +16,8 @@
 
 namespace Sidecar.Common.Tests;
 
+using Sidecar.Common.Utility;
+
 public class RedisConvertersTests
 {
 

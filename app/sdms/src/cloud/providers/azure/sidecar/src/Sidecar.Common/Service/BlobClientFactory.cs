@@ -25,7 +25,7 @@ namespace Sidecar.Common.Service
 
     public class BlobClientFactory : IBlobClientFactory
     {
-        private readonly ILogger<BlobClientFactory> Logger;
+        private readonly ILogger<BlobClientFactory> _logger;
         private readonly IDesClient _desClient;
         private readonly SecretClient _secretClient;
         private readonly TokenCredential _credential;
@@ -38,7 +38,7 @@ namespace Sidecar.Common.Service
             TokenCredential credential,
             IOptionsStorageAccount options)
         {
-            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _desClient = desClient;
             _secretClient = secretClient;
             _credential = credential;
@@ -56,7 +56,7 @@ namespace Sidecar.Common.Service
             var storageAccountName = await desConfig.StorageAccountName.GetActualValue(_secretClient, ct);
             var storageAccountUri = new Uri($"https://{storageAccountName}.blob.core.windows.net");
 
-            Logger.LogInformation("Establishing Storage account connection to {Uri} ...", storageAccountUri);
+            _logger.LogInformation("Establishing Storage account connection to {Uri} ...", storageAccountUri);
             var blobServiceClient = new BlobServiceClient(storageAccountUri, _credential);
             return new BlobClient(blobServiceClient);
         }
