@@ -29,21 +29,29 @@ namespace Sidecar.Common.Service
         private readonly IDesClient _desClient;
         private readonly SecretClient _secretClient;
         private readonly TokenCredential _credential;
+        private readonly IOptionsStorageAccount _options;
 
         public BlobClientFactory(
             ILogger<BlobClientFactory> logger,
             IDesClient desClient,
             SecretClient secretClient,
-            TokenCredential credential)
+            TokenCredential credential,
+            IOptionsStorageAccount options)
         {
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _desClient = desClient;
             _secretClient = secretClient;
             _credential = credential;
+            _options = options;
         }
 
         public async Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
         {
+            if (!string.IsNullOrEmpty(_options.StorageAccountConnectionString))
+            {
+                return new BlobClient(new(_options.StorageAccountConnectionString));
+            }
+
             var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);
             var storageAccountName = await desConfig.StorageAccountName.GetActualValue(_secretClient, ct);
             var storageAccountUri = new Uri($"https://{storageAccountName}.blob.core.windows.net");

@@ -35,8 +35,11 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
     [Option("cosmosPrimaryKey", Required = false, HelpText = "Primary Key for Cosmos (if DES unavailable)")]
     public string CosmosKey { get; set; }
 
-    [Option("storageAccountName", Required = true, HelpText = "Storage account name (if DES unavailable)")]
+    [Option("storageAccountName", Required = false, HelpText = "Storage account name (if DES unavailable)")]
     public string StorageAccountName { get; set; }
+    
+    [Option("storageAccountConnectionString", Required = false, HelpText = "Storage account connection string. If provided, overrides DES and StorageAccountName")]
+    public string StorageAccountConnectionString { get; set; }
 
     [Option("taskQueueName", Required = true, HelpText = "Key name of the list with the tasks in Redis")]
     public string QueueName { get; set; }

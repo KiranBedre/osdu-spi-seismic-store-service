@@ -42,6 +42,7 @@ public class Program
         opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
 
         opts.StorageAccountName ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_ACCOUNT_NAME")!;
+        opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
 
         opts.QueueName ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")!;
 
