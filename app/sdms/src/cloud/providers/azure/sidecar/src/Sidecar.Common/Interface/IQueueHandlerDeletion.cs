@@ -22,5 +22,5 @@ public interface IQueueHandlerDeletion : IRedisHandler
 {
     Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync();
     Task IncrementCountAsync(string operationId, string field);
-    Task UpdateStatusAsync(string operationId, int count);
+    Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue);
 }
