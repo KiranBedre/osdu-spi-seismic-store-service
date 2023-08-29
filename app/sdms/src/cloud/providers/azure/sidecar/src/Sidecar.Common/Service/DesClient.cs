@@ -7,6 +7,10 @@ using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
 using Constants = Sidecar.Common.Utility.Constants;
 
+/// <summary>
+/// Copied from:
+/// https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-service/-/blob/master/app/sdms/src/cloud/providers/azure/dataecosystem.ts?ref_type=heads
+/// </summary>
 public class DesClient : IDesClient
 {
     private readonly HttpClient _http;

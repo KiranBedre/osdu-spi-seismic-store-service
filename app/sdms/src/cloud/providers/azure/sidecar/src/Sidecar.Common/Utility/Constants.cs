@@ -18,6 +18,12 @@ namespace Sidecar.Common.Utility;
 
 public static class Constants
 {
+    /// <summary>
+    /// Names of the secrets in the Key Vault.
+    ///
+    /// Copied from:
+    /// https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-service/-/blob/master/app/sdms/src/cloud/providers/azure/keyvault.ts?ref_type=heads
+    /// </summary>
     public static class SecretNames
     {
         /// <summary>
@@ -40,6 +46,10 @@ public static class Constants
         /// </summary>
         public const string REDIS_QUEUE_PASSWORD = "redis-queue-password";  // pragma: allowlist secret
 
-        public const string APP_RESOURCE_ID = "aad-clientFactory-id";
+        /// <summary>
+        /// Resource ID of the Azure Active Directory application.
+        /// Can be used to e.g. request access tokens in the current AD application. 
+        /// </summary>
+        public const string APP_RESOURCE_ID = "aad-client-id";
     }
 }
