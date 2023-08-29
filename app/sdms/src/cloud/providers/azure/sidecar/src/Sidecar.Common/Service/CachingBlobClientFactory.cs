@@ -16,35 +16,25 @@
 
 using Sidecar.Common.Interface;
 
-namespace Sidecar.Common.Service
+namespace Sidecar.Common.Service;
+
+using Sidecar.Common.Utility;
+
+public class CachingBlobClientFactory : IBlobClientFactory
 {
-    using System.Collections.Concurrent;
+    private readonly AsyncCache<string, IBlobClient> _cache = new();
+    private readonly IBlobClientFactory _factory;
 
-    public class CachingBlobClientFactory : IBlobClientFactory
+    public CachingBlobClientFactory(IBlobClientFactory factory)
     {
-        private readonly IBlobClientFactory _factory;
-        private readonly ConcurrentDictionary<string, IBlobClient> _cache = new();
+        _factory = factory;
+    }
 
-        public CachingBlobClientFactory(IBlobClientFactory factory)
-        {
-            _factory = factory;
-        }
-
-        public async Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
-        {
-            if (_cache.TryGetValue(dataPartitionId, out var value))
-            {
-                return value;
-            }
-
-            // If this method is called concurrently, it's possible that multiple client instances will be created
-            // during the lifetime of this caching factory.
-            // This is OK for our application, we don't need "exactly-once caching".
-            var client = await _factory.GetBlobClient(dataPartitionId, ct);
-
-            _cache.TryAdd(dataPartitionId, client);
-
-            return client;
-        }
+    public Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
+    {
+        return _cache.GetValue(
+            dataPartitionId,
+            () => _factory.GetBlobClient(dataPartitionId, ct)
+        );
     }
 }

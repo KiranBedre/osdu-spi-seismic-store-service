@@ -17,32 +17,23 @@
 namespace Sidecar.Common.Service;
 
 using Interface;
-using System.Collections.Concurrent;
+using Sidecar.Common.Utility;
 
 public class CachingCosmosClientFactory : ICosmosClientFactory
 {
-    private readonly ICosmosClientFactory _origin;
-    private readonly ConcurrentDictionary<string, string> _cache = new(); 
+    private readonly AsyncCache<string, string> _cache = new();
+    private readonly ICosmosClientFactory _factory;
     
-    public CachingCosmosClientFactory(ICosmosClientFactory origin)
+    public CachingCosmosClientFactory(ICosmosClientFactory factory)
     {
-        _origin = origin;
+        _factory = factory;
     }
 
-    public async Task<string> GetCosmosConnectionString(string dataPartitionId, CancellationToken ct = default)
+    public Task<string> GetCosmosConnectionString(string dataPartitionId, CancellationToken ct = default)
     {
-        if (_cache.TryGetValue(dataPartitionId, out var value))
-        {
-            return value;
-        }
-
-        // If this method is called concurrently, it's possible that _origin.GetCosmosConnectionString() will be called
-        // multiple times for the same dataPartitionId.
-        // This is OK for our application, we don't need "exactly-once caching".
-        var response = await _origin.GetCosmosConnectionString(dataPartitionId, ct);
-
-        _cache.TryAdd(dataPartitionId, response);
-
-        return response;
+        return _cache.GetValue(
+            dataPartitionId,
+            () => _factory.GetCosmosConnectionString(dataPartitionId, ct)
+        );
     }
 }

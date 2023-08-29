@@ -18,32 +18,23 @@ namespace Sidecar.Common.Service;
 
 using Interface;
 using Sidecar.Common.Model;
-using System.Collections.Concurrent;
+using Sidecar.Common.Utility;
 
 public class CachingDesClient : IDesClient
 {
+    private readonly AsyncCache<string, DesResponse> _cache = new();
     private readonly IDesClient _origin;
-    private readonly ConcurrentDictionary<string, DesResponse> _cache = new(); 
     
     public CachingDesClient(IDesClient origin)
     {
         _origin = origin;
     }
 
-    public async Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default)
+    public Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default)
     {
-        if (_cache.TryGetValue(dataPartitionId, out var value))
-        {
-            return value;
-        }
-
-        // If this method is called concurrently, it's possible that _origin.GetPartitionConfiguration() will be called
-        // multiple times for the same dataPartitionId.
-        // This is OK for our application, we don't need "exactly-once caching".
-        var response = await _origin.GetPartitionConfiguration(dataPartitionId, ct);
-
-        _cache.TryAdd(dataPartitionId, response);
-
-        return response;
+        return _cache.GetValue(
+            dataPartitionId,
+            () => _origin.GetPartitionConfiguration(dataPartitionId, ct)
+        );
     }
 }
