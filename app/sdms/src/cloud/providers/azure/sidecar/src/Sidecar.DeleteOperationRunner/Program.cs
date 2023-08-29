@@ -68,7 +68,8 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_HOSTNAME),
-            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_PASSWORD));
+            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_PASSWORD),
+            secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID));
             
         Logger?.LogInformation("Got variables from Key Vault...");
 
@@ -78,6 +79,7 @@ public class Program
         opts.RedisLocksPassword ??= secrets[1];
         opts.RedisQueueHostname ??= secrets[2];
         opts.RedisQueuePassword ??= secrets[3];
+        opts.AppResourceId ??= secrets[4];
     }
 
     private static async Task RunAsync(Options opts)
@@ -131,6 +133,7 @@ public class Program
                    .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
                    .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
                    .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
+                   .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
                    .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
                    .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
                    .AddSingleton<IBlobClientFactory, BlobClientFactory>()

@@ -30,8 +30,7 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
             TestingHelpers.GetLogger<RedisHandlerDeletion>().Object
             , new Options
             {
-                RedisQueueHostname = "somehost:1234",
-                QueueName = QueueName
+                QueueName = QueueName,
             }
             , RedisConnectionFactory.Object);
 

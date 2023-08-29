@@ -15,8 +15,8 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
-public interface IOptionsDataEcosystemService
+
+public interface IOptionsQueueRedisQueueName
 {
-    string DesUrl { get; set; }
-    string AppResourceId { get; set; }
+    string QueueName { get; set; }
 }

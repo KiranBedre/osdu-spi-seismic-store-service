@@ -27,9 +27,12 @@ using Sidecar.Common.Utility;
 
 public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 {
-    readonly IOptionsQueueRedis Options;
+    readonly IOptionsQueueRedisQueueName Options;
 
-    public RedisHandlerDeletion(ILogger<RedisHandlerDeletion> logger, IOptionsQueueRedis options, IRedisConnectionFactory redisConnectionFactory)
+    public RedisHandlerDeletion(
+        ILogger<RedisHandlerDeletion> logger, 
+        IOptionsQueueRedisQueueName options, 
+        IRedisConnectionFactory redisConnectionFactory)
         : base(logger, redisConnectionFactory.GetRedisForQueue())
     {
         Options = options;
