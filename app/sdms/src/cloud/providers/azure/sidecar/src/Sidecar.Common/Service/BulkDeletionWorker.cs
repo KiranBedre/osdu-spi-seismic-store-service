@@ -17,7 +17,6 @@
 namespace Sidecar.Common.Service;
 
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks.Dataflow;
@@ -58,7 +57,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
         await Parallel.ForEachAsync(itemsToDelete,
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
-            async (item, innerCt) => await processItemDeletion(dataPartitionId, blobClient, operationId, item, innerCt)
+            async (item, innerCt) => await ProcessItemDeletion(dataPartitionId, blobClient, operationId, item, innerCt)
             );
 
         if (_foundErrors)
@@ -76,7 +75,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
     }
 
-    private async Task processItemDeletion(string dataPartitionId, IBlobClient blobClient, string operationId, DeleteItem item, CancellationToken cancellationToken)
+    private async Task ProcessItemDeletion(string dataPartitionId, IBlobClient blobClient, string operationId, DeleteItem item, CancellationToken ct)
     {
         if (item.Gcsurl is null)
         {
@@ -108,14 +107,14 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         {
             _logger.LogInformation("Deleting blobs in container {ContainerName} with prefix {VirtualFolderName}", containerName, virtualFolderName);
 
-            await DeleteBlobsInBulk(blobClient, containerName, virtualFolderName, containerClient, errors);
+            await DeleteBlobsInBulk(blobClient, containerName, virtualFolderName, containerClient, errors, ct);
         }
         else
         {
             _logger.LogInformation("Deleting container {ContainerName}", containerName);
             try
             {
-                _ = await containerClient.DeleteAsync();
+                _ = await containerClient.DeleteAsync(cancellationToken: ct);
             }
             catch (Azure.RequestFailedException e)
             {
@@ -149,7 +148,6 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             catch (Exception e)
             {
                 _logger.LogError("Could not delete metadata for {DatasetId}: {EMessage}", datasetId, e.Message);
-
             }
             await _queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DeletedCnt);
         }
@@ -166,45 +164,41 @@ public class BulkDeletionWorker : IBulkDeletionWorker
     {
         string[] parts = gcsurl.Split('/');
 
-        if (parts.Length == 1)
+        return parts.Length switch
         {
-            return (parts[0], null);
-        }
-        else if (parts.Length == 2)
-        {
-            return (parts[0], parts[1]);
-        }
-        else
-        {
-            throw new ArgumentException($"Invalid item: {gcsurl} Could not extract gcsurl in the format <container>/<folder name> ");
-        }
+            1 => (parts[0], null),
+            2 => (parts[0], parts[1]),
+            _ => throw new ArgumentException(
+                $"Invalid item: {gcsurl} Could not extract gcsurl in the format <container>/<folder name> ")
+        };
     }
 
-    private async Task DeleteBlobsInBulk(IBlobClient blobClient, string containerName, string? virtualFolderName, BlobContainerClient containerClient, List<string> errors)
+    private async Task DeleteBlobsInBulk(IBlobClient blobClient, string containerName, string? virtualFolderName, BlobContainerClient containerClient, List<string> errors, CancellationToken ct)
     {
         _batchIndex = 0;
-        var batchBlock = CreateBatchForBlobsDeletion(blobClient, errors, out ActionBlock<Tuple<string, string>[]> processItems);
-        var blobs = containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: virtualFolderName + "/");
+        var batchBlock = CreateBatchForBlobsDeletion(blobClient, errors, out var processItems, ct);
+        var blobs = containerClient.GetBlobsAsync(prefix: virtualFolderName + "/", cancellationToken: ct);
 
-        await foreach (var pages in blobs.AsPages())
+        await foreach (var pages in blobs.AsPages().WithCancellation(ct))
         {
             foreach (var blob in pages.Values)
             {
                 _logger.LogInformation("Deleting blob: {BlobName}", blob.Name);
-                _ = await batchBlock.SendAsync(new Tuple<string, string>(containerName, blob.Name));
+                _ = await batchBlock.SendAsync(new(containerName, blob.Name), ct);
             }
         }
         batchBlock.Complete();
         await processItems.Completion;
     }
 
-    private BatchBlock<Tuple<string, string>> CreateBatchForBlobsDeletion(IBlobClient blobClient, List<string> errors, out ActionBlock<Tuple<string, string>[]> processItems)
+    private BatchBlock<Tuple<string, string>> CreateBatchForBlobsDeletion(IBlobClient blobClient, List<string> errors, out ActionBlock<Tuple<string, string>[]> processItems, CancellationToken ct)
     {
         var blobBatchClient = blobClient.GetBatchClient();
         var batchBlock = new BatchBlock<Tuple<string, string>>(Constants.BLOB_BULK_DELETE_BATCH_SIZE);
         processItems = new(async x => await SubmitDeletionBatch(blobBatchClient, errors, listOfBlobs: x), new()
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount,
+            CancellationToken = ct,
         });
         _ = batchBlock.LinkTo(processItems, new() { PropagateCompletion = true });
         return batchBlock;
@@ -214,7 +208,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
                                         List<string> errors,
                                         Tuple<string, string>[] listOfBlobs)
     {
-        var batchedBlobs = new List<Tuple<string, string>>(listOfBlobs);
+        var batchedBlobs = listOfBlobs.ToList();
         _ = Interlocked.Increment(ref _batchIndex);
 
         var task = SendBlobDeleteBatch(blobBatchClient, errors, batchedBlobs, _batchIndex);
@@ -222,7 +216,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         return task;
     }
 
-    private async Task<int> SendBlobDeleteBatch(BlobBatchClient blobBatchClient, List<string> errors, List<Tuple<string, string>> blobs, int batchNr)
+    private async Task<int> SendBlobDeleteBatch(BlobBatchClient blobBatchClient, ICollection<string> errors, List<Tuple<string, string>> blobs, int batchNr)
     {
         var blobBatch = blobBatchClient.CreateBatch();
         blobs.ForEach(x => blobBatch.DeleteBlob(x.Item1, x.Item2));
@@ -230,14 +224,12 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         await blobBatchClient.SubmitBatchAsync(blobBatch)
             .ContinueWith(itemResponse =>
             {
-                if (!itemResponse.IsCompletedSuccessfully)
-                {
-                    var innerExceptions = itemResponse.Exception?.Flatten();
+                if (itemResponse.IsCompletedSuccessfully) return;
+                var innerExceptions = itemResponse.Exception?.Flatten();
 
-                    var message = $"Exception:  {innerExceptions?.InnerExceptions.FirstOrDefault()}";
-                    _logger.LogError(message);
-                    errors.Add(message);
-                }
+                var message = $"Exception:  {innerExceptions?.InnerExceptions.FirstOrDefault()}";
+                _logger.LogError(message);
+                errors.Add(message);
             });
 
         _logger.LogInformation("Batch {BatchNr} completed successfully", batchNr);
