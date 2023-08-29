@@ -51,7 +51,7 @@ public class Program
                .AddSingleton<IOptionsCosmos>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IOptionsRedis>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IOptionsQueueRedis>(sp => sp.GetService<IOptions>()!)
-               .AddSingleton<IOptionsStorageAcount>(sp => sp.GetService<IOptions>()!)
+               .AddSingleton<IOptionsStorageAccount>(sp => sp.GetService<IOptions>()!)
                .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
                .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
                .AddSingleton<IBlobClient, BlobClient>()
