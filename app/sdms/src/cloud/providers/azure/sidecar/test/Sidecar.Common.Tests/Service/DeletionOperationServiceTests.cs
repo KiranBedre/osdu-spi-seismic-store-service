@@ -15,6 +15,7 @@
 // ============================================================================
 
 
+using Sidecar.Common.Utility;
 using Sidecar.DeleteOperationRunner.Services;
 using System.Reflection;
 
@@ -79,10 +80,11 @@ namespace Sidecar.Common.Tests.Service
             lockManagerMock.Verify(manager => manager.AcquireDeleteLock(It.IsAny<string>()), Times.Exactly(itemsToDelete.Count));
             bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
             Assert.Equal(2, itemsToDelete.Count);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(deletionOperation.OperationId, Constants.DeleteOperationStatus.DatasetsCnt, itemsToDelete.Count.ToString()), Times.Once);
         }
 
         [Fact]
-        public void ExecuteAsync_WithoutAcquiringLock_And_No_Slashes_Should_Process_Deletion()
+        public void ExecuteAsync_WithoutAcquiringLock_And_No_Slashes_Should_Process_Deletion_For_Free_Ones()
         {
             // Arrange
             var loggerMock = new Mock<ILogger<DeletionOperationService>>();
@@ -138,6 +140,7 @@ namespace Sidecar.Common.Tests.Service
             var result = methodInfo.Invoke(service, new object[] { cancellationSource.Token });
 
             // Assert
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(deletionOperation.OperationId, Constants.DeleteOperationStatus.DatasetsCnt, "2"), Times.Once);
             itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
             lockManagerMock.Verify(manager => manager.AcquireDeleteLock(It.IsAny<string>()), Times.Exactly(2));
             bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
@@ -199,7 +202,7 @@ namespace Sidecar.Common.Tests.Service
             var result = methodInfo.Invoke(service, new object[] { cancellationSource.Token });
 
             // Assert
-            queueMock.Verify(queue => queue.IncrementCountAsync(deletionOperation.OperationId, "FailedCnt"), Times.Once());
+            queueMock.Verify(queue => queue.IncrementCountAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.FailedCnt), Times.Once());
         }
 
         private static MethodInfo GetMethodUnderTest(string methodName)

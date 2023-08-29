@@ -23,6 +23,8 @@ using System.Globalization;
 using Interface;
 using Sidecar.DeleteOperationRunner.Services;
 using Sidecar.Common.Model;
+using System.Reflection.Metadata;
+using Sidecar.Common.Utility;
 
 public class DeletionOperationService : BackgroundService
 {
@@ -60,7 +62,7 @@ public class DeletionOperationService : BackgroundService
                     var itemsToDelete = await ItemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
 
                     Logger.LogInformation("Found {0} items to delete", itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
-                    await Queue.UpdateFieldStatusOperation(op.OperationId, "DatasetsCnt", itemsToDelete.Count.ToString());
+                    await Queue.UpdateFieldStatusOperation(op.OperationId, Constants.DeleteOperationStatus.DatasetsCnt, itemsToDelete.Count.ToString());
 
                     for (int i = itemsToDelete.Count - 1; i >= 0; i--)
                     {
@@ -71,7 +73,7 @@ public class DeletionOperationService : BackgroundService
                         if (!locked)
                         {
                             Logger.LogInformation("Could not acquire lock for {0}", datasetName);
-                            await Queue.IncrementCountAsync(op.OperationId, "FailedCnt");
+                            await Queue.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FailedCnt);
                             itemsToDelete.Remove(item);
                         }
                     }

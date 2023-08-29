@@ -24,11 +24,10 @@ using System.Threading.Tasks.Dataflow;
 
 using Interface;
 using Sidecar.Common.Model;
+using Sidecar.Common.Utility;
 
 public class BulkDeletionWorker : IBulkDeletionWorker
 {
-    private readonly int _batchSize = 1000;
-
     private readonly ILogger<BulkDeletionWorker> Logger;
     private readonly IQueueHandlerDeletion Queue;
     private readonly IMetadataDeletionWorker MetadataDeletionWorker;
@@ -54,8 +53,8 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         FoundErrors = false;
 
         Logger.LogInformation($"Started blob deletion, it will delete {itemsToDelete.Count} items");
-        await Queue.UpdateFieldStatusOperation(operationId, "Status", Status.InProgress.ToString());
-        await Queue.UpdateFieldStatusOperation(operationId, "StatusDescription", Status.InProgress.Description());
+        await Queue.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.Status, Status.InProgress.ToString());
+        await Queue.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.StatusDescription, Status.InProgress.Description());
 
         await Parallel.ForEachAsync(itemsToDelete,
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
@@ -64,14 +63,14 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
         if (FoundErrors)
         {
-            await Queue.UpdateFieldStatusOperation(operationId, "Status", Status.CompletedWithErrors.ToString());
-            await Queue.UpdateFieldStatusOperation(operationId, "StatusDescription", Status.CompletedWithErrors.Description());
+            await Queue.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.Status, Status.CompletedWithErrors.ToString());
+            await Queue.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.StatusDescription, Status.CompletedWithErrors.Description());
             Logger.LogInformation($"Finished deletion operation {operationId} with errors");
         }
         else
         {
-            await Queue.UpdateFieldStatusOperation(operationId, "Status", Status.Completed.ToString());
-            await Queue.UpdateFieldStatusOperation(operationId, "StatusDescription", Status.Completed.Description());
+            await Queue.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.Status, Status.Completed.ToString());
+            await Queue.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.StatusDescription, Status.Completed.Description());
             Logger.LogInformation($"Finished deletion operation {operationId} successfully");
         }
 
@@ -83,7 +82,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         {
             Logger.LogError($"Gcsurl is null for item {item.Id}");
             FoundErrors = true;
-            await Queue.IncrementCountAsync(operationId, "FailedCnt");
+            await Queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FailedCnt);
             return;
         }
 
@@ -98,7 +97,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         {
             Logger.LogError($"Could not parse gcsurl {item.Gcsurl}: {e.Message}");
             FoundErrors = true;
-            await Queue.IncrementCountAsync(operationId, "FailedCnt");
+            await Queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FailedCnt);
             return;
         }
 
@@ -152,14 +151,14 @@ public class BulkDeletionWorker : IBulkDeletionWorker
                 Logger.LogError($"Could not delete metadata for {datasetId}: {e.Message}");
 
             }
-            await Queue.IncrementCountAsync(operationId, "DeletedCnt");
+            await Queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DeletedCnt);
         }
         else
         {
             FoundErrors = true;
             var allErrors = string.Join(" ", errors);
             Logger.LogInformation($"Will not delete metadata for {datasetId} due to {allErrors}");
-            await Queue.IncrementCountAsync(operationId, "FailedCnt");
+            await Queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FailedCnt);
         }
     }
 
@@ -202,7 +201,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
     private BatchBlock<Tuple<string, string>> CreateBatchForBlobsDeletion(IBlobClient blobClient, List<string> errors, out ActionBlock<Tuple<string, string>[]> processItems)
     {
         var blobBatchClient = blobClient.GetBatchClient();
-        var batchBlock = new BatchBlock<Tuple<string, string>>(_batchSize);
+        var batchBlock = new BatchBlock<Tuple<string, string>>(Constants.BLOB_BULK_DELETE_BATCH_SIZE);
         processItems = new ActionBlock<Tuple<string, string>[]>(async x => await SubmitDeletionBatch(blobBatchClient, errors, listOfBlobs: x), new ExecutionDataflowBlockOptions
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount,

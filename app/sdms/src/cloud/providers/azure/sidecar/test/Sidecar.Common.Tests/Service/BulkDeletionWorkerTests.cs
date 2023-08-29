@@ -18,6 +18,7 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
+using Sidecar.Common.Utility;
 
 namespace Sidecar.Common.Tests.Service
 {
@@ -79,9 +80,11 @@ namespace Sidecar.Common.Tests.Service
             await deletionWorker.RunBulkDeletion(tenant, operationId, itemsToDelete, CancellationToken.None);
 
             // Assert
-            queueMock.Verify(q => q.IncrementCountAsync(operationId, "FailedCnt"), Times.Once);
-            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, "Status", Status.InProgress.ToString()), Times.Once);
-            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, "Status", Status.CompletedWithErrors.ToString()), Times.Once);
+            queueMock.Verify(q => q.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FailedCnt), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.Status, Status.InProgress.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.StatusDescription, Status.InProgress.Description()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.Status, Status.CompletedWithErrors.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.StatusDescription, Status.CompletedWithErrors.Description()), Times.Once);
         }
 
 
@@ -112,7 +115,8 @@ namespace Sidecar.Common.Tests.Service
             queueMock.Verify(
                 queue => queue.IncrementCountAsync("operationId", It.IsAny<string>()),
                Times.Never);
-            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", "Status", Status.Completed.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.Status, Status.Completed.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.StatusDescription, Status.Completed.Description()), Times.Once);
 
         }
 
@@ -191,11 +195,13 @@ namespace Sidecar.Common.Tests.Service
             await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
 
             queueMock.Verify(
-                queue => queue.IncrementCountAsync("operationId", "DeletedCnt"),
+                queue => queue.IncrementCountAsync("operationId", Constants.DeleteOperationStatus.DeletedCnt),
                 Times.Exactly(itemsToDelete.Count));
 
-            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", "Status", Status.InProgress.ToString()), Times.Once);
-            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", "Status", Status.Completed.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.Status, Status.InProgress.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.StatusDescription, Status.InProgress.Description()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.Status, Status.Completed.ToString()), Times.Once);
+            queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.StatusDescription, Status.Completed.Description()), Times.Once);
 
         }
 

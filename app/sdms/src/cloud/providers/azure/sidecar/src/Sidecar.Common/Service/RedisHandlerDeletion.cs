@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Interface;
 using Model;
 using Utilitiy;
+using Sidecar.Common.Utility;
 
 public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
 {
@@ -107,13 +108,13 @@ public class RedisHandlerDeletion : RedisHandler, IQueueHandlerDeletion
     {
         var statusKey = $"{Options.QueueName}:status:{operationId.ToLower()}";
         await HashIncrementAsync(statusKey, field);
-        await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+        await HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
     public async Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue)
     {
         var statusKey = $"{Options.QueueName}:status:{operationId.ToLower()}";
         await HashSetAsync(statusKey, keyName, keyValue);
-        await HashSetAsync(statusKey, "LastUpdatedAt", DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+        await HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 }

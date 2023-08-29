@@ -14,6 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
+using System.ComponentModel;
+
 namespace Sidecar.Common.Utility;
 
 public static class Constants
@@ -51,5 +53,17 @@ public static class Constants
         /// Can be used to e.g. request access tokens in the current AD application. 
         /// </summary>
         public const string APP_RESOURCE_ID = "aad-client-id";
+    }
+
+    public const int BLOB_BULK_DELETE_BATCH_SIZE = 1000;
+
+    public static class DeleteOperationStatus
+    {
+        public const string LastUpdatedAt = "LastUpdatedAt";
+        public const string Status = "Status";
+        public const string StatusDescription = "StatusDescription";
+        public const string DatasetsCnt = "DatasetsCnt";
+        public const string DeletedCnt = "DeletedCnt";
+        public const string FailedCnt = "FailedCnt";
     }
 }
