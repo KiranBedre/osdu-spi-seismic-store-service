@@ -61,4 +61,7 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option("redisLocksPort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the locks ")]
     public string RedisLocksPort {get; set;}
+
+    [Option("appResourceId", Required = false, HelpText = "AD resource ID, e.g. https://management.azure.com/")]
+    public string AppResourceId {get; set;}
 }

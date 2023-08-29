@@ -18,4 +18,5 @@ namespace Sidecar.Common.Interface;
 public interface IOptionsDataEcosystemService
 {
     string DesUrl { get; set; }
+    string AppResourceId { get; set; }
 }
