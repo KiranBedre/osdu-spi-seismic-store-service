@@ -81,8 +81,6 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             return;
         }
 
-        (containerName, virtualFolderName) = ParseContainerAndFolderName(item.Gcsurl);
-
         var containerClient = BlobClient.GetBlobServiceClient().GetBlobContainerClient(containerName);
 
         var errors = new List<string>();
