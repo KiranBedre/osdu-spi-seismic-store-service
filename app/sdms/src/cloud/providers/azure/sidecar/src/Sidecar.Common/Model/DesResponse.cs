@@ -1,16 +1,16 @@
 namespace Sidecar.Common.Model;
 
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 public class DesResponse
 {
-    [JsonPropertyName("sdms-storage-account-name")]
+    [JsonProperty("sdms-storage-account-name")]
     public DesConfigVariable StorageAccountName { get; set; } = new DesConfigVariable();
 
-    [JsonPropertyName("cosmos-endpoint")]
+    [JsonProperty("cosmos-endpoint")]
     public DesConfigVariable CosmosEndpoint { get; set; } = new DesConfigVariable();
 
-    [JsonPropertyName("cosmos-primary-key")]
+    [JsonProperty("cosmos-primary-key")]
     public DesConfigVariable CosmosPrimaryKey { get; set; } = new DesConfigVariable();
 }
 

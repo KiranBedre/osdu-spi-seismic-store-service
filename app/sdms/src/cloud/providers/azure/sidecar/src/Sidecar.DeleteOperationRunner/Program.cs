@@ -118,6 +118,8 @@ public class Program
         // DefaultAzureCredential works in both cases.
         _ = services.AddSingleton<TokenCredential, DefaultAzureCredential>();
 
+        _ = services.AddSingleton<HttpClient>();
+
         if (!string.IsNullOrEmpty(opts.DesUrl))
         {
             _ = services
@@ -153,6 +155,7 @@ public class Program
             .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
@@ -160,7 +163,7 @@ public class Program
             .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
             .AddHostedService<DeletionOperationService>()
             .AddSingleton<ILockManager, LockManager>()
-            .AddScoped<IDataAccess, Cosmos>();
+            .AddSingleton<IDataAccess, Cosmos>();
 
         _ = services
             .AddHealthChecks()

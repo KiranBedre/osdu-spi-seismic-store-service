@@ -29,9 +29,8 @@ public class DesClient : IDesClient
 
         var token = await _credential.GetTokenAsync(defaultTokenScope, ct);
 
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{_opts.DesUrl}/{dataPartitionId}");
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{_opts.DesUrl.TrimEnd('/')}/api/partition/v1/partitions/{dataPartitionId}");
         requestMessage.Headers.Add("Accept", "application/json");
-        requestMessage.Headers.Add("Content-Type", "application/json");
         requestMessage.Headers.Authorization = new("Bearer", token.Token);
 
         var response = await _http.SendAsync(requestMessage, ct);

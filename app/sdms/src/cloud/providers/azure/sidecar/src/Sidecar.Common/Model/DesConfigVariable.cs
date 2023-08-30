@@ -1,7 +1,7 @@
 namespace Sidecar.Common.Model;
 
 using Azure.Security.KeyVault.Secrets;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 public class DesConfigVariable
 {
@@ -9,12 +9,13 @@ public class DesConfigVariable
     /// If <see cref="Sensitive"/> is true, this is the name of a secret in the KeyVault where to find the value.
     /// If <see cref="Sensitive"/> is false, this is the value itself.
     /// </summary>
-    [JsonPropertyName("value")]
+    [JsonProperty("value")]
     public string Value { get; set; } = "";
+
     /// <summary>
     /// Hit on how to interpret the <see cref="Value"/>.
     /// </summary>
-    [JsonPropertyName("sensitive")]
+    [JsonProperty("sensitive")]
     public bool Sensitive { get; set; }
 
     public async Task<string> GetActualValue(SecretClient secretClient, CancellationToken ct)
