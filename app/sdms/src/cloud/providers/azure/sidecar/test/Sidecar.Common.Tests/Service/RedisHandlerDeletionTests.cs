@@ -14,6 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
+#pragma warning disable IDE0022
+
 namespace Sidecar.Common.Tests.Service;
 
 public class RedisHandlerDeletionTests : RedisHandlerTests
@@ -55,7 +57,10 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
     }
 
     [Fact]
-    public async Task CheckForDeletionOperationAsync_QueueDoesNotExist_RedisException() => await Assert.ThrowsAsync<RedisException>(() => _queue.CheckForDeletionOperationAsync());
+    public async Task CheckForDeletionOperationAsync_QueueDoesNotExist_RedisException()
+    {
+        _ = await Assert.ThrowsAsync<RedisException>(() => _queue.CheckForDeletionOperationAsync());
+    }
 
     [Fact]
     public async Task CheckForDeletionOperationAsync_QueueIsEmpty_ReturnsNull()

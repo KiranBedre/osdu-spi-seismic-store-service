@@ -17,7 +17,6 @@
 namespace Sidecar.Common.Service;
 
 using Interface;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Sidecar.Common.Model;
 
@@ -30,7 +29,6 @@ public class DeleteItemsRetriever : IItemsRetriever
     private readonly ICosmosClientFactory _cosmosClientFactory;
 
     public DeleteItemsRetriever(
-        ILogger<DeleteItemsRetriever> logger,
         IDataAccess dataAccess,
         ICosmosClientFactory cosmosClientFactory)
     {
