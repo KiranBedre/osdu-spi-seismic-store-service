@@ -17,7 +17,6 @@
 namespace Sidecar.Common.Service;
 
 using Microsoft.Azure.Cosmos;
-using System;
 using System.Threading.Tasks;
 
 using Interface;
