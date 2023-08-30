@@ -15,6 +15,7 @@
 // ============================================================================
 
 #pragma warning disable IDE0022
+#pragma warning disable IDE0200
 
 namespace Sidecar.Common.Tests.Service;
 
