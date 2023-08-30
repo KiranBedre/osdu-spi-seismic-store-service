@@ -145,13 +145,14 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             try
             {
                 await MetadataDeletionWorker.DeleteMetadata(dataPartitionId, datasetId);
+                await Queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DeletedCnt);
             }
             catch (Exception e)
             {
                 Logger.LogError($"Could not delete metadata for {datasetId}: {e.Message}");
-
+                await Queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FailedCnt);
             }
-            await Queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DeletedCnt);
+            
         }
         else
         {

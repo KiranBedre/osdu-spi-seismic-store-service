@@ -21,17 +21,23 @@ using System;
 using System.Threading.Tasks;
 
 using Interface;
+using Microsoft.Extensions.Logging;
 
 public class MetadataDeletionWorker : IMetadataDeletionWorker
 {
+    private readonly ILogger<MetadataDeletionWorker> Logger;
     private readonly IDataAccess DataAccess;
     private readonly ICosmosClientFactory _cosmosClientFactory;
 
     private int ConsecutiveFailures = 0;
     private const int MaxRetries = 5;
 
-    public MetadataDeletionWorker(IDataAccess dataAccess, ICosmosClientFactory cosmosClientFactory)
+    public MetadataDeletionWorker(
+        ILogger<MetadataDeletionWorker> logger, 
+        IDataAccess dataAccess, 
+        ICosmosClientFactory cosmosClientFactory)
     {
+        Logger = logger;
         DataAccess = dataAccess;
         _cosmosClientFactory = cosmosClientFactory;
     }
@@ -50,7 +56,11 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
             catch (CosmosException ex)
             {
                 ConsecutiveFailures++;
-                Console.WriteLine(ex.Message);
+                Logger.LogWarning($"Could not delete metadata for dataset {id}, Attempt {ConsecutiveFailures}/{MaxRetries} ");
+                if (ConsecutiveFailures == MaxRetries) 
+                { 
+                    throw ex; 
+                }
             }
         } while (!success && ConsecutiveFailures < MaxRetries);
     }
