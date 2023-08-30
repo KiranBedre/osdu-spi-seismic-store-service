@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -108,7 +108,7 @@ namespace Sidecar.Common.Tests.Service
             var itemsToDelete = new List<DeleteItem> { };
 
             var tenant = "opendes";
-            
+
             // Act
             await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
 
@@ -135,7 +135,7 @@ namespace Sidecar.Common.Tests.Service
             var blobBatchMock = new Mock<BlobBatch>();
 
             var tenant = "mytenant";
-            
+
             var bulkDeletionWorker = new BulkDeletionWorker(
                 loggerMock.Object,
                 queueMock.Object,
@@ -178,13 +178,13 @@ namespace Sidecar.Common.Tests.Service
             blobBatchClientMock
                 .Setup(blobBatchClientMock => blobBatchClientMock.CreateBatch())
                 .Returns(blobBatchMock.Object);
-            
+
             var mockedBlobs = Page<BlobItem>.FromValues(new List<BlobItem>
             {
                 BlobsModelFactory.BlobItem("mocked1"),
                 BlobsModelFactory.BlobItem("mocked2")
             }, continuationToken: null, new Mock<Response>().Object);
-            
+
             var mockedBlobsPages = AsyncPageable<BlobItem>.FromPages(new[] { mockedBlobs });
 
             blobContainerClientMock

@@ -23,7 +23,7 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
 
     public RedisHandlerDeletionTests()
     {
-        RedisConnectionFactory
+        _ = RedisConnectionFactory
             .Setup(m => m.GetRedisForQueue())
             .Returns(
                 new RedisHandler(
@@ -32,8 +32,8 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
             ));
 
         _queue = new(
-            TestingHelpers.GetLogger<RedisDeletionTasksStorage>().Object, 
-            new Options { QueueName = QUEUE_NAME }, 
+            TestingHelpers.GetLogger<RedisDeletionTasksStorage>().Object,
+            new Options { QueueName = QUEUE_NAME },
             RedisConnectionFactory.Object);
     }
 
@@ -41,7 +41,7 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
     {
         var expectedMsg = TestingHelpers.GetDelOpMsg();
         //-- The queue is a List, make sure it exists and push the operation id
-        
+
         _ = await DbMock.Object.ListLeftPushAsync(QUEUE_NAME, expectedMsg.OperationId);
 
         //---add the id to the queue of del operations
@@ -60,20 +60,18 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
         // Arrange
 
         // Act and Assert
-        await Assert.ThrowsAsync<RedisException>(() => _queue.CheckForDeletionOperationAsync());
+        _ = await Assert.ThrowsAsync<RedisException>(() => _queue.CheckForDeletionOperationAsync());
     }
-
 
     [Fact]
     public async Task CheckForDeletionOperationAsync_QueueIsEmpty_ReturnsNull()
     {
         // Arrange
-        var expectedMsg = await PushDeleteOperationMessage();
-
+        _ = await PushDeleteOperationMessage();
 
         // Act
+        _ = await _queue.CheckForDeletionOperationAsync();
         var statusMsg = await _queue.CheckForDeletionOperationAsync();
-        statusMsg = await _queue.CheckForDeletionOperationAsync();
 
         // Assert
         Assert.Null(statusMsg);
@@ -89,35 +87,35 @@ public class RedisHandlerDeletionTests : RedisHandlerTests
         var statusMsg = await _queue.CheckForDeletionOperationAsync();
 
         // Assert
-        statusMsg.Should()
+        _ = statusMsg.Should()
             .NotBeNull();
 
-        statusMsg!.OperationId
+        _ = statusMsg!.OperationId
             .Should()
             .Be(expectedMsg.OperationId);
-        statusMsg!.Tenant
+        _ = statusMsg!.Tenant
             .Should()
             .Be(expectedMsg.Tenant);
-        statusMsg!.Path
+        _ = statusMsg!.Path
             .Should()
             .Be(expectedMsg.Path);
-        statusMsg!.Subproject
+        _ = statusMsg!.Subproject
             .Should()
             .Be(expectedMsg.Subproject);
 
-        statusMsg!.Status
+        _ = statusMsg!.Status
             .Should()
             .Be(Status.Started.ToString());
-        statusMsg!.StatusDescription
+        _ = statusMsg!.StatusDescription
             .Should()
             .Be(Status.Started.Description());
-        statusMsg!.DatasetsCnt
+        _ = statusMsg!.DatasetsCnt
             .Should()
             .Be(0);
-        statusMsg!.DeletedCnt
+        _ = statusMsg!.DeletedCnt
             .Should()
             .Be(0);
-        statusMsg!.FailedCnt
+        _ = statusMsg!.FailedCnt
             .Should()
             .Be(0);
     }

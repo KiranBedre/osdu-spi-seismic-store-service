@@ -24,7 +24,7 @@ public class CachingDesClient : IDesClient
 {
     private readonly AsyncCache<string, DesResponse> _cache = new();
     private readonly IDesClient _origin;
-    
+
     public CachingDesClient(IDesClient origin)
     {
         _origin = origin;

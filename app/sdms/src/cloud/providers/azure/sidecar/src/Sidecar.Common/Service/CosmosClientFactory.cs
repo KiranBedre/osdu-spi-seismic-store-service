@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ namespace Sidecar.Common.Service
             _desClient = desClient;
             _secretClient = secretClient;
         }
-        
+
         public async Task<string> GetCosmosConnectionString(string dataPartitionId, CancellationToken ct = default)
         {
             var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);

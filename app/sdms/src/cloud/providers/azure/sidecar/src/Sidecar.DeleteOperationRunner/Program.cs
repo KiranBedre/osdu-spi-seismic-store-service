@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID));
-            
+
         _logger?.LogInformation("Got variables from Key Vault...");
 
         var secrets = secretResponses.Select(s => s.Value.Value).ToArray();
@@ -98,8 +98,8 @@ public class Program
                 // such as Key Vault, CosmosDB, Storage accounts.
                 // When deployed, there will be a pod identity with access to these dependencies.
                 // DefaultAzureCredential works in both cases.
-                services.AddSingleton<TokenCredential, DefaultAzureCredential>(); 
-               
+                services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+
                 if (!string.IsNullOrEmpty(opts.DesUrl))
                 {
                     services
@@ -122,12 +122,12 @@ public class Program
                     .AddSingleton<BlobClientFactory>()
                     .AddSingleton<IBlobClientFactory>(
                         sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
-               
+
                 services
                     .AddSingleton<RedisConnectionFactory>()
                     .AddSingleton<IRedisConnectionFactory>(sp =>
                         new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
-               
+
                 services
                     .AddSingleton<IOptions>(opts)
                     .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())

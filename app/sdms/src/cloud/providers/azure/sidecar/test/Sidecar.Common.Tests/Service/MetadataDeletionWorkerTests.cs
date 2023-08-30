@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ namespace Sidecar.Common.Tests.Service
 
             var tenant = "tenant";
             var cs = "booboo";
-            
+
             var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
             cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 
@@ -49,10 +49,10 @@ namespace Sidecar.Common.Tests.Service
             dataAccessMock.SetupSequence(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()))
                 .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0))
                 .ReturnsAsync(true);
-            
+
             var tenant = "tenant";
             var cs = "booboo";
-            
+
             var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
             cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 

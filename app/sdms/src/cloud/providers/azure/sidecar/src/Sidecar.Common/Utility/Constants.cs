@@ -37,7 +37,7 @@ public static class Constants
         /// Password of the redis instance that stores the locks and the queues. 
         /// </summary>
         public const string REDIS_LOCKS_PASSWORD = "redis-password";  // pragma: allowlist secret
-        
+
         /// <summary>
         /// Hostname of the redis instance that stores the locks and the queues. 
         /// </summary>

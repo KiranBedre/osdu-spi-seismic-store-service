@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
     private readonly IMetadataDeletionWorker _metadataDeletionWorker;
     private readonly IBlobClientFactory _blobClientFactory;
     private int _batchIndex = 0;
-    private bool _foundErrors  = false;
+    private bool _foundErrors = false;
 
     public BulkDeletionWorker(
         ILogger<BulkDeletionWorker> logger,
@@ -213,7 +213,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         _ = Interlocked.Increment(ref _batchIndex);
 
         var task = SendBlobDeleteBatch(blobBatchClient, errors, batchedBlobs, _batchIndex);
-        
+
         return task;
     }
 

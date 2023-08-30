@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,7 @@ namespace Sidecar.Common.Service
                 return ((string)lockValue).StartsWith("WDELETE");
             }
 
-            var result =  await _locksRedis.SetAsync(key, Utils.GenerateDeleteLockId());
+            var result = await _locksRedis.SetAsync(key, Utils.GenerateDeleteLockId());
             await ReleaseMutex(key);
             return result;
         }

@@ -21,8 +21,10 @@ using System.Data.Common;
 #pragma warning disable CS8600
 internal static partial class TestingHelpers
 {
-    internal static DeleteOperationMessage GetDelOpMsg(){
-        return new DeleteOperationMessage{
+    internal static DeleteOperationMessage GetDelOpMsg()
+    {
+        return new DeleteOperationMessage
+        {
             OperationId = Guid.NewGuid().ToString(),
             Tenant = "tenant001",
             Subproject = "subproj007",
@@ -30,8 +32,9 @@ internal static partial class TestingHelpers
         };
     }
 
-    internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false){
-       return new HashEntry[]{
+    internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false)
+    {
+        return new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
@@ -124,23 +127,25 @@ internal static partial class TestingHelpers
             }).Verifiable();
 
         db.Setup(d => d.KeyExistsAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
-            .Returns<RedisKey, CommandFlags>(async (key,flags) => {
+            .Returns<RedisKey, CommandFlags>(async (key, flags) =>
+            {
                 return await cache.KeyExistsAsync(key!);
             }).Verifiable();
 
         db.Setup(d => d.KeyExists(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
-            .Returns<RedisKey, CommandFlags>((key,flags) => {
+            .Returns<RedisKey, CommandFlags>((key, flags) =>
+            {
                 return cache.KeyExists(key!);
             }).Verifiable();
 
-        db.Setup(d => d.ListLeftPush(It.IsAny<RedisKey>(),It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
-            .Returns<RedisKey, RedisValue, When, CommandFlags>((key,value, when,flags) =>
+        db.Setup(d => d.ListLeftPush(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
+            .Returns<RedisKey, RedisValue, When, CommandFlags>((key, value, when, flags) =>
             {
                 return cache.ListLeftPush(key, value!);
             }).Verifiable();
 
         db.Setup(d => d.ListLeftPushAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
-            .Returns<RedisKey, RedisValue, When, CommandFlags>(async (key, value,when, flags) =>
+            .Returns<RedisKey, RedisValue, When, CommandFlags>(async (key, value, when, flags) =>
             {
                 return await cache.ListLeftPushAsync(key, value!);
             }).Verifiable();
@@ -158,7 +163,7 @@ internal static partial class TestingHelpers
             }).Verifiable();
 
         db.Setup(d => d.HashGetAll(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
-            .Returns<RedisKey, CommandFlags>((key,flags) =>
+            .Returns<RedisKey, CommandFlags>((key, flags) =>
             {
                 return cache.HashGetAll(key);
             }).Verifiable();

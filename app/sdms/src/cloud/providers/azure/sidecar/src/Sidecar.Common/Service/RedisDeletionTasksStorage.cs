@@ -31,8 +31,8 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
     private readonly IRedisHandler _queue;
 
     public RedisDeletionTasksStorage(
-        ILogger<RedisDeletionTasksStorage> logger, 
-        IOptionsQueueRedisQueueName options, 
+        ILogger<RedisDeletionTasksStorage> logger,
+        IOptionsQueueRedisQueueName options,
         IRedisConnectionFactory redisConnectionFactory)
     {
         _logger = logger;
@@ -45,17 +45,19 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         var db = _queue.GetDatabase();
 
         var opMsg = await GetDeletionOperationMessage(db);
-        if(opMsg == null){
+        if (opMsg == null)
+        {
             return null;
         }
 
-        var statusMsg = await CreateDeletionOperationStatus(db,opMsg);
+        var statusMsg = await CreateDeletionOperationStatus(db, opMsg);
 
         return statusMsg;
 
     }
 
-    private async Task<DeleteOperationMessage?> GetDeletionOperationMessage(IDatabase db){
+    private async Task<DeleteOperationMessage?> GetDeletionOperationMessage(IDatabase db)
+    {
         var delQ = _options.QueueName;
         if (!await db.KeyExistsAsync(delQ))
         {
@@ -82,7 +84,8 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         return delOpData.FromHashEntries<DeleteOperationMessage>(true);
     }
 
-    private async Task<DeleteOperationStatus> CreateDeletionOperationStatus(IDatabase db, DeleteOperationMessage opMsg){
+    private async Task<DeleteOperationStatus> CreateDeletionOperationStatus(IDatabase db, DeleteOperationMessage opMsg)
+    {
 
         var status = new DeleteOperationStatus
         {

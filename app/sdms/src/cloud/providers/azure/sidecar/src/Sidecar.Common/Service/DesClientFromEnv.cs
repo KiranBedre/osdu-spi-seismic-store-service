@@ -20,13 +20,13 @@ public class DesClientFromEnv : IDesClient
     public Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default)
     {
         // ignore dataPartitionId, always inject the values from the options
-        
+
         return Task.FromResult(new DesResponse
         {
             StorageAccountName = new()
             {
                 Sensitive = false,
-                Value = _opts.StorageAccountName, 
+                Value = _opts.StorageAccountName,
             },
             CosmosEndpoint = new()
             {

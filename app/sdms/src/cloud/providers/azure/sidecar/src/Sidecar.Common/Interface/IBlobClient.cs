@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,13 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Interface;
+
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 
-namespace Sidecar.Common.Interface
+public interface IBlobClient
 {
-    public interface IBlobClient
-    {
-        public BlobContainerClient GetContainerClient(string containerName);
-        public BlobBatchClient GetBatchClient();
-    }
+    public BlobContainerClient GetContainerClient(string containerName);
+    public BlobBatchClient GetBatchClient();
 }

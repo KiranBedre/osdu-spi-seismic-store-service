@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +26,13 @@ namespace Sidecar.Common.Tests.Service
         {
             _dbMock = TestingHelpers.GetDatabase();
             _connectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: _dbMock.Object);
-            
+
             var factoryMock = new Mock<IRedisConnectionFactory>();
             factoryMock.Setup(m => m.GetRedisForLocks()).Returns(
                 new RedisHandler(
                     TestingHelpers.GetLogger<RedisHandler>().Object,
                     _connectionMultiplexer.Object));
-            
+
             var loggerFactory = new Mock<ILoggerFactory>();
             _lockManager = new(factoryMock.Object);
         }

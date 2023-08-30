@@ -50,14 +50,14 @@ public class DeletionOperationService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        while(!cancellationToken.IsCancellationRequested && _consecutiveFailures < MAX_CONSECUTIVE_FAILURES)
+        while (!cancellationToken.IsCancellationRequested && _consecutiveFailures < MAX_CONSECUTIVE_FAILURES)
         {
             try
             {
                 await TryFetchAndExecuteTask(cancellationToken);
                 _consecutiveFailures = 0;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {_consecutiveFailures}/{MAX_CONSECUTIVE_FAILURES}");
                 _consecutiveFailures++;
@@ -84,12 +84,12 @@ public class DeletionOperationService : BackgroundService
             itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
 
         await _deletionTasks.UpdateFieldStatusOperation(
-            op.OperationId, 
+            op.OperationId,
             Constants.DeleteOperationStatus.DatasetsCnt,
             itemsToDelete.Count.ToString());
 
         var successfullyLocked = new List<DeleteItem>();
-        
+
         foreach (var item in itemsToDelete)
         {
             string datasetName = GetDatasetName(item);

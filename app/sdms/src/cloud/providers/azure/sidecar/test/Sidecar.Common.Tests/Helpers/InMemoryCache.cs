@@ -22,7 +22,7 @@ internal static partial class TestingHelpers
 {
     private partial class InMemoryCache
     {
-        private readonly Dictionary<string, RedisValue>  Cache = new();
+        private readonly Dictionary<string, RedisValue> Cache = new();
         private readonly Dictionary<string, List<RedisValue>> QueueCache = new();
 
         private static string GetHashKey(RedisKey key, RedisValue field)
@@ -30,11 +30,13 @@ internal static partial class TestingHelpers
             return $"{key}:{field}:";
         }
 
-        public bool KeyExists(string key){
+        public bool KeyExists(string key)
+        {
             return Cache.ContainsKey(key) || QueueCache.ContainsKey(key);
         }
 
-        public Task<bool> KeyExistsAsync(string key){
+        public Task<bool> KeyExistsAsync(string key)
+        {
             return Task.FromResult(KeyExists(key));
         }
 
@@ -61,7 +63,7 @@ internal static partial class TestingHelpers
             }
 
             var vals = QueueCache[key!];
-            if(vals.Count <= 0)
+            if (vals.Count <= 0)
             {
                 return RedisValue.EmptyString;
             }
@@ -134,7 +136,7 @@ internal static partial class TestingHelpers
             //---note the patter is "<queue name>:<key>:<property name>"
             return Cache
                     .Where(e => e.Key.Contains(key!))
-                    .Select(e => new HashEntry(KeyPrefixMatcher().Replace(e.Key, "").Replace(":",""), e.Value)).ToArray();
+                    .Select(e => new HashEntry(KeyPrefixMatcher().Replace(e.Key, "").Replace(":", ""), e.Value)).ToArray();
 
         }
 
@@ -144,14 +146,16 @@ internal static partial class TestingHelpers
 
         }
 
-        public long HashDecrement(RedisKey key, RedisValue field, long? decrement){
+        public long HashDecrement(RedisKey key, RedisValue field, long? decrement)
+        {
             var initVal = long.Parse(HashGet(key, field)!.ToString()!);
             initVal -= decrement.GetValueOrDefault(1);
             HashSet(key, field, initVal);
             return initVal;
         }
 
-        public long HashIncrement(RedisKey key, RedisValue field, long? increment){
+        public long HashIncrement(RedisKey key, RedisValue field, long? increment)
+        {
             var initVal = long.Parse(HashGet(key, field)!.ToString()!);
             initVal += increment.GetValueOrDefault(1);
             HashSet(key, field, initVal);

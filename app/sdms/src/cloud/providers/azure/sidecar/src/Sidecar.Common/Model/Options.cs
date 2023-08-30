@@ -24,10 +24,10 @@ using Interface;
 public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount, IOptionsDataEcosystemService
 {
     [Option("keyVaultUrl", Required = true, HelpText = "KeyVault endpoint URL, e.g. https://mytestkv.vault.azure.net/")]
-    public string KeyVaultUrl {get; set;}
+    public string KeyVaultUrl { get; set; }
 
     [Option("desUrl", Required = false, HelpText = "Data Ecosystem Service url.")]
-    public string DesUrl {get; set;}
+    public string DesUrl { get; set; }
 
     [Option("cosmosUrl", Required = false, HelpText = "Cosmos endpoint URL (if DES unavailable)")]
     public string CosmosEndpoint { get; set; }
@@ -37,7 +37,7 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option("storageAccountName", Required = false, HelpText = "Storage account name (if DES unavailable)")]
     public string StorageAccountName { get; set; }
-    
+
     [Option("storageAccountConnectionString", Required = false, HelpText = "Storage account connection string. If provided, overrides DES and StorageAccountName")]
     public string StorageAccountConnectionString { get; set; }
 
@@ -45,23 +45,23 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
     public string QueueName { get; set; }
 
     [Option("redisQueueHostname", Required = false, HelpText = "Hostname of the Redis instance that contains the task queue ")]
-    public string RedisQueueHostname {get; set;}
+    public string RedisQueueHostname { get; set; }
 
     [Option("redisQueuePassword", Required = false, HelpText = "Password of the Redis instance that contains the task queue ")]
-    public string RedisQueuePassword {get; set;}
+    public string RedisQueuePassword { get; set; }
 
     [Option("redisQueuePort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the task queue ")]
-    public string RedisQueuePort {get; set;}
+    public string RedisQueuePort { get; set; }
 
     [Option("redisLocksHostname", Required = false, HelpText = "Hostname of the Redis instance that contains the locks ")]
-    public string RedisLocksHostname {get; set;}
+    public string RedisLocksHostname { get; set; }
 
     [Option("redisLocksPassword", Required = false, HelpText = "Password of the Redis instance that contains the locks ")]
-    public string RedisLocksPassword {get; set;}
+    public string RedisLocksPassword { get; set; }
 
     [Option("redisLocksPort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the locks ")]
-    public string RedisLocksPort {get; set;}
+    public string RedisLocksPort { get; set; }
 
     [Option("appResourceId", Required = false, HelpText = "AD resource ID, e.g. https://management.azure.com/")]
-    public string AppResourceId {get; set;}
+    public string AppResourceId { get; set; }
 }

@@ -20,8 +20,8 @@ using System.Collections.Concurrent;
 
 public class AsyncCache<TK, T> where TK : notnull
 {
-    private readonly ConcurrentDictionary<TK, T> _cache = new(); 
-    
+    private readonly ConcurrentDictionary<TK, T> _cache = new();
+
     /// <summary>
     /// If the key is already cached, returns the value.
     /// If the key is not cached, executes the <see cref="valueFactory"/> function and

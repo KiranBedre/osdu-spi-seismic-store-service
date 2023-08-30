@@ -21,8 +21,10 @@ using Sidecar.Common.Utility;
 public class RedisConvertersTests
 {
 
-    private DeleteOperationMessage GetDelOpMsg(){
-        return new DeleteOperationMessage{
+    private DeleteOperationMessage GetDelOpMsg()
+    {
+        return new DeleteOperationMessage
+        {
             OperationId = Guid.NewGuid().ToString(),
             Tenant = "tenant001",
             Subproject = "subproj007",
@@ -30,8 +32,9 @@ public class RedisConvertersTests
         };
     }
 
-    private HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false){
-       return new HashEntry[]{
+    private HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false)
+    {
+        return new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
@@ -40,7 +43,8 @@ public class RedisConvertersTests
     }
 
     [Fact]
-    public void Convert_FromMsg_ToHashEntry_Success(){
+    public void Convert_FromMsg_ToHashEntry_Success()
+    {
         // Arrange
         var msg = GetDelOpMsg();
 
@@ -57,7 +61,8 @@ public class RedisConvertersTests
     }
 
     [Fact]
-    public void Convert_FromMsg_ToHashEntry_UsingJsonAttrNames_Success(){
+    public void Convert_FromMsg_ToHashEntry_UsingJsonAttrNames_Success()
+    {
         // Arrange
         var msg = GetDelOpMsg();
 
@@ -74,7 +79,8 @@ public class RedisConvertersTests
     }
 
     [Fact]
-    public void Convert_FromHashEntry_ToDelOpMsg_Success(){
+    public void Convert_FromHashEntry_ToDelOpMsg_Success()
+    {
         // Arrange
         var expectedMsg = GetDelOpMsg();
         var he = GetDelOpMsgHashEntry(expectedMsg);
@@ -87,7 +93,8 @@ public class RedisConvertersTests
     }
 
     [Fact]
-    public void Convert_FromHashEntry_ToDelOpMsg_UsingJsonAttrNames_Success(){
+    public void Convert_FromHashEntry_ToDelOpMsg_UsingJsonAttrNames_Success()
+    {
         // Arrange
         var expectedMsg = GetDelOpMsg();
         var he = GetDelOpMsgHashEntry(expectedMsg, true);

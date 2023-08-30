@@ -10,8 +10,7 @@ public class DesConfigVariable
     /// If <see cref="Sensitive"/> is false, this is the value itself.
     /// </summary>
     [JsonPropertyName("value")]
-    public string Value { get; set; }
-    
+    public string Value { get; set; } = "";
     /// <summary>
     /// Hit on how to interpret the <see cref="Value"/>.
     /// </summary>
@@ -35,5 +34,4 @@ public class DesConfigVariable
         return secretResponse.Value.Value;
     }
 }
-
 

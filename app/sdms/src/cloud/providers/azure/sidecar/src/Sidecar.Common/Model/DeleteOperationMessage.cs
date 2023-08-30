@@ -22,13 +22,13 @@ using Interface;
 public class DeleteOperationMessage : IDeletionOperationMessage
 {
     [JsonPropertyName("operation_id")]
-    public string OperationId{get;set;} = "";
+    public string OperationId { get; set; } = "";
 
     [JsonPropertyName("tenant")]
     public string Tenant { get; set; } = "";
 
     [JsonPropertyName("subproject")]
-    public string Subproject {get;  set;} = "";
+    public string Subproject { get; set; } = "";
 
     [JsonPropertyName("path")]
     public string Path { get; set; } = "";

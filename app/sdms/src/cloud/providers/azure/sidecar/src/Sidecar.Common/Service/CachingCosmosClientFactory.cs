@@ -23,7 +23,7 @@ public class CachingCosmosClientFactory : ICosmosClientFactory
 {
     private readonly AsyncCache<string, string> _cache = new();
     private readonly ICosmosClientFactory _factory;
-    
+
     public CachingCosmosClientFactory(ICosmosClientFactory factory)
     {
         _factory = factory;

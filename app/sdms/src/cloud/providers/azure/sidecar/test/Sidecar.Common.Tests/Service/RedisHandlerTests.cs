@@ -24,9 +24,9 @@ public class RedisHandlerTests
 
     public RedisHandlerTests()
     {
-        ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: DbMock.Object);;
+        ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: DbMock.Object); ;
     }
-        
+
     private RedisHandler GetQueueHandler() => new RedisHandler(
         TestingHelpers.GetLogger<RedisHandler>().Object,
         ConnectionMultiplexer.Object);
@@ -36,7 +36,8 @@ public class RedisHandlerTests
     [InlineData(1)]
     [InlineData(10)]
     [InlineData(int.MaxValue)]
-    private void HashSet_HashIncrement_Success(int? inc){
+    private void HashSet_HashIncrement_Success(int? inc)
+    {
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
         var queueHandler = GetQueueHandler();
@@ -62,7 +63,8 @@ public class RedisHandlerTests
     [InlineData(1)]
     [InlineData(10)]
     [InlineData(int.MaxValue)]
-    private void HashSet_HashDecrement_Success(int? inc){
+    private void HashSet_HashDecrement_Success(int? inc)
+    {
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
         var queueHandler = GetQueueHandler();

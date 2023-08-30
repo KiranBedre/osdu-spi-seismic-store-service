@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,21 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Model;
+
 using System.Text.Json.Serialization;
 
-namespace Sidecar.Common.Model
+public class DeleteItem
 {
-    public class DeleteItem
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = "";
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = "";
 
-        [JsonPropertyName("gcsurl")]
-        public string? Gcsurl { get; set; }
+    [JsonPropertyName("gcsurl")]
+    public string? Gcsurl { get; set; }
 
+    [JsonPropertyName("path")]
+    public string Path { get; set; } = "";
 
-        [JsonPropertyName("path")]
-        public string Path { get; set; } = "";
-
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-    }
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 }

@@ -26,7 +26,7 @@ public class RedisConnectionFactory : IRedisConnectionFactory
     private readonly ILoggerFactory _loggerFactory;
     private readonly IOptionsLocksRedis _locksOpts;
     private readonly IOptionsQueueRedis _queueOpts;
-    
+
     public RedisConnectionFactory(
         ILoggerFactory loggerFactory,
         IOptionsLocksRedis locksOpts,
@@ -58,8 +58,8 @@ public class RedisConnectionFactory : IRedisConnectionFactory
         var connection = ConnectionMultiplexer.Connect(
             new ConfigurationOptions
             {
-                EndPoints = new () { new DnsEndPoint(
-                    hostname, 
+                EndPoints = new() { new DnsEndPoint(
+                    hostname,
                     Convert.ToInt32(port)) },
                 Password = password,
             });

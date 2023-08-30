@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ using Sidecar.Common.Model;
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type
 #pragma warning disable CS8604 // Possible null reference argument for parameter.
 
-public class DeleteItemsRetriever: IItemsRetriever
+public class DeleteItemsRetriever : IItemsRetriever
 {
     private readonly IDataAccess _dataAccess;
     private readonly ICosmosClientFactory _cosmosClientFactory;

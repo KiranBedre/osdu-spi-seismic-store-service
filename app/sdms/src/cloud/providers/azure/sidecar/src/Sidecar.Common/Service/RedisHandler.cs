@@ -34,7 +34,8 @@ public class RedisHandler : IRedisHandler
         _client = connectionMultiplexer;
     }
 
-    public IDatabase GetDatabase() {
+    public IDatabase GetDatabase()
+    {
         try
         {
             return _client.GetDatabase();
@@ -67,7 +68,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var dec = decBy ?? 1 ;
+            var dec = decBy ?? 1;
             return await GetDatabase().HashDecrementAsync(new RedisKey(key)
                 , new RedisValue(field)
                 , dec);
@@ -85,7 +86,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var inc = incBy ?? 1 ;
+            var inc = incBy ?? 1;
             return await GetDatabase().HashIncrementAsync(new RedisKey(key)
                 , new RedisValue(field)
                 , inc);
@@ -101,7 +102,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var inc = incBy ?? 1 ;
+            var inc = incBy ?? 1;
             return GetDatabase().HashIncrement(new RedisKey(key)
                 , new RedisValue(field)
                 , inc);
@@ -150,7 +151,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var res =  await GetDatabase().HashGetAsync(new RedisKey(key)
+            var res = await GetDatabase().HashGetAsync(new RedisKey(key)
                 , new RedisValue(field));
             return JsonConvert.DeserializeObject<T>(res.ToString());
         }
@@ -165,7 +166,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var res =  GetDatabase().HashGet(new RedisKey(key)
+            var res = GetDatabase().HashGet(new RedisKey(key)
                     , new RedisValue(field));
             return JsonConvert.DeserializeObject<T>(res.ToString());
         }
