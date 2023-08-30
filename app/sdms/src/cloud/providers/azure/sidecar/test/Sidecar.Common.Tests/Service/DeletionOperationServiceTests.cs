@@ -104,27 +104,29 @@ public class DeletionOperationServiceTests
 
         var deletionOperation = InitializeStatus();
 
-        var itemsToDelete = new List<DeleteItem> {
-            new DeleteItem
-                {
-                    Id = "123",
-                    Gcsurl = "container/folder",
-                    Path = "/some/path1/",
-                    Name = "Example1"
-                },
-             new DeleteItem
-                {
-                    Id = "456",
-                    Gcsurl = "container/folder",
-                    Path = "/some/path2",
-                    Name = "Example2"
-                }
+        var item1 = new DeleteItem
+        {
+            Id = "123",
+            Gcsurl = "container/folder",
+            Path = "/some/path",
+            Name = "Example1"
         };
 
+        var item2 = new DeleteItem
+        {
+            Id = "456",
+            Gcsurl = "container/folder",
+            Path = "/some/path2",
+            Name = "Example2"
+        };
+
+        var itemsToLockAndDelete = new List<DeleteItem> { item1, item2 };
+
+        var itemsToDelete = new List<DeleteItem> { item2 };
 
         _ = queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
         _ = itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
-                          .ReturnsAsync(itemsToDelete);
+                          .ReturnsAsync(itemsToLockAndDelete);
 
         _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLock("/some/path1/Example1"))
                        .ReturnsAsync(false);
@@ -143,7 +145,6 @@ public class DeletionOperationServiceTests
         itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
         lockManagerMock.Verify(manager => manager.AcquireDeleteLock(It.IsAny<string>()), Times.Exactly(2));
         bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
-        _ = Assert.Single(itemsToDelete);
     }
 
     [Fact]

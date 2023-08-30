@@ -55,7 +55,6 @@ public class DeleteItemsRetriever : IItemsRetriever
             }
             catch (Exception)
             {
-                Logger.LogError($"Failed to deserialize item: {item}");
                 return null;
             }
         }).Where(deserializedObject => deserializedObject != null) // Filter out failed deserializations

@@ -57,7 +57,7 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
             {
                 _consecutiveFailures++;
                 _logger.LogWarning($"Could not delete metadata for dataset {id}, Attempt {_consecutiveFailures}/{MAX_RETRIES} ");
-                if (_consecutiveFailures == MAX_RETRIES) 
+                if (_consecutiveFailures == MAX_RETRIES)
                 {
                     throw ex;
                 }
