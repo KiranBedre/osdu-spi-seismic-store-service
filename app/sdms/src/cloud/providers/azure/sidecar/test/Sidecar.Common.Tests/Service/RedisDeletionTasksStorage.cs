@@ -19,12 +19,12 @@
 
 namespace Sidecar.Common.Tests.Service;
 
-public class RedisHandlerDeletionTests : RedisHandlerTests
+public class RedisDeletionTasksStorageTests : RedisHandlerTests
 {
     private const string QUEUE_NAME = "somequeue";
     private readonly RedisDeletionTasksStorage _queue;
 
-    public RedisHandlerDeletionTests()
+    public RedisDeletionTasksStorageTests()
     {
         _ = RedisConnectionFactory
             .Setup(m => m.GetRedisForQueue())

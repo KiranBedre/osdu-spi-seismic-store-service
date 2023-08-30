@@ -137,8 +137,7 @@ public class Program
                     .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
                     .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
                     .AddSingleton<IBlobClientFactory, BlobClientFactory>()
-                    .AddSingleton<IBulkDeletionWorker,
-                        BulkDeletionWorker>()
+                    .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
                     .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
                     .AddHostedService<DeletionOperationService>()
                     .AddSingleton<ILockManager, LockManager>()
