@@ -30,11 +30,8 @@ public class CachingDesClient : IDesClient
         _origin = origin;
     }
 
-    public Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default)
-    {
-        return _cache.GetValue(
+    public Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default) => _cache.GetValue(
             dataPartitionId,
             () => _origin.GetPartitionConfiguration(dataPartitionId, ct)
         );
-    }
 }

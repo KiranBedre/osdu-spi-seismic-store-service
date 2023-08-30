@@ -27,7 +27,7 @@ public class RedisHandlerTests
         ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: DbMock.Object); ;
     }
 
-    private RedisHandler GetQueueHandler() => new RedisHandler(
+    private RedisHandler GetQueueHandler() => new(
         TestingHelpers.GetLogger<RedisHandler>().Object,
         ConnectionMultiplexer.Object);
 
@@ -50,10 +50,10 @@ public class RedisHandlerTests
         var returned = queueHandler.HashIncrement(key, field, inc);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue + linc.GetValueOrDefault(1));
     }
@@ -77,10 +77,10 @@ public class RedisHandlerTests
         var returned = queueHandler.HashDecrement(key, field, inc);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue - linc.GetValueOrDefault(1));
     }
@@ -99,10 +99,10 @@ public class RedisHandlerTests
         var returned = queueHandler.HashGet<long>(key, field);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue);
     }
@@ -121,10 +121,10 @@ public class RedisHandlerTests
         var returned = await queueHandler.HashGetAsync<long>(key, field);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue);
     }

@@ -35,8 +35,8 @@ public class DesClient : IDesClient
         requestMessage.Headers.Authorization = new("Bearer", token.Token);
 
         var response = await _http.SendAsync(requestMessage, ct);
-        response.EnsureSuccessStatusCode();
-        string responseBody = await response.Content.ReadAsStringAsync(ct);
+        _ = response.EnsureSuccessStatusCode();
+        var responseBody = await response.Content.ReadAsStringAsync(ct);
         return JsonConvert.DeserializeObject<DesResponse>(responseBody);
     }
 }

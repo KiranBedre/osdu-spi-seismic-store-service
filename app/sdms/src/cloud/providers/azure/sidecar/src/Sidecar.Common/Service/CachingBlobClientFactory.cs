@@ -14,10 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
-using Sidecar.Common.Interface;
-
 namespace Sidecar.Common.Service;
 
+using Sidecar.Common.Interface;
 using Sidecar.Common.Utility;
 
 public class CachingBlobClientFactory : IBlobClientFactory
@@ -30,11 +29,8 @@ public class CachingBlobClientFactory : IBlobClientFactory
         _factory = factory;
     }
 
-    public Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
-    {
-        return _cache.GetValue(
+    public Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default) => _cache.GetValue(
             dataPartitionId,
             () => _factory.GetBlobClient(dataPartitionId, ct)
         );
-    }
 }

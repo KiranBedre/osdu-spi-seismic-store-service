@@ -85,14 +85,14 @@ public class DeletionOperationService : BackgroundService
 
         await _deletionTasks.UpdateFieldStatusOperation(
             op.OperationId,
-            Constants.DeleteOperationStatus.DatasetsCnt,
+            Constants.DeleteOperationStatus.DATASETS_CNT,
             itemsToDelete.Count.ToString());
 
         var successfullyLocked = new List<DeleteItem>();
 
         foreach (var item in itemsToDelete)
         {
-            string datasetName = GetDatasetName(item);
+            var datasetName = GetDatasetName(item);
             _logger.LogDebug("Acquiring lock for {0}", datasetName);
             var locked = await _lockManager.AcquireDeleteLock(datasetName);
             if (locked)
@@ -102,7 +102,7 @@ public class DeletionOperationService : BackgroundService
             else
             {
                 _logger.LogInformation("Could not acquire lock for {0}", datasetName);
-                await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FailedCnt);
+                await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
             }
         }
 

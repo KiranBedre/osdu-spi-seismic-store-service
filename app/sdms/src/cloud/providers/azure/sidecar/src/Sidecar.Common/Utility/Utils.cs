@@ -14,23 +14,19 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Utility;
 
-namespace Sidecar.Common.Utility
+public class Utils
 {
-    public class Utils
+    private static readonly Random _random = new();
+
+    private static string MakeId(int length)
     {
-        private static readonly Random _random = new Random();
-
-        private static string MakeId(int length)
-        {
-            const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            return new string(Enumerable.Repeat(CHARS, length)
-                .Select(s => s[_random.Next(s.Length)]).ToArray());
-        }
-
-        public static string GenerateDeleteLockId()
-        {
-            return "WDELETE" + MakeId(9);
-        }
+        const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        return new string(Enumerable.Repeat(CHARS, length)
+            .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
+
+    public static string GenerateDeleteLockId() => "WDELETE" + MakeId(9);
+
 }

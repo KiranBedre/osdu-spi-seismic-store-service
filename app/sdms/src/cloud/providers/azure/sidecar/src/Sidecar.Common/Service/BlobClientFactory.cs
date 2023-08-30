@@ -14,51 +14,50 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Service;
+
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 
-namespace Sidecar.Common.Service
+using Azure.Core;
+using Azure.Security.KeyVault.Secrets;
+
+public class BlobClientFactory : IBlobClientFactory
 {
-    using Azure.Core;
-    using Azure.Security.KeyVault.Secrets;
+    private readonly ILogger<BlobClientFactory> _logger;
+    private readonly IDesClient _desClient;
+    private readonly SecretClient _secretClient;
+    private readonly TokenCredential _credential;
+    private readonly IOptionsStorageAccount _options;
 
-    public class BlobClientFactory : IBlobClientFactory
+    public BlobClientFactory(
+        ILogger<BlobClientFactory> logger,
+        IDesClient desClient,
+        SecretClient secretClient,
+        TokenCredential credential,
+        IOptionsStorageAccount options)
     {
-        private readonly ILogger<BlobClientFactory> _logger;
-        private readonly IDesClient _desClient;
-        private readonly SecretClient _secretClient;
-        private readonly TokenCredential _credential;
-        private readonly IOptionsStorageAccount _options;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _desClient = desClient;
+        _secretClient = secretClient;
+        _credential = credential;
+        _options = options;
+    }
 
-        public BlobClientFactory(
-            ILogger<BlobClientFactory> logger,
-            IDesClient desClient,
-            SecretClient secretClient,
-            TokenCredential credential,
-            IOptionsStorageAccount options)
+    public async Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
+    {
+        if (!string.IsNullOrEmpty(_options.StorageAccountConnectionString))
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _desClient = desClient;
-            _secretClient = secretClient;
-            _credential = credential;
-            _options = options;
+            return new BlobClient(new(_options.StorageAccountConnectionString));
         }
 
-        public async Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
-        {
-            if (!string.IsNullOrEmpty(_options.StorageAccountConnectionString))
-            {
-                return new BlobClient(new(_options.StorageAccountConnectionString));
-            }
+        var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);
+        var storageAccountName = await desConfig.StorageAccountName.GetActualValue(_secretClient, ct);
+        var storageAccountUri = new Uri($"https://{storageAccountName}.blob.core.windows.net");
 
-            var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);
-            var storageAccountName = await desConfig.StorageAccountName.GetActualValue(_secretClient, ct);
-            var storageAccountUri = new Uri($"https://{storageAccountName}.blob.core.windows.net");
-
-            _logger.LogInformation("Establishing Storage account connection to {Uri} ...", storageAccountUri);
-            var blobServiceClient = new BlobServiceClient(storageAccountUri, _credential);
-            return new BlobClient(blobServiceClient);
-        }
+        _logger.LogInformation("Establishing Storage account connection to {Uri} ...", storageAccountUri);
+        var blobServiceClient = new BlobServiceClient(storageAccountUri, _credential);
+        return new BlobClient(blobServiceClient);
     }
 }

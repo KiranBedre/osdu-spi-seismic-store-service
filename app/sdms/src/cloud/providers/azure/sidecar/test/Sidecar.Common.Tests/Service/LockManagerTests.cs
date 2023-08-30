@@ -14,109 +14,106 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Tests.Service
+namespace Sidecar.Common.Tests.Service;
+
+public class LockManagerTests
 {
-    public class LockManagerTests
+    private readonly LockManager _lockManager;
+    private readonly Mock<IConnectionMultiplexer> _connectionMultiplexer;
+    private readonly Mock<IDatabase> _dbMock;
+
+    public LockManagerTests()
     {
-        private readonly LockManager _lockManager;
-        private readonly Mock<IConnectionMultiplexer> _connectionMultiplexer;
-        private readonly Mock<IDatabase> _dbMock;
+        _dbMock = TestingHelpers.GetDatabase();
+        _connectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: _dbMock.Object);
 
-        public LockManagerTests()
-        {
-            _dbMock = TestingHelpers.GetDatabase();
-            _connectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: _dbMock.Object);
+        var factoryMock = new Mock<IRedisConnectionFactory>();
+        _ = factoryMock.Setup(m => m.GetRedisForLocks()).Returns(
+            new RedisHandler(
+                TestingHelpers.GetLogger<RedisHandler>().Object,
+                _connectionMultiplexer.Object));
 
-            var factoryMock = new Mock<IRedisConnectionFactory>();
-            factoryMock.Setup(m => m.GetRedisForLocks()).Returns(
-                new RedisHandler(
-                    TestingHelpers.GetLogger<RedisHandler>().Object,
-                    _connectionMultiplexer.Object));
+        var loggerFactory = new Mock<ILoggerFactory>();
+        _lockManager = new(factoryMock.Object);
+    }
 
-            var loggerFactory = new Mock<ILoggerFactory>();
-            _lockManager = new(factoryMock.Object);
-        }
+    [Fact]
+    public async Task AcquireDeleteLock_WithLockWrite_ReturnsTrue()
+    {
+        // Arrange
 
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "/path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("WDELETE:lockValue");
 
-        [Fact]
-        public async Task AcquireDeleteLock_WithLockWrite_ReturnsTrue()
-        {
-            // Arrange
+        // Act
+        var result = await _lockManager.AcquireDeleteLock(key);
 
-            var databaseMock = new Mock<IDatabase>();
-            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
-            var key = "/path/file.tst";
-            databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
-                .ReturnsAsync(true);
-            databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("WDELETE:lockValue");
+        // Assert
+        Assert.True(result);
+    }
 
-            // Act
-            var result = await _lockManager.AcquireDeleteLock(key);
+    [Fact]
+    public async Task AcquireDeleteLock_WithValidLockRead_ReturnsFalse()
+    {
+        // Arrange
 
-            // Assert
-            Assert.True(result);
-        }
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "/path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("RLockValue");
 
+        // Act
+        var result = await _lockManager.AcquireDeleteLock(key);
 
-        [Fact]
-        public async Task AcquireDeleteLock_WithValidLockRead_ReturnsFalse()
-        {
-            // Arrange
+        // Assert
+        Assert.False(result);
+    }
 
-            var databaseMock = new Mock<IDatabase>();
-            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
-            var key = "/path/file.tst";
-            databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
-                .ReturnsAsync(true);
-            databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("RLockValue");
+    [Fact]
+    public async Task AcquireDeleteLock_WithoutLock_ReturnsTrue()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "/path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync((string?)null);
+        _ = databaseMock
+           .Setup(client => client.StringSetAsync(
+               It.IsAny<RedisKey>(),
+               It.IsAny<RedisValue>(),
+               It.IsAny<TimeSpan?>(),
+               It.IsAny<bool>(),
+               It.IsAny<When>(),
+               It.IsAny<CommandFlags>()
+           ))
+           .ReturnsAsync(true);
 
-            // Act
-            var result = await _lockManager.AcquireDeleteLock(key);
+        // Act
+        var result = await _lockManager.AcquireDeleteLock(key);
 
-            // Assert
-            Assert.False(result);
-        }
+        // Assert
+        Assert.True(result);
+    }
 
-        [Fact]
-        public async Task AcquireDeleteLock_WithoutLock_ReturnsTrue()
-        {
-            // Arrange
-            var databaseMock = new Mock<IDatabase>();
-            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
-            var key = "/path/file.tst";
-            databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
-                .ReturnsAsync(true);
-            databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync((string?)null);
-            databaseMock
-               .Setup(client => client.StringSetAsync(
-                   It.IsAny<RedisKey>(),
-                   It.IsAny<RedisValue>(),
-                   It.IsAny<TimeSpan?>(),
-                   It.IsAny<bool>(),
-                   It.IsAny<When>(),
-                   It.IsAny<CommandFlags>()
-               ))
-               .ReturnsAsync(true);
+    [Fact]
+    public async Task AcquireDeleteLock_WithoutMutex_ThrowsException()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
 
-            // Act
-            var result = await _lockManager.AcquireDeleteLock(key);
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+                    .ThrowsAsync(new Exception("Lock take failed"));
 
-            // Assert
-            Assert.True(result);
-        }
-
-        [Fact]
-        public async Task AcquireDeleteLock_WithoutMutex_ThrowsException()
-        {
-            // Arrange
-            var databaseMock = new Mock<IDatabase>();
-            _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
-
-            databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
-                        .ThrowsAsync(new Exception("Lock take failed"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _lockManager.AcquireDeleteLock("testKey"));
-        }
+        // Act & Assert
+        _ = await Assert.ThrowsAsync<Exception>(() => _lockManager.AcquireDeleteLock("testKey"));
     }
 }

@@ -29,14 +29,8 @@ public class CachingRedisConnectionFactory : IRedisConnectionFactory
         _queueRedis = new(source.GetRedisForQueue);
     }
 
-    public IRedisHandler GetRedisForQueue()
-    {
-        return _locksRedis.Value;
-    }
+    public IRedisHandler GetRedisForQueue() => _locksRedis.Value;
 
-    public IRedisHandler GetRedisForLocks()
-    {
-        return _queueRedis.Value;
-    }
+    public IRedisHandler GetRedisForLocks() => _queueRedis.Value;
 
 }

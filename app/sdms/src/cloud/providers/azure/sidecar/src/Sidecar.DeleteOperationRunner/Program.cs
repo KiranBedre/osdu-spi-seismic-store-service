@@ -14,6 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.DeleteOperationRunner;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
@@ -23,8 +24,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Utility;
-
-namespace Sidecar.DeleteOperationRunner;
 
 public class Program
 {
@@ -91,44 +90,44 @@ public class Program
             {
                 services.AddAzureClients(builder =>
                 {
-                    builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
+                    _ = builder.AddSecretClient(new Uri(opts.KeyVaultUrl));
                 });
 
                 // From the local machine, the user is expected to az login and have access to all dependencies
                 // such as Key Vault, CosmosDB, Storage accounts.
                 // When deployed, there will be a pod identity with access to these dependencies.
                 // DefaultAzureCredential works in both cases.
-                services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+                _ = services.AddSingleton<TokenCredential, DefaultAzureCredential>();
 
                 if (!string.IsNullOrEmpty(opts.DesUrl))
                 {
-                    services
+                    _ = services
                         .AddSingleton<DesClient>()
                         .AddSingleton<IDesClient>(
                             sp => new CachingDesClient(sp.GetRequiredService<DesClient>()));
                 }
                 else
                 {
-                    _logger.LogWarning("Using DES client from environment");
-                    services.AddSingleton<IDesClient, DesClientFromEnv>();
+                    _logger!.LogWarning("Using DES client from environment");
+                    _ = services.AddSingleton<IDesClient, DesClientFromEnv>();
                 }
 
-                services
+                _ = services
                     .AddSingleton<CosmosClientFactory>()
                     .AddSingleton<ICosmosClientFactory>(
                         sp => new CachingCosmosClientFactory(sp.GetRequiredService<CosmosClientFactory>()));
 
-                services
+                _ = services
                     .AddSingleton<BlobClientFactory>()
                     .AddSingleton<IBlobClientFactory>(
                         sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
 
-                services
+                _ = services
                     .AddSingleton<RedisConnectionFactory>()
                     .AddSingleton<IRedisConnectionFactory>(sp =>
                         new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
 
-                services
+                _ = services
                     .AddSingleton<IOptions>(opts)
                     .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
                     .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())

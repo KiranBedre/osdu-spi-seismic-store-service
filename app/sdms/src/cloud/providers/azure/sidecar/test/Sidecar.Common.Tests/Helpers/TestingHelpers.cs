@@ -15,32 +15,23 @@
 // ============================================================================
 
 namespace Sidecar.Common.Tests;
-
-using System.Data.Common;
-
 #pragma warning disable CS8600
 internal static partial class TestingHelpers
 {
-    internal static DeleteOperationMessage GetDelOpMsg()
+    internal static DeleteOperationMessage GetDelOpMsg() => new()
     {
-        return new DeleteOperationMessage
-        {
-            OperationId = Guid.NewGuid().ToString(),
-            Tenant = "tenant001",
-            Subproject = "subproj007",
-            Path = "tenant001/proj001/subproj007/"
-        };
-    }
+        OperationId = Guid.NewGuid().ToString(),
+        Tenant = "tenant001",
+        Subproject = "subproj007",
+        Path = "tenant001/proj001/subproj007/"
+    };
 
-    internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false)
-    {
-        return new HashEntry[]{
+    internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
             new HashEntry(useJsonAttrNames?"path":"Path",msg.Path)
         };
-    }
 
     internal static Mock<ILogger<T>> GetLogger<T>()
     {
@@ -86,16 +77,16 @@ internal static partial class TestingHelpers
                 return await cache.HashSetAsync(key, field, value);
             }).Verifiable();
 
-        db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), It.IsAny<CommandFlags>()))
+        _ = db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), It.IsAny<CommandFlags>()))
             .Callback<RedisKey, HashEntry[], CommandFlags>((key, values, flags) =>
             {
                 cache.HashSet(key, values);
             });
 
-        db.Setup(d => d.HashSetAsync(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), It.IsAny<CommandFlags>()))
+        _ = db.Setup(d => d.HashSetAsync(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, HashEntry[], CommandFlags>(async (key, values, flags) =>
             {
-                await cache.HashSetAsync(key, values);
+                _ = await cache.HashSetAsync(key, values);
             });
 
         db.Setup(d => d.HashGetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))

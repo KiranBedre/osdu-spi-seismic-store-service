@@ -14,41 +14,42 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Tests.Service
+namespace Sidecar.Common.Tests.Service;
+
+public class DeleteItemsRetrieverTests
 {
-    public class DeleteItemsRetrieverTests
+    [Fact]
+    public async Task GetItems_WithValidData_ReturnsListOfDeleteItems()
     {
-        [Fact]
-        public async Task GetItems_WithValidData_ReturnsListOfDeleteItems()
+        // Arrange
+        var loggerMock = new Mock<ILogger<DeleteItemsRetriever>>();
+        var dataAccessMock = new Mock<IDataAccess>();
+        var cosmosFactoryMock = new Mock<ICosmosClientFactory>();
+
+        var deleteItemsRetriever = new DeleteItemsRetriever(loggerMock.Object, dataAccessMock.Object, cosmosFactoryMock.Object);
+
+        var tenant = "mytenant";
+        var subproject = "subproj";
+        var path = "path/";
+        var records = new List<object>
         {
-            // Arrange
-            var loggerMock = new Mock<ILogger<DeleteItemsRetriever>>();
-            var dataAccessMock = new Mock<IDataAccess>();
-            var cosmosFactoryMock = new Mock<ICosmosClientFactory>();
+            /*lang=json,strict*/
+            @"{ ""id"": ""1"", ""gcsurl"": ""url1"", ""path"": ""path1"", ""name"": ""name1"" }",
+            /*lang=json,strict*/
+            @"{ ""id"": ""2"", ""gcsurl"": ""url2"", ""path"": ""path2"", ""name"": ""name2"" }",
+        };
+        var paginatedRecords = new PaginatedRecords { records = records };
 
-            var deleteItemsRetriever = new DeleteItemsRetriever(loggerMock.Object, dataAccessMock.Object, cosmosFactoryMock.Object);
+        _ = dataAccessMock.Setup(d => d.GetRecords(It.IsAny<string>(), It.IsAny<string>(), null, null))
+            .ReturnsAsync(paginatedRecords);
 
-            var tenant = "mytenant";
-            var subproject = "subproj";
-            var path = "path/";
-            var records = new List<object>
-            {
-                @"{ ""id"": ""1"", ""gcsurl"": ""url1"", ""path"": ""path1"", ""name"": ""name1"" }",
-                @"{ ""id"": ""2"", ""gcsurl"": ""url2"", ""path"": ""path2"", ""name"": ""name2"" }",
-            };
-            var paginatedRecords = new PaginatedRecords { records = records };
+        // Act
+        var result = await deleteItemsRetriever.GetItems(tenant, subproject, path);
 
-            dataAccessMock.Setup(d => d.GetRecords(It.IsAny<string>(), It.IsAny<string>(), null, null))
-                .ReturnsAsync(paginatedRecords);
-
-            // Act
-            var result = await deleteItemsRetriever.GetItems(tenant, subproject, path);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(2, result.Count);
-            Assert.Equal("url1", result[0].Gcsurl);
-            Assert.Equal("url2", result[1].Gcsurl);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+        Assert.Equal("url1", result[0].Gcsurl);
+        Assert.Equal("url2", result[1].Gcsurl);
     }
 }

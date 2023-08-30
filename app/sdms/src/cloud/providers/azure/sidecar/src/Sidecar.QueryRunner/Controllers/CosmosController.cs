@@ -14,47 +14,46 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.QueryRunner.Controllers;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 
-namespace Sidecar.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class CosmosController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CosmosController : ControllerBase
+    private readonly IDataAccess _dataAccess;
+
+    public CosmosController(IDataAccess dataAccess)
     {
-        private readonly IDataAccess _dataAccess;
+        _dataAccess = dataAccess;
+    }
 
-        public CosmosController(IDataAccess dataAccess)
+    [HttpPost("/query")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedRecords))]
+    public async Task<IActionResult> Query([FromBody] QueryPaginatedRequestBody body)
+    {
+        try
         {
-            _dataAccess = dataAccess;
+            if (body.cs != null && body.sql != null)
+            {
+                return Ok(await _dataAccess.Query(body.cs, body.sql, body.ctoken, body.limit));
+            }
+            else if (body.cs == null)
+            {
+                return Problem(400 + "- cs query argument is required");
+            }
+            else
+            {
+                return Problem(400 + "- sql query argument is required");
+            }
         }
-
-        [HttpPost("/query")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedRecords))]
-        public async Task<IActionResult> Query([FromBody] QueryPaginatedRequestBody body)
+        catch (CosmosException ex)
         {
-            try
-            {
-                if (body.cs != null && body.sql != null)
-                {
-                    return Ok(await _dataAccess.Query(body.cs, body.sql, body.ctoken, body.limit));
-                }
-                else if (body.cs == null)
-                {
-                    return Problem(400 + "- cs query argument is required");
-                }
-                else
-                {
-                    return Problem(400 + "- sql query argument is required");
-                }
-            }
-            catch (CosmosException ex)
-            {
-                return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
-            }
-
+            return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
         }
 
     }
+
 }

@@ -38,7 +38,7 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
 
     public async Task DeleteMetadata(string dataPartitionId, string id)
     {
-        bool success = false;
+        var success = false;
         do
         {
             try

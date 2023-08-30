@@ -14,33 +14,30 @@
 // limitations under the License.
 // ============================================================================
 
-using Microsoft.Extensions.Logging;
+namespace Sidecar.Common.Service;
 using Sidecar.Common.Interface;
 
-namespace Sidecar.Common.Service
+using Azure.Security.KeyVault.Secrets;
+
+public class CosmosClientFactory : ICosmosClientFactory
 {
-    using Azure.Security.KeyVault.Secrets;
+    private readonly IDesClient _desClient;
+    private readonly SecretClient _secretClient;
 
-    public class CosmosClientFactory : ICosmosClientFactory
+    public CosmosClientFactory(
+        IDesClient desClient,
+        SecretClient secretClient)
     {
-        private readonly IDesClient _desClient;
-        private readonly SecretClient _secretClient;
+        _desClient = desClient;
+        _secretClient = secretClient;
+    }
 
-        public CosmosClientFactory(
-            IDesClient desClient,
-            SecretClient secretClient)
-        {
-            _desClient = desClient;
-            _secretClient = secretClient;
-        }
+    public async Task<string> GetCosmosConnectionString(string dataPartitionId, CancellationToken ct = default)
+    {
+        var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);
+        var endpoint = await desConfig.CosmosEndpoint.GetActualValue(_secretClient, ct);
+        var primaryKey = await desConfig.CosmosPrimaryKey.GetActualValue(_secretClient, ct);
 
-        public async Task<string> GetCosmosConnectionString(string dataPartitionId, CancellationToken ct = default)
-        {
-            var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);
-            var endpoint = await desConfig.CosmosEndpoint.GetActualValue(_secretClient, ct);
-            var primaryKey = await desConfig.CosmosPrimaryKey.GetActualValue(_secretClient, ct);
-
-            return $"AccountEndpoint={endpoint};AccountKey={primaryKey};";
-        }
+        return $"AccountEndpoint={endpoint};AccountKey={primaryKey};";
     }
 }

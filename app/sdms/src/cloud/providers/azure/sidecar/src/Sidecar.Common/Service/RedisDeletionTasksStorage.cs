@@ -115,14 +115,14 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
     public async Task IncrementCountAsync(string operationId, string field)
     {
         var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
-        await _queue.HashIncrementAsync(statusKey, field);
-        await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+        _ = await _queue.HashIncrementAsync(statusKey, field);
+        _ = await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LAST_UPDATED_AT, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
     public async Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue)
     {
         var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
-        await _queue.HashSetAsync(statusKey, keyName, keyValue);
-        await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LastUpdatedAt, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
+        _ = await _queue.HashSetAsync(statusKey, keyName, keyValue);
+        _ = await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LAST_UPDATED_AT, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 }

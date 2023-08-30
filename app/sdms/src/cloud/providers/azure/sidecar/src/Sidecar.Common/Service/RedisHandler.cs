@@ -177,48 +177,21 @@ public class RedisHandler : IRedisHandler
         }
     }
 
-    public async Task<string?> GetAsync(string key)
-    {
-        return await GetDatabase().StringGetAsync(key);
-    }
+    public async Task<string?> GetAsync(string key) => await GetDatabase().StringGetAsync(key);
 
-    public async Task<bool> SetAsync(string key, string value)
-    {
-        return await GetDatabase().StringSetAsync(key, value);
-    }
+    public async Task<bool> SetAsync(string key, string value) => await GetDatabase().StringSetAsync(key, value);
 
-    public async Task SetAsync(RedisKey key, HashEntry[] hash)
-    {
-        await GetDatabase().HashSetAsync(key, hash);
-    }
+    public async Task SetAsync(RedisKey key, HashEntry[] hash) => await GetDatabase().HashSetAsync(key, hash);
 
-    public long ListLeftPush(RedisKey key, RedisValue val)
-    {
-        return GetDatabase().ListLeftPush(key, new RedisValue(val!));
-    }
+    public long ListLeftPush(RedisKey key, RedisValue val) => GetDatabase().ListLeftPush(key, new RedisValue(val!));
 
-    public long ListLeftPush(RedisKey key, string val)
-    {
-        return ListLeftPush(key, new RedisValue(val));
-    }
+    public long ListLeftPush(RedisKey key, string val) => ListLeftPush(key, new RedisValue(val));
 
-    public async Task<long> ListLeftPushAsync(RedisKey key, RedisValue val)
-    {
-        return await GetDatabase().ListLeftPushAsync(key, new RedisValue(val!));
-    }
+    public async Task<long> ListLeftPushAsync(RedisKey key, RedisValue val) => await GetDatabase().ListLeftPushAsync(key, new RedisValue(val!));
 
-    public async Task<long> ListLeftPushAsync(RedisKey key, string val)
-    {
-        return await ListLeftPushAsync(key, new RedisValue(val));
-    }
+    public async Task<long> ListLeftPushAsync(RedisKey key, string val) => await ListLeftPushAsync(key, new RedisValue(val));
 
-    public void Set(RedisKey key, HashEntry[] hashes)
-    {
-        GetDatabase().HashSet(key, hashes);
-    }
+    public void Set(RedisKey key, HashEntry[] hashes) => GetDatabase().HashSet(key, hashes);
 
-    public async Task<bool> DeleteAsync(string key)
-    {
-        return await GetDatabase().KeyDeleteAsync(key);
-    }
+    public async Task<bool> DeleteAsync(string key) => await GetDatabase().KeyDeleteAsync(key);
 }
