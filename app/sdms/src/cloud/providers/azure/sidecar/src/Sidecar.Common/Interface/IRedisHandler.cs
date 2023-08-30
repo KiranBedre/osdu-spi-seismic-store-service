@@ -16,8 +16,14 @@
 
 namespace Sidecar.Common.Interface;
 
+using StackExchange.Redis;
+
 public interface IRedisHandler
 {
+    public IDatabase GetDatabase();
+    public Task<string?> GetAsync(string key);
+    public Task<bool> SetAsync(string key, string value);
+
     long HashIncrement(string key, string field, long? incBy = 1);
 
     Task<long> HashIncrementAsync(string key, string field, long? incBy = 1);

@@ -22,26 +22,26 @@ using Interface;
 public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationStatus
 {
     [JsonPropertyName("createdAt")]
-    public DateTime CreatedAt { get;set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [JsonPropertyName("lastUpdatedAt")]
-    public DateTime LastUpdatedAt { get;set; } = DateTime.UtcNow;
+    public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 
     [JsonPropertyName("createdBy")]
-    public string CreatedBy { get;set; } = "";
+    public string CreatedBy { get; set; } = "";
 
     [JsonPropertyName("status")]
-    public string Status { get;set; } = "";
+    public string Status { get; set; } = "";
 
     [JsonPropertyName("statusDescription")]
-    public string StatusDescription { get;set; } = "";
+    public string StatusDescription { get; set; } = "";
 
     [JsonPropertyName("datasetsCnt")]
-    public long DatasetsCnt { get;set; } = 0;
+    public long DatasetsCnt { get; set; } = 0;
 
     [JsonPropertyName("deletedCnt")]
-    public long DeletedCnt { get;set; } = 0;
+    public long DeletedCnt { get; set; } = 0;
 
     [JsonPropertyName("failedCnt")]
-    public long FailedCnt { get;set; } = 0;
+    public long FailedCnt { get; set; } = 0;
 }

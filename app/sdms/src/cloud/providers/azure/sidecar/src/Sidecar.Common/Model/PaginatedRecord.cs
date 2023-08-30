@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ namespace Sidecar.Common.Model;
 using Interface;
 public class PaginatedRecords : IPaginatedRecords
 {
-    public List<Object>? records { get; set; }
+    public List<object>? records { get; set; }
     public string? continuationToken { get; set; }
 
 }

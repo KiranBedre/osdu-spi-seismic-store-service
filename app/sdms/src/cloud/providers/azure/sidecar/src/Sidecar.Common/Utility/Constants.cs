@@ -14,8 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-using System.ComponentModel;
-
 namespace Sidecar.Common.Utility;
 
 public static class Constants
@@ -29,28 +27,28 @@ public static class Constants
     public static class SecretNames
     {
         /// <summary>
-        /// Hostname of the redis instance that stores the locks and the queues. 
+        /// Hostname of the redis instance that stores the locks and the queues.
         /// </summary>
         public const string REDIS_LOCKS_HOSTNAME = "redis-hostname";
 
         /// <summary>
-        /// Password of the redis instance that stores the locks and the queues. 
+        /// Password of the redis instance that stores the locks and the queues.
         /// </summary>
         public const string REDIS_LOCKS_PASSWORD = "redis-password";  // pragma: allowlist secret
-        
+
         /// <summary>
-        /// Hostname of the redis instance that stores the locks and the queues. 
+        /// Hostname of the redis instance that stores the locks and the queues.
         /// </summary>
         public const string REDIS_QUEUE_HOSTNAME = "redis-queue-hostname";
 
         /// <summary>
-        /// Password of the redis instance that stores the locks and the queues. 
+        /// Password of the redis instance that stores the locks and the queues.
         /// </summary>
         public const string REDIS_QUEUE_PASSWORD = "redis-queue-password";  // pragma: allowlist secret
 
         /// <summary>
         /// Resource ID of the Azure Active Directory application.
-        /// Can be used to e.g. request access tokens in the current AD application. 
+        /// Can be used to e.g. request access tokens in the current AD application.
         /// </summary>
         public const string APP_RESOURCE_ID = "aad-client-id";
     }
@@ -59,11 +57,11 @@ public static class Constants
 
     public static class DeleteOperationStatus
     {
-        public const string LastUpdatedAt = "LastUpdatedAt";
-        public const string Status = "Status";
-        public const string StatusDescription = "StatusDescription";
-        public const string DatasetsCnt = "DatasetsCnt";
-        public const string DeletedCnt = "DeletedCnt";
-        public const string FailedCnt = "FailedCnt";
+        public const string LAST_UPDATED_AT = "LastUpdatedAt";
+        public const string STATUS = "Status";
+        public const string STATUS_DESCRIPTION = "StatusDescription";
+        public const string DATASETS_CNT = "DatasetsCnt";
+        public const string DELETED_CNT = "DeletedCnt";
+        public const string FAILED_CNT = "FailedCnt";
     }
 }

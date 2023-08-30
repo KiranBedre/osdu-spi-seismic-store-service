@@ -18,46 +18,45 @@ namespace Sidecar.Common.Service;
 
 using StackExchange.Redis;
 using Interface;
+using Microsoft.Extensions.Logging;
 using System.Net;
 
 public class RedisConnectionFactory : IRedisConnectionFactory
 {
+    private readonly ILoggerFactory _loggerFactory;
     private readonly IOptionsLocksRedis _locksOpts;
     private readonly IOptionsQueueRedis _queueOpts;
-    
+
     public RedisConnectionFactory(
+        ILoggerFactory loggerFactory,
         IOptionsLocksRedis locksOpts,
         IOptionsQueueRedis queueOpts)
     {
+        _loggerFactory = loggerFactory;
         _locksOpts = locksOpts;
         _queueOpts = queueOpts;
     }
 
-    public IConnectionMultiplexer GetRedisForQueue()
+    public IRedisHandler GetRedisForQueue() => FromConfig(
+            _locksOpts.RedisLocksHostname,
+            _locksOpts.RedisLocksPort,
+            _locksOpts.RedisLocksPassword);
+
+    public IRedisHandler GetRedisForLocks() => FromConfig(
+            _queueOpts.RedisQueueHostname,
+            _queueOpts.RedisQueuePort,
+            _queueOpts.RedisQueuePassword);
+
+    private IRedisHandler FromConfig(string hostname, string port, string password)
     {
-        return ConnectionMultiplexer.Connect(
+        var connection = ConnectionMultiplexer.Connect(
             new ConfigurationOptions
             {
-                EndPoints = new()
-                {
-                    new DnsEndPoint(
-                        _locksOpts.RedisLocksHostname,
-                        Convert.ToInt32(_locksOpts.RedisLocksPort))
-                },
-                Password = _locksOpts.RedisLocksPassword,
+                EndPoints = new() { new DnsEndPoint(
+                    hostname,
+                    Convert.ToInt32(port)) },
+                Password = password,
             });
+        return new RedisHandler(_loggerFactory.CreateLogger<RedisHandler>(), connection);
     }
-
-    public IConnectionMultiplexer GetRedisForLocks()
-    {
-        return ConnectionMultiplexer.Connect(
-            new ConfigurationOptions
-            {
-                EndPoints = new () { new DnsEndPoint(
-                    _queueOpts.RedisQueueHostname, 
-                    Convert.ToInt32(_queueOpts.RedisQueuePort)) },
-                Password = _queueOpts.RedisQueuePassword,
-            });
-    }
-
 }

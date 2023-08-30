@@ -17,27 +17,22 @@ public class DesClientFromEnv : IDesClient
         _opts = opts;
     }
 
-    public Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default)
+    public Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default) => Task.FromResult(new DesResponse
     {
-        // ignore dataPartitionId, always inject the values from the options
-        
-        return Task.FromResult(new DesResponse
+        StorageAccountName = new()
         {
-            StorageAccountName = new()
-            {
-                Sensitive = false,
-                Value = _opts.StorageAccountName, 
-            },
-            CosmosEndpoint = new()
-            {
-                Sensitive = false,
-                Value = _opts.CosmosEndpoint,
-            },
-            CosmosPrimaryKey = new()
-            {
-                Sensitive = false,
-                Value = _opts.CosmosKey,
-            },
-        });
-    }
+            Sensitive = false,
+            Value = _opts.StorageAccountName,
+        },
+        CosmosEndpoint = new()
+        {
+            Sensitive = false,
+            Value = _opts.CosmosEndpoint,
+        },
+        CosmosPrimaryKey = new()
+        {
+            Sensitive = false,
+            Value = _opts.CosmosKey,
+        },
+    });
 }

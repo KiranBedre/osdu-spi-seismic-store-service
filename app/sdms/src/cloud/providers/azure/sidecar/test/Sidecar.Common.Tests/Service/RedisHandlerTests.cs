@@ -14,27 +14,30 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Tests;
+namespace Sidecar.Common.Tests.Service;
 
 public class RedisHandlerTests
 {
+    protected readonly Mock<IDatabase> DbMock = TestingHelpers.GetDatabase();
     protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
-    protected readonly Mock<IRedisConnectionFactory> RedisConnectionFactory;
+    protected readonly Mock<IRedisConnectionFactory> RedisConnectionFactory = new();
 
     public RedisHandlerTests()
     {
-        ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: TestingHelpers.GetDatabase().Object);
-        RedisConnectionFactory = new Mock<IRedisConnectionFactory>();
+        ConnectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: DbMock.Object); ;
     }
-    private RedisHandler GetQueueHandler() => new RedisHandler(TestingHelpers.GetLogger<RedisHandler>().Object
-            , ConnectionMultiplexer.Object);
+
+    private RedisHandler GetQueueHandler() => new(
+        TestingHelpers.GetLogger<RedisHandler>().Object,
+        ConnectionMultiplexer.Object);
 
     [Theory]
     [InlineData(null)]
     [InlineData(1)]
     [InlineData(10)]
     [InlineData(int.MaxValue)]
-    private void HashSet_HashIncrement_Success(int? inc){
+    private void HashSet_HashIncrement_Success(int? inc)
+    {
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
         var queueHandler = GetQueueHandler();
@@ -47,10 +50,10 @@ public class RedisHandlerTests
         var returned = queueHandler.HashIncrement(key, field, inc);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue + linc.GetValueOrDefault(1));
     }
@@ -60,7 +63,8 @@ public class RedisHandlerTests
     [InlineData(1)]
     [InlineData(10)]
     [InlineData(int.MaxValue)]
-    private void HashSet_HashDecrement_Success(int? inc){
+    private void HashSet_HashDecrement_Success(int? inc)
+    {
         // Arrange
         var linc = (long?)inc; //--xunit + dotnet has a problem casting from int? when the param is a long?
         var queueHandler = GetQueueHandler();
@@ -73,10 +77,10 @@ public class RedisHandlerTests
         var returned = queueHandler.HashDecrement(key, field, inc);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue - linc.GetValueOrDefault(1));
     }
@@ -95,10 +99,10 @@ public class RedisHandlerTests
         var returned = queueHandler.HashGet<long>(key, field);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue);
     }
@@ -117,10 +121,10 @@ public class RedisHandlerTests
         var returned = await queueHandler.HashGetAsync<long>(key, field);
 
         // Assert
-        result
+        _ = result
             .Should()
             .BeTrue();
-        returned
+        _ = returned
             .Should()
             .Be(initialValue);
     }

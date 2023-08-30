@@ -16,29 +16,21 @@
 
 namespace Sidecar.Common.Service;
 
-using StackExchange.Redis;
 using Interface;
-using System.Net;
 
 public class CachingRedisConnectionFactory : IRedisConnectionFactory
 {
-    private readonly Lazy<IConnectionMultiplexer> _locksRedis;
-    private readonly Lazy<IConnectionMultiplexer> _queueRedis;
-    
+    private readonly Lazy<IRedisHandler> _locksRedis;
+    private readonly Lazy<IRedisHandler> _queueRedis;
+
     public CachingRedisConnectionFactory(IRedisConnectionFactory source)
     {
         _locksRedis = new(source.GetRedisForLocks);
         _queueRedis = new(source.GetRedisForQueue);
     }
 
-    public IConnectionMultiplexer GetRedisForQueue()
-    {
-        return _locksRedis.Value;
-    }
+    public IRedisHandler GetRedisForQueue() => _locksRedis.Value;
 
-    public IConnectionMultiplexer GetRedisForLocks()
-    {
-        return _queueRedis.Value;
-    }
+    public IRedisHandler GetRedisForLocks() => _queueRedis.Value;
 
 }

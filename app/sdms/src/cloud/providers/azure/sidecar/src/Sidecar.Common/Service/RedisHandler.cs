@@ -24,24 +24,25 @@ using Interface;
 
 public class RedisHandler : IRedisHandler
 {
-    protected readonly ILogger<RedisHandler> Logger;
-    protected IConnectionMultiplexer Client;
+    private readonly ILogger<RedisHandler> _logger;
+    private readonly IConnectionMultiplexer _client;
 
     public RedisHandler(ILogger<RedisHandler> logger, IConnectionMultiplexer connectionMultiplexer)
 
     {
-        Logger = logger;
-        Client = connectionMultiplexer;
+        _logger = logger;
+        _client = connectionMultiplexer;
     }
 
-    protected IDatabase GetDatabase() {
+    public IDatabase GetDatabase()
+    {
         try
         {
-            return Client.GetDatabase();
+            return _client.GetDatabase();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error connecting to Redis database");
+            _logger.LogError(ex, "Error connecting to Redis database");
             throw;
         }
     }
@@ -58,7 +59,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -67,7 +68,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var dec = decBy ?? 1 ;
+            var dec = decBy ?? 1;
             return await GetDatabase().HashDecrementAsync(new RedisKey(key)
                 , new RedisValue(field)
                 , dec);
@@ -75,7 +76,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to decrement hash for key {key} and field {field}", key, field);
             throw;
         }
 
@@ -85,7 +86,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var inc = incBy ?? 1 ;
+            var inc = incBy ?? 1;
             return await GetDatabase().HashIncrementAsync(new RedisKey(key)
                 , new RedisValue(field)
                 , inc);
@@ -93,7 +94,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -101,7 +102,7 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var inc = incBy ?? 1 ;
+            var inc = incBy ?? 1;
             return GetDatabase().HashIncrement(new RedisKey(key)
                 , new RedisValue(field)
                 , inc);
@@ -109,7 +110,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to increment hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -125,7 +126,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -141,7 +142,7 @@ public class RedisHandler : IRedisHandler
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -150,13 +151,13 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var res =  await GetDatabase().HashGetAsync(new RedisKey(key)
+            var res = await GetDatabase().HashGetAsync(new RedisKey(key)
                 , new RedisValue(field));
             return JsonConvert.DeserializeObject<T>(res.ToString());
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }
@@ -165,59 +166,32 @@ public class RedisHandler : IRedisHandler
     {
         try
         {
-            var res =  GetDatabase().HashGet(new RedisKey(key)
+            var res = GetDatabase().HashGet(new RedisKey(key)
                     , new RedisValue(field));
             return JsonConvert.DeserializeObject<T>(res.ToString());
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
+            _logger.LogError(ex, "Unable to set hash for key {key} and field {field}", key, field);
             throw;
         }
     }
 
-    public async Task<string?> GetAsync(string key)
-    {
-        return await GetDatabase().StringGetAsync(key);
-    }
+    public async Task<string?> GetAsync(string key) => await GetDatabase().StringGetAsync(key);
 
-    public async Task<bool> SetAsync(string key, string value)
-    {
-        return await GetDatabase().StringSetAsync(key, value);
-    }
+    public async Task<bool> SetAsync(string key, string value) => await GetDatabase().StringSetAsync(key, value);
 
-    public async Task SetAsync(RedisKey key, HashEntry[] hash)
-    {
-        await GetDatabase().HashSetAsync(key, hash);
-    }
+    public async Task SetAsync(RedisKey key, HashEntry[] hash) => await GetDatabase().HashSetAsync(key, hash);
 
-    public long ListLeftPush(RedisKey key, RedisValue val)
-    {
-        return GetDatabase().ListLeftPush(key, new RedisValue(val!));
-    }
+    public long ListLeftPush(RedisKey key, RedisValue val) => GetDatabase().ListLeftPush(key, new RedisValue(val!));
 
-    public long ListLeftPush(RedisKey key, string val)
-    {
-        return ListLeftPush(key, new RedisValue(val));
-    }
+    public long ListLeftPush(RedisKey key, string val) => ListLeftPush(key, new RedisValue(val));
 
-    public async Task<long> ListLeftPushAsync(RedisKey key, RedisValue val)
-    {
-        return await GetDatabase().ListLeftPushAsync(key, new RedisValue(val!));
-    }
+    public async Task<long> ListLeftPushAsync(RedisKey key, RedisValue val) => await GetDatabase().ListLeftPushAsync(key, new RedisValue(val!));
 
-    public async Task<long> ListLeftPushAsync(RedisKey key, string val)
-    {
-        return await ListLeftPushAsync(key, new RedisValue(val));
-    }
+    public async Task<long> ListLeftPushAsync(RedisKey key, string val) => await ListLeftPushAsync(key, new RedisValue(val));
 
-    public void Set(RedisKey key, HashEntry[] hashes)
-    {
-        GetDatabase().HashSet(key, hashes);
-    }
+    public void Set(RedisKey key, HashEntry[] hashes) => GetDatabase().HashSet(key, hashes);
 
-    public async Task<bool> DeleteAsync(string key)
-    {
-        return await GetDatabase().KeyDeleteAsync(key);
-    }
+    public async Task<bool> DeleteAsync(string key) => await GetDatabase().KeyDeleteAsync(key);
 }

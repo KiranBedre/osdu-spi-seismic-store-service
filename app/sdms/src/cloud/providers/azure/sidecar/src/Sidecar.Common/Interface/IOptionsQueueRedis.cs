@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ namespace Sidecar.Common.Interface;
 
 public interface IOptionsQueueRedis
 {
-    string RedisQueueHostname {get; set;}
-    string RedisQueuePassword {get; set;}
-    string RedisQueuePort {get; set;}
+    string RedisQueueHostname { get; set; }
+    string RedisQueuePassword { get; set; }
+    string RedisQueuePort { get; set; }
 }

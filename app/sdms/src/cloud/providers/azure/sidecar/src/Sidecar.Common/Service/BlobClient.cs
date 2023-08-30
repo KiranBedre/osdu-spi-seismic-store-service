@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,38 +14,31 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Service;
+
 using Azure.Storage.Blobs;
 using Sidecar.Common.Interface;
+using Azure.Storage.Blobs.Specialized;
 
-namespace Sidecar.Common.Service
+/// <summary>
+/// Mockable alternative to the raw BlobServiceClient
+/// </summary>
+public class BlobClient : IBlobClient
 {
-    using Azure.Storage.Blobs.Specialized;
+    private readonly BlobServiceClient _client;
 
-    /// <summary>
-    /// Mockable alternative to the raw BlobServiceClient
-    /// </summary>
-    public class BlobClient : IBlobClient
+    public BlobClient(BlobServiceClient client)
     {
-        private readonly BlobServiceClient _client;
-
-        public BlobClient(BlobServiceClient client)
-        {
-            _client = client;
-        }
-
-        public BlobContainerClient GetContainerClient(string containerName)
-        {
-            return _client.GetBlobContainerClient(containerName);
-        }
-
-        public BlobBatchClient GetBatchClient()
-        {
-            // Calls to "new" aren't mockable.
-            // This is the reason to have this class: to hide the allocation in this method
-            // and mock this method instead.
-            // note: there's extension method BlobServiceClient.GetBlobBatchClient(), but it's not
-            // mockable either.
-            return new(_client);
-        }
+        _client = client;
     }
+
+    public BlobContainerClient GetContainerClient(string containerName) => _client.GetBlobContainerClient(containerName);
+
+    public BlobBatchClient GetBatchClient() =>
+        // Calls to "new" aren't mockable.
+        // This is the reason to have this class: to hide the allocation in this method
+        // and mock this method instead.
+        // note: there's extension method BlobServiceClient.GetBlobBatchClient(), but it's not
+        // mockable either.
+        new(_client);
 }

@@ -21,8 +21,6 @@ using Sidecar.Common.Model;
 /// <summary>
 /// Client to the "Data Ecosystem Services":
 /// https://community.opengroup.org/osdu/platform/system/partition/-/blob/master/provider/partition-azure/README.md
-///
-/// This service
 /// </summary>
 public interface IDesClient
 {

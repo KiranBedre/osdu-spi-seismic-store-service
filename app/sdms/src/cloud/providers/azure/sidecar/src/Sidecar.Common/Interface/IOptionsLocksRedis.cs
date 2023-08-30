@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,8 @@
 
 namespace Sidecar.Common.Interface;
 public interface IOptionsLocksRedis
-{ 
-    string RedisLocksHostname {get; set;}
-    string RedisLocksPassword {get; set;}
-    string RedisLocksPort {get; set;}
+{
+    string RedisLocksHostname { get; set; }
+    string RedisLocksPassword { get; set; }
+    string RedisLocksPort { get; set; }
 }

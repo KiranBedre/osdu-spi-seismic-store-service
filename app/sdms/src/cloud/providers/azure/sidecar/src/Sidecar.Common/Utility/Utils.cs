@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,19 @@
 // limitations under the License.
 // ============================================================================
 
+namespace Sidecar.Common.Utility;
 
-namespace Sidecar.Common.Utility
+public class Utils
 {
-    public class Utils
+    private static readonly Random _random = new();
+
+    private static string MakeId(int length)
     {
-        private static Random random = new Random();
-
-        private static string MakeID(int length)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
-        public static string GenerateDeleteLockID()
-        {
-            return "WDELETE" + MakeID(9);
-        }
+        const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        return new string(Enumerable.Repeat(CHARS, length)
+            .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
+
+    public static string GenerateDeleteLockId() => "WDELETE" + MakeId(9);
+
 }

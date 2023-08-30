@@ -14,14 +14,13 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Utilitiy;
+namespace Sidecar.Common.Utility;
 
+using Sidecar.Common.Interface;
+using StackExchange.Redis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using StackExchange.Redis;
-
-using Interface;
 
 public static class RedisConverters
 {
@@ -61,7 +60,11 @@ public static class RedisConverters
             var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
 
             var entry = hashEntries.FirstOrDefault(he => he.Name.ToString().Equals(propName));
-            if (entry.Equals(new HashEntry())) continue;
+            if (entry.Equals(new HashEntry()))
+            {
+                continue;
+            }
+
             p.SetValue(obj, Convert.ChangeType(entry.Value.ToString(), p.PropertyType));
         }
         return (T)obj!;

@@ -21,74 +21,92 @@ using Microsoft.Extensions.Logging;
 using System.Globalization;
 
 using Interface;
-using Sidecar.DeleteOperationRunner.Services;
 using Sidecar.Common.Model;
-using System.Reflection.Metadata;
 using Sidecar.Common.Utility;
 
 public class DeletionOperationService : BackgroundService
 {
-    private readonly ILogger<DeletionOperationService> Logger;
-    private readonly IQueueHandlerDeletion Queue;
-    private readonly IItemsRetriever ItemsRetriever;
-    private readonly IBulkDeletionWorker BulkDeletionWorker;
-    private readonly ILockManager LockManager;
+    private readonly ILogger<DeletionOperationService> _logger;
+    private readonly IDeletionTasksStorage _deletionTasks;
+    private readonly IItemsRetriever _itemsRetriever;
+    private readonly IBulkDeletionWorker _bulkDeletionWorker;
+    private readonly ILockManager _lockManager;
 
-    private int ConsecutiveFailures = 0;
-    private const int MaxConsecutiveFailures = 10;
+    private int _consecutiveFailures = 0;
+    private const int MAX_CONSECUTIVE_FAILURES = 10;
 
     public DeletionOperationService(ILogger<DeletionOperationService> logger,
-        IQueueHandlerDeletion queue,
+        IDeletionTasksStorage deletionTasks,
         IItemsRetriever itemsRetriever,
         IBulkDeletionWorker bulkDeletionWorker,
         ILockManager lockManager)
     {
-        Logger = logger;
-        Queue = queue;
-        ItemsRetriever = itemsRetriever;
-        BulkDeletionWorker = bulkDeletionWorker;
-        LockManager = lockManager;
+        _logger = logger;
+        _deletionTasks = deletionTasks;
+        _itemsRetriever = itemsRetriever;
+        _bulkDeletionWorker = bulkDeletionWorker;
+        _lockManager = lockManager;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        do{
-            try {
-                var op = await Queue.CheckForDeletionOperationAsync();
-                if (op is not null) {
-                    //---start the deletion process
-                    Logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
-
-                    var itemsToDelete = await ItemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
-
-                    Logger.LogInformation("Found {0} items to delete", itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
-                    await Queue.UpdateFieldStatusOperation(op.OperationId, Constants.DeleteOperationStatus.DatasetsCnt, itemsToDelete.Count.ToString());
-
-                    for (int i = itemsToDelete.Count - 1; i >= 0; i--)
-                    {
-                        var item = itemsToDelete[i];
-                        string datasetName = GetDatasetName(item);
-                        Logger.LogDebug("Acquiring lock for {0}", datasetName);
-                        var locked = await LockManager.AcquireDeleteLock(datasetName);
-                        if (!locked)
-                        {
-                            Logger.LogInformation("Could not acquire lock for {0}", datasetName);
-                            await Queue.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FailedCnt);
-                            itemsToDelete.Remove(item);
-                        }
-                    }
-
-                    await BulkDeletionWorker.RunBulkDeletion(op.Tenant, op.OperationId, itemsToDelete, cancellationToken);
-                }
-                ConsecutiveFailures = 0;
-            }
-            catch(Exception ex)
+        while (!cancellationToken.IsCancellationRequested && _consecutiveFailures < MAX_CONSECUTIVE_FAILURES)
+        {
+            try
             {
-                Logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {ConsecutiveFailures}/{MaxConsecutiveFailures}");
-                ConsecutiveFailures++;
+                await TryFetchAndExecuteTask(cancellationToken);
+                _consecutiveFailures = 0;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {_consecutiveFailures}/{MAX_CONSECUTIVE_FAILURES}");
+                _consecutiveFailures++;
+            }
+
             await Task.Delay(1000, cancellationToken);
-        } while(!cancellationToken.IsCancellationRequested && ConsecutiveFailures < MaxConsecutiveFailures);
+        }
+    }
+
+    private async Task TryFetchAndExecuteTask(CancellationToken cancellationToken)
+    {
+        var op = await _deletionTasks.CheckForDeletionOperationAsync();
+        if (op is null)
+        {
+            return;
+        }
+
+        //---start the deletion process
+        _logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
+
+        var itemsToDelete = await _itemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
+
+        _logger.LogInformation("Found {0} items to delete",
+            itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
+
+        await _deletionTasks.UpdateFieldStatusOperation(
+            op.OperationId,
+            Constants.DeleteOperationStatus.DATASETS_CNT,
+            itemsToDelete.Count.ToString());
+
+        var successfullyLocked = new List<DeleteItem>();
+
+        foreach (var item in itemsToDelete)
+        {
+            var datasetName = GetDatasetName(item);
+            _logger.LogDebug("Acquiring lock for {0}", datasetName);
+            var locked = await _lockManager.AcquireDeleteLock(datasetName);
+            if (locked)
+            {
+                successfullyLocked.Add(item);
+            }
+            else
+            {
+                _logger.LogInformation("Could not acquire lock for {0}", datasetName);
+                await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
+            }
+        }
+
+        await _bulkDeletionWorker.RunBulkDeletion(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
     }
 
     private static string GetDatasetName(DeleteItem item)
@@ -97,9 +115,7 @@ public class DeletionOperationService : BackgroundService
         {
             return item.Path + item.Name;
         }
-        else
-        {
-            return item.Path + "/" + item.Name;
-        }
+
+        return item.Path + "/" + item.Name;
     }
 }

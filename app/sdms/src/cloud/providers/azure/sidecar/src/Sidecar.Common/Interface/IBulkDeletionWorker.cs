@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
-
+namespace Sidecar.Common.Interface;
 using Sidecar.Common.Model;
 
-namespace Sidecar.Common.Interface;
 public interface IBulkDeletionWorker
 {
     Task RunBulkDeletion(string dataPartitionId, string operationId, List<DeleteItem> items, CancellationToken ct = default);

@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,24 +24,24 @@ using Model;
 
 public class Cosmos : IDataAccess
 {
-    private readonly string databaseId = "sdms-db";
-    private readonly string containerId = "data";
-    private static Dictionary<string, CosmosClient> cosmosClients = new Dictionary<string, CosmosClient>();
+    private const string DATABASE_ID = "sdms-db";
+    private const string CONTAINER_ID = "data";
+    private static readonly Dictionary<string, CosmosClient> _cosmosClients = new();
 
     public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
     {
-        IPaginatedRecords paginatedRecords = await GetRecords(cs, sql, ctoken, limit);
+        var paginatedRecords = await GetRecords(cs, sql, ctoken, limit);
         return JsonConvert.SerializeObject(paginatedRecords);
     }
 
     public async Task<IPaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit)
     {
-        this.initCosmosClient(cs);
-        Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-        Container container = database.GetContainer(this.containerId);
-        List<Object> records = new List<Object>();
-        IPaginatedRecords paginatedRecords = new PaginatedRecords();
-        QueryRequestOptions options = new QueryRequestOptions()
+        initCosmosClient(cs);
+        var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);
+        var container = database.GetContainer(CONTAINER_ID);
+        var records = new List<object>();
+        var paginatedRecords = new PaginatedRecords();
+        var options = new QueryRequestOptions()
         {
             // MaxItemCount set to -1 lets CosmosDB decide on the optimal returned item count
             // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v2&pivots=programming-language-csharp#tune-the-page-size
@@ -50,7 +50,7 @@ public class Cosmos : IDataAccess
             // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v3&pivots=programming-language-csharp#tune-the-degree-of-parallelism
             MaxConcurrency = 32
         };
-        FeedIterator<Object> query = container.GetItemQueryIterator<Object>(
+        var query = container.GetItemQueryIterator<object>(
             sql,
             continuationToken: ctoken,
             requestOptions: options);
@@ -59,7 +59,7 @@ public class Cosmos : IDataAccess
             while (query.HasMoreResults)
             {
                 var results = await query.ReadNextAsync();
-                foreach (Object record in results)
+                foreach (var record in results)
                 {
                     records.Add(record);
                 }
@@ -69,7 +69,7 @@ public class Cosmos : IDataAccess
         else // fetch next page
         {
             var results = await query.ReadNextAsync();
-            foreach (Object record in results)
+            foreach (var record in results)
             {
                 records.Add(record);
             }
@@ -82,18 +82,18 @@ public class Cosmos : IDataAccess
 
     public async Task<bool> DeleteMetadata(string cs, string id)
     {
-        this.initCosmosClient(cs);
-        Database database = Cosmos.cosmosClients[cs].GetDatabase(this.databaseId);
-        Container container = database.GetContainer(this.containerId);
-        var itemResponse = await container.DeleteItemAsync<Object>(id, new PartitionKey(id));
+        initCosmosClient(cs);
+        var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);
+        var container = database.GetContainer(CONTAINER_ID);
+        var itemResponse = await container.DeleteItemAsync<object>(id, new PartitionKey(id));
         return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
     }
 
     private void initCosmosClient(string cs)
     {
-        if (!Cosmos.cosmosClients.ContainsKey(cs))
+        if (!_cosmosClients.ContainsKey(cs))
         {
-            Cosmos.cosmosClients[cs] = new CosmosClient(cs, new CosmosClientOptions()
+            _cosmosClients[cs] = new CosmosClient(cs, new CosmosClientOptions()
             {
                 SerializerOptions = new CosmosSerializationOptions()
                 {

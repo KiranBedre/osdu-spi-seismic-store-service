@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,42 +14,23 @@
 // limitations under the License.
 // ============================================================================
 
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
-using Microsoft.Extensions.Logging;
+namespace Sidecar.Common.Service;
+
 using Sidecar.Common.Interface;
+using Sidecar.Common.Utility;
 
-namespace Sidecar.Common.Service
+public class CachingBlobClientFactory : IBlobClientFactory
 {
-    using Azure.Core;
-    using Azure.Security.KeyVault.Secrets;
-    using System.Collections.Concurrent;
+    private readonly AsyncCache<string, IBlobClient> _cache = new();
+    private readonly IBlobClientFactory _factory;
 
-    public class CachingBlobClientFactory : IBlobClientFactory
+    public CachingBlobClientFactory(IBlobClientFactory factory)
     {
-        private readonly IBlobClientFactory _factory;
-        private readonly ConcurrentDictionary<string, IBlobClient> _cache = new();
-
-        public CachingBlobClientFactory(IBlobClientFactory factory)
-        {
-            _factory = factory;
-        }
-
-        public async Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
-        {
-            if (_cache.TryGetValue(dataPartitionId, out var value))
-            {
-                return value;
-            }
-
-            // If this method is called concurrently, it's possible that multiple client instances will be created
-            // during the lifetime of this caching factory.
-            // This is OK for our application, we don't need "exactly-once caching".
-            var client = await _factory.GetBlobClient(dataPartitionId, ct);
-
-            _cache.TryAdd(dataPartitionId, client);
-
-            return client;
-        }
+        _factory = factory;
     }
+
+    public Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default) => _cache.GetValue(
+            dataPartitionId,
+            () => _factory.GetBlobClient(dataPartitionId, ct)
+        );
 }

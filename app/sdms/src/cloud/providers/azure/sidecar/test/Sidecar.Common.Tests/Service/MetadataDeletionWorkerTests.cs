@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,83 +13,79 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ============================================================================
+namespace Sidecar.Common.Tests.Service;
 using Microsoft.Azure.Cosmos;
 
-namespace Sidecar.Common.Tests.Service
+public class MetadataDeletionWorkerTests
 {
-    public class MetadataDeletionWorkerTests
+    [Fact]
+    public async Task DeleteMetadata_SuccessfulDeletion()
     {
-        [Fact]
-        public async Task DeleteMetadata_SuccessfulDeletion()
-        {
-            // Arrange
-            var loggerMock = new Mock<ILogger<MetadataDeletionWorker>>();
-            var dataAccessMock = new Mock<IDataAccess>();
-            dataAccessMock.Setup(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+        // Arrange
+        var loggerMock = new Mock<ILogger<MetadataDeletionWorker>>();
+        var dataAccessMock = new Mock<IDataAccess>();
+        _ = dataAccessMock.Setup(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
-            var tenant = "tenant";
-            var cs = "booboo";
-            
-            var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
-            cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
+        var tenant = "tenant";
+        var cs = "booboo";
 
-            var deletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
+        var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
+        _ = cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 
-            // Act
-            await deletionWorker.DeleteMetadata(tenant, "metadataId");
+        var deletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
-            // Assert
-            dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Once);
-        }
+        // Act
+        await deletionWorker.DeleteMetadata(tenant, "metadataId");
 
-        [Fact]
-        public async Task DeleteMetadata_ExceptionIsThrownAfterRetries()
-        {
-            // Arrange
-            var loggerMock = new Mock<ILogger<MetadataDeletionWorker>>();
-            var dataAccessMock = new Mock<IDataAccess>();
-            dataAccessMock.Setup(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()))
-                .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0));
+        // Assert
+        dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Once);
+    }
 
-            var maxRetries = 5;
+    [Fact]
+    public async Task DeleteMetadata_FailureThenSuccess()
+    {
+        // Arrange
+        var loggerMock = new Mock<ILogger<MetadataDeletionWorker>>();
+        var dataAccessMock = new Mock<IDataAccess>();
+        _ = dataAccessMock.SetupSequence(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0))
+            .ReturnsAsync(true);
 
-            var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
-            cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString("tenant", It.IsAny<CancellationToken>())).ReturnsAsync("cs");
+        var tenant = "tenant";
+        var cs = "booboo";
 
-            var metadataDeletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
+        var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
+        _ = cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<CosmosException>(async () => await metadataDeletionWorker.DeleteMetadata("partitionId", "id"));
+        var deletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
-            // Assert that the DeleteMetadata method was called the expected number of times (MaxRetries)
-            dataAccessMock.Verify(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(maxRetries));
+        // Act
+        await deletionWorker.DeleteMetadata(tenant, "metadataId");
 
-        }
+        // Assert
+        dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Exactly(2));
+    }
 
+    [Fact]
+    public async Task DeleteMetadata_ExceptionIsThrownAfterRetries()
+    {
+        // Arrange
+        var loggerMock = new Mock<ILogger<MetadataDeletionWorker>>();
+        var dataAccessMock = new Mock<IDataAccess>();
+        _ = dataAccessMock.Setup(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0));
 
-        [Fact]
-        public async Task DeleteMetadata_FailureThenSuccess()
-        {
-            // Arrange
-            var loggerMock = new Mock<ILogger<MetadataDeletionWorker>>();
-            var dataAccessMock = new Mock<IDataAccess>();
-            dataAccessMock.SetupSequence(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()))
-                .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0))
-                .ReturnsAsync(true);
-            
-            var tenant = "tenant";
-            var cs = "booboo";
-            
-            var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
-            cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
+        var maxRetries = 5;
 
-            var deletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
+        var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
+        _ = cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionString("tenant", It.IsAny<CancellationToken>())).ReturnsAsync("cs");
 
-            // Act
-            await deletionWorker.DeleteMetadata(tenant, "metadataId");
+        var metadataDeletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
-            // Assert
-            dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Exactly(2));
-        }
+        // Act & Assert
+        _ = await Assert.ThrowsAsync<CosmosException>(async () => await metadataDeletionWorker.DeleteMetadata("partitionId", "id"));
+
+        // Assert that the DeleteMetadata method was called the expected number of times (MaxRetries)
+        dataAccessMock.Verify(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(maxRetries));
     }
 }

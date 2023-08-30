@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,43 +25,43 @@ using Microsoft.Extensions.Logging;
 
 public class MetadataDeletionWorker : IMetadataDeletionWorker
 {
-    private readonly ILogger<MetadataDeletionWorker> Logger;
-    private readonly IDataAccess DataAccess;
+    private readonly ILogger<MetadataDeletionWorker> _logger;
+    private readonly IDataAccess _dataAccess;
     private readonly ICosmosClientFactory _cosmosClientFactory;
 
-    private int ConsecutiveFailures = 0;
-    private const int MaxRetries = 5;
+    private int _consecutiveFailures = 0;
+    private const int MAX_RETRIES = 5;
 
     public MetadataDeletionWorker(
-        ILogger<MetadataDeletionWorker> logger, 
-        IDataAccess dataAccess, 
+        ILogger<MetadataDeletionWorker> logger,
+        IDataAccess dataAccess,
         ICosmosClientFactory cosmosClientFactory)
     {
-        Logger = logger;
-        DataAccess = dataAccess;
+        _logger = logger;
+        _dataAccess = dataAccess;
         _cosmosClientFactory = cosmosClientFactory;
     }
 
     public async Task DeleteMetadata(string dataPartitionId, string id)
     {
-        bool success = false;
+        var success = false;
         do
         {
             try
             {
                 var cs = await _cosmosClientFactory.GetCosmosConnectionString(dataPartitionId);
-                success = await DataAccess.DeleteMetadata(cs, id);
-                ConsecutiveFailures = 0;
+                success = await _dataAccess.DeleteMetadata(cs, id);
+                _consecutiveFailures = 0;
             }
             catch (CosmosException ex)
             {
-                ConsecutiveFailures++;
-                Logger.LogWarning($"Could not delete metadata for dataset {id}, Attempt {ConsecutiveFailures}/{MaxRetries} ");
-                if (ConsecutiveFailures == MaxRetries) 
-                { 
-                    throw ex; 
+                _consecutiveFailures++;
+                _logger.LogWarning($"Could not delete metadata for dataset {id}, Attempt {_consecutiveFailures}/{MAX_RETRIES} ");
+                if (_consecutiveFailures == MAX_RETRIES) 
+                {
+                    throw ex;
                 }
             }
-        } while (!success && ConsecutiveFailures < MaxRetries);
+        } while (!success && _consecutiveFailures < MAX_RETRIES);
     }
 }

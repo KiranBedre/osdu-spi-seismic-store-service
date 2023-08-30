@@ -18,6 +18,6 @@ namespace Sidecar.Common.Interface;
 
 public interface IPaginatedRecords
 {
-    List<Object>? records { get; set; }
+    List<object>? records { get; set; }
     string? continuationToken { get; set; }
 }

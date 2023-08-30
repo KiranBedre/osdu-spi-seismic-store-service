@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
-using Azure.Storage.Blobs;
+namespace Sidecar.Common.Interface;
 
-namespace Sidecar.Common.Interface
+public interface IBlobClientFactory
 {
-    public interface IBlobClientFactory
-    {
-        Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default);
-    }
+    Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default);
 }

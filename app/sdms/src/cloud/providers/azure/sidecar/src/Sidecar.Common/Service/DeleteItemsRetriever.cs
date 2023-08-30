@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,26 +17,22 @@
 namespace Sidecar.Common.Service;
 
 using Interface;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Sidecar.Common.Model;
 
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type
 #pragma warning disable CS8604 // Possible null reference argument for parameter.
 
-public class DeleteItemsRetriever: IItemsRetriever
+public class DeleteItemsRetriever : IItemsRetriever
 {
-    private readonly ILogger<DeleteItemsRetriever> Logger;
-    private readonly IDataAccess DataAccess;
+    private readonly IDataAccess _dataAccess;
     private readonly ICosmosClientFactory _cosmosClientFactory;
 
     public DeleteItemsRetriever(
-        ILogger<DeleteItemsRetriever> logger,
         IDataAccess dataAccess,
         ICosmosClientFactory cosmosClientFactory)
     {
-        Logger = logger;
-        DataAccess = dataAccess;
+        _dataAccess = dataAccess;
         _cosmosClientFactory = cosmosClientFactory;
     }
 
@@ -49,7 +45,7 @@ public class DeleteItemsRetriever: IItemsRetriever
 
         var cs = await _cosmosClientFactory.GetCosmosConnectionString(dataPartitionId, ct);
 
-        var paginatedRecords = await DataAccess.GetRecords(cs, sql, null, null);
+        var paginatedRecords = await _dataAccess.GetRecords(cs, sql, null, null);
 
         return paginatedRecords.records.Select(item =>
         {

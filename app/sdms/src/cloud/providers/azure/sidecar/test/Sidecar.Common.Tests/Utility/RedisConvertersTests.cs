@@ -14,31 +14,31 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Tests;
+namespace Sidecar.Common.Tests.Utility;
+
+using Sidecar.Common.Utility;
 
 public class RedisConvertersTests
 {
 
-    private DeleteOperationMessage GetDelOpMsg(){
-        return new DeleteOperationMessage{
-            OperationId = Guid.NewGuid().ToString(),
-            Tenant = "tenant001",
-            Subproject = "subproj007",
-            Path = "tenant001/proj001/subproj007/"
-        };
-    }
+    private DeleteOperationMessage GetDelOpMsg() => new()
+    {
+        OperationId = Guid.NewGuid().ToString(),
+        Tenant = "tenant001",
+        Subproject = "subproj007",
+        Path = "tenant001/proj001/subproj007/"
+    };
 
-    private HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false){
-       return new HashEntry[]{
+    private HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
             new HashEntry(useJsonAttrNames?"path":"Path",msg.Path)
         };
-    }
 
     [Fact]
-    public void Convert_FromMsg_ToHashEntry_Success(){
+    public void Convert_FromMsg_ToHashEntry_Success()
+    {
         // Arrange
         var msg = GetDelOpMsg();
 
@@ -46,7 +46,7 @@ public class RedisConvertersTests
         var he = msg.ToHashEntries();
 
         // Assert
-        he.Should().NotBeEmpty()
+        _ = he.Should().NotBeEmpty()
             .And.HaveCount(4)
             .And.ContainSingle(h => h.Name == "OperationId" && h.Value == msg.OperationId)
             .And.ContainSingle(h => h.Name == "Tenant" && h.Value == msg.Tenant)
@@ -55,7 +55,8 @@ public class RedisConvertersTests
     }
 
     [Fact]
-    public void Convert_FromMsg_ToHashEntry_UsingJsonAttrNames_Success(){
+    public void Convert_FromMsg_ToHashEntry_UsingJsonAttrNames_Success()
+    {
         // Arrange
         var msg = GetDelOpMsg();
 
@@ -63,7 +64,7 @@ public class RedisConvertersTests
         var he = msg.ToHashEntries(true);
 
         // Assert
-        he.Should().NotBeEmpty()
+        _ = he.Should().NotBeEmpty()
             .And.HaveCount(4)
             .And.ContainSingle(h => h.Name == "operation_id" && h.Value == msg.OperationId)
             .And.ContainSingle(h => h.Name == "tenant" && h.Value == msg.Tenant)
@@ -72,7 +73,8 @@ public class RedisConvertersTests
     }
 
     [Fact]
-    public void Convert_FromHashEntry_ToDelOpMsg_Success(){
+    public void Convert_FromHashEntry_ToDelOpMsg_Success()
+    {
         // Arrange
         var expectedMsg = GetDelOpMsg();
         var he = GetDelOpMsgHashEntry(expectedMsg);
@@ -81,11 +83,12 @@ public class RedisConvertersTests
         var msg = he.FromHashEntries<DeleteOperationMessage>();
 
         // Assert
-        msg.Should().BeEquivalentTo(expectedMsg);
+        _ = msg.Should().BeEquivalentTo(expectedMsg);
     }
 
     [Fact]
-    public void Convert_FromHashEntry_ToDelOpMsg_UsingJsonAttrNames_Success(){
+    public void Convert_FromHashEntry_ToDelOpMsg_UsingJsonAttrNames_Success()
+    {
         // Arrange
         var expectedMsg = GetDelOpMsg();
         var he = GetDelOpMsgHashEntry(expectedMsg, true);
@@ -94,7 +97,7 @@ public class RedisConvertersTests
         var msg = he.FromHashEntries<DeleteOperationMessage>(true);
 
         // Assert
-        msg.Should().BeEquivalentTo(expectedMsg);
+        _ = msg.Should().BeEquivalentTo(expectedMsg);
     }
 
 }

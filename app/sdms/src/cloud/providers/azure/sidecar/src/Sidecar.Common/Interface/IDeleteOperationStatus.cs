@@ -23,13 +23,13 @@ public interface IDeleteOperationStatus : IDeletionOperationMessage
 
     string CreatedBy { get; set; }
 
-    string Status {get;  set;}
+    string Status { get; set; }
 
-    string StatusDescription {get;  set;}
+    string StatusDescription { get; set; }
 
-    long DatasetsCnt{get;set;}
+    long DatasetsCnt { get; set; }
 
-    long DeletedCnt{get;set;}
+    long DeletedCnt { get; set; }
 
-    long FailedCnt{get;set;}
+    long FailedCnt { get; set; }
 }

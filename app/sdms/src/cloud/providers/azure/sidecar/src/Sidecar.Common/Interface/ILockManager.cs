@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,16 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.DeleteOperationRunner.Services
+namespace Sidecar.Common.Interface;
+
+public interface ILockManager
 {
-    public interface ILockManager
-    {
-        /// <summary>
-        /// Attempts to acquire a delete lock which is only possible of no read or writ lock is present.
-        /// A delete lock can be acquired even though a delete lock is already present.
-        /// A delete lock is similar to a write lock, the value starts with WDELETE instead of W.
-        /// </summary>
-        /// <param name="key">The dataset to be locked</param>
-        /// <returns>`true` if the delete lock could be acquired, `false` otherwise.</returns>
-        Task<bool> AcquireDeleteLock(string key);
-    }
+    /// <summary>
+    /// Attempts to acquire a delete lock which is only possible of no read or writ lock is present.
+    /// A delete lock can be acquired even though a delete lock is already present.
+    /// A delete lock is similar to a write lock, the value starts with WDELETE instead of W.
+    /// </summary>
+    /// <param name="key">The dataset to be locked</param>
+    /// <returns>`true` if the delete lock could be acquired, `false` otherwise.</returns>
+    Task<bool> AcquireDeleteLock(string key);
 }
