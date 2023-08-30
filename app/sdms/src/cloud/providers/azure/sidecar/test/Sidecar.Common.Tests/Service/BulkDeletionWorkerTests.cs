@@ -20,7 +20,9 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
+using Microsoft.Azure.Cosmos;
 using Sidecar.Common.Utility;
+using System.Net;
 
 public class BulkDeletionWorkerTests
 {
@@ -202,7 +204,84 @@ public class BulkDeletionWorkerTests
         queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
         queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
         queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
+    }
 
+    [Fact]
+    public async Task RunBulkDeletion_WithFailedMetadata_Should_Work()
+    {
+        // Arrange
+        var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
+        var queueMock = new Mock<IDeletionTasksStorage>();
+        var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
+        var blobClientMock = new Mock<IBlobClient>();
+        var blobClientFactoryMock = new Mock<IBlobClientFactory>();
+        var blobBatchClientMock = new Mock<BlobBatchClient>();
+        var blobContainerClientMock = new Mock<BlobContainerClient>();
+        var blobBatchMock = new Mock<BlobBatch>();
+
+        var tenant = "mytenant";
+
+        var bulkDeletionWorker = new BulkDeletionWorker(
+            loggerMock.Object,
+            queueMock.Object,
+            metadataDeletionWorkerMock.Object,
+            blobClientFactoryMock.Object
+        );
+
+        var itemsToDelete = new List<DeleteItem> {
+            new DeleteItem
+                {
+                    Id = "123",
+                    Gcsurl = "container/folder1",
+                    Path = "/some/path",
+                    Name = "Example"
+                }
+        };
+
+        _ = blobClientMock
+            .Setup(client => client.GetContainerClient(It.IsAny<string>()))
+            .Returns(blobContainerClientMock.Object);
+
+        _ = blobClientMock
+            .Setup(client => client.GetBatchClient())
+            .Returns(blobBatchClientMock.Object);
+
+        _ = blobClientFactoryMock
+            .Setup(clientFactory => clientFactory.GetBlobClient(tenant, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(blobClientMock.Object);
+
+        _ = blobBatchMock
+            .Setup(b => b.DeleteBlob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>()));
+
+        _ = blobBatchClientMock
+            .Setup(blobBatchClientMock => blobBatchClientMock.CreateBatch())
+            .Returns(blobBatchMock.Object);
+
+        var mockedBlobs = Page<BlobItem>.FromValues(new List<BlobItem>
+        {
+            BlobsModelFactory.BlobItem("mocked1")
+        }, continuationToken: null, new Mock<Response>().Object);
+
+        var mockedBlobsPages = AsyncPageable<BlobItem>.FromPages(new[] { mockedBlobs });
+
+        _ = blobContainerClientMock
+            .Setup(clientFactory => clientFactory.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(mockedBlobsPages);
+
+        _ = metadataDeletionWorkerMock
+              .Setup(container => container.DeleteMetadataAsync(It.IsAny<string>(), It.IsAny<string>()))
+              .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
+
+        // Act
+        await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
+
+        queueMock.Verify(
+            queue => queue.IncrementCountAsync("operationId", Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
+
+        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
     }
 
 }

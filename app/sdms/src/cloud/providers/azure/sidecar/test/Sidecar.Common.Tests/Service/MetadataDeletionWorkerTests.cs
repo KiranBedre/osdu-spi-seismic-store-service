@@ -35,7 +35,7 @@ public class MetadataDeletionWorkerTests
         var deletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
         // Act
-        await deletionWorker.DeleteMetadata(tenant, "metadataId");
+        await deletionWorker.DeleteMetadataAsync(tenant, "metadataId");
 
         // Assert
         dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Once);
@@ -60,7 +60,7 @@ public class MetadataDeletionWorkerTests
         var deletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
         // Act
-        await deletionWorker.DeleteMetadata(tenant, "metadataId");
+        await deletionWorker.DeleteMetadataAsync(tenant, "metadataId");
 
         // Assert
         dataAccessMock.Verify(d => d.DeleteMetadata(cs, "metadataId"), Times.Exactly(2));
@@ -83,7 +83,7 @@ public class MetadataDeletionWorkerTests
         var metadataDeletionWorker = new MetadataDeletionWorker(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
         // Act & Assert
-        _ = await Assert.ThrowsAsync<CosmosException>(async () => await metadataDeletionWorker.DeleteMetadata("partitionId", "id"));
+        _ = await Assert.ThrowsAsync<CosmosException>(async () => await metadataDeletionWorker.DeleteMetadataAsync("partitionId", "id"));
 
         // Assert that the DeleteMetadata method was called the expected number of times (MaxRetries)
         dataAccessMock.Verify(d => d.DeleteMetadata(It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(maxRetries));

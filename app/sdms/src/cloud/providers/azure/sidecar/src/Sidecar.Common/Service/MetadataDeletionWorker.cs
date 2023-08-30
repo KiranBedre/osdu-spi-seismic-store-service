@@ -41,7 +41,7 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
         _cosmosClientFactory = cosmosClientFactory;
     }
 
-    public async Task DeleteMetadata(string dataPartitionId, string id)
+    public async Task DeleteMetadataAsync(string dataPartitionId, string id)
     {
         var success = false;
         do
