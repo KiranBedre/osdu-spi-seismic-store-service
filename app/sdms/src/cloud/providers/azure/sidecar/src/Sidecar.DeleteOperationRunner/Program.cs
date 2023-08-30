@@ -118,7 +118,7 @@ public class Program
         // DefaultAzureCredential works in both cases.
         _ = services.AddSingleton<TokenCredential, DefaultAzureCredential>();
 
-        services.AddSingleton<HttpClient>();
+        _ = services.AddSingleton<HttpClient>();
 
         if (!string.IsNullOrEmpty(opts.DesUrl))
         {
