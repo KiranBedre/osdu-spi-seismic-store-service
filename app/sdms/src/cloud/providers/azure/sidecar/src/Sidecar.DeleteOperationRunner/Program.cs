@@ -163,7 +163,7 @@ public class Program
             .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
             .AddHostedService<DeletionOperationService>()
             .AddSingleton<ILockManager, LockManager>()
-            .AddScoped<IDataAccess, Cosmos>();
+            .AddSingleton<IDataAccess, Cosmos>();
 
         _ = services
             .AddHealthChecks()
