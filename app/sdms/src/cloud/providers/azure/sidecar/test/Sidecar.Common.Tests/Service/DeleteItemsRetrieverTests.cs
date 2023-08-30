@@ -26,7 +26,7 @@ public class DeleteItemsRetrieverTests
         var dataAccessMock = new Mock<IDataAccess>();
         var cosmosFactoryMock = new Mock<ICosmosClientFactory>();
 
-        var deleteItemsRetriever = new DeleteItemsRetriever(loggerMock.Object, dataAccessMock.Object, cosmosFactoryMock.Object);
+        var deleteItemsRetriever = new DeleteItemsRetriever(dataAccessMock.Object, cosmosFactoryMock.Object);
 
         var tenant = "mytenant";
         var subproject = "subproj";
