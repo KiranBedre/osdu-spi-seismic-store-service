@@ -87,22 +87,21 @@ public class Program
     private static async Task RunAsync(Options opts)
     {
         var webApplicationBuilder = WebApplication.CreateBuilder();
-        
+
         ConfigureServices(webApplicationBuilder.Services, opts);
 
-        webApplicationBuilder.Logging
+        _ = webApplicationBuilder.Logging
             .ClearProviders()
-            .AddSimpleConsole(o => {
+            .AddSimpleConsole(o =>
+            {
                 o.SingleLine = true;
                 o.TimestampFormat = "[HH:mm:ss:fff] ";
             });
-
-        webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
-
+        _ = webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
         var webapp = webApplicationBuilder.Build();
 
-        webapp.UseHealthChecks("/healthz");
-        
+        _ = webapp.UseHealthChecks("/healthz");
+
         await webapp.RunAsync();
     }
 
@@ -161,9 +160,9 @@ public class Program
             .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
             .AddHostedService<DeletionOperationService>()
             .AddSingleton<ILockManager, LockManager>()
-            .AddScoped<IDataAccess, Cosmos>();   
-                
-        services
+            .AddScoped<IDataAccess, Cosmos>();
+
+        _ = services
             .AddHealthChecks()
             .AddCheck<TaskQueueExistenceCheck>(
                 "task-queue-existence-check",

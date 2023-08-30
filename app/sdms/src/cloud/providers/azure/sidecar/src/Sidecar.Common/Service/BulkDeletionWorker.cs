@@ -233,7 +233,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
                 var innerExceptions = itemResponse.Exception?.Flatten();
 
-                var message = $"Exception:  {innerExceptions?.InnerExceptions.FirstOrDefault()}";
+                var message = $"Exception: {innerExceptions?.InnerExceptions.FirstOrDefault()}";
                 _logger.LogError(message);
                 errors.Add(message);
             });
