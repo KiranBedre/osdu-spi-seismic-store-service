@@ -82,6 +82,9 @@ export abstract class Config implements IConfig {
     // Unit Test activation flag
     public static UTEST: string;
 
+    // Unit Test activation flag
+    public static INTTEST: string;
+
     // Service base configurations
     public static SERVICE_ENV: string;
     public static SERVICE_PORT: number;
@@ -399,3 +402,4 @@ export class ConfigFactory extends CloudFactory {
 
 // Set the Utest flag correctly as soon as the config class get loaded
 Config.UTEST = process.env.UTEST;
+Config.INTTEST = process.env.INTTEST;

@@ -52,10 +52,16 @@ export class DeleteJobRedisStore {
     }
 
     private static getDeleteOperationKey(operationId: string) {
+        if (Config.INTTEST) {
+            return deleteJobQueueName + ":inttest:" + operationId;
+        }
         return deleteJobQueueName + ":" + operationId;
     }
 
     private static getDeleteOperationStatusKey(operationId: string) {
+        if (Config.INTTEST) {
+            return deleteJobQueueName + ":inttest:status:" + operationId;
+        }
         return deleteJobQueueName + ":status:" + operationId;
     }
 
