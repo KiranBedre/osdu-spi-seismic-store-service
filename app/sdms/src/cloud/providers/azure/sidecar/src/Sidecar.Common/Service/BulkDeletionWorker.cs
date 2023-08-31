@@ -131,7 +131,6 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             }
         }
 
-        // removing the metadata
         await RemoveMetadata(dataPartitionId, operationId, item.Id, errors);
     }
 

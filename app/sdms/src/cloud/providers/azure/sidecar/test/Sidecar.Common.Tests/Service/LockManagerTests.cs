@@ -41,7 +41,6 @@ public class LockManagerTests
     public async Task AcquireDeleteLock_WithLockWrite_ReturnsTrue()
     {
         // Arrange
-
         var databaseMock = new Mock<IDatabase>();
         _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
         var key = "/path/file.tst";
@@ -60,7 +59,6 @@ public class LockManagerTests
     public async Task AcquireDeleteLock_WithValidLockRead_ReturnsFalse()
     {
         // Arrange
-
         var databaseMock = new Mock<IDatabase>();
         _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
         var key = "/path/file.tst";
