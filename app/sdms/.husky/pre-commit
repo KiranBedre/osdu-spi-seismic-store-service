@@ -4,5 +4,5 @@
 echo "-------------------------------------------------------"
 echo "1)"
 echo "scans for the inclusion of AWS keys"
-cd ./app/sdms && npx scan-for-secrets src
+cd ./app/sdms && npx scan-for-secrets src/cloud/providers/aws
 echo "-------------------------------------------------------"

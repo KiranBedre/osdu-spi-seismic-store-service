@@ -1,22 +1,22 @@
 #for fasapi and uvicorn
-fastapi==0.66.1
-uvicorn==0.14.0
+fastapi==0.100.1
+uvicorn==0.23.2
 
 #for segy library
-segysdk-python==0.0.174259
+segysdk-python==0.0.199422
 
 #for zgy to bingrid
-vector==0.8.5
+vector==1.1.0
 
 #for static files
-aiofiles==0.5.0
+aiofiles==23.2.1
 
 #for testing
-pytest==6.2.4
-jsonschema==3.2.0
-requests~=2.26.0
-requests-mock==1.7.0
+pytest==7.4.0
+jsonschema==4.19.0
+requests==2.31.0
+requests-mock==1.11.0
 behave==1.2.6
 
 #for .env
-python-dotenv==0.19.0
+python-dotenv==1.0.0

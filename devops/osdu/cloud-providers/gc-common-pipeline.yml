@@ -300,7 +300,7 @@ variables:
     - !reference [.gc_define_version, script]
     - !reference [.gc_set_image_name, script]
     - >
-      helm upgrade $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE oci://$CI_REGISTRY_IMAGE/gc-helm/gc-$SEISMIC_GC_SERVICE-deploy 
+      helm upgrade $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE oci://$CI_REGISTRY_IMAGE/gc-helm/gc-$SEISMIC_GC_SERVICE-deploy
       --version $VERSION
       --install
       --create-namespace

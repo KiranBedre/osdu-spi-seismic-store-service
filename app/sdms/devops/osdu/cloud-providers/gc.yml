@@ -31,6 +31,9 @@ sdms-gc-helm-charts-gitlab:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: never
       changes:
@@ -51,6 +54,9 @@ sdms-gc-helm-charts-gitlab:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
     - if: '$GC == "1"'
       when: on_success
       changes:
@@ -71,6 +77,9 @@ sdms-gc-helm-charts-gitlab:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-helm-charts-release-gitlab:
   extends: .gc-helm-charts-release-gitlab
@@ -118,6 +127,9 @@ sdms-gc-containerize-gitlab:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
       changes:
@@ -138,6 +150,9 @@ sdms-gc-containerize-gitlab:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
     - if: '$GC == "1"'
       when: on_success
       changes:
@@ -158,6 +173,9 @@ sdms-gc-containerize-gitlab:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-containerize-gcr:
   extends: .gc-containerize-gcr
@@ -190,6 +208,9 @@ sdms-gc-containerize-gcr:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-deploy:
   extends: .gc-deploy
@@ -223,6 +244,9 @@ sdms-gc-deploy:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-dev2-deploy:
   extends: .gc-dev2-deploy
@@ -254,6 +278,9 @@ sdms-gc-dev2-deploy:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
       changes:
@@ -274,6 +301,9 @@ sdms-gc-dev2-deploy:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-preship-deploy:
   extends: .gc-preship-deploy
@@ -305,6 +335,9 @@ sdms-gc-preship-deploy:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
       allow_failure: true
     - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
       when: manual
@@ -326,6 +359,9 @@ sdms-gc-preship-deploy:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
       allow_failure: true
 
 sdms-gc-baremetal-deploy:
@@ -360,6 +396,9 @@ sdms-gc-baremetal-deploy:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-test-python:
   variables:
@@ -411,6 +450,9 @@ sdms-gc-test-python:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-dev2-test-python:
   variables:
@@ -458,6 +500,9 @@ sdms-gc-dev2-test-python:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
       changes:
@@ -478,12 +523,15 @@ sdms-gc-dev2-test-python:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md
 
 sdms-gc-baremetal-test-python:
   extends: .gc-baremetal-test-python
   image: node
   needs: ["sdms-gc-baremetal-deploy"]
-  allow_failure: true
+  allow_failure: false
   before_script:
     - cd app/$SDMS_SERVICE
   script:
@@ -535,3 +583,6 @@ sdms-gc-baremetal-test-python:
         - app/sdms/src/cloud/providers/anthos/**/*
         - app/sdms/src/cloud/providers/gc/**/*
         - app/sdms/src/cloud/providers/google/**/*
+        - app/sdms/**/*.json
+        - app/sdms/**/*.yml
+        - app/sdms/**/*.md

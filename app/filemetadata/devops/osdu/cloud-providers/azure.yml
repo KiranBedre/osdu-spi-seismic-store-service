@@ -78,7 +78,6 @@ filemetadata_azure_unit_test:
   stage: integration
   needs:
     - filemetadata_azure_deploy
-  allow_failure: true
   variables:
     AZURE_AD_APP_RESOURCE_ID: $AZURE_APP_ID
     AZURE_AD_TENANT_ID: $AZURE_TENANT_ID
@@ -86,7 +85,10 @@ filemetadata_azure_unit_test:
     INTEGRATION_TESTER: $AZURE_PRINCIPAL_ID
     DNS: https://${AZURE_DNS_NAME}
   script:
-    - pip3 install requests msal fastapi python-dotenv
+    - apt-get install python3-venv -y
+    - python3 -m venv seimicenv
+    - source seimicenv/bin/activate
+    - pip3 install requests msal fastapi python-dotenv httpx
     - cd app/$FILEMETADATA_SERVICE/app
     - python3 -m unittest discover -s test -p test_* -v
   only:
@@ -104,7 +106,6 @@ filemetadata_azure_integration_test:
   stage: integration
   needs:
     - filemetadata_azure_deploy
-  allow_failure: true
   variables:
     AZURE_AD_APP_RESOURCE_ID: $AZURE_APP_ID
     AZURE_AD_TENANT_ID: $AZURE_TENANT_ID
@@ -113,7 +114,10 @@ filemetadata_azure_integration_test:
     DNS: https://${AZURE_DNS_NAME}
     SVC_API_KEY: $AZURE_SVC_API_KEY
   script:
-    - pip3 install -Iv pytest==6.2.4 jsonschema==3.2.0 requests~=2.26.0 requests-mock==1.7.0 behave==1.2.6 python-dotenv==0.19.0
+    - apt-get install python3-venv -y
+    - python3 -m venv seimicenv
+    - source seimicenv/bin/activate
+    - pip3 install -Iv pytest==6.2.4 jsonschema==3.2.0 requests~=2.26.0 requests-mock==1.7.0 behave==1.2.6 python-dotenv==0.19.0 charset_normalizer chardet
     - cd app/$FILEMETADATA_SERVICE/app/integration_test
     - python3 -m behave -v
   only:
