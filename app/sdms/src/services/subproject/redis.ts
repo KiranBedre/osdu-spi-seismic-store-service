@@ -17,12 +17,10 @@
 import * as Redis from 'ioredis';
 import { Config } from '../../cloud';
 import { IDeleteOperationQueueTaskModel, IDeleteOperationStatusModel } from './model';
-import def from 'ajv/dist/vocabularies/discriminator';
 
 
-const deleteJobQueueName = "deletejobqueue";
-const defaultOperationStatus = "NOT_STARTED";
 
+const defaultOperationStatus = "NotStarted";
 export class DeleteJobRedisStore {
 
     private static redisClient: Redis.Redis;
@@ -52,17 +50,11 @@ export class DeleteJobRedisStore {
     }
 
     private static getDeleteOperationKey(operationId: string) {
-        if (Config.INTTEST) {
-            return deleteJobQueueName + ":inttest:" + operationId;
-        }
-        return deleteJobQueueName + ":" + operationId;
+        return Config.REDIS_DELETION_QUEUE + ":" + operationId;
     }
 
     private static getDeleteOperationStatusKey(operationId: string) {
-        if (Config.INTTEST) {
-            return deleteJobQueueName + ":inttest:status:" + operationId;
-        }
-        return deleteJobQueueName + ":status:" + operationId;
+        return Config.REDIS_DELETION_QUEUE + ":status:" + operationId;
     }
 
     public static async pushOperation(operation: IDeleteOperationQueueTaskModel) {
@@ -70,7 +62,7 @@ export class DeleteJobRedisStore {
         await this.redisClient
             .multi()
             .hset(operationKey, operation)
-            .lpush(deleteJobQueueName, operation.operation_id)
+            .lpush(Config.REDIS_DELETION_QUEUE, operation.operation_id)
             .exec();
     }
 
