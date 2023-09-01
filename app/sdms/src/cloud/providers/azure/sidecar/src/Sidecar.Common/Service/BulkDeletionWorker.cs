@@ -121,7 +121,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
                 if (e.ErrorCode == "ContainerNotFound")
                 {
                     // we assume this was previously deleted and continue ignoring this exception
-                    _logger.LogInformation("Could not find container \'{ContainerName}\'. Ignoring as it is assumed to have already been deleted", containerName);
+                    _logger.LogWarning("Could not find container \'{ContainerName}\'. Ignoring as it is assumed to have already been deleted", containerName);
                 }
                 else
                 {
@@ -183,7 +183,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         {
             foreach (var blob in pages.Values)
             {
-                _logger.LogInformation("Deleting blob: {BlobName}", blob.Name);
+                _logger.LogDebug("Deleting blob: {BlobName}", blob.Name);
                 _ = await batchBlock.SendAsync(new(containerName, blob.Name), ct);
             }
         }
