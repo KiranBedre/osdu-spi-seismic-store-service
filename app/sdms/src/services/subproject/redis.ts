@@ -19,8 +19,8 @@ import { Config } from '../../cloud';
 import { IDeleteOperationQueueTaskModel, IDeleteOperationStatusModel } from './model';
 
 
-
 const defaultOperationStatus = "NotStarted";
+
 export class DeleteJobRedisStore {
 
     private static redisClient: Redis.Redis;
