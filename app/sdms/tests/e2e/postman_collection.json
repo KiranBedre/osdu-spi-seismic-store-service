@@ -1668,125 +1668,6 @@
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "SUBPROJECT BULK-DELETE: Delete datasets in a subproject",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 202) {\r",
-									"    console.log(pm.response.text())\r",
-									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
-									"\r",
-									"} else {\r",
-									"    var jsonData = pm.response.json();\r",
-									"\r",
-									"    pm.test(\"Status code is 202\", function () {\r",
-									"        pm.response.to.have.status(202);\r",
-									"    });\r",
-									"\r",
-									"    pm.test(\"Validate Operation Id\", function () {\r",
-									"        pm.expect(jsonData.operation_id).to.exist;\r",
-									"    });\r",
-									"\r",
-									"    let operation_id = jsonData.operation_id;\r",
-									"    pm.collectionVariables.set('operationId', operation_id)\r",
-									"    \r",
-									"    // Reset environment variables if _.retryOnFailure function was used before\r",
-									"    var key = request.name + '_counter';\r",
-									"    pm.environment.unset(key);\r",
-									"    postman.setEnvironmentVariable('execCounter', 1)\r",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?path={{testPath01}}",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"subproject",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}",
-								"bulk-delete"
-							],
-							"query": [
-								{
-									"key": "path",
-									"value": "{{testPath01}}"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "SUBPROJECT BULK-DELETE STATUS: Get status of the bulk-delete operation",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 200) {\r",
-									"    console.log(pm.response.text())\r",
-									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
-									"\r",
-									"} else {\r",
-									"    var jsonData = pm.response.json();\r",
-									"\r",
-									"    pm.test(\"Status code is 200\", function () {\r",
-									"        pm.response.to.have.status(200);\r",
-									"    });\r",
-									"\r",
-									"    pm.test(\"Validate operation status\", function () {\r",
-									"        pm.expect(jsonData.status).to.eql('NOT_STARTED');\r",
-									"    });\r",
-									"    \r",
-									"    // Reset environment variables if _.retryOnFailure function was used before\r",
-									"    var key = request.name + '_counter';\r",
-									"    pm.environment.unset(key);\r",
-									"    postman.setEnvironmentVariable('execCounter', 1)\r",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?operationid={{operationId}}",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"subproject",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}",
-								"bulk-delete"
-							],
-							"query": [
-								{
-									"key": "operationid",
-									"value": "{{operationId}}"
-								}
-							]
-						}
-					},
-					"response": []
 				}
 			],
 			"description": "These tests perform different opearations on subproject such as REGISTER,GET,LIST,PATCH and DELETE including a negative test for registering long subproject name."
@@ -20043,6 +19924,130 @@
 				}
 			],
 			"description": "These tests are designed for cleaning up by resetting the environment variables. Additionally, the subproject hold feature is enabled to ensure subproject is alive."
+		},
+		{
+			"name": "bulk delete",
+			"item": [
+				{
+					"name": "SUBPROJECT BULK-DELETE: Delete datasets in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 202) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 202\", function () {\r",
+									"        pm.response.to.have.status(202);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Validate Operation Id\", function () {\r",
+									"        pm.expect(jsonData.operation_id).to.exist;\r",
+									"    });\r",
+									"\r",
+									"    let operation_id = jsonData.operation_id;\r",
+									"    pm.collectionVariables.set('operationId', operation_id)\r",
+									"    \r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?path={{testPath01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"bulk-delete"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPath01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SUBPROJECT BULK-DELETE STATUS: Get status of the bulk-delete operation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 200\", function () {\r",
+									"        pm.response.to.have.status(200);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Validate operation status\", function () {\r",
+									"        pm.expect(jsonData.status).to.eql('NotStarted');\r",
+									"    });\r",
+									"    \r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?operationid={{operationId}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"bulk-delete"
+							],
+							"query": [
+								{
+									"key": "operationid",
+									"value": "{{operationId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
