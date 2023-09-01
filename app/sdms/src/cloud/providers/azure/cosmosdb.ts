@@ -245,7 +245,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 }
                 return result.data;
             });
-            return Promise.resolve(results);
+            return Promise.resolve([results]);
         }
     }
 
