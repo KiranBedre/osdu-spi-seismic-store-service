@@ -128,5 +128,4 @@ public class RedisHandlerTests
             .Should()
             .Be(initialValue);
     }
-
 }

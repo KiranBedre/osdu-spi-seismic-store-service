@@ -25,5 +25,5 @@ public interface ILockManager
     /// </summary>
     /// <param name="key">The dataset to be locked</param>
     /// <returns>`true` if the delete lock could be acquired, `false` otherwise.</returns>
-    Task<bool> AcquireDeleteLock(string key);
+    Task<bool> AcquireDeleteLockAsync(string key);
 }

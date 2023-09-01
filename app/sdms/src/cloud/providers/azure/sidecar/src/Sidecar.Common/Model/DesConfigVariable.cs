@@ -18,7 +18,7 @@ public class DesConfigVariable
     [JsonProperty("sensitive")]
     public bool Sensitive { get; set; }
 
-    public async Task<string> GetActualValue(SecretClient secretClient, CancellationToken ct)
+    public async Task<string> GetActualValueAsync(SecretClient secretClient, CancellationToken ct)
     {
         if (!Sensitive)
         {

@@ -45,15 +45,15 @@ public class BlobClientFactory : IBlobClientFactory
         _options = options;
     }
 
-    public async Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default)
+    public async Task<IBlobClient> GetBlobClientAsync(string dataPartitionId, CancellationToken ct = default)
     {
         if (!string.IsNullOrEmpty(_options.StorageAccountConnectionString))
         {
             return new BlobClient(new(_options.StorageAccountConnectionString));
         }
 
-        var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);
-        var storageAccountName = await desConfig.StorageAccountName.GetActualValue(_secretClient, ct);
+        var desConfig = await _desClient.GetPartitionConfigurationAsync(dataPartitionId, ct);
+        var storageAccountName = await desConfig.StorageAccountName.GetActualValueAsync(_secretClient, ct);
         var storageAccountUri = new Uri($"https://{storageAccountName}.blob.core.windows.net");
 
         _logger.LogInformation("Establishing Storage account connection to {Uri} ...", storageAccountUri);

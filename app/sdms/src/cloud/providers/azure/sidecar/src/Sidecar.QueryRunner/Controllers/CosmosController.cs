@@ -32,13 +32,13 @@ public class CosmosController : ControllerBase
 
     [HttpPost("/query")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedRecords))]
-    public async Task<IActionResult> Query([FromBody] QueryPaginatedRequestBody body)
+    public async Task<IActionResult> QueryAsync([FromBody] QueryPaginatedRequestBody body)
     {
         try
         {
             if (body.cs != null && body.sql != null)
             {
-                return Ok(await _dataAccess.Query(body.cs, body.sql, body.ctoken, body.limit));
+                return Ok(await _dataAccess.QueryAsync(body.cs, body.sql, body.ctoken, body.limit));
             }
             else if (body.cs == null)
             {

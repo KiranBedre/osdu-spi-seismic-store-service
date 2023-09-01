@@ -54,7 +54,7 @@ public class DeletionOperationService : BackgroundService
         {
             try
             {
-                await TryFetchAndExecuteTask(cancellationToken);
+                await TryFetchAndExecuteTaskAsync(cancellationToken);
                 _consecutiveFailures = 0;
             }
             catch (Exception ex)
@@ -67,7 +67,7 @@ public class DeletionOperationService : BackgroundService
         }
     }
 
-    private async Task TryFetchAndExecuteTask(CancellationToken cancellationToken)
+    private async Task TryFetchAndExecuteTaskAsync(CancellationToken cancellationToken)
     {
         var op = await _deletionTasks.CheckForDeletionOperationAsync();
         if (op is null)
@@ -78,12 +78,12 @@ public class DeletionOperationService : BackgroundService
         //---start the deletion process
         _logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
 
-        var itemsToDelete = await _itemsRetriever.GetItems(op.Tenant, op.Subproject, op.Path, cancellationToken);
+        var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Path, cancellationToken);
 
         _logger.LogInformation("Found {0} items to delete",
             itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
 
-        await _deletionTasks.UpdateFieldStatusOperation(
+        await _deletionTasks.UpdateFieldStatusOperationAsync(
             op.OperationId,
             Constants.DeleteOperationStatus.DATASETS_CNT,
             itemsToDelete.Count.ToString());
@@ -94,7 +94,7 @@ public class DeletionOperationService : BackgroundService
         {
             var datasetName = GetDatasetName(item);
             _logger.LogDebug("Acquiring lock for {0}", datasetName);
-            var locked = await _lockManager.AcquireDeleteLock(datasetName);
+            var locked = await _lockManager.AcquireDeleteLockAsync(datasetName);
             if (locked)
             {
                 successfullyLocked.Add(item);
@@ -106,7 +106,7 @@ public class DeletionOperationService : BackgroundService
             }
         }
 
-        await _bulkDeletionWorker.RunBulkDeletion(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
+        await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
     }
 
     private static string GetDatasetName(DeleteItem item)

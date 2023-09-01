@@ -22,5 +22,5 @@ public interface IDeletionTasksStorage
 {
     Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync();
     Task IncrementCountAsync(string operationId, string field);
-    Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue);
+    Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue);
 }

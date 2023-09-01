@@ -18,5 +18,5 @@ namespace Sidecar.Common.Interface;
 
 public interface IBlobClientFactory
 {
-    Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default);
+    Task<IBlobClient> GetBlobClientAsync(string dataPartitionId, CancellationToken ct = default);
 }

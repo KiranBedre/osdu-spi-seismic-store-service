@@ -29,13 +29,13 @@ public class LockManager : ILockManager
         _locksRedis = redisConnectionFactory.GetRedisForLocks();
     }
 
-    private async Task<object?> GetLock(string key)
+    private async Task<object?> GetLockAsync(string key)
     {
         var entity = await _locksRedis.GetAsync(key);
         return entity != null ? entity.StartsWith("rms") ? entity[4..].Split(':') : entity : null;
     }
 
-    private async Task AcquireMutex(string key)
+    private async Task AcquireMutexAsync(string key)
     {
         var lockKey = "locks:" + key;
 
@@ -50,33 +50,33 @@ public class LockManager : ILockManager
         }
     }
 
-    private async Task ReleaseMutex(string key)
+    private async Task ReleaseMutexAsync(string key)
     {
         var lockKey = "locks:" + key;
         _ = await _locksRedis.GetDatabase().LockReleaseAsync(lockKey, Environment.MachineName);
     }
 
-    /// <inheritdoc cref="ILockManager.AcquireDeleteLock"/>
-    public async Task<bool> AcquireDeleteLock(string key)
+    /// <inheritdoc cref="ILockManager.AcquireDeleteLockAsync"/>
+    public async Task<bool> AcquireDeleteLockAsync(string key)
     {
         try
         {
-            await AcquireMutex(key);
+            await AcquireMutexAsync(key);
         }
         catch (Exception e)
         {
             throw new Exception($"Cannot aquire mutex {key}. Please try again shortly. {e.Message} ");
         }
 
-        var lockValue = await GetLock(key);
+        var lockValue = await GetLockAsync(key);
         if (lockValue is not null and string)
         {
-            await ReleaseMutex(key);
+            await ReleaseMutexAsync(key);
             return ((string)lockValue).StartsWith("WDELETE");
         }
 
         var result = await _locksRedis.SetAsync(key, Utils.GenerateDeleteLockId());
-        await ReleaseMutex(key);
+        await ReleaseMutexAsync(key);
         return result;
     }
 }

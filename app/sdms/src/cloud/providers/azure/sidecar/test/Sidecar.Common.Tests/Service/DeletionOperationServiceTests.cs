@@ -63,10 +63,10 @@ public class DeletionOperationServiceTests
 
 
         _ = queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
-        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
+        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                           .ReturnsAsync(itemsToDelete);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLock(It.IsAny<string>()))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync(It.IsAny<string>()))
                        .ReturnsAsync(true);
 
         var methodInfo = GetMethodUnderTest("ExecuteAsync");
@@ -75,11 +75,11 @@ public class DeletionOperationServiceTests
         var result = methodInfo.Invoke(service, new object[] { cancellationSource.Token });
 
         // Assert
-        itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
-        lockManagerMock.Verify(manager => manager.AcquireDeleteLock(It.IsAny<string>()), Times.Exactly(itemsToDelete.Count));
-        bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
+        itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
+        lockManagerMock.Verify(manager => manager.AcquireDeleteLockAsync(It.IsAny<string>()), Times.Exactly(itemsToDelete.Count));
+        bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletionAsync(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
         Assert.Equal(2, itemsToDelete.Count);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, itemsToDelete.Count.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, itemsToDelete.Count.ToString()), Times.Once);
     }
 
     [Fact]
@@ -125,13 +125,13 @@ public class DeletionOperationServiceTests
         var itemsToDelete = new List<DeleteItem> { item2 };
 
         _ = queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
-        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
+        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                           .ReturnsAsync(itemsToLockAndDelete);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLock("/some/path1/Example1"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path1/Example1"))
                        .ReturnsAsync(false);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLock("/some/path2/Example2"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path2/Example2"))
                        .ReturnsAsync(true);
 
 
@@ -141,10 +141,10 @@ public class DeletionOperationServiceTests
         var result = methodInfo.Invoke(service, new object[] { cancellationSource.Token });
 
         // Assert
-        queueMock.Verify(q => q.UpdateFieldStatusOperation(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, "2"), Times.Once);
-        itemsRetrieverMock.Verify(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
-        lockManagerMock.Verify(manager => manager.AcquireDeleteLock(It.IsAny<string>()), Times.Exactly(2));
-        bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletion(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, "2"), Times.Once);
+        itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
+        lockManagerMock.Verify(manager => manager.AcquireDeleteLockAsync(It.IsAny<string>()), Times.Exactly(2));
+        bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletionAsync(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
     }
 
     [Fact]
@@ -187,13 +187,13 @@ public class DeletionOperationServiceTests
         };
 
         _ = queueMock.Setup(queue => queue.CheckForDeletionOperationAsync()).ReturnsAsync(deletionOperation);
-        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItems(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
+        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                           .ReturnsAsync(itemsToDelete);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLock("/some/path1/Example1"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path1/Example1"))
                        .ReturnsAsync(false);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLock("/some/path2/Example2"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path2/Example2"))
                        .ReturnsAsync(true);
 
         var methodInfo = GetMethodUnderTest("ExecuteAsync");
@@ -226,5 +226,4 @@ public class DeletionOperationServiceTests
         DeletedCnt = 0,
         FailedCnt = 0
     };
-
 }

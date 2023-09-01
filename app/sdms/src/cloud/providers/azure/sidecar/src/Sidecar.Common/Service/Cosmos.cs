@@ -28,13 +28,13 @@ public class Cosmos : IDataAccess
     private const string CONTAINER_ID = "data";
     private static readonly Dictionary<string, CosmosClient> _cosmosClients = new();
 
-    public async Task<string> Query(string cs, string sql, string? ctoken, int? limit)
+    public async Task<string> QueryAsync(string cs, string sql, string? ctoken, int? limit)
     {
-        var paginatedRecords = await GetRecords(cs, sql, ctoken, limit);
+        var paginatedRecords = await GetRecordsAsync(cs, sql, ctoken, limit);
         return JsonConvert.SerializeObject(paginatedRecords);
     }
 
-    public async Task<IPaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit)
+    public async Task<IPaginatedRecords> GetRecordsAsync(string cs, string sql, string? ctoken, int? limit)
     {
         initCosmosClient(cs);
         var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);
@@ -80,7 +80,7 @@ public class Cosmos : IDataAccess
         return paginatedRecords;
     }
 
-    public async Task<bool> DeleteMetadata(string cs, string id)
+    public async Task<bool> DeleteMetadataAsync(string cs, string id)
     {
         initCosmosClient(cs);
         var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);

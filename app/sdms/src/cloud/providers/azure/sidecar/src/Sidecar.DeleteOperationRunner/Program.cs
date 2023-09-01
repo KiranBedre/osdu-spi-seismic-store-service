@@ -61,7 +61,7 @@ public class Program
         opts.DesUrl ??= Environment.GetEnvironmentVariable("DES_SERVICE_HOST")!;
     }
 
-    private static async Task AttemptOptionsFromKeyVault(Options opts)
+    private static async Task AttemptOptionsFromKeyVaultAsync(Options opts)
     {
         var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), new DefaultAzureCredential());
 
@@ -204,7 +204,7 @@ public class Program
         {
             var opts = res.Value ?? new Options();
             AttemptOptionsFromEnv(opts);
-            await AttemptOptionsFromKeyVault(opts);
+            await AttemptOptionsFromKeyVaultAsync(opts);
 
             //---update the args to include the env vars
             args = parser.FormatCommandLine(opts).Split(' ');

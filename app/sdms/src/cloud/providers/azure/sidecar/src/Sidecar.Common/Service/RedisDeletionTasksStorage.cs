@@ -44,19 +44,19 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
     {
         var db = _queue.GetDatabase();
 
-        var opMsg = await GetDeletionOperationMessage(db);
+        var opMsg = await GetDeletionOperationMessageAsync(db);
         if (opMsg == null)
         {
             return null;
         }
 
-        var statusMsg = await CreateDeletionOperationStatus(db, opMsg);
+        var statusMsg = await CreateDeletionOperationStatusAsync(db, opMsg);
 
         return statusMsg;
 
     }
 
-    private async Task<DeleteOperationMessage?> GetDeletionOperationMessage(IDatabase db)
+    private async Task<DeleteOperationMessage?> GetDeletionOperationMessageAsync(IDatabase db)
     {
         var delQ = _options.QueueName;
         if (!await db.KeyExistsAsync(delQ))
@@ -84,7 +84,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         return delOpData.FromHashEntries<DeleteOperationMessage>(true);
     }
 
-    private async Task<DeleteOperationStatus> CreateDeletionOperationStatus(IDatabase db, DeleteOperationMessage opMsg)
+    private async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDatabase db, DeleteOperationMessage opMsg)
     {
 
         var status = new DeleteOperationStatus
@@ -119,7 +119,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         _ = await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LAST_UPDATED_AT, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
-    public async Task UpdateFieldStatusOperation(string operationId, string keyName, string keyValue)
+    public async Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue)
     {
         var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
         _ = await _queue.HashSetAsync(statusKey, keyName, keyValue);

@@ -22,7 +22,7 @@ public class DesClient : IDesClient
         _credential = credential;
     }
 
-    public async Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct)
+    public async Task<DesResponse> GetPartitionConfigurationAsync(string dataPartitionId, CancellationToken ct)
     {
         var appResourceId = _opts.AppResourceId;
         var defaultTokenScope = new TokenRequestContext(new[] { $"{appResourceId}/.default" });

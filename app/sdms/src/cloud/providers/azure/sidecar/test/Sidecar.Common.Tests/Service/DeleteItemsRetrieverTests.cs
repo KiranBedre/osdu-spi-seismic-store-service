@@ -40,11 +40,11 @@ public class DeleteItemsRetrieverTests
         };
         var paginatedRecords = new PaginatedRecords { records = records };
 
-        _ = dataAccessMock.Setup(d => d.GetRecords(It.IsAny<string>(), It.IsAny<string>(), null, null))
+        _ = dataAccessMock.Setup(d => d.GetRecordsAsync(It.IsAny<string>(), It.IsAny<string>(), null, null))
             .ReturnsAsync(paginatedRecords);
 
         // Act
-        var result = await deleteItemsRetriever.GetItems(tenant, subproject, path);
+        var result = await deleteItemsRetriever.GetItemsAsync(tenant, subproject, path);
 
         // Assert
         Assert.NotNull(result);

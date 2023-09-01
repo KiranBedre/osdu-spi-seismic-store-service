@@ -18,11 +18,11 @@ the operation including the following:
 
 The following digram provides an overview for the flow of the deletion operation.
 
-![Deleteion Operation Diagram](.attachments/flow-diag-deletion.png)
+![Deletion Operation Diagram](.attachments/flow-diag-deletion.png)
 
 As the process runs in the background and can take some time, the deletion operation will provide the status of the long running operation.
 
-![Deleteion Status Diagram](.attachments/flow-diag-deletion-status.png)
+![Deletion Status Diagram](.attachments/flow-diag-deletion-status.png)
 
 > Note:
 > Please refer to this [ADR]([http](https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-service/-/issues/107))
@@ -34,7 +34,8 @@ This project provides an [.env.example](.env.example) file that provides the bas
 
 | Name | Description | Example |
 | - | - | - |
-| __SDMS_REDIS_QUEUE_CONNSTR__ |  Connectiong string for the Redis instance that holds the queue for deletion operations.<br /><br />  In the typical Azure deployment, this Redis instance starts with the prefix `queue`.<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.  | queue-xxxxx.redis.cache.windows.net:6380,password=password_here,ssl=True,abortConnect=False   |
+| __SDMS_KEYVAULT_URL__ | Required. Keyvault url stores secret values for all partions (for cosmos, redis, account storage), while secret names are provided by the DES service. Also stores the Application Resource Id. | "https://kv-4e37ckkpdir6i.vault.azure.net/",
+| __SDMS_REDIS_QUEUE_CONNSTR__ |  Connection string for the Redis instance that holds the queue for deletion operations.<br /><br />  In the typical Azure deployment, this Redis instance starts with the prefix `queue`.<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.  | queue-xxxxx.redis.cache.windows.net:6380,password=password_here,ssl=True,abortConnect=False   |
 | __SDMS_REDIS_QUEUE_NAME__  |  The name of the queue in Redis; the queue is of type `List`.<br /><br />This value is always required.  | deletejobqueue   |
 | __SDMS_COSMOS_ENDPOINT__ | The url for the Cosmos instance.<br /><br />This value can be found in the deployment in the Cosmos instance that stores the metadata for SDMS.<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.    |    |
 | __SDMS_COSMOS_KEY__ |  The key for the Cosmos instance.<br /><br />This value can be found in the deployment in the Cosmos instance that stores the metadata for SDMS.<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.  |  primary/secondary or Cosmos key |
@@ -44,9 +45,25 @@ This project provides an [.env.example](.env.example) file that provides the bas
 | __AZURE_CLIENT_ID__ |  The Application (Client) Id under which the service is to be run. The App Registration (Service Principal) must have access to the deployed SDMS Azure resources.<br /><br />The App Registration must be created by an indivdiual with enough rights on the Azure subscription.<br /><br />Optional:  If supplied this value will be picked up during execution and used by the `DefaultAzureCredential` in the service.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet).  |  00000000-0000-0000-0000-000000000000  |
 | __AZURE_CLIENT_SECRET__ |  The secret for the Application (Client).<br /><br />Optional:  If supplied this value will be picked up during execution and used by the `DefaultAzureCredential` in the service.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet).  | some_secret_key   |
 | __AZURE_TENANT_ID__ |    The Azure Tenant Id of the deployment.<br /><br />Optional:  If supplied this value will be picked up during execution and used by the `DefaultAzureCredential` in the service.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet). |    |
-| __Logging__LogLevel__Microsoft__ | Logging level configuration for the logging provider.<br /><br />Optional: If supplied, will override the default logging level.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#set-log-level-by-command-line-environment-variables-and-other-configuration)  |  1 <br /><br />The details of the levels can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#log-level)  |
+| __Logging__LogLevel__Default__ | Logging level configuration for the logging provider.<br /><br />Optional: If supplied, will override the default logging level.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#set-log-level-by-command-line-environment-variables-and-other-configuration)  |  1 <br /><br />The details of the levels can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#log-level)  |
+
 
 Example:
+ 
+With DES_SERVICE_HOST:
+
+```bash
+SDMS_REDIS_QUEUE_NAME='deletejobqueue'
+SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
+DES_SERVICE_HOST='https://sdmstest.oep.ppe.azure-int.net'
+Logging__LogLevel__Debug=1
+AZURE_CLIENT_ID='00000000-0000-0000-0000-000000000000'
+AZURE_CLIENT_SECRET='<client secret>'
+AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
+```
+
+With DES_SERVICE_HOST overwriting the connection strings:
+
 ```bash
 SDMS_REDIS_QUEUE_CONNSTR='queue-xxx.redis.cache.windows.net:6380,password=<some password>,ssl=True,abortConnect=False'
 SDMS_REDIS_QUEUE_NAME='deletejobqueue'
@@ -62,7 +79,19 @@ AZURE_CLIENT_SECRET='<client secret>'
 AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
 ```
 
-### How to finde DES Service URL
+Without DES_SERVICE_HOST, reading the Redis connection strings from the KeyVault:
+
+```bash
+SDMS_REDIS_QUEUE_NAME='deletejobqueue'
+SDMS_COSMOS_KEY='<primary/secondary Cosmos Key>'
+SDMS_COSMOS_ENDPOINT='https://db-xxx.documents.azure.com:443/'
+SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcswi;AccountKey=<some account key>;EndpointSuffix=core.windows.net'
+SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
+Logging__LogLevel__Debug=1
+```
+
+
+### How to find DES Service URL
 
 This value can be found using the following steps:
 

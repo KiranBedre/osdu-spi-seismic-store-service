@@ -19,5 +19,5 @@ using Sidecar.Common.Model;
 
 public interface IBulkDeletionWorker
 {
-    Task RunBulkDeletion(string dataPartitionId, string operationId, List<DeleteItem> items, CancellationToken ct = default);
+    Task RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> items, CancellationToken ct = default);
 }

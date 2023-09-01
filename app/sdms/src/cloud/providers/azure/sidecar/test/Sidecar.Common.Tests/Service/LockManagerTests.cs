@@ -49,7 +49,7 @@ public class LockManagerTests
         _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("WDELETE:lockValue");
 
         // Act
-        var result = await _lockManager.AcquireDeleteLock(key);
+        var result = await _lockManager.AcquireDeleteLockAsync(key);
 
         // Assert
         Assert.True(result);
@@ -67,7 +67,7 @@ public class LockManagerTests
         _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("RLockValue");
 
         // Act
-        var result = await _lockManager.AcquireDeleteLock(key);
+        var result = await _lockManager.AcquireDeleteLockAsync(key);
 
         // Assert
         Assert.False(result);
@@ -95,7 +95,7 @@ public class LockManagerTests
            .ReturnsAsync(true);
 
         // Act
-        var result = await _lockManager.AcquireDeleteLock(key);
+        var result = await _lockManager.AcquireDeleteLockAsync(key);
 
         // Assert
         Assert.True(result);
@@ -112,6 +112,6 @@ public class LockManagerTests
                     .ThrowsAsync(new Exception("Lock take failed"));
 
         // Act & Assert
-        _ = await Assert.ThrowsAsync<Exception>(() => _lockManager.AcquireDeleteLock("testKey"));
+        _ = await Assert.ThrowsAsync<Exception>(() => _lockManager.AcquireDeleteLockAsync("testKey"));
     }
 }

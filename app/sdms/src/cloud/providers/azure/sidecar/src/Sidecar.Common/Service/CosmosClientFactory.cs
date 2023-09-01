@@ -32,11 +32,11 @@ public class CosmosClientFactory : ICosmosClientFactory
         _secretClient = secretClient;
     }
 
-    public async Task<string> GetCosmosConnectionString(string dataPartitionId, CancellationToken ct = default)
+    public async Task<string> GetCosmosConnectionStringAsync(string dataPartitionId, CancellationToken ct = default)
     {
-        var desConfig = await _desClient.GetPartitionConfiguration(dataPartitionId, ct);
-        var endpoint = await desConfig.CosmosEndpoint.GetActualValue(_secretClient, ct);
-        var primaryKey = await desConfig.CosmosPrimaryKey.GetActualValue(_secretClient, ct);
+        var desConfig = await _desClient.GetPartitionConfigurationAsync(dataPartitionId, ct);
+        var endpoint = await desConfig.CosmosEndpoint.GetActualValueAsync(_secretClient, ct);
+        var primaryKey = await desConfig.CosmosPrimaryKey.GetActualValueAsync(_secretClient, ct);
 
         return $"AccountEndpoint={endpoint};AccountKey={primaryKey};";
     }

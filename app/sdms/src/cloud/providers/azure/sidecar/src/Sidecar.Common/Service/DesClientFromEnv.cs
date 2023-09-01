@@ -17,7 +17,7 @@ public class DesClientFromEnv : IDesClient
         _opts = opts;
     }
 
-    public Task<DesResponse> GetPartitionConfiguration(string dataPartitionId, CancellationToken ct = default) => Task.FromResult(new DesResponse
+    public Task<DesResponse> GetPartitionConfigurationAsync(string dataPartitionId, CancellationToken ct = default) => Task.FromResult(new DesResponse
     {
         StorageAccountName = new()
         {

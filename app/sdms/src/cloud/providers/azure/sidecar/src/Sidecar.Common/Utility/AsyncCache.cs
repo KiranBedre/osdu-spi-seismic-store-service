@@ -36,7 +36,7 @@ public class AsyncCache<TK, T> where TK : notnull
     /// <param name="cacheKey">Cache key</param>
     /// <param name="valueFactory">Async function that returns a result</param>
     /// <returns>Result of valueFactory, or the</returns>
-    public async Task<T> GetValue(TK cacheKey, Func<Task<T>> valueFactory)
+    public async Task<T> GetValueAsync(TK cacheKey, Func<Task<T>> valueFactory)
     {
         if (_cache.TryGetValue(cacheKey, out var value))
         {

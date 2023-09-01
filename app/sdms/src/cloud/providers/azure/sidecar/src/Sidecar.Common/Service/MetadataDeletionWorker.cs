@@ -48,8 +48,8 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
         {
             try
             {
-                var cs = await _cosmosClientFactory.GetCosmosConnectionString(dataPartitionId);
-                success = await _dataAccess.DeleteMetadata(cs, id);
+                var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId);
+                success = await _dataAccess.DeleteMetadataAsync(cs, id);
                 _consecutiveFailures = 0;
             }
             catch (CosmosException ex)

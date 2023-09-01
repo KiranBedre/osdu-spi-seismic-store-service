@@ -29,8 +29,8 @@ public class CachingBlobClientFactory : IBlobClientFactory
         _factory = factory;
     }
 
-    public Task<IBlobClient> GetBlobClient(string dataPartitionId, CancellationToken ct = default) => _cache.GetValue(
+    public Task<IBlobClient> GetBlobClientAsync(string dataPartitionId, CancellationToken ct = default) => _cache.GetValueAsync(
             dataPartitionId,
-            () => _factory.GetBlobClient(dataPartitionId, ct)
+            () => _factory.GetBlobClientAsync(dataPartitionId, ct)
         );
 }

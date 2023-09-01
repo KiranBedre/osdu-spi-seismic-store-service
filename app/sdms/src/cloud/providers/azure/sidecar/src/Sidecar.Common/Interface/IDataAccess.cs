@@ -17,7 +17,7 @@
 namespace Sidecar.Common.Interface;
 public interface IDataAccess
 {
-    Task<string> Query(string cs, string sql, string? ctoken, int? limit);
-    Task<IPaginatedRecords> GetRecords(string cs, string sql, string? ctoken, int? limit);
-    Task<bool> DeleteMetadata(string cs, string id);
+    Task<string> QueryAsync(string cs, string sql, string? ctoken, int? limit);
+    Task<IPaginatedRecords> GetRecordsAsync(string cs, string sql, string? ctoken, int? limit);
+    Task<bool> DeleteMetadataAsync(string cs, string id);
 }

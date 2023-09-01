@@ -29,8 +29,8 @@ public class CachingCosmosClientFactory : ICosmosClientFactory
         _factory = factory;
     }
 
-    public Task<string> GetCosmosConnectionString(string dataPartitionId, CancellationToken ct = default) => _cache.GetValue(
+    public Task<string> GetCosmosConnectionStringAsync(string dataPartitionId, CancellationToken ct = default) => _cache.GetValueAsync(
             dataPartitionId,
-            () => _factory.GetCosmosConnectionString(dataPartitionId, ct)
+            () => _factory.GetCosmosConnectionStringAsync(dataPartitionId, ct)
         );
 }

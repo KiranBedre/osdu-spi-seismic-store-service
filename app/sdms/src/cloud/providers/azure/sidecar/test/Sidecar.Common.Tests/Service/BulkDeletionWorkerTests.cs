@@ -57,7 +57,7 @@ public class BulkDeletionWorkerTests
     [Theory]
     [InlineData(null)]
     [InlineData("/a/b/c")]
-    public async Task ProcessItemDeletion_WithNullGcsUrl_IncrementsFailedCount(string gcsurl)
+    public async Task ProcessItemDeletion_WithInvalidGcsUrl_IncrementsFailedCount(string gcsurl)
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
@@ -82,14 +82,14 @@ public class BulkDeletionWorkerTests
         var itemsToDelete = new List<DeleteItem> { item };
 
         // Act
-        await deletionWorker.RunBulkDeletion(tenant, operationId, itemsToDelete, CancellationToken.None);
+        await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
 
         // Assert
         queueMock.Verify(q => q.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
     }
 
     [Fact]
@@ -111,15 +111,16 @@ public class BulkDeletionWorkerTests
         var itemsToDelete = new List<DeleteItem> { };
 
         var tenant = "opendes";
+        var operationId = "123";
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
+        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
 
         queueMock.Verify(
-            queue => queue.IncrementCountAsync("operationId", It.IsAny<string>()),
+            queue => queue.IncrementCountAsync(operationId, It.IsAny<string>()),
            Times.Never);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
 
     }
 
@@ -136,7 +137,8 @@ public class BulkDeletionWorkerTests
         var blobContainerClientMock = new Mock<BlobContainerClient>();
         var blobBatchMock = new Mock<BlobBatch>();
 
-        var tenant = "mytenant";
+        var tenant = "tenant";
+        var operationId = "123";
 
         var bulkDeletionWorker = new BulkDeletionWorker(
             loggerMock.Object,
@@ -171,7 +173,7 @@ public class BulkDeletionWorkerTests
             .Returns(blobBatchClientMock.Object);
 
         _ = blobClientFactoryMock
-            .Setup(clientFactory => clientFactory.GetBlobClient(tenant, It.IsAny<CancellationToken>()))
+            .Setup(clientFactory => clientFactory.GetBlobClientAsync(tenant, It.IsAny<CancellationToken>()))
             .ReturnsAsync(blobClientMock.Object);
 
         _ = blobBatchMock
@@ -194,16 +196,16 @@ public class BulkDeletionWorkerTests
             .Returns(mockedBlobsPages);
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
+        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
 
         queueMock.Verify(
-            queue => queue.IncrementCountAsync("operationId", Constants.DeleteOperationStatus.DELETED_CNT),
+            queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DELETED_CNT),
             Times.Exactly(itemsToDelete.Count));
 
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
     }
 
     [Fact]
@@ -219,7 +221,8 @@ public class BulkDeletionWorkerTests
         var blobContainerClientMock = new Mock<BlobContainerClient>();
         var blobBatchMock = new Mock<BlobBatch>();
 
-        var tenant = "mytenant";
+        var tenant = "tenant";
+        var operationId = "123";
 
         var bulkDeletionWorker = new BulkDeletionWorker(
             loggerMock.Object,
@@ -247,7 +250,7 @@ public class BulkDeletionWorkerTests
             .Returns(blobBatchClientMock.Object);
 
         _ = blobClientFactoryMock
-            .Setup(clientFactory => clientFactory.GetBlobClient(tenant, It.IsAny<CancellationToken>()))
+            .Setup(clientFactory => clientFactory.GetBlobClientAsync(tenant, It.IsAny<CancellationToken>()))
             .ReturnsAsync(blobClientMock.Object);
 
         _ = blobBatchMock
@@ -273,15 +276,14 @@ public class BulkDeletionWorkerTests
               .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletion(tenant, "operationId", itemsToDelete, CancellationToken.None);
+        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
 
         queueMock.Verify(
-            queue => queue.IncrementCountAsync("operationId", Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
+            queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
 
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperation("operationId", Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
+        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
     }
-
 }
