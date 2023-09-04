@@ -89,7 +89,7 @@ public class Cosmos : IDataAccess
         return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
     }
 
-    private void initCosmosClient(string cs)
+    private static void initCosmosClient(string cs)
     {
         if (!_cosmosClients.ContainsKey(cs))
         {

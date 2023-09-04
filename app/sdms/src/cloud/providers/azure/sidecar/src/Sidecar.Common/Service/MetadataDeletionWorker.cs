@@ -55,7 +55,7 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
             catch (CosmosException ex)
             {
                 _consecutiveFailures++;
-                _logger.LogWarning($"Could not delete metadata for dataset {id}, Attempt {_consecutiveFailures}/{MAX_RETRIES} ");
+                _logger.LogWarning("Could not delete metadata for dataset {id}, Attempt {a}", id, _consecutiveFailures / MAX_RETRIES);
                 if (_consecutiveFailures == MAX_RETRIES)
                 {
                     throw ex;

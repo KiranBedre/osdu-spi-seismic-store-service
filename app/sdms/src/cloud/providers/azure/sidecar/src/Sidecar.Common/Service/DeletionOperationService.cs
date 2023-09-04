@@ -59,7 +59,7 @@ public class DeletionOperationService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error {ex.Message} while processing deletion operation: {_consecutiveFailures}/{MAX_CONSECUTIVE_FAILURES}");
+                _logger.LogError(ex, "Error {m} while processing deletion operation.", _consecutiveFailures / MAX_CONSECUTIVE_FAILURES);
                 _consecutiveFailures++;
             }
 
@@ -76,11 +76,11 @@ public class DeletionOperationService : BackgroundService
         }
 
         //---start the deletion process
-        _logger.LogInformation("Starting deletion operation {0}...", op.OperationId);
+        _logger.LogInformation("Starting deletion operation {op}...", op.OperationId);
 
         var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Path, cancellationToken);
 
-        _logger.LogInformation("Found {0} items to delete",
+        _logger.LogInformation("Found {c} items to delete",
             itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
 
         await _deletionTasks.UpdateFieldStatusOperationAsync(
@@ -102,7 +102,7 @@ public class DeletionOperationService : BackgroundService
         foreach (var item in itemsToDelete)
         {
             var datasetName = GetDatasetName(item);
-            _logger.LogDebug("Acquiring lock for {0}", datasetName);
+            _logger.LogDebug("Acquiring lock for {n}", datasetName);
             var lockKey = op.Tenant + "/" + op.Subproject + datasetName;
             var locked = await _lockManager.AcquireDeleteLockAsync(lockKey);
             if (locked)
@@ -111,7 +111,7 @@ public class DeletionOperationService : BackgroundService
             }
             else
             {
-                _logger.LogInformation("Could not acquire lock for {0}", datasetName);
+                _logger.LogInformation("Could not acquire lock for {n}", datasetName);
                 await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
                 foundLockErrors = true;
             }

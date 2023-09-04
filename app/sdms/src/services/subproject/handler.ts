@@ -271,7 +271,7 @@ export class SubProjectHandler {
     private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationModel> {
         
         if (Config.CLOUDPROVIDER !== 'azure') {
-            throw new Error('Feature not implemented');
+            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
 
         const subprojectName = req.params.subprojectid;
