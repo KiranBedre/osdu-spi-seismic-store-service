@@ -33,7 +33,7 @@ public class DeletionOperationService : BackgroundService
     private readonly ILockManager _lockManager;
 
     private int _consecutiveFailures = 0;
-    private const int MAX_CONSECUTIVE_FAILURES = 10;
+    private const int MAX_CONSECUTIVE_FAILURES = 1000000;
 
     public DeletionOperationService(ILogger<DeletionOperationService> logger,
         IDeletionTasksStorage deletionTasks,
@@ -94,7 +94,8 @@ public class DeletionOperationService : BackgroundService
         {
             var datasetName = GetDatasetName(item);
             _logger.LogDebug("Acquiring lock for {0}", datasetName);
-            var locked = await _lockManager.AcquireDeleteLockAsync(datasetName);
+            var lockKey = op.Tenant + "/" + op.Subproject + datasetName;
+            var locked = await _lockManager.AcquireDeleteLockAsync(lockKey);
             if (locked)
             {
                 successfullyLocked.Add(item);
