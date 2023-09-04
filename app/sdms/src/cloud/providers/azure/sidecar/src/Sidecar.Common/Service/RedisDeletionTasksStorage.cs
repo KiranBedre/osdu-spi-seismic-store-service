@@ -59,17 +59,13 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
     private async Task<DeleteOperationMessage?> GetDeletionOperationMessageAsync(IDatabase db)
     {
         var delQ = _options.QueueName;
-        if (!await db.KeyExistsAsync(delQ))
-        {
-            _logger.LogError("Queue {q} does not exist", delQ);
-            throw new RedisException("Queue does not exist");
-        }
 
         var op = await db.ListLeftPopAsync(delQ);
 
         if (!op.HasValue)
         {
             _logger.LogDebug("Deletion queue {q} is empty", delQ);
+            Thread.Sleep(1000);
             return null;
         }
 
