@@ -21,7 +21,7 @@ using Sidecar.Common.Utility;
 public class RedisConvertersTests
 {
 
-    private DeleteOperationMessage GetDelOpMsg() => new()
+    private static DeleteOperationMessage GetDelOpMsg() => new()
     {
         OperationId = Guid.NewGuid().ToString(),
         Tenant = "tenant001",
@@ -29,7 +29,7 @@ public class RedisConvertersTests
         Path = "tenant001/proj001/subproj007/"
     };
 
-    private HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
+    private static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),

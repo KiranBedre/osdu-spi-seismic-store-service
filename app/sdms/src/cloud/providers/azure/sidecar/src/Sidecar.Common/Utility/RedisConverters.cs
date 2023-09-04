@@ -32,17 +32,7 @@ public static class RedisConverters
             .Select(p =>
             {
                 var propertyValue = p.GetValue(obj)!;
-                string hashValue;
-
-                if (propertyValue is IEnumerable<object>)
-                {
-                    hashValue = JsonSerializer.Serialize(propertyValue);
-                }
-                else
-                {
-                    hashValue = propertyValue.ToString()!;
-                }
-
+                var hashValue = propertyValue is IEnumerable<object> ? JsonSerializer.Serialize(propertyValue) : propertyValue.ToString();
                 var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
                 var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
                 return new HashEntry(propName, hashValue);
