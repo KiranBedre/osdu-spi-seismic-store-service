@@ -82,7 +82,7 @@ public class BulkDeletionWorkerTests
         var itemsToDelete = new List<DeleteItem> { item };
 
         // Act
-        await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
 
         // Assert
         queueMock.Verify(q => q.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
@@ -114,7 +114,7 @@ public class BulkDeletionWorkerTests
         var operationId = "123";
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
 
         queueMock.Verify(
             queue => queue.IncrementCountAsync(operationId, It.IsAny<string>()),
@@ -196,7 +196,7 @@ public class BulkDeletionWorkerTests
             .Returns(mockedBlobsPages);
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
 
         queueMock.Verify(
             queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DELETED_CNT),
@@ -276,7 +276,7 @@ public class BulkDeletionWorkerTests
               .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
 
         queueMock.Verify(
             queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);

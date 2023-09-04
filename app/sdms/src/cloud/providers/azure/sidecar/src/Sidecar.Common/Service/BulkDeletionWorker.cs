@@ -45,11 +45,11 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         _blobClientFactory = blobClientFactory;
     }
 
-    public async Task RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> itemsToDelete, CancellationToken ct)
+    public async Task RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> itemsToDelete, bool foundErrros, CancellationToken ct)
     {
         var blobClient = await _blobClientFactory.GetBlobClientAsync(dataPartitionId, ct);
 
-        _foundErrors = false;
+        _foundErrors = foundErrros;
 
         _logger.LogInformation("Started blob deletion, it will delete {Count} items", itemsToDelete.Count);
         await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString());

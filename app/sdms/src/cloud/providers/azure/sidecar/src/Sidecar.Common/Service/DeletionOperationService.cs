@@ -90,6 +90,15 @@ public class DeletionOperationService : BackgroundService
 
         var successfullyLocked = new List<DeleteItem>();
 
+        var foundLockErrors = await LockDatasetsAsync(op, itemsToDelete, successfullyLocked);
+
+        await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, foundLockErrors, cancellationToken);
+    }
+
+    private async Task<bool> LockDatasetsAsync(IDeleteOperationStatus op, List<DeleteItem> itemsToDelete, List<DeleteItem> successfullyLocked)
+    {
+        var foundLockErrors = false;
+
         foreach (var item in itemsToDelete)
         {
             var datasetName = GetDatasetName(item);
@@ -104,10 +113,11 @@ public class DeletionOperationService : BackgroundService
             {
                 _logger.LogInformation("Could not acquire lock for {0}", datasetName);
                 await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
+                foundLockErrors = true;
             }
         }
 
-        await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
+        return foundLockErrors;
     }
 
     private static string GetDatasetName(DeleteItem item)
