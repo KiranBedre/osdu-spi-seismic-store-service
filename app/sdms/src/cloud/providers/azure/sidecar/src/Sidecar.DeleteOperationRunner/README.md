@@ -74,7 +74,7 @@ SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcs
 SDMS_REDIS_LOCKS_CONNSTR='cache-xxx.redis.cache.windows.net:6380,password=<some password>,ssl=True,abortConnect=False'
 SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
 DES_SERVICE_HOST='https://sdmstest.oep.ppe.azure-int.net'
-Logging__LogLevel__Microsoft=1
+Logging__LogLevel__Debug=1
 AZURE_CLIENT_ID='00000000-0000-0000-0000-000000000000'
 AZURE_CLIENT_SECRET='<client secret>'
 AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
