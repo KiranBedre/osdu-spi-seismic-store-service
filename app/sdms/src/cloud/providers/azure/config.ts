@@ -110,6 +110,10 @@ export class AzureConfig extends Config {
             AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE =
                 process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE === 'true';  // enabled by default
 
+            // redis deletion queue
+            AzureConfig.REDIS_DELETION_QUEUE = process.env.REDIS_DELETION_QUEUE || 
+                AzureConfig.REDIS_DELETION_QUEUE;
+
             // set the auth provider
             AzureConfig.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;
             AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL = // If not set as secret try to load from envs
@@ -145,6 +149,7 @@ export class AzureConfig extends Config {
                 REDIS_SHARED_INSTANCE_ADDRESS: AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS,
                 REDIS_SHARED_INSTANCE_PORT: AzureConfig.REDIS_SHARED_INSTANCE_PORT,
                 REDIS_SHARED_INSTANCE_TLS_DISABLE: AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE,
+                REDIS_DELETION_QUEUE: AzureConfig.REDIS_DELETION_QUEUE,
                 DES_SERVICE_HOST_COMPLIANCE: AzureConfig.DES_SERVICE_HOST_COMPLIANCE,
                 DES_SERVICE_HOST_ENTITLEMENT: AzureConfig.DES_SERVICE_HOST_ENTITLEMENT,
                 DES_SERVICE_HOST_STORAGE: AzureConfig.DES_SERVICE_HOST_STORAGE,
