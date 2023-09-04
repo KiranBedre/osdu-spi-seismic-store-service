@@ -315,6 +315,7 @@ export class TestSubProjectSVC {
         
         Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
             try {
+                Config.CLOUDPROVIDER = 'azure';
                 this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
                 this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
                 this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
@@ -330,6 +331,7 @@ export class TestSubProjectSVC {
 
         Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
             try {
+                Config.CLOUDPROVIDER = 'azure';
                 this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
                 this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
                 this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
@@ -362,6 +364,7 @@ export class TestSubProjectSVC {
             }
 
             try {
+                Config.CLOUDPROVIDER = 'azure';
                 this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
                 this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
                 this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
@@ -380,6 +383,7 @@ export class TestSubProjectSVC {
             expReq.query.operationid = 'operationId';
 
             try {
+                Config.CLOUDPROVIDER = 'azure';
                 this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
                 this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
                 this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
