@@ -128,10 +128,10 @@ public class DeletionOperationServiceTests
         _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                           .ReturnsAsync(itemsToLockAndDelete);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path1/Example1"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync(GetLockKeyPrefix(deletionOperation) + "/some/path1/Example1"))
                        .ReturnsAsync(false);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path2/Example2"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync(GetLockKeyPrefix(deletionOperation) + "/some/path2/Example2"))
                        .ReturnsAsync(true);
 
 
@@ -190,10 +190,10 @@ public class DeletionOperationServiceTests
         _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                           .ReturnsAsync(itemsToDelete);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path1/Example1"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync(GetLockKeyPrefix(deletionOperation) + "/some/path1/Example1"))
                        .ReturnsAsync(false);
 
-        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync("/some/path2/Example2"))
+        _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync(GetLockKeyPrefix(deletionOperation) + "/some/path2/Example2"))
                        .ReturnsAsync(true);
 
         var methodInfo = GetMethodUnderTest("ExecuteAsync");
@@ -226,4 +226,6 @@ public class DeletionOperationServiceTests
         DeletedCnt = 0,
         FailedCnt = 0
     };
+
+    private static string GetLockKeyPrefix(DeleteOperationStatus deleteOperation) => deleteOperation.Tenant + "/" + deleteOperation.Subproject;
 }
