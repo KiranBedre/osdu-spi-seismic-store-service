@@ -19,7 +19,7 @@ using System.Text.RegularExpressions;
 
 internal static partial class TestingHelpers
 {
-    private static readonly Regex _keyPrefixMatcher = new Regex("(.*?):(.*?):");
+    private static readonly Regex _keyPrefixMatcher = new("(.*?):(.*?):");
     private partial class InMemoryCache
     {
         private readonly Dictionary<string, RedisValue> _cache = new();
