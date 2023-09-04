@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 
 internal static partial class TestingHelpers
 {
+    private static readonly Regex _keyPrefixMatcher = new Regex("(.*?):(.*?):");
     private partial class InMemoryCache
     {
         private readonly Dictionary<string, RedisValue> _cache = new();
@@ -112,7 +113,7 @@ internal static partial class TestingHelpers
         //---note the patter is "<queue name>:<key>:<property name>"
         public HashEntry[] HashGetAll(RedisKey key) => _cache
                     .Where(e => e.Key.Contains(key!))
-                    .Select(e => new HashEntry(KeyPrefixMatcher().Replace(e.Key, "").Replace(":", ""), e.Value)).ToArray();
+                    .Select(e => new HashEntry(_keyPrefixMatcher.Replace(e.Key, "").Replace(":", ""), e.Value)).ToArray();
 
         public async Task<HashEntry[]> HashGetAllAsync(RedisKey key) => await Task.FromResult(HashGetAll(key));
 
@@ -131,9 +132,6 @@ internal static partial class TestingHelpers
             _ = HashSet(key, field, initVal);
             return initVal;
         }
-
-        [GeneratedRegex("(.*?):(.*?):")]
-        private static partial Regex KeyPrefixMatcher();
     }
 
 }
