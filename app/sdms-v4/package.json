@@ -53,5 +53,31 @@
         "mocha": "^10.2.0",
         "prettier": "^2.8.1",
         "ts-node": "^10.9.1"
+    },
+    "overrides": {
+        "@azure/identity": {
+            "@azure/msal-node": {
+                "semver": "7.5.2"
+            }
+        },
+        "@typescript-eslint/parser": {
+            "@typescript-eslint/typescript-estree": {
+                "semver": "7.5.2"
+            }
+        },
+        "applicationinsights": {
+            "@azure/opentelemetry-instrumentation-azure-sdk": {
+                "@opentelemetry/instrumentation": {
+                    "semver": "7.5.2"
+                }
+            }
+        },
+        "json-refs": {
+            "path-loader": {
+                "superagent": {
+                    "semver": "7.5.2"
+                }
+            }
+        }
     }
 }
