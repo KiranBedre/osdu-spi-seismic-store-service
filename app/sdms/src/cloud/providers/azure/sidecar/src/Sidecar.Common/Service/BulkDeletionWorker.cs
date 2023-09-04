@@ -233,9 +233,9 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
                 var innerExceptions = itemResponse.Exception?.Flatten();
 
-                var message = $"Exception: {innerExceptions?.InnerExceptions.FirstOrDefault()}";
-                _logger.LogError(message);
-                errors.Add(message);
+                var message = innerExceptions?.InnerExceptions.FirstOrDefault();
+                _logger.LogError("Exception: {e}", message);
+                errors.Add($"Exception {message.Message}");
             });
 
         _logger.LogInformation("Batch {BatchNr} completed successfully", batchNr);
