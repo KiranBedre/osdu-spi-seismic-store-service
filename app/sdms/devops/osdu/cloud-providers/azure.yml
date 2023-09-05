@@ -18,7 +18,6 @@ variables:
 
 sdms_azure_dotnet_test:
   image: mcr.microsoft.com/dotnet/sdk:6.0
-  stage: test
   needs: []
   script:
     - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar
