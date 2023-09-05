@@ -43,13 +43,9 @@ public class LockManager : ILockManager
         var lockKey = "locks:" + key;
 
         var acquired = await _locksRedis.GetDatabase().LockTakeAsync(lockKey, Environment.MachineName, _ttl);
-        if (acquired)
+        if (!acquired)
         {
-            return;
-        }
-        else
-        {
-            throw new Exception($"Cannot lock key {key}. Please try again shortly. ");
+            throw new($"Cannot lock key {key}. Please try again shortly.");
         }
     }
 
@@ -66,9 +62,9 @@ public class LockManager : ILockManager
         {
             await AcquireMutexAsync(key);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            _logger.LogError("Cannot acquire mutex {key}. ", key);
+            _logger.LogError(e, "Cannot acquire mutex {key}. ", key);
             return false;
         }
 
