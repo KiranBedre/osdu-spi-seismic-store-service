@@ -21,7 +21,6 @@ public class LockManagerTests
     private readonly LockManager _lockManager;
     private readonly Mock<IConnectionMultiplexer> _connectionMultiplexer;
     private readonly Mock<IDatabase> _dbMock;
-
     public LockManagerTests()
     {
         _dbMock = TestingHelpers.GetDatabase();
@@ -34,7 +33,8 @@ public class LockManagerTests
                 _connectionMultiplexer.Object));
 
         var loggerFactory = new Mock<ILoggerFactory>();
-        _lockManager = new(factoryMock.Object);
+        var loggerMock = new Mock<ILogger<LockManager>>();
+        _lockManager = new(loggerMock.Object, factoryMock.Object);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class LockManagerTests
     }
 
     [Fact]
-    public async Task AcquireDeleteLock_WithoutMutex_ThrowsException()
+    public async Task AcquireDeleteLock_WithoutMutex_ReturnsFalse()
     {
         // Arrange
         var databaseMock = new Mock<IDatabase>();
@@ -111,7 +111,10 @@ public class LockManagerTests
         _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
                     .ThrowsAsync(new Exception("Lock take failed"));
 
-        // Act & Assert
-        _ = await Assert.ThrowsAsync<Exception>(() => _lockManager.AcquireDeleteLockAsync("testKey"));
+        // Act
+        var result = await _lockManager.AcquireDeleteLockAsync("key");
+
+        // Assert
+        Assert.False(result);
     }
 }

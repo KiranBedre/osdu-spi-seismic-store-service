@@ -16,6 +16,7 @@
 
 namespace Sidecar.Common.Service;
 
+using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Utility;
 
@@ -23,9 +24,11 @@ public class LockManager : ILockManager
 {
     private static readonly TimeSpan _ttl = TimeSpan.FromSeconds(6);
     private readonly IRedisHandler _locksRedis;
+    private readonly ILogger<LockManager> _logger;
 
-    public LockManager(IRedisConnectionFactory redisConnectionFactory)
+    public LockManager(ILogger<LockManager> logger, IRedisConnectionFactory redisConnectionFactory)
     {
+        _logger = logger;
         _locksRedis = redisConnectionFactory.GetRedisForLocks();
     }
 
@@ -63,9 +66,10 @@ public class LockManager : ILockManager
         {
             await AcquireMutexAsync(key);
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            throw new Exception($"Cannot aquire mutex {key}. Please try again shortly. {e.Message} ");
+            _logger.LogError("Cannot aquire mutex {key}. ", key);
+            return false;
         }
 
         var lockValue = await GetLockAsync(key);

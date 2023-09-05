@@ -64,7 +64,6 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
 
         if (!op.HasValue)
         {
-            _logger.LogDebug("Deletion queue {q} is empty", delQ);
             Thread.Sleep(1000);
             return null;
         }
