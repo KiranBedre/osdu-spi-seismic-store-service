@@ -163,11 +163,6 @@ public class Program
                 sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
 
         _ = services
-            .AddSingleton<RedisConnectionFactory>()
-            .AddSingleton<IRedisConnectionFactory>(sp =>
-                new CachingRedisConnectionFactory(sp.GetRequiredService<RedisConnectionFactory>()));
-
-        _ = services
             .AddSingleton<IOptions>(opts)
             .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
@@ -175,6 +170,8 @@ public class Program
             .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
+            .AddSingleton<IRedisConnectionFactory, RedisConnectionFactory>()
             .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
