@@ -101,15 +101,14 @@ public class Program
             configureTelemetryConfiguration: (config) =>
                 config.ConnectionString = opts.AppInsightsConnectionString,
                 configureApplicationInsightsLoggerOptions: (options) => { }
-            )
+            ).
+            AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Debug)
             .ClearProviders()
             .AddSimpleConsole(o =>
             {
                 o.SingleLine = true;
                 o.TimestampFormat = "[HH:mm:ss:fff] ";
             });
-
-        _ = webApplicationBuilder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Default", LogLevel.Debug);
 
         _ = webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
         var webapp = webApplicationBuilder.Build();
