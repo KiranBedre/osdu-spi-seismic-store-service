@@ -18,15 +18,15 @@ namespace Sidecar.Common.Utility;
 
 public class Utils
 {
-    private static readonly Random _random = new();
+    private static readonly Random _random = Random.Shared;  // thread-safe random just in case
 
     private static string MakeId(int length)
     {
         const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        return new string(Enumerable.Repeat(CHARS, length)
+        return new(Enumerable.Repeat(CHARS, length)
             .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
 
-    public static string GenerateDeleteLockId() => "WDELETE" + MakeId(9);
+    public static string GenerateDeleteLockId() => Constants.DELETE_LOCK_PREFIX + MakeId(9);
 
 }
