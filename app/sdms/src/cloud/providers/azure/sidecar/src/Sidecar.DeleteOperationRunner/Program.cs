@@ -107,11 +107,14 @@ public class Program
             })
             .AddApplicationInsights(
             configureTelemetryConfiguration: (config) =>
-                config.InstrumentationKey = opts.AppInsightsInstrumentationKey,
+#pragma warning disable CS0618 // Type or member is obsolete
+               config.InstrumentationKey = opts.AppInsightsInstrumentationKey, //this is for adding traces in the App Insights
+#pragma warning restore CS0618 // Type or member is obsolete
                 configureApplicationInsightsLoggerOptions: (options) => { }
             ).
             AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Debug);
-        
+
+
 
         _ = webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
         var webapp = webApplicationBuilder.Build();
@@ -195,7 +198,10 @@ public class Program
                 name: "redis-queue-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1));
 
+        //this is for adding dependencies in the App Insights
+#pragma warning disable CS0618 // Type or member is obsolete
         var options = new ApplicationInsightsServiceOptions { InstrumentationKey = opts.AppInsightsInstrumentationKey };
+#pragma warning restore CS0618 // Type or member is obsolete
         _ = services.AddApplicationInsightsTelemetry(options: options);
 
     }

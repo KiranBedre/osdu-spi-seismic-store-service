@@ -69,7 +69,6 @@ public class DeletionOperationService : BackgroundService
 
     private async Task TryFetchAndExecuteTaskAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Checking for a new operation on the deletion queue");
         var op = await _deletionTasks.CheckForDeletionOperationAsync();
         if (op is null)
         {
