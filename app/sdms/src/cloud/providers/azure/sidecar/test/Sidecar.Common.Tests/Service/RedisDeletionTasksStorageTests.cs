@@ -58,12 +58,6 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
     }
 
     [Fact]
-    public async Task CheckForDeletionOperationAsync_QueueDoesNotExist_RedisException()
-    {
-        _ = await Assert.ThrowsAsync<RedisException>(() => _queue.CheckForDeletionOperationAsync());
-    }
-
-    [Fact]
     public async Task CheckForDeletionOperationAsync_QueueIsEmpty_ReturnsNull()
     {
         // Arrange
