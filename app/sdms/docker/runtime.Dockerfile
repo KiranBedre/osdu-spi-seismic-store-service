@@ -45,7 +45,7 @@ RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-head
     && chown -R appuser:appgroup /seistore-service \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/npm' >> /etc/sudoers \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/node' >> /etc/sudoers \
-    && npm install -g husky \
+    && npm install --quiet husky -g \
     && npm install --production --quiet \
     && apk del native-deps
 
