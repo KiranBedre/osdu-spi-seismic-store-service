@@ -64,7 +64,7 @@ public class Program
 
         opts.DesUrl ??= Environment.GetEnvironmentVariable("DES_SERVICE_HOST")!;
 
-        opts.AppInsightsConnectionString ??= Environment.GetEnvironmentVariable("APPINSIGHTS_CONNECTION_STRING")!;
+        opts.AppInsightsInstrumentationKey ??= Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATION_KEY")!;
     }
 
     private static async Task AttemptOptionsFromKeyVaultAsync(Options opts)
@@ -77,7 +77,8 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_PASSWORD),
-            secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID));
+            secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID),
+            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY));
 
         _logger?.LogInformation("Got variables from Key Vault...");
 
@@ -88,6 +89,7 @@ public class Program
         opts.RedisQueueHostname ??= secrets[2];
         opts.RedisQueuePassword ??= secrets[3];
         opts.AppResourceId ??= secrets[4];
+        opts.AppInsightsInstrumentationKey ??= secrets[5];
     }
 
     private static async Task RunAsync(Options opts)
@@ -105,10 +107,11 @@ public class Program
             })
             .AddApplicationInsights(
             configureTelemetryConfiguration: (config) =>
-                config.ConnectionString = opts.AppInsightsConnectionString,
+                config.InstrumentationKey = opts.AppInsightsInstrumentationKey,
                 configureApplicationInsightsLoggerOptions: (options) => { }
             ).
             AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Debug);
+        
 
         _ = webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
         var webapp = webApplicationBuilder.Build();
@@ -192,7 +195,7 @@ public class Program
                 name: "redis-queue-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1));
 
-        var options = new ApplicationInsightsServiceOptions { ConnectionString = opts.AppInsightsConnectionString };
+        var options = new ApplicationInsightsServiceOptions { InstrumentationKey = opts.AppInsightsInstrumentationKey };
         _ = services.AddApplicationInsightsTelemetry(options: options);
 
     }

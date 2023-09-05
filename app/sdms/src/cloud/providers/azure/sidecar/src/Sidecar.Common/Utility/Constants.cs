@@ -51,6 +51,11 @@ public static class Constants
         /// Can be used to e.g. request access tokens in the current AD application.
         /// </summary>
         public const string APP_RESOURCE_ID = "aad-client-id";
+
+        /// <summary>
+        /// Instrumentation key of Application Insights.
+        /// </summary>
+        public const string APP_INSIGHTS_INSTRUMENTATION_KEY = "appinsights-key";
     }
 
     public const int BLOB_BULK_DELETE_BATCH_SIZE = 1000;
