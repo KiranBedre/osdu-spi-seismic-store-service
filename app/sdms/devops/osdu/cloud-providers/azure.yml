@@ -16,11 +16,25 @@ variables:
   E2E_HOSTNAME: https://$AZURE_DNS_NAME
   E2E_ENTITLEMENTS_USER: $INTEGRATION_TESTER
 
-
+sdms_azure_dotnet_test:
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  stage: test
+  needs: []
+  script:
+    - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar
+    - dotnet test
+  only:
+    changes:
+      - app/sdms/src/cloud/providers/azure/sidecar/**/*
+    refs:
+      - branches
+      - merge_requests
+      - tags
 
 sdms_azure_containerize:
   extends: .azure_containerize
   needs:
+    - sdms_azure_dotnet_test
     - sdms_compile-and-unit-test
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
