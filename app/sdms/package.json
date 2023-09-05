@@ -158,15 +158,15 @@
     "@commitlint/is-ignored": {
       "semver": "7.5.2"
     },
+    "express": {
+      "qs": "$qs"
+    },
     "jsonwebtoken": {
       "semver": "7.5.2"
     },
     "jwtproxy": {
       "jsonwebtoken": "$jsonwebtoken",
       "semver": "7.5.2"
-    },
-    "express": {
-      "qs": "$qs"
     },
     "newman": {
       "qs": "$qs",
