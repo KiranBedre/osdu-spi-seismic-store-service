@@ -28,6 +28,11 @@ public class Cosmos : IDataAccess
     private const string CONTAINER_ID = "data";
     private static readonly Dictionary<string, CosmosClient> _cosmosClients = new();
 
+    /// <param name="cs">Connection string for the target Cosmos instance</param>
+    /// <param name="sql">SQL query to send to Cosmos</param>
+    /// <param name="ctoken">Continuation token</param>
+    /// <param name="limit">Results limit</param>
+    /// <returns>JSON containing results and new continuation token</returns>
     public async Task<string> QueryAsync(string cs, string sql, string? ctoken, int? limit)
     {
         var paginatedRecords = await GetRecordsAsync(cs, sql, ctoken, limit);

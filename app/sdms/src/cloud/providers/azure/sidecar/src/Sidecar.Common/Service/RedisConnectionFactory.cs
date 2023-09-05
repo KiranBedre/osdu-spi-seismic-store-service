@@ -24,15 +24,18 @@ using System.Net;
 public class RedisConnectionFactory : IRedisConnectionFactory
 {
     private readonly ILoggerFactory _loggerFactory;
+    private readonly ICachingConnectionMultiplexerFactory _multiplexerFactory;
     private readonly IOptionsLocksRedis _locksOpts;
     private readonly IOptionsQueueRedis _queueOpts;
 
     public RedisConnectionFactory(
         ILoggerFactory loggerFactory,
+        ICachingConnectionMultiplexerFactory multiplexerFactory,
         IOptionsLocksRedis locksOpts,
         IOptionsQueueRedis queueOpts)
     {
         _loggerFactory = loggerFactory;
+        _multiplexerFactory = multiplexerFactory;
         _locksOpts = locksOpts;
         _queueOpts = queueOpts;
     }
@@ -49,14 +52,7 @@ public class RedisConnectionFactory : IRedisConnectionFactory
 
     private IRedisHandler FromConfig(string hostname, string port, string password)
     {
-        var connection = ConnectionMultiplexer.Connect(
-            new ConfigurationOptions
-            {
-                EndPoints = new() { new DnsEndPoint(
-                    hostname,
-                    Convert.ToInt32(port)) },
-                Password = password,
-            });
+        var connection = _multiplexerFactory.GetRedisConnection(hostname, Convert.ToInt32(port), password);
         return new RedisHandler(_loggerFactory.CreateLogger<RedisHandler>(), connection);
     }
 }
