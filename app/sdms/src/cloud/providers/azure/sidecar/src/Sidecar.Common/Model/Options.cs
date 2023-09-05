@@ -67,4 +67,7 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option("appResourceId", Required = false, HelpText = "AD resource ID, e.g. https://management.azure.com/")]
     public string AppResourceId { get; set; }
+
+    [Option("appInsightsConnectionString", Required = false, HelpText = "AppInsights connection string")]
+    public string AppInsightsConnectionString { get; set; }
 }

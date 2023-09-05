@@ -33,7 +33,7 @@ public class DeletionOperationService : BackgroundService
     private readonly ILockManager _lockManager;
 
     private int _consecutiveFailures = 0;
-    private const int MAX_CONSECUTIVE_FAILURES = 1000000;
+    private const int MAX_CONSECUTIVE_FAILURES = 10;
 
     public DeletionOperationService(ILogger<DeletionOperationService> logger,
         IDeletionTasksStorage deletionTasks,
@@ -72,6 +72,7 @@ public class DeletionOperationService : BackgroundService
         var op = await _deletionTasks.CheckForDeletionOperationAsync();
         if (op is null)
         {
+            Thread.Sleep(1000);
             return;
         }
 
@@ -111,7 +112,7 @@ public class DeletionOperationService : BackgroundService
             }
             else
             {
-                _logger.LogInformation("Could not acquire lock for {n}", datasetName);
+                _logger.LogError("Could not acquire lock for {n}", datasetName);
                 await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
                 foundLockErrors = true;
             }

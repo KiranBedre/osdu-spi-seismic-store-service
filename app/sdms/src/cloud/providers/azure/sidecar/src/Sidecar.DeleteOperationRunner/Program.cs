@@ -19,11 +19,13 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using CommandLine;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.ApplicationInsights;
 using Sidecar.Common.HealthChecks;
 using Sidecar.Common.Utility;
 
@@ -61,6 +63,8 @@ public class Program
         opts.KeyVaultUrl ??= Environment.GetEnvironmentVariable("SDMS_KEYVAULT_URL")!;
 
         opts.DesUrl ??= Environment.GetEnvironmentVariable("DES_SERVICE_HOST")!;
+
+        opts.AppInsightsConnectionString ??= Environment.GetEnvironmentVariable("APPINSIGHTS_CONNECTION_STRING")!;
     }
 
     private static async Task AttemptOptionsFromKeyVaultAsync(Options opts)
@@ -93,12 +97,20 @@ public class Program
         ConfigureServices(webApplicationBuilder.Services, opts);
 
         _ = webApplicationBuilder.Logging
+            .AddApplicationInsights(
+            configureTelemetryConfiguration: (config) =>
+                config.ConnectionString = opts.AppInsightsConnectionString,
+                configureApplicationInsightsLoggerOptions: (options) => { }
+            )
             .ClearProviders()
             .AddSimpleConsole(o =>
             {
                 o.SingleLine = true;
                 o.TimestampFormat = "[HH:mm:ss:fff] ";
             });
+
+        _ = webApplicationBuilder.Logging.AddFilter<ApplicationInsightsLoggerProvider>("Default", LogLevel.Debug);
+
         _ = webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
         var webapp = webApplicationBuilder.Build();
 
@@ -180,6 +192,10 @@ public class Program
                 sp => sp.GetRequiredService<RedisConnectionFactory>().GetRedisForQueue().GetConnection(),
                 name: "redis-queue-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1));
+
+        var options = new ApplicationInsightsServiceOptions { ConnectionString = opts.AppInsightsConnectionString };
+        _ = services.AddApplicationInsightsTelemetry(options: options);
+
     }
 
     private static async Task Main(string[] args)
