@@ -97,18 +97,18 @@ public class Program
         ConfigureServices(webApplicationBuilder.Services, opts);
 
         _ = webApplicationBuilder.Logging
-            .AddApplicationInsights(
-            configureTelemetryConfiguration: (config) =>
-                config.ConnectionString = opts.AppInsightsConnectionString,
-                configureApplicationInsightsLoggerOptions: (options) => { }
-            ).
-            AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Debug)
             .ClearProviders()
             .AddSimpleConsole(o =>
             {
                 o.SingleLine = true;
                 o.TimestampFormat = "[HH:mm:ss:fff] ";
-            });
+            })
+            .AddApplicationInsights(
+            configureTelemetryConfiguration: (config) =>
+                config.ConnectionString = opts.AppInsightsConnectionString,
+                configureApplicationInsightsLoggerOptions: (options) => { }
+            ).
+            AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Debug);
 
         _ = webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
         var webapp = webApplicationBuilder.Build();

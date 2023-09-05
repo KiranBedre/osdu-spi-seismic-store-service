@@ -48,7 +48,6 @@ This project provides an [.env.example](.env.example) file that provides the bas
 | __AZURE_CLIENT_ID__               | The Application (Client) Id under which the service is to be run. The App Registration (Service Principal) must have access to the deployed SDMS Azure resources.<br /><br />The App Registration must be created by an indivdiual with enough rights on the Azure subscription.<br /><br />Optional:  If supplied this value will be picked up during execution and used by the `DefaultAzureCredential` in the service.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet). |  00000000-0000-0000-0000-000000000000  |
 | __AZURE_CLIENT_SECRET__           | The secret for the Application (Client).<br /><br />Optional:  If supplied this value will be picked up during execution and used by the `DefaultAzureCredential` in the service.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet).                                                                                                                                                                                                                                         | some_secret_key   |
 | __AZURE_TENANT_ID__               | The Azure Tenant Id of the deployment.<br /><br />Optional:  If supplied this value will be picked up during execution and used by the `DefaultAzureCredential` in the service.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet).                                                                                                                                                                                                                                           |    |
-| __APPINSIGHTS_CONNECTION_STRING__ | The Applicaiton Inisghts Connection String                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | secret   |
 | __Logging__LogLevel__Default__    | Logging level configuration for the logging provider.<br /><br />Optional: If supplied, will override the default logging level.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#set-log-level-by-command-line-environment-variables-and-other-configuration)                                                                                                                                                                                                                                |  1 <br /><br />The details of the levels can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#log-level)  |
 
 
@@ -64,7 +63,6 @@ Logging__LogLevel__Debug=1
 AZURE_CLIENT_ID='00000000-0000-0000-0000-000000000000'
 AZURE_CLIENT_SECRET='<client secret>'
 AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
-APPINSIGHTS_CONNECTION_STRING='secret'
 ```
 
 With DES_SERVICE_HOST overwriting the connection strings:
@@ -84,7 +82,6 @@ Logging__LogLevel__Debug=1
 AZURE_CLIENT_ID='00000000-0000-0000-0000-000000000000'
 AZURE_CLIENT_SECRET='<client secret>'
 AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
-APPINSIGHTS_CONNECTION_STRING='secret'
 ```
 
 Without DES_SERVICE_HOST, reading the Redis connection strings from the KeyVault:
@@ -96,7 +93,6 @@ SDMS_COSMOS_ENDPOINT='https://db-xxx.documents.azure.com:443/'
 SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcswi;AccountKey=<some account key>;EndpointSuffix=core.windows.net'
 SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
 Logging__LogLevel__Debug=1
-APPINSIGHTS_CONNECTION_STRING='secret'
 ```
 
 
