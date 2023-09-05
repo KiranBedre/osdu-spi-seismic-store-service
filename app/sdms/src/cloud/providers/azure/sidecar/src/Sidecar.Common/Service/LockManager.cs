@@ -68,15 +68,15 @@ public class LockManager : ILockManager
         }
         catch (Exception)
         {
-            _logger.LogError("Cannot aquire mutex {key}. ", key);
+            _logger.LogError("Cannot acquire mutex {key}. ", key);
             return false;
         }
 
         var lockValue = await GetLockAsync(key);
-        if (lockValue is not null and string)
+        if (lockValue is string s)
         {
             await ReleaseMutexAsync(key);
-            return ((string)lockValue).StartsWith("WDELETE");
+            return s.StartsWith(Constants.DELETE_LOCK_PREFIX);
         }
 
         var result = await _locksRedis.SetAsync(key, Utils.GenerateDeleteLockId());

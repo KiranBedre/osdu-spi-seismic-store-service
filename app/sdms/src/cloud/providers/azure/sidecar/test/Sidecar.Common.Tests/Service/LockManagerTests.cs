@@ -16,6 +16,8 @@
 
 namespace Sidecar.Common.Tests.Service;
 
+using Sidecar.Common.Utility;
+
 public class LockManagerTests
 {
     private readonly LockManager _lockManager;
@@ -46,7 +48,7 @@ public class LockManagerTests
         var key = "/path/file.tst";
         _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
             .ReturnsAsync(true);
-        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("WDELETE:lockValue");
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync($"{Constants.DELETE_LOCK_PREFIX}:lockValue");
 
         // Act
         var result = await _lockManager.AcquireDeleteLockAsync(key);

@@ -60,6 +60,8 @@ public static class Constants
 
     public const int BLOB_BULK_DELETE_BATCH_SIZE = 1000;
 
+    public const string DELETE_LOCK_PREFIX = "WDELETE";
+    
     public static class DeleteOperationStatus
     {
         public const string LAST_UPDATED_AT = "LastUpdatedAt";
