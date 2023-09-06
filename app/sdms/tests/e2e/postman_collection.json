@@ -8891,7 +8891,7 @@
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
 									"    pm.environment.unset(key);",
-									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"    postman.setEnvironmentVariable('execCounter', 1)", 
 									"}"
 								],
 								"type": "text/javascript"
