@@ -16,10 +16,8 @@
 
 namespace Sidecar.Common.Service;
 
-using StackExchange.Redis;
 using Interface;
 using Microsoft.Extensions.Logging;
-using System.Net;
 
 public class RedisConnectionFactory : IRedisConnectionFactory
 {

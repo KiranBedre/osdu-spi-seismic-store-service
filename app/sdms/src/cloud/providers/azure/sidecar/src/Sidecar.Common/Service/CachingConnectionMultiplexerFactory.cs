@@ -25,9 +25,7 @@ public class CachingConnectionMultiplexerFactory : ICachingConnectionMultiplexer
 {
     private readonly ConcurrentDictionary<Tuple<string, int, string>, ConnectionMultiplexer> _cache = new();
 
-    public IConnectionMultiplexer GetRedisConnection(string hostname, int port, string password)
-    {
-        return _cache.GetOrAdd(
+    public IConnectionMultiplexer GetRedisConnection(string hostname, int port, string password) => _cache.GetOrAdd(
             new(hostname, port, password),
             _ => ConnectionMultiplexer.Connect(
                 new ConfigurationOptions
@@ -39,5 +37,4 @@ public class CachingConnectionMultiplexerFactory : ICachingConnectionMultiplexer
                     Password = password,
                 })
         );
-    }
 }
