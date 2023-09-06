@@ -17,18 +17,16 @@
 import sinon from 'sinon';
 import crypto from 'crypto'
 
-import { Conflict, Container, ContainerDefinition, ContainerResponse, FeedOptions, FeedResponse, Item, Items, OfferResponse, PartitionedQueryExecutionInfo, PartitionKeyDefinition, PartitionKeyRange, QueryIterator, RequestOptions, ResourceResponse, Response, SqlQuerySpec } from '@azure/cosmos';
-import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureCosmosDbTransactionDAO } from '../../../../src/cloud/providers/azure/cosmosdb';
-import { DatasetModel, PaginationModel } from '../../../../src/services/dataset';
+import { Container, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
+import { AzureCosmosDbDAO, AzureCosmosDbQuery } from '../../../../src/cloud/providers/azure';
+import { DatasetModel } from '../../../../src/services/dataset';
 import { AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
-import { Config, IJournal, IJournalTransaction } from '../../../../src/cloud';
+import { Config } from '../../../../src/cloud';
 import { IJournalQueryModel } from '../../../../src/cloud/journal';
 import { Tx } from '../../utils';
-import {assert, expect} from 'chai';
+import { assert, expect } from 'chai';
 import { AzureConfig } from '../../../../src/cloud/providers/azure';
-import { HighlightSpanKind } from 'typescript';
-import { query } from 'winston';
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 export class TestAzureCosmosDbDAO {
     private static sandbox: sinon.SinonSandbox;
