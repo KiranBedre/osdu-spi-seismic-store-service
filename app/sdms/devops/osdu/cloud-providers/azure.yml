@@ -25,7 +25,7 @@ sdms_azure_dotnet_test:
       - $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
       - $CI_PROJECT_DIR/xunit/xunit-test-result.xml
     reports:
-      xunit: $CI_PROJECT_DIR/xunit/xunit-test-result.xml
+      junit: $CI_PROJECT_DIR/xunit/xunit-test-result.xml
       coverage_report:
         coverage_format: cobertura
         path: $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
