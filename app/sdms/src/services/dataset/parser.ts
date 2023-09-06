@@ -30,7 +30,7 @@ export class DatasetParser {
 
         Params.checkString(req.query.ctag, 'ctag');
 
-        if (req.query.ctag.length < 19) { // ctag (16) + project(3 at least)
+        if ((req.query.ctag as string).length < 19) { // ctag (16) + project(3 at least)
             throw (Error.make(Error.Status.BAD_REQUEST, 'The \'ctag\' query parameter is in a wrong format.'));
         }
 
@@ -126,7 +126,9 @@ export class DatasetParser {
     }
 
     public static list(req: expRequest): DatasetListRequest {
-        return req.method === 'POST' ? this.listPost(req) : this.listGet(req);
+        const res = req.method === 'POST' ? this.listPost(req) : this.listGet(req);
+        delete res.dataset.path;
+        return res;
     }
 
     public static listGet(req: expRequest): DatasetListRequest {
@@ -337,12 +339,17 @@ export class DatasetParser {
 
     private static createDatasetModelFromRequest(req: expRequest) {
         const dataset: DatasetModel = {} as DatasetModel;
-        this.getSDPathFromURLParams(dataset, req);
+        this.getSDPathFromRequest(dataset, req);
         return dataset;
     }
 
-    private static getSDPathFromURLParams(dataset: DatasetModel, req: expRequest) {
-        dataset.name = req.params.datasetid;
+    private static getSDPathFromRequest(dataset: DatasetModel, req: expRequest) {
+        if (req.params.datasetid) {
+            dataset.name = req.params.datasetid;
+        } else if (req.query.datasetid) {
+            dataset.name = decodeURIComponent(req.query.datasetid as string);
+        }
+
         dataset.tenant = req.params.tenantid;
         dataset.subproject = req.params.subprojectid;
 

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=14-alpine
+ARG docker_node_image_version=16-alpine
 
 # -------------------------------
 # Compilation stage
@@ -25,6 +25,7 @@ ADD ./ /service
 WORKDIR /service
 RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && npm install --quiet node-gyp -g \
+    && npm install --quiet husky -g \
     && npm install --quiet \
     && npm run build \
     && mkdir artifact \
@@ -45,7 +46,8 @@ RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-head
     && chown -R appuser:appgroup /seistore-service \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/npm' >> /etc/sudoers \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/node' >> /etc/sudoers \
-    && npm ci --production --quiet \
+    && npm install --quiet husky -g \
+    && npm install --production --quiet \
     && apk del native-deps
 
 ENTRYPOINT ["node", "--trace-warnings", "--trace-uncaught", "./dist/server/server-start.js"]

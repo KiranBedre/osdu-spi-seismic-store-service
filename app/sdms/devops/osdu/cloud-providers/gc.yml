@@ -531,7 +531,7 @@ sdms-gc-baremetal-test-python:
   extends: .gc-baremetal-test-python
   image: node
   needs: ["sdms-gc-baremetal-deploy"]
-  allow_failure: true
+  allow_failure: false
   before_script:
     - cd app/$SDMS_SERVICE
   script:

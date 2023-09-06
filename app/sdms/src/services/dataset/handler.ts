@@ -30,7 +30,7 @@ import { IWriteLockSession, Locker } from './locker';
 import { DatasetOP } from './optype';
 import { DatasetParser } from './parser';
 import { SchemaManagerFactory } from './schema-manager';
-import { ComputedSizeResponse } from './model';
+import { ComputedSizeResponse, GetSizeResponse } from './model';
 
 export class DatasetHandler {
 
@@ -42,7 +42,7 @@ export class DatasetHandler {
             let subproject: SubProjectModel;
             try {
                 subproject = await SubProjectDAO.get(
-                JournalFactoryTenantClient.get(tenant), req.params.tenantid, req.params.subprojectid);
+                    JournalFactoryTenantClient.get(tenant), req.params.tenantid, req.params.subprojectid);
             } catch (error) {
                 await Auth.isUserAuthorized(req.get('authorization'),
                     [TenantGroups.userGroup(tenant.esd)], tenant.esd, req[Config.DE_FORWARD_APPKEY]);
@@ -69,6 +69,8 @@ export class DatasetHandler {
                 Response.writeOK(res, await this.exists(req, tenant, subproject));
             } else if (op === DatasetOP.Sizes) {
                 Response.writeOK(res, await this.sizes(req, tenant, subproject));
+            } else if (op === DatasetOP.GetSize) {
+                Response.writeOK(res, await this.getSize(req, tenant, subproject));
             } else if (op === DatasetOP.ComputeSize) {
                 Response.writeOK(res, await this.computeSize(req, tenant, subproject));
             } else if (op === DatasetOP.Permission) {
@@ -214,7 +216,7 @@ export class DatasetHandler {
 
             // save the dataset entity
             await Promise.all([
-                DatasetDAO.register(journalClient, { key: datasetEntityKey, data: dataset }),
+                DatasetDAO.register(journalClient, {key: datasetEntityKey, data: dataset}),
                 (storageSchemaRecord && (FeatureFlags.isEnabled(Feature.SEISMICMETA_STORAGE))) ?
                     DESStorage.insertRecord(req.headers.authorization,
                         [storageSchemaRecord], tenant.esd, req[Config.DE_FORWARD_APPKEY],
@@ -298,10 +300,10 @@ export class DatasetHandler {
 
         // check if the dataset does not exist
         if (!datasetOUT) {
-            if(subproject.access_policy === Config.UNIFORM_ACCESS_POLICY) {
+            if(subproject.access_policy === Config.UNIFORM_ACCESS_POLICY){
                 await Auth.isUserAuthorized(req.get('authorization'),
                     SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
-                        tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+                    tenant.esd, req[Config.DE_FORWARD_APPKEY]);
             } else {
                 await Auth.isUserAuthorized(req.get('authorization'),
                     [TenantGroups.userGroup(tenant.esd)], tenant.esd, req[Config.DE_FORWARD_APPKEY]);
@@ -335,7 +337,7 @@ export class DatasetHandler {
                 const dataPartition = DESUtils.getDataPartitionID(tenant.esd);
                 const userEmail = await UserAssociationServiceFactory.build(
                     Config.USER_ASSOCIATION_SVC_PROVIDER).convertPrincipalIdentifierToUserInfo(
-                        datasetOUT.created_by, dataPartition);
+                    datasetOUT.created_by, dataPartition);
                 datasetOUT.created_by = userEmail;
             }
         }
@@ -348,10 +350,10 @@ export class DatasetHandler {
                 tenant.esd,
                 req[Config.DE_FORWARD_APPKEY],
                 seismicMetaRecordVersion).catch((error) => {
-                    recordExist = false;
-                });
+                recordExist = false;
+            });
 
-            if(recordExist){
+            if (recordExist) {
                 // For all datasets with storage record, the default storage schema type is seismicmeta
                 if (storageSchemaRecord && !datasetOUT.storageSchemaRecordType) {
                     datasetOUT.storageSchemaRecordType = 'seismicmeta';
@@ -384,7 +386,7 @@ export class DatasetHandler {
         // Retrieve the dataset path information
         const userInput = DatasetParser.list(req);
 
-        const searchParam: string  = userInput.search;
+        const searchParam: string = userInput.search;
         const selectParam: string[] = userInput.select;
         const dataset = userInput.dataset;
         const pagination = userInput.pagination;
@@ -406,7 +408,7 @@ export class DatasetHandler {
         const userAssociationService = FeatureFlags.isEnabled(Feature.CCM_INTERACTION) && userInfo ?
             UserAssociationServiceFactory.build(Config.USER_ASSOCIATION_SVC_PROVIDER) : undefined;
         const dataPartition = DESUtils.getDataPartitionID(tenant.esd);
-        if(!selectParam){
+        if (!selectParam) {
             for (const item of output.datasets) {
                 item.ctag = item.ctag + tenant.gcpid + ';' + dataPartition;
                 item.access_policy = subproject.access_policy || Config.UNIFORM_ACCESS_POLICY;
@@ -416,9 +418,9 @@ export class DatasetHandler {
                 }
             }
         } else {
-            if(selectParam.includes('ctag')) {
+            if (selectParam.includes('ctag')) {
                 for (const item of output.datasets) {
-                   item.ctag = item.ctag + tenant.gcpid + ';' + dataPartition;
+                    item.ctag = item.ctag + tenant.gcpid + ';' + dataPartition;
                 }
             }
             if (selectParam.includes('created_by')) {
@@ -466,7 +468,9 @@ export class DatasetHandler {
             (await DatasetDAO.get(journalClient, datasetIn))[0];
 
         // if the dataset does not exist return ok
-        if (!dataset) { return; }
+        if (!dataset) {
+            return;
+        }
 
         // check authorization (write)
         await Auth.isWriteAuthorized(req.headers.authorization,
@@ -483,8 +487,8 @@ export class DatasetHandler {
         const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
         StorageFactory.build(Config.CLOUDPROVIDER, tenant).deleteObjects(
             bucket, virtualFolder).catch((error) => {
-                LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
-            });
+            LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
+        });
 
         // remove any remaining locks (this should be removed with SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS)
         const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
@@ -560,7 +564,7 @@ export class DatasetHandler {
         }
 
         // unlock the dataset for close operation (and patch)
-        const lockres = wid ? await Locker.unlock(lockKey, wid) : { id: null, cnt: 0 };
+        const lockres = wid ? await Locker.unlock(lockKey, wid) : {id: null, cnt: 0};
 
         // ensure nobody got the lock between the close and the mutex acquisition
         if (!Config.SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS) {
@@ -603,11 +607,21 @@ export class DatasetHandler {
 
 
         // patch datasetOUT with datasetIN
-        if (datasetIN.metadata) { datasetOUT.metadata = datasetIN.metadata; }
-        if (datasetIN.filemetadata) { datasetOUT.filemetadata = datasetIN.filemetadata; }
-        if (datasetIN.last_modified_date) { datasetOUT.last_modified_date = datasetIN.last_modified_date; }
-        if (datasetIN.readonly !== undefined) { datasetOUT.readonly = datasetIN.readonly; }
-        if (datasetIN.gtags !== undefined && datasetIN.gtags.length > 0) { datasetOUT.gtags = datasetIN.gtags; }
+        if (datasetIN.metadata) {
+            datasetOUT.metadata = datasetIN.metadata;
+        }
+        if (datasetIN.filemetadata) {
+            datasetOUT.filemetadata = datasetIN.filemetadata;
+        }
+        if (datasetIN.last_modified_date) {
+            datasetOUT.last_modified_date = datasetIN.last_modified_date;
+        }
+        if (datasetIN.readonly !== undefined) {
+            datasetOUT.readonly = datasetIN.readonly;
+        }
+        if (datasetIN.gtags !== undefined && datasetIN.gtags.length > 0) {
+            datasetOUT.gtags = datasetIN.gtags;
+        }
         if (datasetIN.ltag) {
             await Auth.isLegalTagValid(
                 req.headers.authorization, datasetIN.ltag, tenant.esd, req[Config.DE_FORWARD_APPKEY]);
@@ -678,7 +692,7 @@ export class DatasetHandler {
         if (newName) {
             await Promise.all([
                 DatasetDAO.delete(journalClient, datasetOUT),
-                DatasetDAO.register(journalClient, { key: datasetOUTKey, data: datasetOUT })]);
+                DatasetDAO.register(journalClient, {key: datasetOUTKey, data: datasetOUT})]);
         } else {
             await DatasetDAO.update(journalClient, datasetOUT, datasetOUTKey);
         }
@@ -858,12 +872,13 @@ export class DatasetHandler {
         Config.disableStrongConsistencyEmulation();
         let results: boolean[] = [];
         if (subproject.enforce_key) {
-            if(Config.CLOUDPROVIDER !== 'azure') {
+            if (Config.CLOUDPROVIDER !== 'azure') {
                 for (const dataset of datasets) {
                     results.push((await DatasetDAO.getByKey(journalClient, dataset)) !== undefined);
                 }
+            } else {
+                results = await DatasetDAO.exists(journalClient, datasets)
             }
-            else { results = await DatasetDAO.exists(journalClient, datasets) }
         } else {
             for (const dataset of datasets) {
                 results.push((await DatasetDAO.get(journalClient, dataset))[0] !== undefined);
@@ -895,7 +910,7 @@ export class DatasetHandler {
         Config.disableStrongConsistencyEmulation();
         let results: number[] = [];
         if (subproject.enforce_key) {
-            if(Config.CLOUDPROVIDER !== 'azure') {
+            if (Config.CLOUDPROVIDER !== 'azure') {
                 for (let dataset of datasets) {
                     dataset = await DatasetDAO.getByKey(journalClient, dataset);
                     if (dataset === undefined) {
@@ -922,7 +937,28 @@ export class DatasetHandler {
         Config.enableStrongConsistencyEmulation();
 
         return results;
+    }
 
+    // retrieve the size of the datasets (sum of 'compute_size' values)
+    // Required role: subproject.viewer || dataset.viewer (dependents on applied access policy)
+    private static async getSize(
+        req: expRequest, tenant: TenantModel, subproject: SubProjectModel): Promise<GetSizeResponse> {
+
+        // parse user request
+        // Retrieve the dataset information
+        const dataset = DatasetParser.size(req);
+
+        // retrieve journalClient client
+        const journalClient = JournalFactoryTenantClient.get(tenant);
+
+        // check if the caller is authorized
+        await Auth.isReadAuthorized(req.headers.authorization,
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+            tenant, dataset.subproject, req[Config.DE_FORWARD_APPKEY],
+            req.headers['impersonation-token-context'] as string);
+
+        // get dataset size
+        return await journalClient.getSize(dataset) as GetSizeResponse;
     }
 
     // Compute and retrieve the size and the date of a dataset

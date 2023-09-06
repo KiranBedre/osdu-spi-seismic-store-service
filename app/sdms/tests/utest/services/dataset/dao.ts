@@ -123,6 +123,12 @@ export class DatasetDAOTest {
                              selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
                     return Promise.resolve([[datasetModel], {}]);
                 },
+                getSize(dataset: DatasetModel): Promise<{dataset_count: number, size_bytes: number}> {
+                    return Promise.resolve({ dataset_count: 0, size_bytes: 0});
+                },
+                deleteMulti(keys: string[]): Promise<void> {
+                    return Promise.resolve();
+                },
                 KEY: undefined
             };
 
