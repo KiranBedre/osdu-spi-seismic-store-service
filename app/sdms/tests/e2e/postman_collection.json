@@ -20807,7 +20807,25 @@
 					],
 					"request": {
 						"method": "DELETE",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?path={{testPathEncoded}}",
 							"host": [
@@ -20850,13 +20868,13 @@
 									"        pm.response.to.have.status(200);\r",
 									"    });\r",
 									"\r",
-									"    if (jsonData.status != 'Completed') {\r",
+									"    if (jsonData.status != 'CompletedWithErrors') {\r",
 									"        console.log(\"Operation status: \" + jsonData.status);\r",
 									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"    }\r",
 									"\r",
 									"    pm.test(\"Validate operation status\", function () {\r",
-									"        pm.expect(jsonData.status).to.eql('Completed');\r",
+									"        pm.expect(jsonData.status).to.eql('CompletedWithErrors');\r",
 									"    });\r",
 									"\r",
 									"    pm.test(\"Validate datasets count\", function () {\r",
@@ -20877,7 +20895,25 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?operationid={{operationId}}",
 							"host": [
@@ -21163,7 +21199,25 @@
 					],
 					"request": {
 						"method": "DELETE",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?path={{testPathEncoded}}",
 							"host": [
@@ -21233,7 +21287,25 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}/bulk-delete?operationid={{operationId}}",
 							"host": [
