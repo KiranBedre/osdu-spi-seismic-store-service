@@ -36,6 +36,7 @@ sdms_azure_dotnet_ci:
   only:
     changes:
       - app/sdms/src/cloud/providers/azure/sidecar/**/*
+      - app/sdms/devops/osdu/cloud-providers/azure.yml
     refs:
       - branches
       - merge_requests
