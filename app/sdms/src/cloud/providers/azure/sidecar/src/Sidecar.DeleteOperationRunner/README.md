@@ -1,26 +1,25 @@
 # Delete Operation Runner
 
-This project provides the Azure impelementation for the long-running deletion operation which is responsible for the bulk deletion of datasets and their associated
-metadata.
+This project provides the Azure implementation for the long-running deletion operation which is responsible for the bulk deletion of datasets and their associated metadata.
 
 ## Overview
 
-Deleting a large number of datasets can be a long running operation which requires the process to run asynchronously.  There are a number of tasks that need to be handled during
-the operation including the following:
+Deleting a large number of datasets can be a long-running operation which requires the process to run asynchronously.  There are a number of tasks that need to be handled during
+the operation, including the following:
 
-- Queing request from the front facing API.
-- Dequeuing requests on the backend.
-- Reporting the status.
+- Queuing requests from the front-facing API.
+- Dequeuing requests in the backend.
+- Reporting the status of deletion.
 - Building the queue of datasets to be deleted.
 - Locking the datasets for deletion.
 - Deletion of the associated blobs.
 - Deletion of the associated metadata.
 
-The following digram provides an overview for the flow of the deletion operation.
+The following diagram provides an overview for the flow of the deletion operation.
 
 ![Deletion Operation Diagram](.attachments/flow-diag-deletion.png)
 
-As the process runs in the background and can take some time, the deletion operation will provide the status of the long running operation.
+As the process runs in the background and can take a long time, the deletion operation will provide the status of the long-running operation.
 
 ![Deletion Status Diagram](.attachments/flow-diag-deletion-status.png)
 
@@ -50,7 +49,6 @@ This project provides an [.env.example](.env.example) file that provides the bas
 | __AZURE_TENANT_ID__                 | The Azure Tenant Id of the deployment.<br /><br />Optional:  If supplied this value will be picked up during execution and used by the `DefaultAzureCredential` in the service.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet).                                                                                                                                                                                                                                           |    |
 | __APPINSIGHTS_INSTRUMENTATION_KEY__ | The Applicaiton Insights Instrumentation Key                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | secret   |
 | __Logging__LogLevel__Default__      | Logging level configuration for the logging provider.<br /><br />Optional: If supplied, will override the default logging level.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#set-log-level-by-command-line-environment-variables-and-other-configuration)                                                                                                                                                                                                                                |  1 <br /><br />The details of the levels can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#log-level)  |
-
 
 Example:
  
@@ -95,7 +93,6 @@ SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcs
 SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
 Logging__LogLevel__Debug=1
 ```
-
 
 ### How to find DES Service URL
 
