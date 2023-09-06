@@ -754,7 +754,7 @@ export class TestAzureCosmosDbDAO {
         }
       );
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
           const dataset = {
               subproject: subproject,
               name: name,
@@ -768,7 +768,6 @@ export class TestAzureCosmosDbDAO {
               expect(error.error.status).to.equal("BAD_REQUEST");
               expect(error.error.code).to.equal(400);
           }
-          done();
       });
     }
 
@@ -785,7 +784,7 @@ export class TestAzureCosmosDbDAO {
           mockResult
         ) as any;
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
           AzureConfig.SIDECAR_ENABLE_QUERY = false;
           let sinonStub = this.sandbox.stub(Items.prototype, "query");
 
@@ -798,7 +797,6 @@ export class TestAzureCosmosDbDAO {
           });
 
           sinon.assert.calledWith(sinonStub, expectedQuery);
-          done();
         });
     }
 
