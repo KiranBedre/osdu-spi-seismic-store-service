@@ -96,6 +96,7 @@ export class TestAzureCosmosDbDAO {
                 this.sandbox.restore();
             });
 
+            this.getSize();
             this.save();
             this.get();
             this.delete();
@@ -704,6 +705,112 @@ export class TestAzureCosmosDbDAO {
         });
     }
 
+    private static getSize() {
+      Tx.sectionInit("getSize");
+
+      let subproject = "subproject1";
+      let path = "path1";
+      let name = "name1";
+      const expectedQuery: SqlQuerySpec = {
+        query:
+          "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject",
+        parameters: [
+          { name: "@subproject", value: subproject },
+        ],
+      };
+        this.getSizeCase(
+        {
+          subproject: subproject,
+        } as DatasetModel,
+        {
+          query:
+            "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject",
+          parameters: [
+            { name: "@subproject", value: subproject },
+          ],
+        }
+      );
+
+      this.getSizeCase(
+        {
+          subproject: subproject,
+          path: path,
+        } as DatasetModel,
+        {
+          query:
+            "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject AND STARTSWITH(c.data.path, @path, false)",
+          parameters: [
+            { name: "@subproject", value: subproject },
+            { name: "@path", value: path },
+          ],
+        }
+      );
+
+      this.getSizeCase(
+        {
+          subproject: subproject,
+          path: path,
+          name: name,
+        } as DatasetModel,
+        {
+          query:
+            "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject AND c.data.name = @name AND STARTSWITH(c.data.path, @path, false)",
+          parameters: [
+            { name: "@subproject", value: subproject },
+            { name: "@name", value: name }, 
+            { name: "@path", value: path },
+          ],
+        }
+      );
+
+      Tx.test(async (done: any) => {
+          const dataset = {
+              subproject: subproject,
+              name: name,
+          } as DatasetModel;
+          AzureConfig.SIDECAR_ENABLE_QUERY = false;
+
+          try {
+              await this.cosmos.getSize(dataset);
+          } catch (error) {
+              expect(error.error.message).to.equal("[seismic-store-service] Path needs to be provided.");
+              expect(error.error.status).to.equal("BAD_REQUEST");
+              expect(error.error.code).to.equal(400);
+          }
+          done();
+      });
+    }
+
+    private static getSizeCase(dataset: DatasetModel, expectedQuery: SqlQuerySpec) {
+        const size_bytes = 56;
+        const count = 34;
+        const mockResult = [
+          {
+            size_bytes: size_bytes,
+            count: count,
+          },
+        ] as any;
+        let queryIterator: QueryIterator<any> = this.getQueryIterator(
+          mockResult
+        ) as any;
+
+        Tx.test(async (done: any) => {
+          AzureConfig.SIDECAR_ENABLE_QUERY = false;
+          let sinonStub = this.sandbox.stub(Items.prototype, "query");
+
+          sinonStub.returns(queryIterator);
+
+          let res = await this.cosmos.getSize(dataset);
+          expect(res).to.deep.equal({
+            size_bytes: size_bytes,
+            dataset_count: count,
+          });
+
+          sinon.assert.calledWith(sinonStub, expectedQuery);
+          done();
+        });
+    }
+
     private static getDatasetModel(name: string) {
         return {
             name: name,
@@ -896,9 +1003,9 @@ export class TestAzureCosmosDbDAO {
         });
     }
 
-    private static getQueryIterator() {
+    private static getQueryIterator(resources = ['resources']) {
         let feedResponse: FeedResponse<any> = {
-            resources: ["resources"],
+            resources: resources,
             headers: undefined,
             hasMoreResults: false,
             continuation: '',

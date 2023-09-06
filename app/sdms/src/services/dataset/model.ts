@@ -77,3 +77,8 @@ export interface ComputedSizeResponse {
     computed_size: number;
     computed_size_date: any;
 }
+
+export interface GetSizeResponse {
+    size_bytes: number;
+    dataset_count: number;
+}
