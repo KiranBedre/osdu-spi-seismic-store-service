@@ -22,15 +22,16 @@ sdms_azure_dotnet_test:
   needs: []
   artifacts:
     paths:
-      - $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/cobertura/*/coverage.cobertura.xml
-      - $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/xunit/xunit-test-result.xml
+
+      - $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests/cobertura/*/coverage.cobertura.xml
+      - $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests/xunit/xunit-test-result.xml
     reports:
-      junit: $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/xunit/xunit-test-result.xml
+      junit: $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests/xunit/xunit-test-result.xml
       coverage_report:
         coverage_format: cobertura
-        path: $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/cobertura/*/coverage.cobertura.xml
+        path: $CI_PROJECT_DIR/app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests/cobertura/*/coverage.cobertura.xml
   script:
-    - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar
+    - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests
     - dotnet test -c Debug -r ./cobertura --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"xunit;LogFilePath=./xunit/xunit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
   only:
     changes:
