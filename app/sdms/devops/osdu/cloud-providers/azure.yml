@@ -31,6 +31,7 @@ sdms_azure_dotnet_ci:
         path: ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
   script:
     - cd app/${SDMS_SERVICE}/src/cloud/providers/azure/sidecar
+    - dotnet format --severity warn --verify-no-changes
     - cd test/Sidecar.Common.Tests
     - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"xunit;LogFilePath=${CI_PROJECT_DIR}/xunit/xunit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
   only:

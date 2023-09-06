@@ -1,3 +1,5 @@
+#pragma warning disable IDE0065
+
 global using FluentAssertions;
 global using StackExchange.Redis;
 global using Microsoft.Extensions.Logging;
