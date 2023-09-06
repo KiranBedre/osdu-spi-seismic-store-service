@@ -23,15 +23,15 @@ sdms_azure_dotnet_test:
   artifacts:
     paths:
       - $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
-      - $CI_PROJECT_DIR/junit/junit-test-result.xml
+      - $CI_PROJECT_DIR/xunit/xunit-test-result.xml
     reports:
-      junit: $CI_PROJECT_DIR/junit/junit-test-result.xml
+      xunit: $CI_PROJECT_DIR/xunit/xunit-test-result.xml
       coverage_report:
         coverage_format: cobertura
         path: $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
   script:
     - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar
-    - dotnet test -c Debug -r ./cobertura --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"junit;LogFilePath=./junit/junit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+    - dotnet test -c Debug -r ./cobertura --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"xunit;LogFilePath=./xunit/xunit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
   only:
     changes:
       - app/sdms/src/cloud/providers/azure/sidecar/**/*
