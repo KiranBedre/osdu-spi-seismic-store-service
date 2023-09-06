@@ -23,7 +23,7 @@ sdms_azure_dotnet_ci:
   artifacts:
     paths:
       - ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
-      - ${CI_PROJECT_DIR}/xunit/xunit-test-result.xml
+      - ${CI_PROJECT_DIR}/junit/*-test-result.xml
     reports:
       junit: ${CI_PROJECT_DIR}/junit/*-test-result.xml
       coverage_report:
