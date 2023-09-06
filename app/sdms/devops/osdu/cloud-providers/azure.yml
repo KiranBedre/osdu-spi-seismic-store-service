@@ -20,9 +20,18 @@ sdms_azure_dotnet_test:
   image: mcr.microsoft.com/dotnet/sdk:6.0
   stage: build
   needs: []
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
+      - $CI_PROJECT_DIR/junit/junit-test-result.xml
+    reports:
+      cobertura:
+        - $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
+      junit:
+        - $CI_PROJECT_DIR/junit/junit-test-result.xml
   script:
     - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar
-    - dotnet test
+    - dotnet test -c Debug -r ./cobertura --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"junit;LogFilePath=./junit/junit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
   only:
     changes:
       - app/sdms/src/cloud/providers/azure/sidecar/**/*
