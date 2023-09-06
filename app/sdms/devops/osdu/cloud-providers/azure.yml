@@ -20,6 +20,8 @@ sdms_azure_dotnet_test:
   image: mcr.microsoft.com/dotnet/sdk:6.0
   stage: build
   needs: []
+  variables:
+    CI_PROJECT_DI: ${CI_PROJECT_DI}
   artifacts:
     paths:
       - $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
