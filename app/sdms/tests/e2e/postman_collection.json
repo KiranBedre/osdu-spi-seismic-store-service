@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ddd67866-95a0-4244-a1ff-cca6dc0b5f97",
+		"_postman_id": "43df0660-4b2d-4be5-8d48-10360ad741cb",
 		"name": "SDMS-E2E ver.M20 - Release 0.23",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "17166992"
@@ -3980,8 +3980,8 @@
 									"console.log('Dataset search variables are initialized for datasets search folder');",
 									"pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));",
 									"postman.setEnvironmentVariable('execCounter', 1)",
-									"console.log(\"cloud provider:\"+pm.response.headers.get('Service-Provider'));",
-									"if (pm.environment.get('serviceCloudProvider') == 'aws' || pm.environment.get('serviceCloudProvider') == 'anthos') {",
+									"",
+									"if (pm.environment.get('serviceCloudProvider') == 'aws' || pm.environment.get('serviceCloudProvider') == 'anthos' || pm.environment.get('serviceCloudProvider') == 'google') {",
 									"    postman.setNextRequest('DATASET SEARCH STATUS UNSET: Cleanup test environment');",
 									"}"
 								],
@@ -5281,7 +5281,7 @@
 									"pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));",
 									"postman.setEnvironmentVariable('execCounter', 1)",
 									"",
-									"if (pm.environment.get('serviceCloudProvider') == 'aws' || pm.environment.get('serviceCloudProvider') == 'anthos') {",
+									"if (pm.environment.get('serviceCloudProvider') == 'aws' || pm.environment.get('serviceCloudProvider') == 'anthos'|| pm.environment.get('serviceCloudProvider') == 'google') {",
 									"    postman.setNextRequest('DATASET SELECT STATUS UNSET: Cleanup test environment');",
 									"}"
 								],
