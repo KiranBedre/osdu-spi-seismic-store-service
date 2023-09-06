@@ -51,10 +51,10 @@ async function ServerStart() {
         
         console.log('- Initializing deletion job redis');
         await DeleteJobRedisStore.init({
-            ADDRESS: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
-            PORT: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
-            KEY: Config.LOCKSMAP_REDIS_INSTANCE_KEY,
-            DISABLE_TLS: Config.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE
+            ADDRESS: Config.REDIS_SHARED_INSTANCE_ADDRESS,
+            PORT: Config.REDIS_SHARED_INSTANCE_PORT,
+            KEY: Config.REDIS_SHARED_INSTANCE_KEY,
+            DISABLE_TLS: Config.REDIS_SHARED_INSTANCE_TLS_DISABLE
         });
 
         console.log('- Initializing storage transfer daemon');

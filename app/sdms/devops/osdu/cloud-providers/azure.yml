@@ -16,11 +16,35 @@ variables:
   E2E_HOSTNAME: https://$AZURE_DNS_NAME
   E2E_ENTITLEMENTS_USER: $INTEGRATION_TESTER
 
-
+sdms_azure_dotnet_test:
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  stage: build
+  needs: []
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
+      - ${CI_PROJECT_DIR}/xunit/xunit-test-result.xml
+    reports:
+      junit: ${CI_PROJECT_DIR}/xunit/xunit-test-result.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
+  script:
+    - echo ${CI_PROJECT_DIR}
+    - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests
+    - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"xunit;LogFilePath=${CI_PROJECT_DIR}/xunit/xunit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+  only:
+    changes:
+      - app/sdms/src/cloud/providers/azure/sidecar/**/*
+    refs:
+      - branches
+      - merge_requests
+      - tags
 
 sdms_azure_containerize:
   extends: .azure_containerize
   needs:
+    - sdms_azure_dotnet_test
     - sdms_compile-and-unit-test
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
