@@ -21,20 +21,20 @@ sdms_azure_dotnet_test:
   stage: build
   needs: []
   variables:
-    CI_PROJECT_DI: ${CI_PROJECT_DI}
+    CI_PROJECT_DIR: ${CI_PROJECT_DIR}
   artifacts:
     paths:
-      - $CI_PROJECT_DI/cobertura/*/coverage.cobertura.xml
-      - $CI_PROJECT_DI/xunit/xunit-test-result.xml
+      - $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
+      - $CI_PROJECT_DIR/xunit/xunit-test-result.xml
     reports:
-      junit: $CI_PROJECT_DI/xunit/xunit-test-result.xml
+      junit: $CI_PROJECT_DIR/xunit/xunit-test-result.xml
       coverage_report:
         coverage_format: cobertura
-        path: $CI_PROJECT_DI/cobertura/*/coverage.cobertura.xml
+        path: $CI_PROJECT_DIR/cobertura/*/coverage.cobertura.xml
   script:
-    - echo $CI_PROJECT_DI
+    - echo $CI_PROJECT_DIR
     - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests
-    - dotnet test -c Debug --results-directory="$CI_PROJECT_DI/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"xunit;LogFilePath=$CI_PROJECT_DI/xunit/xunit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+    - dotnet test -c Debug --results-directory="$CI_PROJECT_DIR/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:.  --logger:"xunit;LogFilePath=$CI_PROJECT_DIR/xunit/xunit-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
   only:
     changes:
       - app/sdms/src/cloud/providers/azure/sidecar/**/*
