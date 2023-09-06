@@ -86,6 +86,12 @@ router.post('/tenant/:tenantid/subproject/:subprojectid/dataset/:datasetid/size'
         await DatasetHandler.handler(req, res, DatasetOP.ComputeSize);
     });
 
+// retrieve the size of the subfolder/folder/dataset
+router.get('/tenant/:tenantid/subproject/:subprojectid/size',
+    async (req: expRequest, res: expResponse) => {
+        await DatasetHandler.handler(req, res, DatasetOP.GetSize);
+    });
+
 // check the permissions of a user on a dataset
 router.get('/tenant/:tenantid/subproject/:subprojectid/dataset/:datasetid/permission',
     async (req: expRequest, res: expResponse) => {
