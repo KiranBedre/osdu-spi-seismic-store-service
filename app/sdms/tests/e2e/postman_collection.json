@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "4e8191e1-3fec-496c-a9f7-6cfce422eaa2",
+		"_postman_id": "ddd67866-95a0-4244-a1ff-cca6dc0b5f97",
 		"name": "SDMS-E2E ver.M20 - Release 0.23",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "11702291"
+		"_exporter_id": "17166992"
 	},
 	"item": [
 		{
@@ -1707,10 +1707,7 @@
 									"postman.setEnvironmentVariable(\"dsx02\", makeID_dataset(16) + \"_.ds-x\");\r",
 									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
 									"postman.setEnvironmentVariable(\"testPath\", path);\r",
-									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));\r",
-									"\r",
-									"const OriginalFiles = [\"randomfile1.txt\", \"randomfile2.txt\", \"randomfile3.txt\"];\r",
-									"postman.setEnvironmentVariable(\"OriginalFiles\", OriginalFiles);"
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));"
 								],
 								"type": "text/javascript"
 							}
@@ -1741,143 +1738,6 @@
 							],
 							"path": [
 								"svcstatus"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "DATASET REGISTER: Register random txt files in dataset",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 200) {",
-									"console.log(pm.response.text())",
-									"_.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"} else {",
-									"    // Reset environment variables if _.retryOnFailure function was used before",
-									"    var key = request.name + '_counter';",
-									"    pm.environment.unset(key);",
-									"    postman.setEnvironmentVariable('execCounter', 1)",
-									"    //---",
-									"",
-									"    var jsonData = pm.response.json();",
-									"",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
-									"    pm.test(\"Check content type\", function () {",
-									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
-									"    });",
-									"",
-									"    pm.test(\"tenant\", function () {",
-									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
-									"    });",
-									"",
-									"    pm.test(\"subproject\", function () {",
-									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
-									"    });",
-									"",
-									"    pm.test(\"path\", function () {",
-									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
-									"    });",
-									"",
-									"    pm.test(\"ltag\", function () {",
-									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
-									"    });",
-									"",
-									"    pm.test(\"Dates are present\", function () {",
-									"        pm.expect(jsonData.created_date).to.exist;",
-									"        pm.expect(jsonData.last_modified_date).to.exist;",
-									"    });",
-									"",
-									"    pm.test(\"sbit_count\", function () {",
-									"        pm.expect(jsonData.sbit_count).to.eql(1);",
-									"    });",
-									"",
-									"    pm.test(\"Check gtag\", function () {",
-									"        pm.expect(jsonData.gtags.length).to.eql(1);",
-									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
-									"    }); ",
-									"    ",
-									"    let CurrentFiles = pm.environment.get(\"CurrentFiles\");",
-									"    if(CurrentFiles.length > 0) {",
-									"        postman.setNextRequest('DATASET REGISTER: Register random txt files in dataset');",
-									"    }else{",
-									"        pm.environment.unset('CurrentFiles');",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
-									"\r",
-									"if(!CurrentFiles) {\r",
-									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
-									"}\r",
-									"\r",
-									"if(pm.environment.get(\"execCounter\") === '1') {\r",
-									"    let Current = CurrentFiles.pop();\r",
-									"    pm.environment.set(\"randomfile\", Current);\r",
-									"    pm.environment.set(\"CurrentFiles\", CurrentFiles);\r",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
-						},
-						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomfile}}?path={{testPathEncoded}}",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"dataset",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}",
-								"dataset",
-								"{{randomfile}}"
-							],
-							"query": [
-								{
-									"key": "path",
-									"value": "{{testPathEncoded}}"
-								}
 							]
 						}
 					},
@@ -2858,168 +2718,6 @@
 					"response": []
 				},
 				{
-					"name": "DATASET LIST: Files in subproject with search parameter",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"let cloudProvider = pm.environment.get('serviceCloudProvider');",
-									"if (cloudProvider === 'azure') {",
-									"    if (responseCode.code != 200) {",
-									"        console.log(pm.response.text())",
-									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"",
-									"    } else {",
-									"        var jsonData = pm.response.json();",
-									"",
-									"        pm.test(\"Status code is 200\", function () {",
-									"            pm.response.to.have.status(200);",
-									"        });",
-									"",
-									"        pm.test(\"Check content type\", function () {",
-									"            pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
-									"        });",
-									"",
-									"        pm.test('Ensure that item\\'s name starts with \"random-file\"', () => {",
-									"            const responseData = pm.response.json();",
-									"            responseData.forEach(item => {",
-									"            pm.expect(item.name).to.match(/^randomfile/);",
-									"            });",
-									"        });",
-									"",
-									"        // Reset environment variables if _.retryOnFailure function was used before",
-									"        var key = request.name + '_counter';",
-									"        pm.environment.unset(key);",
-									"        postman.setEnvironmentVariable('execCounter', 1)",
-									"    }",
-									"}",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name=randomfile%",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"dataset",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}"
-							],
-							"query": [
-								{
-									"key": "search",
-									"value": "name=randomfile%"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "DATASET LIST: Files in subproject with select parameter",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"let cloudProvider = pm.environment.get('serviceCloudProvider');",
-									"if (cloudProvider === 'azure') {",
-									"    if (responseCode.code != 200) {",
-									"        console.log(pm.response.text())",
-									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"",
-									"    } else {",
-									"        var jsonData = pm.response.json();",
-									"",
-									"        pm.test(\"Status code is 200\", function () {",
-									"            pm.response.to.have.status(200);",
-									"        });",
-									"",
-									"        pm.test(\"Check content type\", function () {",
-									"            pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
-									"        });",
-									"",
-									"        pm.test(\"Name parameter only\", function() {",
-									"            pm.response.json().forEach(function(item) {",
-									"                pm.expect(Object.keys(item)).to.eql([\"name\"]);",
-									"            });",
-									"    });",
-									"",
-									"        // Reset environment variables if _.retryOnFailure function was used before",
-									"        var key = request.name + '_counter';",
-									"        pm.environment.unset(key);",
-									"        postman.setEnvironmentVariable('execCounter', 1)",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[name]",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"dataset",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}"
-							],
-							"query": [
-								{
-									"key": "select",
-									"value": "[name]"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "DATASET DSX01 CHECK CTAG TRUE: Validate ctag to equal true",
 					"event": [
 						{
@@ -3687,7 +3385,7 @@
 									"    });",
 									"",
 									"    pm.test(\"Read Datasets\", function () {",
-									"        pm.expect(jsonData.datasets.length).to.eql(5);",
+									"        pm.expect(jsonData.datasets.length).to.eql(2);",
 									"    });",
 									"",
 									"    pm.test(\"Read Directories\", function () {",
@@ -3953,101 +3651,6 @@
 								"{{subproject}}",
 								"dataset",
 								"{{dsx01}}"
-							],
-							"query": [
-								{
-									"key": "path",
-									"value": "{{testPathEncoded}}"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "DATASET DELETE: Delete random txt files in dataset",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 200) {",
-									"    console.log(pm.response.text())",
-									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"",
-									"} else {",
-									"    // Reset environment variables if _.retryOnFailure function was used before",
-									"    var key = request.name + '_counter';",
-									"    pm.environment.unset(key);",
-									"    postman.setEnvironmentVariable('execCounter', 1)",
-									"    //---",
-									"",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
-									"    let CurrentFiles = pm.environment.get(\"CurrentFiles\");",
-									"    if(CurrentFiles.length > 0) {",
-									"        postman.setNextRequest('DATASET DELETE: Delete random txt files in dataset');",
-									"    }else{",
-									"        pm.environment.unset('CurrentFiles')",
-									"    }",
-									"}",
-									""
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
-									"\r",
-									"if(!CurrentFiles) {\r",
-									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
-									"}\r",
-									"\r",
-									"if(pm.environment.get(\"execCounter\") === '1') {\r",
-									"    let Current = CurrentFiles.pop();\r",
-									"    pm.environment.set(\"randomfile\", Current);\r",
-									"    pm.environment.set(\"CurrentFiles\", CurrentFiles);\r",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomfile}}?path={{testPathEncoded}}",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"dataset",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}",
-								"dataset",
-								"{{randomfile}}"
 							],
 							"query": [
 								{
@@ -4363,6 +3966,2568 @@
 				}
 			],
 			"description": "These tests start by registering two datasets and then perform various actions on them. These actions include using endpoints like REGISTER, GET, LIST, PATCH, DELETE, CTAG CHECK, EXIST, SIZES, READDIR, and PERMISSIONS. These endpoints allow us to retrieve metadata, update information, delete datasets, and perform other functions related to dataset management. By utilizing these different endpoints, we can effectively manage and manipulate our datasets"
+		},
+		{
+			"name": "dataset search",
+			"item": [
+				{
+					"name": "DATASET SEARCH STATUS SET: Create test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('Dataset search variables are initialized for datasets search folder');",
+									"pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"console.log(\"cloud provider:\"+pm.response.headers.get('Service-Provider'));",
+									"if (pm.environment.get('serviceCloudProvider') == 'aws' || pm.environment.get('serviceCloudProvider') == 'anthos') {",
+									"    postman.setNextRequest('DATASET SEARCH STATUS UNSET: Cleanup test environment');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dsx01\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"postman.setEnvironmentVariable(\"dsx02\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));\r",
+									"\r",
+									"const OriginalFiles = [\"randomfile1.txt\", \"randomfile2.txt\", \"randomfile3.txt\"];\r",
+									"postman.setEnvironmentVariable(\"OriginalFiles\", OriginalFiles);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH REGISTER: Register random txt files in dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"console.log(pm.response.text())",
+									"_.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"    //---",
+									"",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    ",
+									"    let CurrentFiles = pm.environment.get(\"CurrentFiles\");",
+									"    if(CurrentFiles.length > 0) {",
+									"        postman.setNextRequest('DATASET SEARCH REGISTER: Register random txt files in dataset');",
+									"    }else{",
+									"        pm.environment.unset('CurrentFiles');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
+									"\r",
+									"if(!CurrentFiles) {\r",
+									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
+									"}\r",
+									"\r",
+									"if(pm.environment.get(\"execCounter\") === '1') {\r",
+									"    let Current = CurrentFiles.pop();\r",
+									"    pm.environment.set(\"randomfile\", Current);\r",
+									"    pm.environment.set(\"CurrentFiles\", CurrentFiles);\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomfile}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{randomfile}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH REGISTER: Register a new dataset dsx01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    ",
+									"    pm.environment.set(\"gcsUrl\",jsonData.gcsurl);",
+									"    pm.environment.set(\"created_date\",jsonData.created_date);",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of random txt files in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"    ",
+									"    pm.test('Ensure that item\\'s name starts with \"randomfile\"', () => {",
+									"        jsonData.forEach(item => {",
+									"            pm.expect(item.name).to.match(/^randomfile/);",
+									"        });",
+									"    });            ",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name=randomfile%",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name=randomfile%"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of tenants for a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"tenant\" value from the response",
+									"        const responseTenant = item.tenant;",
+									"",
+									"        // Compare with the expected tenant value",
+									"        pm.test(`Validating tenant for ${item.tenant}`, () => {",
+									"            pm.expect(responseTenant).to.eql(pm.environment.get(\"tenant\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=tenant={{tenant}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "tenant={{tenant}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of subproject in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"subproject\" value from the response",
+									"        const responseSubproject = item.subproject;",
+									"",
+									"        // Compare with the expected subproject value",
+									"        pm.test(`Validating subproject for ${item.subproject}`, () => {",
+									"            pm.expect(responseSubproject).to.eql(pm.environment.get(\"subproject\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=subproject={{subproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "subproject={{subproject}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of datasets name in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"Dataset\" value from the response",
+									"        const responseDataset = item.name;",
+									"",
+									"        // Compare with the expected dataset value",
+									"        pm.test(`Validating Dataset for ${item.name}`, () => {",
+									"            pm.expect(responseDataset).to.eql(pm.environment.get(\"dsx01\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name={{dsx01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "name={{dsx01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of legaltags in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"ltag\" value from the response",
+									"        const responseLtag = item.ltag;",
+									"",
+									"        // Compare with the expected ltag value",
+									"        pm.test(`Validating ltag for ${item.ltag}`, () => {",
+									"            pm.expect(responseLtag).to.eql(pm.environment.get(\"legaltag01\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=ltag={{legaltag01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "ltag={{legaltag01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of createdDate in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"created_date\" value from the response",
+									"        const responseCreatedDate = item.created_date;",
+									"",
+									"        // Compare with the expected created_date value",
+									"        pm.test(`Validating created_date for ${item.created_date}`, () => {",
+									"            pm.expect(responseCreatedDate).to.eql(pm.environment.get(\"created_date\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=created_date={{created_date}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "created_date={{created_date}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of paths in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"path\" value from the response",
+									"        const responsePath = item.path;",
+									"",
+									"        // Compare with the expected path value",
+									"        pm.test(`Validating path for ${item.path}`, () => {",
+									"            pm.expect(responsePath).to.eql(pm.environment.get(\"testPath\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=path={{testPath}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "path={{testPath}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of owners of subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"created_by\" value from the response",
+									"        const responseOwner = item.created_by;",
+									"",
+									"        // Compare with the expected created_by value",
+									"        pm.test(`Validating created_by for ${item.created_by}`, () => {",
+									"            pm.expect(responseOwner).to.eql(pm.environment.get(\"adminEmail\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=created_by={{adminEmail}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "created_by={{adminEmail}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH LIST: Get list of gcsurl in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Loop through each item in the response",
+									"    for (const item of jsonData) {",
+									"        // Get the \"gcsurl\" value from the response",
+									"        const responseGcsurl = item.gcsurl;",
+									"",
+									"        // Compare with the expected gcsurl value",
+									"        pm.test(`Validating gcsurl for ${item.gcsurl}`, () => {",
+									"            pm.expect(responseGcsurl).to.eql(pm.environment.get(\"gcsUrl\"));",
+									"        });",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=gcsurl={{gcsUrl}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "gcsurl={{gcsUrl}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH DELETE: Delete a dataset dsx01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH DELETE: Delete random txt files in dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"    //---",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    let CurrentFiles = pm.environment.get(\"CurrentFiles\");",
+									"    if(CurrentFiles.length > 0) {",
+									"        postman.setNextRequest('DATASET SEARCH DELETE: Delete random txt files in dataset');",
+									"    }else{",
+									"        pm.environment.unset('CurrentFiles')",
+									"    }",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let CurrentFiles = pm.environment.get(\"CurrentFiles\");\r",
+									"\r",
+									"if(!CurrentFiles) {\r",
+									"    CurrentFiles = pm.environment.get(\"OriginalFiles\").split(',');\r",
+									"}\r",
+									"\r",
+									"if(pm.environment.get(\"execCounter\") === '1') {\r",
+									"    let Current = CurrentFiles.pop();\r",
+									"    pm.environment.set(\"randomfile\", Current);\r",
+									"    pm.environment.set(\"CurrentFiles\", CurrentFiles);\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{randomfile}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{randomfile}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SEARCH STATUS UNSET: Cleanup test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.unset('dsx01')",
+									"pm.environment.unset('dsx02')",
+									"pm.environment.unset('testPath')",
+									"pm.environment.unset('testPathEncoded')",
+									"pm.environment.unset('sbit')",
+									"pm.environment.unset('ctag')",
+									"pm.environment.unset('OriginalFiles')",
+									"pm.environment.unset('CurrentlFiles')",
+									"pm.environment.unset('randomfile')",
+									"pm.environment.unset('gcsUrl')",
+									"pm.environment.unset('created_date')",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"console.log('Dataset search variables were removed for datasets search folder');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "dataset select",
+			"item": [
+				{
+					"name": "DATASET SELECT STATUS SET: Create test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('Dataset select variables are initialized for datasets select folder');",
+									"pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"if (pm.environment.get('serviceCloudProvider') == 'aws' || pm.environment.get('serviceCloudProvider') == 'anthos') {",
+									"    postman.setNextRequest('DATASET SELECT STATUS UNSET: Cleanup test environment');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of datasets in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Initialize arrays to store values",
+									"    var nameArray = [];",
+									"    var tenantArray = [];",
+									"    var subprojectArray = [];",
+									"    var pathArray = [];",
+									"    var ltagArray = [];",
+									"    var created_byArray = [];",
+									"    var last_modified_dateArray = [];",
+									"    var created_dateArray = [];",
+									"    var gtagsArray = [];",
+									"    var gcsurlArray = [];",
+									"    var ctagArray = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        nameArray.push(jsonData[i].name);",
+									"        tenantArray.push(jsonData[i].tenant);",
+									"        subprojectArray.push(jsonData[i].subproject);",
+									"        pathArray.push(jsonData[i].path);",
+									"        ltagArray.push(jsonData[i].ltag);",
+									"        created_byArray.push(jsonData[i].created_by);",
+									"        last_modified_dateArray.push(jsonData[i].last_modified_date);",
+									"        created_dateArray.push(jsonData[i].created_date);",
+									"        gtagsArray.push(jsonData[i].gtags);",
+									"        gcsurlArray.push(jsonData[i].gcsurl);",
+									"        ctagArray.push(jsonData[i].ctag);",
+									"    }",
+									"",
+									"    // Store the arrays in environment variables",
+									"    pm.environment.set(\"nameArray\", JSON.stringify(nameArray));",
+									"    pm.environment.set(\"tenantArray\", JSON.stringify(tenantArray));",
+									"    pm.environment.set(\"subprojectArray\", JSON.stringify(subprojectArray));",
+									"    pm.environment.set(\"pathArray\", JSON.stringify(pathArray));",
+									"    pm.environment.set(\"ltagArray\", JSON.stringify(ltagArray));",
+									"    pm.environment.set(\"created_byArray\", JSON.stringify(created_byArray));",
+									"    pm.environment.set(\"last_modified_dateArray\", JSON.stringify(last_modified_dateArray));",
+									"    pm.environment.set(\"created_dateArray\", JSON.stringify(created_dateArray));",
+									"    pm.environment.set(\"gtagsArray\", JSON.stringify(gtagsArray));",
+									"    pm.environment.set(\"gcsurlArray\", JSON.stringify(gcsurlArray));",
+									"    pm.environment.set(\"ctagArray\", JSON.stringify(ctagArray));",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of tenant names in subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Initialize array to store values",
+									"    var tenantArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        tenantArrayCurrent.push(jsonData[i].tenant);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"tenantArrayCurrent\", JSON.stringify(tenantArrayCurrent));",
+									"  ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"tenantArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"tenantArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Tenant arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[tenant]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[tenant]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of subproject names in subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Initialize array to store values",
+									"    var subprojectArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        subprojectArrayCurrent.push(jsonData[i].subproject);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"subprojectArrayCurrent\", JSON.stringify(subprojectArrayCurrent));",
+									"",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"subprojectArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"subprojectArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Subproject arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[subproject]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[subproject]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of dataset names in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Initialize array to store values",
+									"    var nameArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        nameArrayCurrent.push(jsonData[i].name);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"nameArrayCurrent\", JSON.stringify(nameArrayCurrent));",
+									" ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"nameArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"nameArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Name arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[name]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[name]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of path in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"    ",
+									"    // Initialize array to store values",
+									"    var pathArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        pathArrayCurrent.push(jsonData[i].path);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"pathArrayCurrent\", JSON.stringify(pathArrayCurrent));",
+									"   ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"pathArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"pathArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Path arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[path]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[path]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of ltag in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"    ",
+									"    // Initialize array to store values",
+									"    var ltagArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        ltagArrayCurrent.push(jsonData[i].ltag);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"ltagArrayCurrent\", JSON.stringify(ltagArrayCurrent));",
+									"   ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"ltagArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"ltagArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Ltag arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[ltag]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[ltag]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of owners in subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"    ",
+									"    // Initialize array to store values",
+									"    var created_byArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        created_byArrayCurrent.push(jsonData[i].created_by);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"created_byArrayCurrent\", JSON.stringify(created_byArrayCurrent));",
+									"   ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"created_byArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"created_byArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Created_by arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[created_by]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[created_by]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of last modified dates in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"    ",
+									"    // Initialize array to store values",
+									"    var last_modified_dateArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        last_modified_dateArrayCurrent.push(jsonData[i].last_modified_date);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"last_modified_dateArrayCurrent\", JSON.stringify(last_modified_dateArrayCurrent));",
+									"  ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"last_modified_dateArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"last_modified_dateArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Last_modified_date arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[last_modified_date]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[last_modified_date]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of created dates in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"    ",
+									"    // Initialize array to store values",
+									"    var created_dateArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        created_dateArrayCurrent.push(jsonData[i].created_date);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"created_dateArrayCurrent\", JSON.stringify(created_dateArrayCurrent));",
+									"  ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"created_dateArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"created_dateArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Created_date Arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[created_date]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[created_date]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of gtags in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Initialize the new array",
+									"    var gtagsArrayCurrent = [];",
+									"",
+									"    // Iterate through the responseArray",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        var tags = jsonData[i].gtags;",
+									"        ",
+									"        if (tags.length > 1) {",
+									"            gtagsArrayCurrent.push(tags);",
+									"        } else {",
+									"            gtagsArrayCurrent.push([tags[0]]);",
+									"        }",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"gtagsArrayCurrent\", JSON.stringify(gtagsArrayCurrent));",
+									"  ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"gtagsArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"gtagsArrayCurrent\"));",
+									"",
+									"    // Initialize a new array to store values without null",
+									"    var newArray = [];",
+									"",
+									"    // Iterate through the inputArray and exclude null values",
+									"    for (var i = 0; i < expectedArray.length; i++) {",
+									"        if (expectedArray[i] !== null) {",
+									"            newArray.push(expectedArray[i]);",
+									"        }",
+									"    }",
+									"    ",
+									"    // Compare the arrays",
+									"    pm.test(\"gtags arrays are equal\", function() {",
+									"        pm.expect(newArray).to.deep.equal(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[gtags]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[gtags]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of gcsurl in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Initialize array to store values",
+									"    var gcsurlArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        gcsurlArrayCurrent.push(jsonData[i].gcsurl);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"gcsurlArrayCurrent\", JSON.stringify(gcsurlArrayCurrent));",
+									"",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"gcsurlArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"gcsurlArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Gcsurl arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[gcsurl]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[gcsurl]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT LIST: Get list of ctags in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    // Initialize array to store values",
+									"    var ctagArrayCurrent = [];",
+									"",
+									"    // Loop through each item in the response",
+									"    for (var i = 0; i < jsonData.length; i++) {",
+									"        ctagArrayCurrent.push(jsonData[i].ctag);",
+									"    }",
+									"",
+									"    // Store the array in environment variable",
+									"    pm.environment.set(\"ctagArrayCurrent\", JSON.stringify(ctagArrayCurrent));",
+									"   ",
+									"    // Convert the environment variables containing arrays into actual arrays",
+									"    var expectedArray = JSON.parse(pm.environment.get(\"ctagArray\"));",
+									"    var actualArray = JSON.parse(pm.environment.get(\"ctagArrayCurrent\"));",
+									"",
+									"    // Compare the arrays",
+									"    pm.test(\"Ctag arrays are equal\", function() {",
+									"        pm.expect(expectedArray).to.eql(actualArray);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?select=[ctag]",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							],
+							"query": [
+								{
+									"key": "select",
+									"value": "[ctag]"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET SELECT STATUS UNSET: Cleanup test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.unset('nameArray')",
+									"pm.environment.unset('tenantArray')",
+									"pm.environment.unset('subprojectArray')",
+									"pm.environment.unset('pathArray')",
+									"pm.environment.unset('ltagArray')",
+									"pm.environment.unset('created_byArray')",
+									"pm.environment.unset('last_modified_dateArray')",
+									"pm.environment.unset('created_dateArray')",
+									"pm.environment.unset('gtagsArray')",
+									"pm.environment.unset('gcsurlArray')",
+									"pm.environment.unset('ctagArray')",
+									"pm.environment.unset('tenantArrayCurrent')",
+									"pm.environment.unset('subprojectArrayCurrent')",
+									"pm.environment.unset('nameArrayCurrent')",
+									"pm.environment.unset('pathArrayCurrent')",
+									"pm.environment.unset('ltagArrayCurrent')",
+									"pm.environment.unset('created_byArrayCurrent')",
+									"pm.environment.unset('last_modified_dateArrayCurrent')",
+									"pm.environment.unset('created_dateArrayCurrent')",
+									"pm.environment.unset('gtagsArrayCurrent')",
+									"pm.environment.unset('gcsurlArrayCurrent')",
+									"pm.environment.unset('ctagArrayCurrent')",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"console.log('Dataset select variables were removed for datasets search folder');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		},
 		{
 			"name": "dataset ls pagination",
