@@ -39,14 +39,14 @@ public class RedisConnectionFactory : IRedisConnectionFactory
     }
 
     public IRedisHandler GetRedisForQueue() => FromConfig(
-            _locksOpts.RedisLocksHostname,
-            _locksOpts.RedisLocksPort,
-            _locksOpts.RedisLocksPassword);
-
-    public IRedisHandler GetRedisForLocks() => FromConfig(
             _queueOpts.RedisQueueHostname,
             _queueOpts.RedisQueuePort,
             _queueOpts.RedisQueuePassword);
+
+    public IRedisHandler GetRedisForLocks() => FromConfig(
+            _locksOpts.RedisLocksHostname,
+            _locksOpts.RedisLocksPort,
+            _locksOpts.RedisLocksPassword);
 
     private IRedisHandler FromConfig(string hostname, string port, string password)
     {
