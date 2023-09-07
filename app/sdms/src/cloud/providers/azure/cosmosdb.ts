@@ -33,7 +33,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     public KEY = Symbol('id');
     private dataPartition: string;
     private static containerCache: { [key: string]: Container; } = {};
-    private static axiosInstance: AxiosInstance;
+    public static axiosInstance: AxiosInstance;
 
     public async getCosmoContainer(): Promise<Container> {
 
@@ -59,10 +59,10 @@ export class AzureCosmosDbDAO extends AbstractJournal {
 
     }
 
-    public constructor(tenant: TenantModel, axiosInstance?: AxiosInstance) {
+    public constructor(tenant: TenantModel) {
         super();
         this.dataPartition = tenant.esd.indexOf('.') !== -1 ? tenant.esd.split('.')[0] : tenant.esd;
-        AzureCosmosDbDAO.axiosInstance = axiosInstance ?? axios.create({
+        AzureCosmosDbDAO.axiosInstance = axios.create({
             httpsAgent: require('https').Agent({
                 rejectUnauthorized: false
             })

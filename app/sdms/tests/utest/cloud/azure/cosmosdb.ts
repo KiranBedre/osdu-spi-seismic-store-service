@@ -34,6 +34,7 @@ export class TestAzureCosmosDbDAO {
     private static query: AzureCosmosDbQuery;
     private static axiosInstance: AxiosInstance;
     private static buffer: Buffer;
+    private static tmpAxios: AxiosInstance;
 
     public static run() {
 
@@ -42,7 +43,7 @@ export class TestAzureCosmosDbDAO {
             this.sandbox = sinon.createSandbox();
             // axiosInstance needs to have any kind or "post" method to make it stubbable in the tests
             this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
-            this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' }, this.axiosInstance);
+            this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' });
             this.query = new AzureCosmosDbQuery('name-a', 'kind-a');
 
             const datasetModel: DatasetModel = {
@@ -85,12 +86,20 @@ export class TestAzureCosmosDbDAO {
                     return iJournalQueryModel;
                 }
             };
+
             beforeEach(() => {
                 this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
                     new Container(undefined, 'id', undefined));
+
+                // replace axiosInstance to our stub. Unfortunately, we can't do this with sandbox methods.
+                this.tmpAxios = AzureCosmosDbDAO.axiosInstance;
+                AzureCosmosDbDAO.axiosInstance = this.axiosInstance;
+
+                this.sandbox.replace(AzureCosmosDbDAO, 'axiosInstance', this.axiosInstance);
             })
 
             afterEach(() => {
+                AzureCosmosDbDAO.axiosInstance = this.tmpAxios;  // restore Axios instance
                 this.sandbox.restore();
             });
 
@@ -474,10 +483,13 @@ export class TestAzureCosmosDbDAO {
             limit: 1,
             cursor: "cursor"
         }
+
         Tx.sectionInit('listDatasets');
+
         let query =  'SELECT * FROM c WHERE c.data.subproject = "' + subproject +
             '" AND c.data.path = "' + path + '"'
         let queryIterator: QueryIterator<any> = this.getQueryIterator() as any;
+
         Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
