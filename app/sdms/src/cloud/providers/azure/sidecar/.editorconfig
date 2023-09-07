@@ -1,0 +1,71 @@
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+
+[*.cs]
+# Sample how to change certain rules.
+# Possible options: error, warning, suggestion, silent, none, default
+#dotnet_diagnostic.IDE0060.severity = suggestion # Remove unused parameter
+
+# CA1848: LoggerMessage delegates
+dotnet_diagnostic.CA1848.severity = none
+
+# IDE005: Unused refs check
+dotnet_diagnostic.IDE0005.severity = error
+
+# S3925: Implement ISerializable in exceptions
+dotnet_diagnostic.S3925.severity = suggestion
+
+# IDE0045: 'if' statement can be simplified
+dotnet_diagnostic.IDE0045.severity = suggestion
+
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+
+csharp_using_directive_placement = inside_namespace
+csharp_style_namespace_declarations = file_scoped
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true
+csharp_style_var_elsewhere = true
+dotnet_style_prefer_conditional_expression_over_return = false
+csharp_qualified_using_at_nested_scope = true
+csharp_style_expression_bodied_methods = true
+
+# Public fields are capitalized
+dotnet_naming_symbols.public_symbols.applicable_kinds           = property,method,field,event,delegate
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public
+dotnet_naming_symbols.public_symbols.required_modifiers         = readonly
+
+dotnet_naming_style.first_word_upper_case_style.capitalization = first_word_upper
+
+dotnet_naming_rule.public_members_must_be_capitalized.symbols  = public_symbols
+dotnet_naming_rule.public_members_must_be_capitalized.style    = first_word_upper_case_style
+dotnet_naming_rule.public_members_must_be_capitalized.severity = suggestion
+
+# Private class members have underscore prefix
+
+dotnet_naming_rule.private_members_with_underscore.symbols  = private_fields
+dotnet_naming_rule.private_members_with_underscore.style    = prefix_underscore
+dotnet_naming_rule.private_members_with_underscore.severity = suggestion
+
+dotnet_naming_symbols.private_fields.applicable_kinds           = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
+
+# Constants are UPPERCASE
+
+dotnet_naming_rule.constants_should_be_upper_case.symbols = constants
+dotnet_naming_rule.constants_should_be_upper_case.style = constant_style
+dotnet_naming_rule.constants_should_be_upper_case.severity = suggestion
+
+dotnet_naming_symbols.constants.applicable_kinds = field, local
+dotnet_naming_symbols.constants.required_modifiers = const
+
+dotnet_naming_style.constant_style.capitalization = all_upper
+
+[/test/**.cs]
+# IDE0051: Unused methods check
+dotnet_diagnostic.IDE0051.severity = none

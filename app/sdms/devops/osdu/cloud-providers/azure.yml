@@ -4,6 +4,7 @@ variables:
   NAMESPACE: ddms-seismic
   SDMS_SERVICE_NAME: seismic-ddms
   SDMS_SIDECAR_NAME: seismic-ddms-sidecar
+  SDMS_DELETION_SERVICE_NAME: seismic-ddms-deletion-service
   AZURE_SDMS_PREFIX: /seistore-svc/api/v3
   E2E_SUBPROJECT: demosandbox08
   E2E_ADMIN_EMAIL: $AZURE_AD_USER_EMAIL
@@ -15,20 +16,49 @@ variables:
   E2E_HOSTNAME: https://$AZURE_DNS_NAME
   E2E_ENTITLEMENTS_USER: $INTEGRATION_TESTER
 
-
+sdms_azure_dotnet_ci:
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  stage: build
+  needs: []
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
+      - ${CI_PROJECT_DIR}/junit/*-test-result.xml
+    reports:
+      junit: ${CI_PROJECT_DIR}/junit/*-test-result.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
+  script:
+    - cd app/${SDMS_SERVICE}/src/cloud/providers/azure/sidecar
+    - dotnet format --severity warn --verify-no-changes
+    - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=${CI_PROJECT_DIR}/junit/{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+  only:
+    changes:
+      - app/sdms/src/cloud/providers/azure/sidecar/**/*
+      - app/sdms/devops/osdu/cloud-providers/azure.yml
+    refs:
+      - branches
+      - merge_requests
+      - tags
 
 sdms_azure_containerize:
   extends: .azure_containerize
   needs:
+    - sdms_azure_dotnet_ci
     - sdms_compile-and-unit-test
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
     SHA_SIDECAR_IMAGE: ${SDMS_SIDECAR_NAME}:${CI_COMMIT_SHA}
+    SHA_DELETION_SERVICE_IMAGE: ${SDMS_DELETION_SERVICE_NAME}:${CI_COMMIT_SHA}
     SDMS_SIDECAR_IMAGE: $SDMS_SIDECAR_NAME
+    SDMS_DELETION_SERVICE_IMAGE: $SDMS_DELETION_SERVICE_NAME
     LATEST_IMAGE: ${SDMS_SERVICE_NAME}:latest
     LATEST_SIDECAR_IMAGE: ${SDMS_SIDECAR_NAME}:latest
+    LATEST_DELETION_SERVICE_IMAGE: ${SDMS_DELETION_SERVICE_NAME}:latest
     RELEASE_IMAGE: release-${CI_COMMIT_TAG}:${SDMS_SERVICE_NAME}-${CI_COMMIT_TAG}
     RELEASE_SIDECAR_IMAGE: release-${CI_COMMIT_TAG}:${SDMS_SIDECAR_NAME}-${CI_COMMIT_TAG}
+    RELEASE_DELETION_SERVICE_IMAGE: release-${CI_COMMIT_TAG}:${SDMS_DELETION_SERVICE_NAME}-${CI_COMMIT_TAG}
   script:
     - cd app/$SDMS_SERVICE
     - sed -i "/anthos/d" src/cloud/providers/index.ts
@@ -56,10 +86,11 @@ sdms_azure_containerize:
     # Runtime image
     - docker build -t $SDMS_UTEST_RUNTIME_IMAGE --file devops/azure/runtime.Dockerfile .
     # Sidecar image
-    - cd src/cloud/providers/azure/sidecar
-    - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_SIDECAR_IMAGE .
+    - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_SIDECAR_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.QueryRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
+    # Deletion service image
+    - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_DELETION_SERVICE_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.DeleteOperationRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
+
     # Gitlab Container Registry
-    - cd ../../../../..
     # Runtime image
     - docker tag $SDMS_UTEST_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE
     - docker push ${CI_REGISTRY_IMAGE}/$SHA_IMAGE
@@ -72,6 +103,12 @@ sdms_azure_containerize:
     - docker push ${CI_REGISTRY_IMAGE}/$SHA_SIDECAR_IMAGE
     - docker tag $CI_REGISTRY_IMAGE/$SHA_SIDECAR_IMAGE $CI_REGISTRY_IMAGE/$LATEST_SIDECAR_IMAGE
     - docker push ${CI_REGISTRY_IMAGE}/$LATEST_SIDECAR_IMAGE
+    # Deletion service image
+    - docker tag $SDMS_DELETION_SERVICE_IMAGE $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE
+    - docker push ${CI_REGISTRY_IMAGE}/$SHA_DELETION_SERVICE_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE $CI_REGISTRY_IMAGE/$LATEST_DELETION_SERVICE_IMAGE
+    - docker push ${CI_REGISTRY_IMAGE}/$LATEST_DELETION_SERVICE_IMAGE
+
     # Azure Container Registry
     # Runtime image
     - az acr login -n $AZURE_REGISTRY
@@ -95,6 +132,18 @@ sdms_azure_containerize:
         docker tag $CI_REGISTRY_IMAGE/$SHA_SIDECAR_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_SIDECAR_IMAGE
         docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_SIDECAR_IMAGE
       fi
+    # Deletion service image
+    - az acr login -n $AZURE_REGISTRY
+    - docker tag $SDMS_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE
+    - docker push ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$LATEST_DELETION_SERVICE_IMAGE
+    - docker push ${AZURE_REGISTRY}.azurecr.io/$LATEST_DELETION_SERVICE_IMAGE
+    - |
+      if [ ! -z "$CI_COMMIT_TAG" ]; then
+        docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_DELETION_SERVICE_IMAGE
+        docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_DELETION_SERVICE_IMAGE
+      fi
+
   only:
     changes:
       - devops/**/*
@@ -304,5 +353,6 @@ sdms_azure_publish:
   script:
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/$SDMS_SERVICE:${AZ_VER}
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_SIDECAR_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_SIDECAR_NAME}:${AZ_VER}
+   - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_DELETION_SERVICE_NAME}:${AZ_VER}
    - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
 

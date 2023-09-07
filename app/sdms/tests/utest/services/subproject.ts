@@ -24,11 +24,13 @@ import { DatasetDAO } from '../../../src/services/dataset';
 import { SubProjectDAO, SubprojectGroups, SubProjectModel } from '../../../src/services/subproject';
 import { SubProjectHandler } from '../../../src/services/subproject/handler';
 import { SubProjectOP } from '../../../src/services/subproject/optype';
+import { DeleteJobRedisStore } from '../../../src/services/subproject/redis';
 import { TenantAuth, TenantDAO, TenantModel } from '../../../src/services/tenant';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
 
 import sinon from 'sinon';
+import { v4 as uuidv4 } from 'uuid';
 
 export class TestSubProjectSVC {
 
@@ -94,6 +96,8 @@ export class TestSubProjectSVC {
             this.list();
             this.others();
             this.delete();
+            this.bulkDelete();
+            this.bulkDeleteStatus();
 
         });
 
@@ -303,6 +307,95 @@ export class TestSubProjectSVC {
 
         });
 
+    }
+
+    private static bulkDelete() {
+
+        Tx.sectionInit('bulkDelete');
+        
+        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+            try {
+                Config.CLOUDPROVIDER = 'azure';
+                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+                this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
+                this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+                this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+                this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').resolves();
+
+                await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDelete);
+                Tx.check202(expRes.statusCode, done);
+            } catch (e) {
+                done(e);
+            }
+        });
+
+        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+            try {
+                Config.CLOUDPROVIDER = 'azure';
+                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+                this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
+                this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+                this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+                this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').throws();
+                await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDelete);
+                Tx.check500(expRes.statusCode, done);
+            } catch (e) {
+                done(e);
+            }
+        });
+    }
+
+    private static bulkDeleteStatus() {
+
+        Tx.sectionInit('bulkDeleteStatus');
+        
+        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+            expReq.query.operationid = 'operationId';
+            
+            const operationStatus = {
+                operation_id: uuidv4(),
+                created_at: "string",
+                created_by: "string",
+                last_updated_at: "string",
+                status: "string",
+                dataset_cnt: 1000,
+                deleted_cnt: 10,
+                failed_cnt: 1
+            }
+
+            try {
+                Config.CLOUDPROVIDER = 'azure';
+                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+                this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
+                this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+                this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+                this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(operationStatus);
+                
+                await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDeleteStatus);
+                Tx.check200(expRes.statusCode, done);
+            } catch (e) {
+                done(e);
+            }
+        });
+
+        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+            
+            expReq.query.operationid = 'operationId';
+
+            try {
+                Config.CLOUDPROVIDER = 'azure';
+                this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+                this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
+                this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+                this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+                this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(undefined);
+                
+                await SubProjectHandler.handler(expReq, expRes, SubProjectOP.BulkDeleteStatus);
+                Tx.check404(expRes.statusCode, done);
+            } catch (e) {
+                done(e);
+            }
+        });
     }
 
 }
