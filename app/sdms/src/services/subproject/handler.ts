@@ -267,7 +267,7 @@ export class SubProjectHandler {
 
     }
 
-    // trigger bulk delete operation for datasets in a given path within the subproject
+    // trigger bulk delete operation for datasets with a given path within the subproject
     private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationModel> {
 
         if (Config.CLOUDPROVIDER !== 'azure') {
