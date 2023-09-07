@@ -36,8 +36,8 @@ sdms_azure_dotnet_ci:
     - dotnet format --severity warn --verify-no-changes
     - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=${CI_PROJECT_DIR}/junit/{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
     # generate coverage summary and print to stdout:
-    - dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.1.25
-    - reportgenerator "-reports:${CI_PROJECT_DIR}/cobertura/**/coverage.cobertura.xml" "-targetdir:${CI_PROJECT_DIR}/cobertura" -reporttypes:TextSummary
+    - dotnet tool install dotnet-reportgenerator-globaltool --version 5.1.25 --tool-path ./tools
+    - ./tools/reportgenerator "-reports:${CI_PROJECT_DIR}/cobertura/**/coverage.cobertura.xml" "-targetdir:${CI_PROJECT_DIR}/cobertura" -reporttypes:TextSummary
     - cat "${CI_PROJECT_DIR}/cobertura/Summary.txt"
   only:
     changes:
