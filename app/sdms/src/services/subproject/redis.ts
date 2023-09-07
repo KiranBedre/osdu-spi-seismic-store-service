@@ -19,14 +19,13 @@ import { Config } from '../../cloud';
 import { IDeleteOperationQueueTaskModel, IDeleteOperationStatusModel } from './model';
 
 
-const defaultOperationStatus = "NotStarted";
+const defaultOperationStatus = 'NotStarted';
 
 export class DeleteJobRedisStore {
 
     private static redisClient: Redis.Redis;
 
     public static async init(cacheParams: { ADDRESS: string, PORT: number, KEY?: string, DISABLE_TLS?: boolean; }) {
-        
         if (Config.UTEST) {
             const redis = require('ioredis-mock');
             this.redisClient = new redis();
@@ -38,7 +37,7 @@ export class DeleteJobRedisStore {
             port: cacheParams.PORT,
             connectionName: 'sdms-bulk-delete'
         };
-    
+
         if (cacheParams.KEY) {
             redisOptions.password = cacheParams.KEY;
             if (!cacheParams.DISABLE_TLS) {
@@ -50,11 +49,11 @@ export class DeleteJobRedisStore {
     }
 
     private static getDeleteOperationKey(operationId: string) {
-        return Config.REDIS_DELETION_QUEUE + ":" + operationId;
+        return Config.REDIS_DELETION_QUEUE + ':' + operationId;
     }
 
     private static getDeleteOperationStatusKey(operationId: string) {
-        return Config.REDIS_DELETION_QUEUE + ":status:" + operationId;
+        return Config.REDIS_DELETION_QUEUE + ':status:' + operationId;
     }
 
     public static async pushOperation(operation: IDeleteOperationQueueTaskModel) {

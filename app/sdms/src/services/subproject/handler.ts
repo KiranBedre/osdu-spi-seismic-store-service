@@ -267,9 +267,9 @@ export class SubProjectHandler {
 
     }
 
-    // trigger bulk delete operation for datasets in a given path within the subproject 
+    // trigger bulk delete operation for datasets in a given path within the subproject
     private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationModel> {
-        
+
         if (Config.CLOUDPROVIDER !== 'azure') {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
@@ -288,8 +288,8 @@ export class SubProjectHandler {
             operation_id: operationId,
             tenant: tenant.name,
             subproject: subprojectName,
-            path: path
-        }
+            path: path,
+        };
 
         await DeleteJobRedisStore.pushOperation(operation);
 

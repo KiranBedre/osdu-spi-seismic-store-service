@@ -111,7 +111,7 @@ export class AzureConfig extends Config {
                 process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE === 'true';  // enabled by default
 
             // redis deletion queue
-            AzureConfig.REDIS_DELETION_QUEUE = process.env.REDIS_DELETION_QUEUE || 
+            AzureConfig.REDIS_DELETION_QUEUE = process.env.REDIS_DELETION_QUEUE ||
                 AzureConfig.REDIS_DELETION_QUEUE;
 
             // set the auth provider
