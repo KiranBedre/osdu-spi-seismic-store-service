@@ -45,8 +45,9 @@ sdms_azure_dotnet_ci:
 sdms_azure_containerize:
   extends: .azure_containerize
   needs:
-    - sdms_azure_dotnet_ci
-    - sdms_compile-and-unit-test
+    - job: sdms_azure_dotnet_ci
+      optional: true
+    - job: sdms_compile-and-unit-test
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
     SHA_SIDECAR_IMAGE: ${SDMS_SIDECAR_NAME}:${CI_COMMIT_SHA}
