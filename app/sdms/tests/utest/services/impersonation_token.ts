@@ -57,7 +57,7 @@ export class TestImpersonationTokenSVC {
 
         Tx.sectionInit('generate');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.headers['user-token'] = this.userAuthExp0;
             expReq.body.token = this.userAuthExp;
             expReq.body.resources = this.resources;
@@ -68,7 +68,6 @@ export class TestImpersonationTokenSVC {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             await ImpersonationTokenHandler.handler(expReq, expRes, ImpersonationTokenOps.Generate);
-            done();
         });
 
     }

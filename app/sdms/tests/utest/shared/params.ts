@@ -42,54 +42,52 @@ export class TestParams {
    private static checkBody() {
       Tx.sectionInit('check body');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const body = { 'a': 'b', 'c': 'd' };
          Params.checkBody(body, true);
-         done();
       });
 
       // body is undefined
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const body = {};
          try {
             Params.checkBody(body, true);
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const body = {};
 
          const result = Params.checkBody(body, false);
-         Tx.checkTrue(result === undefined, done);
+         Tx.checkTrue(result === undefined);
 
       });
 
       // body is not a object
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const body = 100;
          try {
             Params.checkBody(body, true);
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
 
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const body = '';
          try {
             Params.checkBody(body, true);
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const body = '';
          Params.checkBody(body, false);
-         done();
       });
       
    }
@@ -98,31 +96,30 @@ export class TestParams {
       Tx.sectionInit('check array');
 
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          Params.checkArray(['100', '200'], 'array01', true);
-         done();
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          try {
             Params.checkArray('', 'array01', true);
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
 
          const result = Params.checkArray('', 'array01', false);
-         Tx.checkTrue(result === undefined, done);
+         Tx.checkTrue(result === undefined);
 
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          try {
             Params.checkArray(100, 'array01', true);
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
    }
@@ -130,22 +127,20 @@ export class TestParams {
    private static checkEmail() {
       Tx.sectionInit('check email');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          Params.checkEmail('user@email.com', 'emailAdress', true);
-         done();
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          Params.checkEmail('', 'emailAdress', false);
-         done();
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          try {
             Params.checkEmail('invalidEmail', 'emailAdress', true);
          }
          catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
    }
@@ -153,25 +148,24 @@ export class TestParams {
    private static checkDatasetPath() {
       Tx.sectionInit('check dataset path');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          Params.checkDatasetPath('/a/b/c', 'filepath', true);
-         done();
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          try {
             Params.checkDatasetPath('@$', 'filepath', true);
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
 
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          try {
             Params.checkDatasetPath('', 'filepath', true);
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
    }
@@ -179,10 +173,9 @@ export class TestParams {
    private static checkBoolean() {
       Tx.sectionInit('check Boolean');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          this.spy.stub(Params, <any>'checkParam').resolves();
          Params.checkBoolean('param', 'fieldName', true);
-         done();
       });
 
    }

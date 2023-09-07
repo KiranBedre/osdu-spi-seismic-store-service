@@ -78,11 +78,10 @@ export class TestSvcApp {
 		const tenant = { name: 'tenant', esd: 'esd', gcpid: 'google_project' } as TenantModel;
 		const application = { email: 'email', trusted: true } as IAppModel;
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(this.journal);
 			this.journal.save.resolves({} as never);
 			await AppsDAO.register(tenant, application);
-			done();
 		});
 	}
 
@@ -90,11 +89,10 @@ export class TestSvcApp {
 		Tx.sectionInit('get');
 		const tenant = { name: 'tenant', esd: 'esd', gcpid: 'google_project' } as TenantModel;
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(this.journal);
 			this.journal.get.resolves({ email: 'app@email', trusted: true });
 			await AppsDAO.get(tenant, 'app@email');
-			done();
 		});
 	}
 
@@ -102,7 +100,7 @@ export class TestSvcApp {
 		Tx.sectionInit('list');
 		const tenant = { name: 'tenant', esd: 'esd', gcpid: 'google_project' } as TenantModel;
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(this.journal);
 
 			const returnValue = [
@@ -112,7 +110,6 @@ export class TestSvcApp {
 			this.journal.runQuery.resolves([returnValue]);
 			this.sandbox.stub(Array.prototype, 'map').returns(returnValue);
 			await AppsDAO.list(tenant);
-			done();
 		});
 	}
 }

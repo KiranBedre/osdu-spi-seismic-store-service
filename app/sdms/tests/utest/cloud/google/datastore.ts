@@ -52,10 +52,9 @@ export class TestGoogleDatastoreDAO {
    private static save() {
       Tx.sectionInit('save');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Datastore.prototype, 'save').resolves();
          this.ds.save('entity');
-         done();
       });
    }
 
@@ -63,30 +62,27 @@ export class TestGoogleDatastoreDAO {
    private static delete() {
       Tx.sectionInit('delete');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Datastore.prototype, 'delete').resolves();
          this.ds.delete('entity');
-         done();
       });
    }
 
    private static get() {
       Tx.sectionInit('get');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Datastore.prototype, 'get').resolves();
          this.ds.get('key');
-         done();
       });
    }
 
    private static createQuery() {
       Tx.sectionInit('create query');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Datastore.prototype, 'createQuery').resolves();
          this.ds.createQuery('namespace', 'kind');
-         done();
       });
 
    }
@@ -94,7 +90,7 @@ export class TestGoogleDatastoreDAO {
    private static runQuery() {
       Tx.sectionInit('run query');
 
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Datastore.prototype, 'runQuery').resolves();
          this.sandbox.stub(Datastore.prototype, 'createQuery').resolves();
 
@@ -102,7 +98,6 @@ export class TestGoogleDatastoreDAO {
          const query = datastore.createQuery('kind');
 
          this.ds.runQuery(query);
-         done();
       });
 
    }
@@ -110,7 +105,7 @@ export class TestGoogleDatastoreDAO {
    private static createKey() {
       Tx.sectionInit('create Key');
 
-   //    Tx.test(async (done: any) => {
+   //    Tx.test(async () => {
          
    //       this.sandbox.stub()
    //       const datastore = new Datastore({ projectId: 'gcpid' });
@@ -118,7 +113,7 @@ export class TestGoogleDatastoreDAO {
    //          enforcedKey: true
    //       };
    //       datastore.createKey(specs);
-   //       done();
+   //
    //    });
 
    }
@@ -162,40 +157,36 @@ export class TestGoogleDatastoreTransactionDAO {
    private static save() {
 
       Tx.sectionInit('save**');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'save').resolves();
          this.tdao.save('entity');
-         done();
       });
    }
 
    private static delete() {
 
       Tx.sectionInit('delete');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'get').resolves();
          this.tdao.delete('key');
-         done();
       });
    }
 
    private static createQuery() {
 
       Tx.sectionInit('create query');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'createQuery').resolves();
          this.tdao.createQuery('namespace', 'kind');
-         done();
       });
    }
 
    private static runQuery() {
 
       Tx.sectionInit('run query');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'runQuery').resolves();
          this.tdao.runQuery(this.query as Query);
-         done();
       });
 
    }
@@ -203,39 +194,35 @@ export class TestGoogleDatastoreTransactionDAO {
    private static runq() {
 
       Tx.sectionInit('run');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'run').resolves();
          this.tdao.run();
-         done();
       });
    }
 
    private static rollback() {
 
       Tx.sectionInit('rollback');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'rollback').resolves();
          this.tdao.rollback();
-         done();
       });
    }
 
    private static commitq() {
 
       Tx.sectionInit('commit');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'commit').resolves();
          this.tdao.commit();
-         done();
       });
    }
 
    private static getq() {
       Tx.sectionInit('get');
-      Tx.test(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(Transaction.prototype, 'get').resolves();
          this.tdao.get('key');
-         done();
       });
 
    }

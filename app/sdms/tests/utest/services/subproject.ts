@@ -110,7 +110,7 @@ export class TestSubProjectSVC {
 
         Tx.sectionInit('create');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
 
             expReq.body.admin = 'user@user.com';
             expReq.body.storage_class = 'REGIONAL';
@@ -130,10 +130,10 @@ export class TestSubProjectSVC {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(SeistoreFactory, 'build').returns(this.mockSeistore);
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.Create);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.admin = 'user@user.com';
             expReq.body.storage_class = 'REGIONAL';
             expReq.body.storage_location = 'US-CENTRAL1';
@@ -145,14 +145,12 @@ export class TestSubProjectSVC {
             this.sandbox.stub(Response, 'writeError');
             this.sandbox.stub(SeistoreFactory, 'build').returns(this.mockSeistore);
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.Create);
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             this.journal.save.resolves();
             const subproject = { tenant: 'tnx', name: 'spx' } as SubProjectModel;
             await SubProjectDAO.register(this.journal, subproject);
-            done();
         });
 
     }
@@ -161,24 +159,24 @@ export class TestSubProjectSVC {
 
         Tx.sectionInit('get');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
             this.sandbox.stub(Auth, 'isUserAuthorized');
             this.sandbox.stub(SubProjectDAO, 'get').resolves(this.testSubProject);
             this.sandbox.stub(Auth, 'isLegalTagValid');
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.Get);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
             this.sandbox.stub(Auth, 'isUserAuthorized');
             this.sandbox.stub(Auth, 'isLegalTagValid');
             this.sandbox.stub(SubProjectDAO, 'get').resolves(this.testSubProject);
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.Get);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
     }
@@ -187,7 +185,7 @@ export class TestSubProjectSVC {
 
         Tx.sectionInit('list');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
             this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(Auth, 'isUserAuthorized');
@@ -196,10 +194,10 @@ export class TestSubProjectSVC {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(SubProjectDAO, 'get').resolves();
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.List);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
             this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(Auth, 'isUserAuthorized');
@@ -208,20 +206,19 @@ export class TestSubProjectSVC {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(SubProjectDAO, 'get').resolves();
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.List);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             this.journal.runQuery.resolves([[]] as never);
             this.sandbox.stub(SubProjectDAO, 'constructServiceGroupACLs').resolves({
                 'admins': ['admin@xyz.com'],
                 'viewers': ['viewer@xyz.com']
             });
             await SubProjectDAO.list(this.journal, 'tnx');
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             const entityID = []; entityID[this.journal.KEY] = { name: 'name' };
             this.sandbox.stub(SubProjectDAO, 'constructServiceGroupACLs').resolves({
                 'admins': ['admin@xyz.com'],
@@ -229,10 +226,9 @@ export class TestSubProjectSVC {
             });
             this.journal.runQuery.resolves([[entityID]] as never);
             await SubProjectDAO.list(this.journal, 'tnx');
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             const entityID = []; entityID[this.journal.KEY] = { name: 'name' };
             this.sandbox.stub(SubProjectDAO, 'constructServiceGroupACLs').resolves({
                 'admins': ['admin@xyz.com'],
@@ -240,7 +236,6 @@ export class TestSubProjectSVC {
             });
             this.journal.runQuery.resolves([[{ name: 'name', tenant: 'tenant' }]] as never);
             await SubProjectDAO.list(this.journal, 'tnx');
-            done();
         });
     }
 
@@ -248,18 +243,17 @@ export class TestSubProjectSVC {
 
         Tx.sectionInit('others');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(true);
             this.sandbox.stub(Auth, 'isLegalTagValid');
             this.sandbox.stub(SeistoreFactory, 'build').returns(this.mockSeistore);
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.Create);
-            Tx.check403(expRes.statusCode, done);
+            Tx.check403(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
             await SubProjectHandler.handler(expReq, expRes, undefined);
-            done();
         });
 
     }
@@ -267,7 +261,7 @@ export class TestSubProjectSVC {
 
         Tx.sectionInit('delete');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a', gcpid: 'gcp-id' } as TenantModel);
             this.sandbox.stub(SubProjectDAO, 'get').resolves(this.testSubProject);
             Config.CLOUDPROVIDER = 'google';
@@ -299,7 +293,7 @@ export class TestSubProjectSVC {
             // this.sandbox.stub(AuthGroups, 'clearGroup').resolves();
 
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.Delete);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
 
         });
 

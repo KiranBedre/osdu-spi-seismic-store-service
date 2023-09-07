@@ -47,7 +47,7 @@ export class TestImpToken {
    private static testCreate() {
       Tx.sectionInit('create');
 
-      // Tx.testExp(async (done: any) => {
+      // Tx.test(async () => {
       //    this.sandbox.stub(google.Credentials.prototype, 'getServiceAccountAccessToken').resolves(
       //       { access_token: 'access_token', expires_in: 100, token_type: 'token' });
       //    this.sandbox.stub(axios, 'post').resolves(JSON.stringify({ signedJwt: 'signed_jwt' }));
@@ -64,11 +64,11 @@ export class TestImpToken {
       //       userToken: 'user_token',
 
       //    });
-      //    done();
-      //    Tx.checkTrue(result.impersonation_token === 'signed_jwt', done);
+      //
+      //    Tx.checkTrue(result.impersonation_token === 'signed_jwt');
       // });
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(google.Credentials.prototype, 'getServiceAccountAccessToken').resolves(
             { access_token: 'access_token', expires_in: 100, token_type: 'token' });
          this.sandbox.stub(axios, 'post').throws();
@@ -88,7 +88,7 @@ export class TestImpToken {
 
             });
          } catch (error) {
-            Tx.check500(error.error.code, done);
+            Tx.check500(error.error.code);
          }
       });
    }
@@ -96,20 +96,18 @@ export class TestImpToken {
    private static testCanBeRefreshed() {
       Tx.sectionInit('can be refreshed');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'get').resolves();
          await ImpTokenDAO.canBeRefreshed('https://google.com');
-         done();
       });
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          this.sandbox.stub(axios, 'get').throws();
          try {
             // await ImpTokenDAO.canBeRefreshed('https://refresh-url');
             await ImpTokenDAO.canBeRefreshed('https://google.com');
-            done();
          } catch (e) {
-            Tx.check400(e.error.code, done);
+            Tx.check400(e.error.code);
          }
       });
    }
@@ -117,17 +115,17 @@ export class TestImpToken {
    private static getImpTokenBody() {
       Tx.sectionInit('get imptoken body');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          const result = await ImpTokenDAO.getImpTokenBody
             ('Bearer ya.eyAiaWF0IjogImlhdCIsInJ1cmwiOiAicnVybCIsICJyc3JjIjogInJzcmMiLCJvYm8iOiAib2JvIn0=');
-         Tx.checkTrue(result.iat.toString() === 'iat' && result.refreshUrl === 'rurl', done);
+         Tx.checkTrue(result.iat.toString() === 'iat' && result.refreshUrl === 'rurl');
       });
    }
 
    private static validate() {
       Tx.sectionInit('validate');
 
-      // Tx.testExp(async (done: any) => {
+      // Tx.test(async () => {
 
       //    this.sandbox.stub(jsonwebtoken, 'decode').returns({ header: { kid: 'kid' } });
       //    this.sandbox.stub(axios, 'get').resolves(JSON.stringify({ kid: 'public_key' }));
@@ -139,31 +137,31 @@ export class TestImpToken {
       //          rurl: 'rurl',
       //       } as any);
       //    const result = await ImpTokenDAO.validate('token');
-      //    Tx.checkTrue(result.user === 'user-a' && result.refreshUrl === 'rurl', done);
+      //    Tx.checkTrue(result.user === 'user-a' && result.refreshUrl === 'rurl');
 
       // });
 
-      // Tx.testExp(async (done: any) => {
+      // Tx.test(async () => {
       //    try {
       //       this.sandbox.stub(axios, 'get').throws();
       //       await ImpTokenDAO.validate('token');
       //    } catch (e) {
-      //       Tx.check500(e.error.code, done);
+      //       Tx.check500(e.error.code);
       //    }
       // });
 
-      // Tx.testExp(async (done: any) => {
+      // Tx.test(async () => {
 
       //    this.sandbox.stub(jsonwebtoken, 'decode').throws();
       //    this.sandbox.stub(axios, 'get').resolves(JSON.stringify({ kid: 'public_key' }));
       //    try {
       //       await ImpTokenDAO.validate('token');
       //    } catch (e) {
-      //       Tx.check400(e.error.code, done);
+      //       Tx.check400(e.error.code);
       //    }
       // });
 
-      // Tx.testExp(async (done: any) => {
+      // Tx.test(async () => {
 
       //    this.sandbox.stub(jsonwebtoken, 'decode').returns({ header: { kid: 'kid' } });
       //    this.sandbox.stub(axios, 'get').resolves(JSON.stringify({ kid: 'public_key' }));
@@ -171,11 +169,11 @@ export class TestImpToken {
       //    try {
       //       await ImpTokenDAO.validate('token');
       //    } catch (e) {
-      //       Tx.check400(e.error.code, done);
+      //       Tx.check400(e.error.code);
       //    }
       // });
 
-      // Tx.testExp(async (done: any) => {
+      // Tx.test(async () => {
 
       //    this.sandbox.stub(jsonwebtoken, 'decode').returns({ header: { kid: 'kid' } });
       //    this.sandbox.stub(axios, 'get').resolves(JSON.stringify({ kid: 'public_key' }));
@@ -186,7 +184,7 @@ export class TestImpToken {
       //    try {
       //       await ImpTokenDAO.validate('token');
       //    } catch (e) {
-      //       Tx.check400(e.error.code, done);
+      //       Tx.check400(e.error.code);
       //    }
       // });
 

@@ -72,39 +72,39 @@ export class TestAuth {
         const tenant = {
             default_acls: undefined, esd: undefined, gcpid: undefined, name: 't' } as ITenantModel;
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('esd');
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: 'none' }] as never);
             this.sandbox.stub(Auth, 'isNewImpersonationToken').returns(false);
             try {
                 await Auth.isWriteAuthorized(this.userToken, [], tenant, 's', 'appkey', undefined);
-            } catch (e) { Tx.check403(e.error.code, done); }
+            } catch (e) { Tx.check403(e.error.code); }
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ImpTokenDAO, 'getImpTokenBody').returns(
                 { resources: [{ resource: 't/s', readonly: false }] } as ImpTokenBodyModel);
-            Tx.checkTrue(await Auth.isWriteAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined), done);
+            Tx.checkTrue(await Auth.isWriteAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined));
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ImpTokenDAO, 'getImpTokenBody').returns({ resources: [] } as ImpTokenBodyModel);
-            Tx.checkFalse(await Auth.isWriteAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined, false), done);
+            Tx.checkFalse(await Auth.isWriteAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined, false));
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ImpTokenDAO, 'getImpTokenBody').returns(
                 { resources: [{ resource: 't/s', readonly: true }] } as ImpTokenBodyModel);
             try {
                 await Auth.isWriteAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined);
-            } catch (e) { Tx.check403(e.error.code, done); }
+            } catch (e) { Tx.check403(e.error.code); }
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ImpTokenDAO, 'getImpTokenBody').returns({ resources: [] } as ImpTokenBodyModel);
             try {
                 await Auth.isWriteAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined);
-            } catch (e) { Tx.check403(e.error.code, done); }
+            } catch (e) { Tx.check403(e.error.code); }
         });
 
     }
@@ -116,31 +116,31 @@ export class TestAuth {
 
         Tx.sectionInit('read access');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('esd');
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: 'none' }] as never);
             this.sandbox.stub(Auth, 'isNewImpersonationToken').returns(false);
             try {
                 await Auth.isReadAuthorized(this.userToken, [], tenant, 's', 'appkey', undefined);
-            } catch (e) { Tx.check403(e.error.code, done); }
+            } catch (e) { Tx.check403(e.error.code); }
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ImpTokenDAO, 'getImpTokenBody').returns(
                 { resources: [{ resource: 't/s', readonly: false }] } as ImpTokenBodyModel);
-            Tx.checkTrue(await Auth.isReadAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined), done);
+            Tx.checkTrue(await Auth.isReadAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined));
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ImpTokenDAO, 'getImpTokenBody').returns({ resources: [] } as ImpTokenBodyModel);
             try {
                 await Auth.isReadAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined);
-            } catch (e) { Tx.check403(e.error.code, done); }
+            } catch (e) { Tx.check403(e.error.code); }
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ImpTokenDAO, 'getImpTokenBody').returns({ resources: [] } as ImpTokenBodyModel);
-            Tx.checkFalse(await Auth.isReadAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined, false), done);
+            Tx.checkFalse(await Auth.isReadAuthorized(this.impToken, [], tenant, 's', 'appkey', undefined, false));
         });
 
     }
@@ -149,11 +149,10 @@ export class TestAuth {
 
         Tx.sectionInit('user groups');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('esd');
             this.sandbox.stub(DESEntitlement, 'getUserGroups');
             await AuthGroups.getUserGroups('t', 'esd', 'appkey');
-            done();
         });
     }
 
@@ -161,18 +160,18 @@ export class TestAuth {
 
         Tx.sectionInit('legal tag');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('esd');
             this.sandbox.stub(DESCompliance, 'isLegalTagValid').resolves(true as never);
-            Tx.checkTrue(await Auth.isLegalTagValid('usertoken', 'xxx', 't', 'appkey'), done);
+            Tx.checkTrue(await Auth.isLegalTagValid('usertoken', 'xxx', 't', 'appkey'));
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('esd');
             this.sandbox.stub(DESCompliance, 'isLegalTagValid').resolves(false as never);
             try {
                 await Auth.isLegalTagValid('usertoken', 'xxx', 't', 'appkey');
-            } catch (e) { Tx.check404(e.error.code, done); }
+            } catch (e) { Tx.check404(e.error.code); }
         });
 
     }
@@ -181,20 +180,20 @@ export class TestAuth {
 
         Tx.sectionInit('user authorizations');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('esd');
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: 'g' }] as never);
             this.sandbox.stub(AuthGroups, 'isMemberOfAtLeastOneGroup').resolves(true)
-            Tx.checkTrue(await Auth.isUserAuthorized(this.userToken, ['g'], 'e', 'appkey'), done);
+            Tx.checkTrue(await Auth.isUserAuthorized(this.userToken, ['g'], 'e', 'appkey'));
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('esd');
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: 'none' }] as never);
             this.sandbox.stub(AuthGroups, 'isMemberOfAtLeastOneGroup').resolves(false)
             try {
                 await Auth.isUserAuthorized(this.userToken, ['t'], 'e', 'appkey');
-            } catch (e) { Tx.check403(e.error.code, done); }
+            } catch (e) { Tx.check403(e.error.code); }
         });
 
     }
@@ -203,17 +202,17 @@ export class TestAuth {
 
         Tx.sectionInit('apps authorizations');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(AppsDAO, 'get').resolves({ email: 'e', trusted: true });
-            Tx.checkTrue(await Auth.isAppAuthorized({ gcpid: 'x', name: 'x', esd: 'x', default_acls: 'x' }, 'e'), done);
+            Tx.checkTrue(await Auth.isAppAuthorized({ gcpid: 'x', name: 'x', esd: 'x', default_acls: 'x' }, 'e'));
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(AppsDAO, 'get').resolves({ email: 'e', trusted: false });
             try {
                 Tx.checkTrue(await Auth.isAppAuthorized(
-                    { gcpid: 'x', name: 'x', esd: 'x', default_acls: 'x' }, 'e'), done);
-            } catch (e) { Tx.check403(e.error.code, done); }
+                    { gcpid: 'x', name: 'x', esd: 'x', default_acls: 'x' }, 'e'));
+            } catch (e) { Tx.check403(e.error.code); }
         });
 
     }
@@ -221,7 +220,7 @@ export class TestAuth {
     private static listUsersInGroup() {
         Tx.sectionInit('get group users');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(DESUtils, 'getDataPartitionID').resolves('entitlment-tenant');
             this.sandbox.stub(DESEntitlement, 'listUsersInGroup').resolves({
                 members: [
@@ -234,7 +233,7 @@ export class TestAuth {
             });
 
             const result = await AuthGroups.listUsersInGroup(undefined, 'group-a', 'esd', 'appkey');
-            Tx.checkTrue(result[0].email === 'user@email' && result[0].role === 'role', done);
+            Tx.checkTrue(result[0].email === 'user@email' && result[0].role === 'role');
         });
     }
 

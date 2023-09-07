@@ -80,7 +80,7 @@ export class TestImpersonationTokenHandler {
 
         Tx.sectionInit("generateImpersonationTokenTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Generate;
 
@@ -101,11 +101,11 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Generate;
 
@@ -126,11 +126,11 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(Promise, "all").resolves([false]);
             await Handler.handler(req, res, op);
-            Tx.check403(res.statusCode, done)
+            Tx.check403(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Generate;
 
@@ -155,11 +155,11 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
             await Handler.handler(req, res, op);
             impersonationTokenRequestBodyModel.resources[0].readonly = false;
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Generate;
 
@@ -180,11 +180,11 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             await Handler.handler(req, res, op);
-            Tx.check500(res.statusCode, done);
+            Tx.check500(res.statusCode);
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Generate;
 
@@ -206,7 +206,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(FeatureFlags, "isEnabled").returns(false);
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done);
+            Tx.check200(res.statusCode);
 
         } );
         
@@ -216,7 +216,7 @@ export class TestImpersonationTokenHandler {
 
         Tx.sectionInit("refreshImpersonationTokenTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Refresh;
 
@@ -230,11 +230,11 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
             this.sandbox.stub(Utils, "decrypt").returns('{"resources":[{"resource": "name/resource", "readonly": false}], "metadata":{}, "user": "user", "impersonated_by": "impersonation-token"}');
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done);
+            Tx.check200(res.statusCode);
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Refresh;
 
@@ -248,11 +248,11 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(Utils, "decrypt").returns('{"resources":[{"resource": "name/resource", "readonly": false}], "metadata":{}, "user": "user", "impersonated_by": "impersonation-token"}');
             await Handler.handler(req, res, op);
-            Tx.check500(res.statusCode, done);
+            Tx.check500(res.statusCode);
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Refresh;
 
@@ -262,11 +262,11 @@ export class TestImpersonationTokenHandler {
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done);
+            Tx.check400(res.statusCode);
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Refresh;
 
@@ -275,11 +275,11 @@ export class TestImpersonationTokenHandler {
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done);
+            Tx.check400(res.statusCode);
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Refresh;
 
@@ -288,11 +288,11 @@ export class TestImpersonationTokenHandler {
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done);
+            Tx.check400(res.statusCode);
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Refresh;
 
@@ -306,7 +306,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(Utils, "decrypt").returns('{"resources":[{"resource": "name/resource", "readonly": false}], "metadata":{}, "user": "user", "impersonated_by": "impersonation-token"}');
             this.sandbox.stub(FeatureFlags, "isEnabled").returns(false);
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done);
+            Tx.check200(res.statusCode);
 
         } );
         
@@ -316,21 +316,21 @@ export class TestImpersonationTokenHandler {
 
         Tx.sectionInit("errorTokenTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = 5;
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             await Handler.handler(req, res, op);
-            Tx.check500(res.statusCode, done);
+            Tx.check500(res.statusCode);
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(true);
             await Handler.handler(req, res, op);
-            Tx.check403(res.statusCode, done);
+            Tx.check403(res.statusCode);
 
         } );
         

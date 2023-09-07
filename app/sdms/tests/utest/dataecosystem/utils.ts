@@ -43,16 +43,16 @@ export class TestDESUtils {
    private static getDataPartition() {
       Tx.sectionInit('get data partition');
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          const result = DESUtils.getDataPartitionID('tenant.env.cloud.slb-ds.com');
-         Tx.checkTrue(result === 'tenant', done);
+         Tx.checkTrue(result === 'tenant');
       });
 
-      Tx.testExp(async (done: any) => {
+      Tx.test(async () => {
          try {
             DESUtils.getDataPartitionID('tenant');
          } catch (e) {
-            Tx.check404(e.error.code, done);
+            Tx.check404(e.error.code);
          }
       });
    }

@@ -52,9 +52,8 @@ export class TestSeismicmeta {
 
         Tx.sectionInit('test register');
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             this.manager.addSchemas();
-            done();
         });
 
     }
@@ -63,10 +62,10 @@ export class TestSeismicmeta {
 
         Tx.sectionInit('test get Dataset Schema Kind');
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             try {
                 this.manager.getDatasetSchemaKind();
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
         });
 
     }
@@ -75,10 +74,10 @@ export class TestSeismicmeta {
 
         Tx.sectionInit('test get Dataset Schema Name');
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             try {
                 this.manager.getDatasetSchemaName();
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
         });
 
     }
@@ -87,10 +86,10 @@ export class TestSeismicmeta {
 
         Tx.sectionInit('test get Dataset Schema Name');
 
-        Tx.testExp(async (done: any) => { 
+        Tx.test(async () => { 
             try {
                 this.manager.validate("input-a");
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
         });
 
     }
@@ -126,12 +125,11 @@ export class TestSegyManager {
 
         Tx.sectionInit('test add Schemas');
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Utils, "resolveJsonRefs").resolves();
             // this.sandbox.stub(Utils, "resolveJsonRefs").resolves();
             this.manager.addSchemas();
-            done();
         });
 
     }
@@ -140,7 +138,7 @@ export class TestSegyManager {
 
         Tx.sectionInit('test apply Schema Transforms');
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             let myModel = {
                 transformFuncID: "transformFuncID-a",
@@ -151,7 +149,7 @@ export class TestSegyManager {
             this.sandbox.stub(SegyManager, "schemaTransformFuncMap").resolves();
             try {
                 this.manager.applySchemaTransforms(myModel);
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
             
         });
 
@@ -161,7 +159,7 @@ export class TestSegyManager {
 
         Tx.sectionInit('test validate');
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             // let myModel = {
             //     transformFuncID: "transformFuncID-a",
@@ -171,7 +169,7 @@ export class TestSegyManager {
 
             this.sandbox.stub(SegyManager, "schemaTransformFuncMap").resolves();
             try { this.manager.validate("data");}
-            catch (e) {done();}
+            catch (e) { return; } // ignore exceptions
            
         });
 

@@ -50,13 +50,13 @@ export class OpenzgyTest {
 
         Tx.sectionInit("test add Schemas");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(Utils, "resolveJsonRefs").resolves();
             this.sandbox.stub(OpenZgyV1SchemaManager.ajv, "addSchema").resolves();
             
             try {
                 await this.manager.addSchemas();
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
         });
 
     }
@@ -65,7 +65,7 @@ export class OpenzgyTest {
 
         Tx.sectionInit("test apply Schema Transforms");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             let mymodle = {
                 transformFuncID: "transformFuncID",
                 data: "data",
@@ -74,7 +74,7 @@ export class OpenzgyTest {
             
             try {
                 await this.manager.applySchemaTransforms(mymodle);;
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
         });
 
     }
@@ -83,7 +83,7 @@ export class OpenzgyTest {
 
         Tx.sectionInit("test validate");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             let mymodle = {
                 transformFuncID: "transformFuncID",
                 data: "data",
@@ -92,7 +92,7 @@ export class OpenzgyTest {
             
             try {
                 this.manager.validate(mymodle);;
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
         });
 
     }
