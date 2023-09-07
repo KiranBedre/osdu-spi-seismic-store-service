@@ -51,11 +51,11 @@ This project provides an [.env.example](.env.example) file that provides the bas
 | __Logging__LogLevel__Default__      | Logging level configuration for the logging provider.<br /><br />Optional: If supplied, will override the default logging level.<br /><br />More information can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#set-log-level-by-command-line-environment-variables-and-other-configuration)                                                                                                                                                                                                                                |  1 <br /><br />The details of the levels can be found [here](https://learn.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#log-level)  |
 
 Example:
- 
+
 With DES_SERVICE_HOST:
 
 ```bash
-SDMS_REDIS_QUEUE_NAME='deletejobqueue'
+SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
 SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
 DES_SERVICE_HOST='https://sdmstest.oep.ppe.azure-int.net'
 Logging__LogLevel__Debug=1
@@ -69,7 +69,7 @@ With DES_SERVICE_HOST overwriting the connection strings:
 ```bash
 SDMS_REDIS_QUEUE_HOSTNAME='cache-xxx.redis.cache.windows.net'
 SDMS_REDIS_QUEUE_PASSWORD='<some password>'
-SDMS_REDIS_QUEUE_NAME='deletejobqueue'
+SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
 SDMS_COSMOS_KEY='<primary/secondary Cosmos Key>'
 SDMS_COSMOS_ENDPOINT='https://db-xxx.documents.azure.com:443/'
 SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcswi;AccountKey=<some account key>;EndpointSuffix=core.windows.net'
@@ -86,7 +86,7 @@ AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
 Without DES_SERVICE_HOST, reading the Redis connection strings from the KeyVault:
 
 ```bash
-SDMS_REDIS_QUEUE_NAME='deletejobqueue'
+SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
 SDMS_COSMOS_KEY='<primary/secondary Cosmos Key>'
 SDMS_COSMOS_ENDPOINT='https://db-xxx.documents.azure.com:443/'
 SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcswi;AccountKey=<some account key>;EndpointSuffix=core.windows.net'
