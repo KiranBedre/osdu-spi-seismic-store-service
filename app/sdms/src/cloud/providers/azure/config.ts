@@ -131,6 +131,8 @@ export class AzureConfig extends Config {
             // set the correlation id
             AzureConfig.CORRELATION_ID = process.env.CORRELATION_ID || AzureConfig.CORRELATION_ID;
 
+            Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST = true;
+
             // init generic configurations
             await Config.initServiceConfiguration({
                 SERVICE_ENV: process.env.APP_ENVIRONMENT_IDENTIFIER,

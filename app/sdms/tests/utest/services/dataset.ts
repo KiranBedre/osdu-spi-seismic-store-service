@@ -122,18 +122,18 @@ export class TestDatasetSVC {
         Tx.sectionInit('listPost');
 
         Tx.testExpAsync(async (expReq: expRequest) => {
+            expReq.method = 'POST';
             expReq.query.ctag = 'xxx';
 
-            DatasetParser.listPost(expReq);
-
+            DatasetParser.list(expReq);
         });
 
         Tx.testExpAsync(async (expReq: expRequest) => {
+            expReq.method = 'POST';
             // expReq.query.ctag = 'xxx';
             // expReq.body = {};
 
-            DatasetParser.listPost(expReq);
-
+            DatasetParser.list(expReq);
         });
 
         // Tx.testExpAsync(async (expReq: expRequest) => {

@@ -262,7 +262,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
-            azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}}];
+            azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}, type: 'STRING'}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
@@ -271,7 +271,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
-            azureCosmosDbQuery.filters = [{property: 'property', operator: 'CONTAINS', value: {value: 'value'}}];
+            azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}, type: 'STRING'}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             azureCosmosDbQuery.pagingStart = '';
             azureCosmosDbQuery.pagingLimit = 0;
