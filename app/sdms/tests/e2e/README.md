@@ -27,28 +27,29 @@ Postman collection with API requests that check the basic functionality of the s
 ### Script usage
 
 To run tests using bash script:
+
 1. Open _[Git_Bash](https://git-scm.com/downloads)_ terminal
 2. Clone the repository
 
-```
+```bash
 git clone https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-service.git
 ```
 
 2. Move into the folder with script
 
-```
+```bash
 cd app/sdms/tests/e2e/run_e2e_tests.sh
 ```
 
 3. Make it executable (for Unix/Linux)
 
-```
+```bash
 chmod +x ./tests/e2e/run_e2e_tests.sh
 ```
 
 4. Run the script
 
-```
+```bash
 ./tests/e2e/run_e2e_tests.sh \
     --seistore-svc-url="https://${DNS_HOST}/${serviceUrlSuffix}" \
     --seistore-svc-api-key="NA" \
@@ -61,18 +62,21 @@ chmod +x ./tests/e2e/run_e2e_tests.sh
     --legaltag02="${e2eLegaltag02}" \
     --VCS_Provider="${isGitlab}"
 ```
+
 ---
 
 
 ### Postman Runner usage
 
 To run tests using [Postman](https://www.postman.com/downloads/) Runner tool:
+
 1. Open _[Git_Bash](https://git-scm.com/downloads)_ terminal
 2. Clone the repository
 
-```
+```bash
 git clone https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-service.git
 ```
+
 3. Open Postman
 4. Import _app/sdms/tests/e2e/postman_collection.json_
 5. Import _app/sdms/tests/e2e/postman_env.json_

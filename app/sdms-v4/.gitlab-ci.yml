@@ -4,9 +4,13 @@ include:
 
   # containerize
   # osdu
+  - local: "app/sdms-v4/devops/osdu/containerize/osdu.yml"
+  
+  # cspell
+  - local: "app/sdms-v4/devops/osdu/scanners/cspell-node.yml"
 
-  # this job doesn't work for a long time
-  #  - local: "app/sdms-v4/devops/osdu/containerize/osdu.yml"
+  # markdownlint
+  - local: "app/sdms-v4/devops/osdu/scanners/markdownlint-node.yml"
 
   # deploy
   # azure
