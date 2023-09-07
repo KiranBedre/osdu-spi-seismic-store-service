@@ -51,9 +51,9 @@ export class Testgroups {
 
         Tx.sectionInit('service Admin Group');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const result = SubprojectGroups.serviceAdminGroup('tenant-a', 'subproject-a', 'esd-a');
-            Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.admin@esd-a', done);
+            Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.admin@esd-a');
         });
 
     }
@@ -62,9 +62,9 @@ export class Testgroups {
 
         Tx.sectionInit('service Editor Group');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const result = SubprojectGroups.serviceEditorGroup('tenant-a', 'subproject-a', 'esd-a');
-            Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.editor@esd-a', done);
+            Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.editor@esd-a');
         });
 
     }
@@ -73,9 +73,9 @@ export class Testgroups {
 
         Tx.sectionInit('service Editor Group');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const result = SubprojectGroups.serviceViewerGroup('tenant-a', 'subproject-a', 'esd-a');
-            Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.viewer@esd-a', done);
+            Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.viewer@esd-a');
         });
 
     }
@@ -106,12 +106,11 @@ export class TestGeneralHandler {
 
         Tx.sectionInit('service Admin Group');
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: GeneralOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: GeneralOP) => {
             op = GeneralOP.Readiness;
             const result = GeneralHandler.handler(req, res, op);
-            done();
 
-            // Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.admin@esd-a', done);
+            // Tx.checkTrue(result === 'service.seistore.undefined.tenant-a.subproject-a.admin@esd-a');
         });
     }
 }

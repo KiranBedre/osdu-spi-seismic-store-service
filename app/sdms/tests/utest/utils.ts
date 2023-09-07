@@ -74,27 +74,28 @@ export class Tx {
     }
 
     public static test(cb: any) {
-        it(this.getTag(), (done) => {
-            cb(done)
-                .catch(done);  // interpret exceptions as test failures
-        });
+        it(this.getTag(), cb);
     }
 
     public static testExp(cb: any) {
-        it(this.getTag(), (done) => { cb(done, this.getReq(), this.getRes()); });
+        it(this.getTag(), () => cb(this.getReq(), this.getRes() ));
     }
 
-    public static check200(val: number, done: any) { this.check(val, 200, done); }
-    public static check202(val: number, done: any) { this.check(val, 202, done); }
-    public static check400(val: number, done: any) { this.check(val, 400, done); }
-    public static check403(val: number, done: any) { this.check(val, 403, done); }
-    public static check404(val: number, done: any) { this.check(val, 404, done); }
-    public static check409(val: number, done: any) { this.check(val, 409, done); }
-    public static check423(val: number, done: any) { this.check(val, 423, done); }
-    public static check500(val: number, done: any) { this.check(val, 500, done); }
-    public static check501(val: number, done: any) { this.check(val, 501, done); }
-    public static checkTrue(val: boolean, done: any) { this.check(val, true, done); }
-    public static checkFalse(val: boolean, done: any) { this.check(val, false, done); }
+    public static testExpAsync(cb: any) {
+        it(this.getTag(), async () => await cb(this.getReq(), this.getRes()));
+    }
+
+    public static check200(val: number) { this.check(val, 200); }
+    public static check202(val: number) { this.check(val, 202); }
+    public static check400(val: number) { this.check(val, 400); }
+    public static check403(val: number) { this.check(val, 403); }
+    public static check404(val: number) { this.check(val, 404); }
+    public static check409(val: number) { this.check(val, 409); }
+    public static check423(val: number) { this.check(val, 423); }
+    public static check500(val: number) { this.check(val, 500); }
+    public static check501(val: number) { this.check(val, 501); }
+    public static checkTrue(val: boolean) { this.check(val, true); }
+    public static checkFalse(val: boolean) { this.check(val, false); }
 
     private static sectionCount = 0;
     private static sectionTitle = '';
@@ -108,8 +109,8 @@ export class Tx {
         return this.getSectionPrefix() + ' ' + this.sectionTitle;
     }
 
-    private static check(val: any, check: any, done: any) {
-        expect(val).to.be.equal(check); done();
+    private static check(val: any, check: any) {
+        expect(val).to.be.equal(check);
     }
 
 }

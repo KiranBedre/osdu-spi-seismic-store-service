@@ -36,6 +36,7 @@ export interface IJournal {
     get(key: any): Promise<[any | any[]]>;
     getIdByKeys(keys: any[]): Promise<string[]>;
     getMetaDataSizesByKeys(keys: any[]): Promise<Map<string, number>>
+    getSize(dataset: DatasetModel): Promise<{dataset_count: number, size_bytes: number}>
     save(entity: any): Promise<void>;
     delete(key: any): Promise<void>;
     deleteMulti(keys: string[]): Promise<void>;
@@ -129,6 +130,9 @@ export abstract class AbstractJournal implements IJournal {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
     public getMetaDataSizesByKeys(keys: any[]): Promise<Map<string, number>> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    }
+    public getSize(dataset: DatasetModel): Promise<{dataset_count: number, size_bytes: number}> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
 }

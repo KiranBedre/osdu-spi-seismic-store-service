@@ -39,12 +39,11 @@ export class TestLoggerSHD {
 
       Tx.sectionInit('test trace logger');
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const trace = new TraceLog('test trace');
          trace.start('step-a');
          trace.stop();
          trace.flush();
-         done();
       });
    }
 

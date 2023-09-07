@@ -3541,6 +3541,268 @@
 					"response": []
 				},
 				{
+					"name": "DATASET GET SIZE OF DATASET: Retrieve dataset size",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Response has size_bytes key\", function () {",
+									"        pm.expect(jsonData).to.have.property('size_bytes');",
+									"    });",
+									"",
+									"    pm.test(\"Response has dataset_count key\", function () {",
+									"        pm.expect(jsonData).to.have.property('dataset_count');",
+									"    });",
+									"",
+									"    pm.test(\"size_bytes\", function () {",
+									"        pm.expect(jsonData.size_bytes).to.be.a('number');",
+									"    });",
+									"",
+									"    pm.test(\"dataset_count\", function () {",
+									"        pm.expect(jsonData.dataset_count).to.eql(1);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/size?path={{testPath}}&datasetid={{dsx01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"size"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPath}}"
+								},
+								{
+									"key": "datasetid",
+									"value": "{{dsx01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET GET SIZE OF FOLDER: Retrieve size",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Response has size_bytes key\", function () {",
+									"        pm.expect(jsonData).to.have.property('size_bytes');",
+									"    });",
+									"",
+									"    pm.test(\"Response has dataset_count key\", function () {",
+									"        pm.expect(jsonData).to.have.property('dataset_count');",
+									"    });",
+									"",
+									"    pm.test(\"size_bytes\", function () {",
+									"        pm.expect(jsonData.size_bytes).to.be.a('number');",
+									"    });",
+									"",
+									"    pm.test(\"dataset_count\", function () {",
+									"        pm.expect(jsonData.dataset_count).gte(1);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/size?path={{testPath}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"size"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPath}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET GET SIZE OF SUBPROJECT: Retrieve size for subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Response has size_bytes key\", function () {",
+									"        pm.expect(jsonData).to.have.property('size_bytes');",
+									"    });",
+									"",
+									"    pm.test(\"Response has dataset_count key\", function () {",
+									"        pm.expect(jsonData).to.have.property('dataset_count');",
+									"    });",
+									"",
+									"    pm.test(\"size_bytes\", function () {",
+									"        pm.expect(jsonData.size_bytes).to.be.a('number');",
+									"    });",
+									"",
+									"    pm.test(\"dataset_count\", function () {",
+									"        pm.expect(jsonData.dataset_count).gte(1);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/size",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"size"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "DATASET GET SINGLE SIZE  DSX01: Retrieve dataset and check in reponse for size information",
 					"event": [
 						{

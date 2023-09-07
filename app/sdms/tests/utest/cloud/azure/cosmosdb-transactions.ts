@@ -50,36 +50,31 @@ export class TestAzureCosmosDbTransactionDAO {
     private static testGet() {
         Tx.sectionInit('testGet');
         // This test validates pass-through of get() calls to the underlying non-transactional journal
-        Tx.test(async (done: any) => {
-            try {
-                // setup
-                const expectedKey = 'myKey';
-                const expectedResult: [any] = ['mySingleResult'];
-                const journalStub = {
-                    get(key: any): Promise<[any | any[]]> {
-                        if (key !== expectedKey) {
-                            throw new Error(`TEST FAILURE: Unexpected Parameter: '${key}' != '${expectedKey}'`);
-                        }
-                        return Promise.resolve(expectedResult);
+        Tx.test(async () => {
+            // setup
+            const expectedKey = 'myKey';
+            const expectedResult: [any] = ['mySingleResult'];
+            const journalStub = {
+                get(key: any): Promise<[any | any[]]> {
+                    if (key !== expectedKey) {
+                        throw new Error(`TEST FAILURE: Unexpected Parameter: '${key}' != '${expectedKey}'`);
                     }
-                } as IJournal;
-                const subject = new AzureCosmosDbTransactionDAO(journalStub as AzureCosmosDbDAO);
-                const anyKey = 'myKey';
-                // act
-                const actual = await subject.get(anyKey);
-                // assert
-                assert.sameDeepMembers(actual, expectedResult);
-            }
-            finally {
-                done();
-            }
+                    return Promise.resolve(expectedResult);
+                }
+            } as IJournal;
+            const subject = new AzureCosmosDbTransactionDAO(journalStub as AzureCosmosDbDAO);
+            const anyKey = 'myKey';
+            // act
+            const actual = await subject.get(anyKey);
+            // assert
+            assert.sameDeepMembers(actual, expectedResult);
         });
     }
 
     private static testSave() {
         Tx.sectionInit('testSave');
         // This test validates queuing the save operation to an internal pending ops queue
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 // setup
                 const entity = {
@@ -94,7 +89,6 @@ export class TestAzureCosmosDbTransactionDAO {
                 assert.deepEqual(subject.queuedOperations, [ new AzureCosmosDbTransactionOperation('save', entity) ]);
             }
             finally {
-                done();
             }
         });
     }
@@ -102,7 +96,7 @@ export class TestAzureCosmosDbTransactionDAO {
     private static testDelete() {
         Tx.sectionInit('testDelete');
         // This test validates queuing the delete operation to an internal pending ops queue
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 // setup
                 const key = '0';
@@ -115,7 +109,6 @@ export class TestAzureCosmosDbTransactionDAO {
                 assert.deepEqual(subject.queuedOperations, [ new AzureCosmosDbTransactionOperation('delete', key) ]);
             }
             finally {
-                done();
             }
         });
     }
@@ -123,7 +116,7 @@ export class TestAzureCosmosDbTransactionDAO {
     private static testCreateQuery() {
         Tx.sectionInit('testCreateQuery');
         // This test validates pass-through of createQuery() calls to the underlying non-transactional journal
-        Tx.test((done: any) => {
+        Tx.test(() => {
             try {
                 // setup
                 const expectedNamespace = 'myNamespace';
@@ -147,7 +140,6 @@ export class TestAzureCosmosDbTransactionDAO {
                 assert.deepEqual(actual, expectedResult);
             }
             finally {
-                done();
             }
         });
     }
@@ -155,7 +147,7 @@ export class TestAzureCosmosDbTransactionDAO {
     private static testRun() {
         Tx.sectionInit('testRun');
         // This test validates that the run() operation behaves correctly depending on internal pending ops queue state
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 // setup
                 const journalStub = {
@@ -167,7 +159,6 @@ export class TestAzureCosmosDbTransactionDAO {
                 assert.deepEqual(subject.queuedOperations, []);
             }
             finally {
-                done();
             }
         });
     }
@@ -175,7 +166,7 @@ export class TestAzureCosmosDbTransactionDAO {
     private static testRunWithInvalidState() {
         Tx.sectionInit('testRunWithInvalidState');
         // This test validates that the run() operation behaves correctly depending on internal pending ops queue state
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 // setup
                 const entity = { id : 'foo' };
@@ -196,7 +187,6 @@ export class TestAzureCosmosDbTransactionDAO {
                 }
             }
             finally {
-                done();
             }
         });
     }
@@ -205,7 +195,7 @@ export class TestAzureCosmosDbTransactionDAO {
         Tx.sectionInit('testRollback');
         // This test validates that the rollback() operation behaves correctly depending
         // on internal pending ops queue state
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 // setup
                 const entity = { id : 'foo' };
@@ -226,7 +216,6 @@ export class TestAzureCosmosDbTransactionDAO {
                 assert.deepEqual(subject.queuedOperations, []);
             }
             finally {
-                done();
             }
         });
     }
@@ -238,7 +227,7 @@ export class TestAzureCosmosDbTransactionDAO {
         // This test validates that the commit() operation behaves correctly depending on
         // internal pending ops queue state
         // The internal pending ops should be replayed against the underlying journal as a batch
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 // setup
                 const expectedEntity = { id : 'foo' };
@@ -277,7 +266,6 @@ export class TestAzureCosmosDbTransactionDAO {
                 assert.equal(deleteCalls, 1);
             }
             finally {
-                done();
             }
         });
     }

@@ -93,7 +93,7 @@ export class TestAzureKeyVault {
     private static TestGetSecrets() {
 
         Tx.sectionInit('TestGetSecrets');
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             await KeyVault.loadSecrets(mockSecretClient);
             assert.equal(AzureConfig.AI_INSTRUMENTATION_KEY, mockAIInstrumentationKey);
             assert.equal(AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY, mockRedisQueueKey);
@@ -102,7 +102,6 @@ export class TestAzureKeyVault {
             assert.equal(AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS, mockRedisHost);
             assert.equal(AzureConfig.APP_RESOURCE_ID, mockSpAppSourceID);
             assert.equal(AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL, mockSauthProvider);
-            done();
         });
     }
 

@@ -69,7 +69,7 @@ export class TestResponseSHD {
    private static testWriteOK() {
       Tx.sectionInit('Response writeOK');
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
 
          const spy = this.sandbox.spy(TestRESExpress.prototype, 'set');
          const expRes = (new TestRESExpress() as unknown) as expResponse;
@@ -84,10 +84,10 @@ export class TestResponseSHD {
             'X-Frame-Options': 'DENY',
             'X-XSS-Protection': '1',
          });
-         Tx.checkTrue(result, done);
+         Tx.checkTrue(result);
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
 
          const spy = this.sandbox.spy(TestRESExpress.prototype, 'status');
          const expRes = (new TestRESExpress() as unknown) as expResponse;
@@ -95,10 +95,10 @@ export class TestResponseSHD {
          Response.writeOK(expRes, { data: 'data' });
 
          const result = spy.calledWith(200);
-         Tx.checkTrue(result, done);
+         Tx.checkTrue(result);
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
 
          const spy = this.sandbox.spy(TestStatusExpress.prototype, 'send');
          const expRes = (new TestRESExpress() as unknown) as expResponse;
@@ -112,10 +112,10 @@ export class TestResponseSHD {
          Response.writeOK(expRes, data);
 
          const result = spy.calledWith(JSON.parse(xssfilters.inHTMLData(JSON.stringify(data))));
-         Tx.checkTrue(result, done);
+         Tx.checkTrue(result);
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
 
          const spy = this.sandbox.spy(TestStatusExpress.prototype, 'send');
          const expRes = (new TestRESExpress() as unknown) as expResponse;
@@ -131,14 +131,14 @@ export class TestResponseSHD {
          };
 
          const result = spy.calledWith(JSON.parse(JSON.stringify(convertedData)));
-         Tx.checkTrue(result, done);
+         Tx.checkTrue(result);
       });
    }
 
    private static testWriteError() {
       Tx.sectionInit('Response writeError');
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const expRes = (new TestRESExpress() as unknown) as expResponse;
          const spy = this.sandbox.spy(Response, 'write');
 
@@ -149,11 +149,11 @@ export class TestResponseSHD {
             },
          });
 
-         Tx.checkTrue(spy.calledWith(expRes, 402, 'error message'), done);
+         Tx.checkTrue(spy.calledWith(expRes, 402, 'error message'));
 
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const expRes = (new TestRESExpress() as unknown) as expResponse;
          const spy = this.sandbox.spy(Response, 'write');
 
@@ -162,11 +162,11 @@ export class TestResponseSHD {
             message: 'error message',
          });
 
-         Tx.checkTrue(spy.calledWith(expRes, 403, 'error message'), done);
+         Tx.checkTrue(spy.calledWith(expRes, 403, 'error message'));
 
       });
       
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const expRes = (new TestRESExpress() as unknown) as expResponse;
          const spy = this.sandbox.spy(Response, 'write');
 
@@ -175,37 +175,35 @@ export class TestResponseSHD {
             message: 'error message',
          });
 
-         Tx.checkFalse(spy.calledWith(expRes, 10, 'error message'), done);
+         Tx.checkFalse(spy.calledWith(expRes, 10, 'error message'));
 
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const expRes = (new TestRESExpress() as unknown) as expResponse;
          const spy = this.sandbox.spy(Response, 'write');
 
          Response.writeError(expRes, undefined);
 
-         Tx.checkTrue(spy.calledWith(expRes, 500, 'Internal Server Error'), done);
+         Tx.checkTrue(spy.calledWith(expRes, 500, 'Internal Server Error'));
 
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const expRes = (new TestRESExpress() as unknown) as expResponse;
          this.sandbox.stub(FeatureFlags, 'isEnabled').resolves(true);
 
          Response.writeError(expRes, 'err');
-         done();
-         // Tx.checkTrue(spy.calledWith(expRes, 500, 'Internal Server Error'), done);
+         // Tx.checkTrue(spy.calledWith(expRes, 500, 'Internal Server Error'));
 
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const expRes = (new TestRESExpress() as unknown) as expResponse;
          this.sandbox.stub(FeatureFlags, 'isEnabled').resolves(true);
 
          Response.writeError(expRes, '');
-         done();
-         // Tx.checkTrue(spy.calledWith(expRes, 500, 'Internal Server Error'), done);
+         // Tx.checkTrue(spy.calledWith(expRes, 500, 'Internal Server Error'));
 
       });
 
@@ -214,22 +212,20 @@ export class TestResponseSHD {
    private static writeMetric() {
       Tx.sectionInit('Response writeOK');
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          // this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
          Response.writeMetric('key', 'val');
-         done();
       });
    }
 
    private static write() {
       Tx.sectionInit('Response writeOK');
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const expRes = (new TestRESExpress() as unknown) as expResponse;
 
          // this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
-         Response.write(expRes, 500);   
-         done();
+         Response.write(expRes, 500);
       });
    }
 

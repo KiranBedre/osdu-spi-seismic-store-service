@@ -75,7 +75,7 @@ export class TestUtilitySVC {
 
         Tx.sectionInit('gcstoken');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx/spx';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
             this.sandbox.stub(SubProjectDAO, 'get').resolves({ acls: { viewers: [], admins: [] } } as any);
@@ -83,10 +83,10 @@ export class TestUtilitySVC {
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             this.sandbox.stub(google.Credentials.prototype, 'getStorageCredentials');
             await UtilityHandler.handler(expReq, expRes, UtilityOP.GCSTOKEN);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx/spx';
             expReq.query.readonly = 'false';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -95,29 +95,29 @@ export class TestUtilitySVC {
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             this.sandbox.stub(google.Credentials.prototype, 'getStorageCredentials');
             await UtilityHandler.handler(expReq, expRes, UtilityOP.GCSTOKEN);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath = 'sdx://tnx';
             try {
                 UtilityParser.gcsToken(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath = 'sd://tnx';
             try {
                 UtilityParser.gcsToken(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath = 'sd://tnx/spx';
             expReq.query.readonly = 'wrong';
             try {
                 UtilityParser.gcsToken(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
     }
@@ -126,7 +126,7 @@ export class TestUtilitySVC {
 
         Tx.sectionInit('list');
 
-        // Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        // Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
         //     expReq.query.sdpath = 'sd://tnx/spx';
         //     this.sandbox.stub(TenantDAO, 'get').resolves({esd: 'esd'} as any);
         //     this.sandbox.stub(DESUtils, 'getDataPartitionID');
@@ -136,10 +136,10 @@ export class TestUtilitySVC {
         //     this.sandbox.stub(SubProjectDAO, 'list').resolves([{ 'name': 'subproject-a' },
         //     { 'name': 'subproject-b' }] as any);
         //     await UtilityHandler.handler(expReq, expRes, UtilityOP.LS);
-        //     Tx.check200(expRes.statusCode, done);
+        //     Tx.check200(expRes.statusCode);
         // });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             const prefix = TenantGroups.serviceGroupPrefix('tnx');
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -147,10 +147,10 @@ export class TestUtilitySVC {
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: prefix + '.spx.admin', email: prefix + '.spx.admin@email' }] as never);
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ 'name': 'subproject-a' }] as any);
             await UtilityHandler.handler(expReq, expRes, UtilityOP.LS);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             const prefix = TenantGroups.serviceGroupPrefix('tnx');
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -158,10 +158,10 @@ export class TestUtilitySVC {
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: prefix + '.spx.editor' }] as never);
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ 'name': 'subproject-a' }] as any);
             await UtilityHandler.handler(expReq, expRes, UtilityOP.LS);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             const prefix = TenantGroups.serviceGroupPrefix('tnx');
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -169,10 +169,10 @@ export class TestUtilitySVC {
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: prefix + '.spx.viewer' }] as never);
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ 'name': 'subproject-a' }] as any);
             await UtilityHandler.handler(expReq, expRes, UtilityOP.LS);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://tnx';
             const prefix = TenantGroups.serviceGroupPrefix('tnx');
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -180,25 +180,24 @@ export class TestUtilitySVC {
             this.sandbox.stub(DESEntitlement, 'getUserGroups').resolves([{ name: '' }] as never);
             this.sandbox.stub(SubProjectDAO, 'list').resolves([{ 'name': 'subproject-a' }] as any);
             await UtilityHandler.handler(expReq, expRes, UtilityOP.LS);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath = 'sdx://tnx';
             try {
                 await UtilityParser.ls(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath = 'sd://';
             await UtilityParser.ls(expReq);
-            done();
         });
 
         // for sd://, ls endpoint returns all tenants that have subprojects
         // here tenant-b does not have a subproject, so it would not be included in the result
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath = 'sd://';
             this.sandbox.stub(TenantDAO, 'getAll').resolves([{
                 name: 'tenant-a',
@@ -238,7 +237,7 @@ export class TestUtilitySVC {
             await UtilityHandler.handler(expReq, expRes, UtilityOP.LS);
             Tx.checkTrue(
                 responseStub.args[0][1].includes('tenant-a') &&
-                responseStub.args[0][1].includes('tenant-c'), done);
+                responseStub.args[0][1].includes('tenant-c'));
         });
 
     }
@@ -247,7 +246,7 @@ export class TestUtilitySVC {
 
         Tx.sectionInit('cp');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx/spx1/a2/dsx01';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -268,10 +267,10 @@ export class TestUtilitySVC {
             this.sandbox.stub(google.GoogleSeistore.prototype, 'getEmailFromTokenPayload').resolves('email');
             this.transaction.run.resolves();
             await UtilityHandler.handler(expReq, expRes, UtilityOP.CP);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx/spx2/a2/dsx01';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -293,10 +292,10 @@ export class TestUtilitySVC {
             this.transaction.run.resolves();
             this.sandbox.stub(google.GoogleSeistore.prototype, 'getEmailFromTokenPayload').resolves('email');
             await UtilityHandler.handler(expReq, expRes, UtilityOP.CP);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx/spx1/a2/dsx01';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -311,10 +310,9 @@ export class TestUtilitySVC {
             this.sandbox.stub(Locker, 'createWriteLock').resolves();
             this.sandbox.stub(Locker, 'unlock').resolves();
             await UtilityHandler.handler(expReq, expRes, UtilityOP.CP);
-            done();
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx/spx1/a2/dsx01';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -332,47 +330,46 @@ export class TestUtilitySVC {
             this.sandbox.stub(Locker, 'releaseMutex').resolves();
             this.transaction.run.resolves();
             await UtilityHandler.handler(expReq, expRes, UtilityOP.CP);
-            done();
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath_from = 'sdx://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx/spx2/a2/dsx01';
             try {
                 UtilityParser.cp(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sdx://tnx/spx2/a2/dsx01';
             try {
                 UtilityParser.cp(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath_from = 'sd://tnx';
             expReq.query.sdpath_to = 'sd://tnx/spx2/a2/dsx01';
             try {
                 UtilityParser.cp(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx';
             try {
                 UtilityParser.cp(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx2/spx2/a2/dsx01';
             try {
                 UtilityParser.cp(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
     }
@@ -381,10 +378,9 @@ export class TestUtilitySVC {
 
         Tx.sectionInit('others');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(Response, 'writeError');
             await UtilityHandler.handler(expReq, expRes, undefined);
-            done();
         });
 
     }

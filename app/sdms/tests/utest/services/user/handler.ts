@@ -97,7 +97,7 @@ export class TestServicesUserHandler {
 
         Tx.sectionInit("addUserToGroupsTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Add;
 
@@ -116,10 +116,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Add;
 
@@ -138,10 +138,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Add;
 
@@ -159,10 +159,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Add;
 
@@ -181,10 +181,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Add;
 
@@ -203,10 +203,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'getByKey').resolves(datasetModel);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Add;
 
@@ -224,7 +224,7 @@ export class TestServicesUserHandler {
             this.sandbox.stub(SubProjectDAO, 'get').resolves(subProjectModel);
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
         });
 
     };
@@ -233,7 +233,7 @@ export class TestServicesUserHandler {
 
         Tx.sectionInit("removeUserFromDatasetTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Remove;
 
@@ -252,10 +252,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Remove;
 
@@ -275,10 +275,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Remove;
 
@@ -298,7 +298,7 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'getByKey').resolves(datasetModel);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
     };
 
@@ -306,7 +306,7 @@ export class TestServicesUserHandler {
 
         Tx.sectionInit("listUsersTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.List;
 
@@ -323,10 +323,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.List;
 
@@ -342,10 +342,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(SubProjectDAO, 'get').resolves(subProjectModel);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.List;
 
@@ -361,10 +361,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.List;
 
@@ -381,10 +381,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'getByKey').resolves(datasetModel);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.List;
 
@@ -398,7 +398,7 @@ export class TestServicesUserHandler {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
         });
     };
 
@@ -406,7 +406,7 @@ export class TestServicesUserHandler {
 
         Tx.sectionInit("rolesUserTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Roles;
 
@@ -427,10 +427,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Roles;
 
@@ -451,10 +451,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Roles;
 
@@ -475,10 +475,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Roles;
 
@@ -501,10 +501,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(DatasetDAO, 'getByKey').resolves(datasetModel);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Roles;
 
@@ -519,10 +519,10 @@ export class TestServicesUserHandler {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = UserOP.Roles;
 
@@ -532,7 +532,7 @@ export class TestServicesUserHandler {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
         });
 
     };
@@ -541,22 +541,22 @@ export class TestServicesUserHandler {
 
         Tx.sectionInit("errorTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
             
             op = 5;
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
 
             await Handler.handler(req, res, op);
-            Tx.check500(res.statusCode, done)
+            Tx.check500(res.statusCode)
         });
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UserOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UserOP) => {
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(true);
 
             await Handler.handler(req, res, op);
-            Tx.check403(res.statusCode, done)
+            Tx.check403(res.statusCode)
         });
 
     };
