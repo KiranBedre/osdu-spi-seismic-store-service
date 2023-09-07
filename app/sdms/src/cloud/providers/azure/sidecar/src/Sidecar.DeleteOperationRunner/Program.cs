@@ -75,8 +75,8 @@ public class Program
         var secretResponses = await Task.WhenAll(
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_PASSWORD),
-            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_HOSTNAME),
-            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_QUEUE_PASSWORD),
+            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_HOSTNAME),
+            secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY));
 

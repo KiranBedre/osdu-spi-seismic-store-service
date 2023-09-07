@@ -29,22 +29,22 @@ public static class Constants
         /// <summary>
         /// Hostname of the redis instance that stores the locks and the queues.
         /// </summary>
-        public const string REDIS_LOCKS_HOSTNAME = "redis-hostname";
+        public const string REDIS_SHARED_HOSTNAME = "redis-hostname";
 
         /// <summary>
         /// Password of the redis instance that stores the locks and the queues.
         /// </summary>
-        public const string REDIS_LOCKS_PASSWORD = "redis-password";  // pragma: allowlist secret
+        public const string REDIS_SHARED_PASSWORD = "redis-password";  // pragma: allowlist secret
 
         /// <summary>
         /// Hostname of the redis instance that stores the locks and the queues.
         /// </summary>
-        public const string REDIS_QUEUE_HOSTNAME = "redis-queue-hostname";
+        public const string REDIS_LOCKS_HOSTNAME = "redis-queue-hostname";
 
         /// <summary>
         /// Password of the redis instance that stores the locks and the queues.
         /// </summary>
-        public const string REDIS_QUEUE_PASSWORD = "redis-queue-password";  // pragma: allowlist secret
+        public const string REDIS_LOCKS_PASSWORD = "redis-queue-password";  // pragma: allowlist secret
 
         /// <summary>
         /// Resource ID of the Azure Active Directory application.
