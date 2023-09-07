@@ -305,7 +305,7 @@ export class TestSubProjectSVC {
         
         Tx.sectionInit('bulkDelete');
         
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExp(async (expReq: expRequest, expRes: expResponse) => {
             Config.CLOUDPROVIDER = 'azure';
             this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
             this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
@@ -317,7 +317,7 @@ export class TestSubProjectSVC {
             Tx.check202(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExp(async (expReq: expRequest, expRes: expResponse) => {
             Config.CLOUDPROVIDER = 'azure';
             this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
             this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);
@@ -334,7 +334,7 @@ export class TestSubProjectSVC {
 
         Tx.sectionInit('bulkDeleteStatus');
         
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExp(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.operationid = 'operationId';
             
             const operationStatus = {
@@ -359,7 +359,7 @@ export class TestSubProjectSVC {
             Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExp(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.operationid = 'operationId';
 
             Config.CLOUDPROVIDER = 'azure';
