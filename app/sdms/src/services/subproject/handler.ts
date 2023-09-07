@@ -288,7 +288,7 @@ export class SubProjectHandler {
             operation_id: operationId,
             tenant: tenant.name,
             subproject: subprojectName,
-            path: path,
+            path,
         };
 
         await DeleteJobRedisStore.pushOperation(operation);
@@ -297,7 +297,7 @@ export class SubProjectHandler {
             operation_id: operationId
         };
     }
-    
+
     // get status of a bulk delete operation
     private static async bulkDeleteStatus(req: expRequest): Promise<IDeleteOperationStatusModel> {
 
