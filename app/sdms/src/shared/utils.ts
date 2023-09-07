@@ -147,6 +147,17 @@ export class Utils {
 
     }
 
+    public static isBoolean(input: string): boolean {
+
+        switch(input.toLowerCase()) {
+            case 'true':
+            case 'false':
+                return true;
+            default:
+                return false;
+        }
+    }
+
     // retry on error using exponential retry backOff strategy.
     // wait*2^1+e, wait*2^2+e, wait*2^3+e, wait*2^(retryMaxAttempts)+e
     // 200ms 400ms 800ms 1600ms ...

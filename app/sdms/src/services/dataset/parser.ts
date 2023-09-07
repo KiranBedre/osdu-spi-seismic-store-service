@@ -126,12 +126,9 @@ export class DatasetParser {
     }
 
     public static list(req: expRequest): DatasetListRequest {
-        const res = req.method === 'POST' ? this.listPost(req) : this.listGet(req);
-        delete res.dataset.path;
-        return res;
-    }
+        const isPost = req.method === 'POST';
+        const params = isPost ? req.body : req.query;
 
-    public static listGet(req: expRequest): DatasetListRequest {
         let userInfo = true;
         if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
             userInfo = false;
@@ -143,76 +140,57 @@ export class DatasetParser {
             userInfo: userInfo.valueOf()
         } as DatasetListRequest;
 
-        if (req.query.gtag) {
-            if (!(req.query.gtag instanceof Array)) {
-                input.dataset.gtags = [req.query.gtag as string]
+        if (!params) return input;
+
+        Params.checkString(params.cursor, 'cursor', false);
+
+        if (params.gtag) {
+            if(isPost) { Params.checkArray(req.body.gtag, 'gtag', false); }
+            if (!(params.gtag instanceof Array)) {
+                input.dataset.gtags = [params.gtag as string]
             } else {
-                input.dataset.gtags = req.query.gtag as string[]
+                input.dataset.gtags = params.gtag as string[]
             }
         }
 
-        if (req.query.limit || req.query.cursor) {
-            input.pagination = {
-                limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
-                cursor: req.query.cursor as string
-            };
-        }
-
-        if (input.pagination?.limit < 0) {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'limit\' query parameter can not be less than zero.'));
-        }
-
-        if (input.pagination?.cursor === '') {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'cursor\' query parameter can not be empty if supplied'));
-        }
-
-        if (req.query?.search) {
-            input.search = req.query.search as string;
-        }
-
-        if (req.query?.select && typeof req.query.select === 'string') {
-            input.select = req.query.select.slice(1,-1).split(',');
-        }
-
-        return input;
-    }
-
-    public static listPost(req: expRequest): DatasetListRequest {
-        let userInfo = true;
-        if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
-            userInfo = false;
-        }
-
-        const input = {
-            dataset: this.createDatasetModelFromRequest(req),
-            pagination: null,
-            userInfo: userInfo.valueOf()
-        } as DatasetListRequest;
-
-        if (!req.body) return input;
-
-        Params.checkArray(req.body.gtag, 'gtag', false);
-        Params.checkString(req.body.limit, 'limit', false);
-        Params.checkString(req.body.cursor, 'cursor', false);
-
-        if (req.body.gtag) {
-            input.dataset.gtags = req.body.gtag;
-        }
-
-        if (req.body.limit || req.body.cursor) {
-            input.pagination = { limit: +req.body.limit, cursor: req.body.cursor };
+        if (params.limit || params.cursor) {
+            if(isPost) {
+                Params.checkString(params.limit, 'limit', false);
+                input.pagination = { limit: +params.limit, cursor: params.cursor };
+            }
+            else {
+                input.pagination = {
+                    limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
+                    cursor: req.query.cursor as string
+                };
+            }
         }
         if (input.pagination?.limit < 0) {
             throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'limit\' body field cannot be less than zero.'));
+                'The \'limit\' input param cannot be less than zero.'));
         }
         if (input.pagination?.cursor === '') {
             throw (Error.make(Error.Status.BAD_REQUEST,
-                'The \'cursor\' body field cannot be empty if supplied'));
+                'The \'cursor\' input param cannot be empty if supplied'));
         }
 
+        if (params.search) {
+            if(!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The \'search\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
+            }
+            input.search = params.search as string;
+        }
+
+        if (params.select && typeof params.select === 'string') {
+            if(!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The \'select\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
+            }
+            input.select = params.select.slice(1,-1).split(',');
+        }
+
+        delete input.dataset.path;
         return input;
     }
 
