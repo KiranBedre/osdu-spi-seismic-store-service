@@ -12,6 +12,12 @@ include:
   # lint
   - local: "app/sdms/devops/osdu/scanners/lint-node.yml"
 
+  # cspell
+  - local: "app/sdms/devops/osdu/scanners/cspell-node.yml"
+
+  # markdownlint
+  - local: "app/sdms/devops/osdu/scanners/markdownlint-node.yml"
+
   # scan for secrets
   - local: "app/sdms/devops/osdu/scanners/scan-for-secrets-node.yml"
 
