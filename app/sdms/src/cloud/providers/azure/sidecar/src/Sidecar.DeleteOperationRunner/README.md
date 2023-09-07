@@ -52,7 +52,7 @@ This project provides an [.env.example](.env.example) file that provides the bas
 
 Example:
 
-With DES_SERVICE_HOST:
+This is similar to the values in the typical Azure deployment. The `DES Service` provides the connection string for the Cosmos instance and the storage account.
 
 ```bash
 SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
@@ -64,7 +64,7 @@ AZURE_CLIENT_SECRET='<client secret>'
 AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
 ```
 
-With DES_SERVICE_HOST overwriting the connection strings:
+We can also overwrite the connection strings for the Cosmos instance, storage account, Redis instances:
 
 ```bash
 SDMS_REDIS_QUEUE_HOSTNAME='cache-xxx.redis.cache.windows.net'
@@ -83,7 +83,8 @@ AZURE_CLIENT_SECRET='<client secret>'
 AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
 ```
 
-Without DES_SERVICE_HOST, reading the Redis connection strings from the KeyVault:
+If we want to avoid the calls to the `DES Service` while running locally, we can omit the `DES_SERVICE_HOST`.
+If we omit it, then we need to add the connection strings for the storage account and the cosmos instance.
 
 ```bash
 SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
