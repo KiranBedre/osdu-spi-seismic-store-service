@@ -20,9 +20,11 @@ sdms_azure_dotnet_ci:
   image: mcr.microsoft.com/dotnet/sdk:6.0
   stage: build
   needs: []
+  coverage: '/  Line coverage: \d+.\d+%/'  # regular expression to parse coverage from stdout
   artifacts:
     paths:
       - ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
+      - ${CI_PROJECT_DIR}/cobertura/*
       - ${CI_PROJECT_DIR}/junit/*-test-result.xml
     reports:
       junit: ${CI_PROJECT_DIR}/junit/*-test-result.xml
@@ -33,6 +35,10 @@ sdms_azure_dotnet_ci:
     - cd app/${SDMS_SERVICE}/src/cloud/providers/azure/sidecar
     - dotnet format --severity warn --verify-no-changes
     - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=${CI_PROJECT_DIR}/junit/{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+    # generate coverage summary and print to stdout:
+    - dotnet tool install -g dotnet-reportgenerator-globaltool --version 5.1.25
+    - reportgenerator "-reports:${CI_PROJECT_DIR}/cobertura/**/coverage.cobertura.xml" "-targetdir:${CI_PROJECT_DIR}/cobertura" -reporttypes:TextSummary
+    - cat "${CI_PROJECT_DIR}/cobertura/Summary.txt"
   only:
     changes:
       - app/sdms/src/cloud/providers/azure/sidecar/**/*
