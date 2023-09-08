@@ -1,9 +1,8 @@
 {
 	"info": {
-		"_postman_id": "bb92d77b-ab9a-43bb-823c-2eb4ad1a6c69",
+		"_postman_id": "5c58ef49-d9a1-4182-af93-06e92eee2847",
 		"name": "SDMS-E2E ver.M20 - Release 0.23",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "10879044"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -20015,179 +20014,6 @@
 			"description": "These tests will check the idempotency of the dataset register, dataset patch and dataset delete endpoints."
 		},
 		{
-			"name": "cleanup",
-			"item": [
-				{
-					"name": "CLEANUP STATUS SET: verify condition for subproject delete",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.environment.get(\"hold_subproject\") == \"true\") {",
-									"    console.log('Subproject ' + pm.environment.get('subproject') + ' will not be deleted');",
-									"    postman.setNextRequest(\"CLEANUP STATUS UNSET: Cleanup test environment\");",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/svcstatus",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"svcstatus"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "CLEANUP SUBPROJECT DELETE: Delete a subproject",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 200) {",
-									"    console.log(pm.response.text())",
-									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"",
-									"} else {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
-									"    // Reset environment variables if _.retryOnFailure function was used before",
-									"    var key = request.name + '_counter';",
-									"    pm.environment.unset(key);",
-									"    postman.setEnvironmentVariable('execCounter', 1)",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}"
-							},
-							{
-								"key": "data-partition-id",
-								"value": "{{datapartition}}"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"subproject",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "CLEANUP STATUS UNSET: Cleanup test environment Copy",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.environment.unset('serviceCloudProvider');",
-									"pm.environment.unset('appAdminEmail');",
-									"pm.environment.unset('maxAmountOfRetries');",
-									"pm.environment.unset('subprojectLongName');",
-									"pm.environment.unset('execCounter');",
-									"// if subproject name was not provided remove subproject",
-									"if (pm.environment.get(\"hold_subproject\" !== true)) {",
-									"    pm.environment.unset('subproject');",
-									"}",
-									"pm.environment.unset('hold_subproject');",
-									"",
-									"console.log('Postman environment was cleaned up');"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/svcstatus",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"svcstatus"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"description": "These tests are designed for cleaning up by resetting the environment variables. Additionally, the subproject hold feature is enabled to ensure subproject is alive."
-		},
-		{
 			"name": "bulk delete",
 			"item": [
 				{
@@ -21739,6 +21565,179 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "cleanup",
+			"item": [
+				{
+					"name": "CLEANUP STATUS SET: verify condition for subproject delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"hold_subproject\") == \"true\") {",
+									"    console.log('Subproject ' + pm.environment.get('subproject') + ' will not be deleted');",
+									"    postman.setNextRequest(\"CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CLEANUP SUBPROJECT DELETE: Delete a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CLEANUP STATUS UNSET: Cleanup test environment Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.unset('serviceCloudProvider');",
+									"pm.environment.unset('appAdminEmail');",
+									"pm.environment.unset('maxAmountOfRetries');",
+									"pm.environment.unset('subprojectLongName');",
+									"pm.environment.unset('execCounter');",
+									"// if subproject name was not provided remove subproject",
+									"if (pm.environment.get(\"hold_subproject\" !== true)) {",
+									"    pm.environment.unset('subproject');",
+									"}",
+									"pm.environment.unset('hold_subproject');",
+									"",
+									"console.log('Postman environment was cleaned up');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "These tests are designed for cleaning up by resetting the environment variables. Additionally, the subproject hold feature is enabled to ensure subproject is alive."
 		}
 	],
 	"event": [
