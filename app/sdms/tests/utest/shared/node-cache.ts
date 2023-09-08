@@ -39,10 +39,9 @@ export class TestNodeCache {
 
       Tx.sectionInit('Test flushAll');
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const trace = new InMemoryCache();
          trace.flushAll();
-         done();
       });
    }
 

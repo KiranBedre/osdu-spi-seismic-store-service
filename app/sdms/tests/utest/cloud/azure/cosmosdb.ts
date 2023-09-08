@@ -17,18 +17,16 @@
 import sinon from 'sinon';
 import crypto from 'crypto'
 
-import { Conflict, Container, ContainerDefinition, ContainerResponse, FeedOptions, FeedResponse, Item, Items, OfferResponse, PartitionedQueryExecutionInfo, PartitionKeyDefinition, PartitionKeyRange, QueryIterator, RequestOptions, ResourceResponse, Response, SqlQuerySpec } from '@azure/cosmos';
-import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureCosmosDbTransactionDAO } from '../../../../src/cloud/providers/azure/cosmosdb';
-import { DatasetModel, PaginationModel } from '../../../../src/services/dataset';
+import { Container, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
+import { AzureCosmosDbDAO, AzureCosmosDbQuery } from '../../../../src/cloud/providers/azure';
+import { DatasetModel } from '../../../../src/services/dataset';
 import { AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
-import { Config, IJournal, IJournalTransaction } from '../../../../src/cloud';
+import { Config } from '../../../../src/cloud';
 import { IJournalQueryModel } from '../../../../src/cloud/journal';
 import { Tx } from '../../utils';
-import {assert, expect} from 'chai';
+import { assert, expect } from 'chai';
 import { AzureConfig } from '../../../../src/cloud/providers/azure';
-import { HighlightSpanKind } from 'typescript';
-import { query } from 'winston';
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 export class TestAzureCosmosDbDAO {
     private static sandbox: sinon.SinonSandbox;
@@ -96,6 +94,7 @@ export class TestAzureCosmosDbDAO {
                 this.sandbox.restore();
             });
 
+            this.getSize();
             this.save();
             this.get();
             this.delete();
@@ -126,13 +125,11 @@ export class TestAzureCosmosDbDAO {
 
         Tx.sectionInit('save');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(Items.prototype, 'upsert').resolves(mockEntity.data as any);
             this.cosmos.save(mockEntity).then(res => {
-                done();
             }).catch(err => {
                 assert.fail(err)
-                done();
             });
         });
 
@@ -147,7 +144,7 @@ export class TestAzureCosmosDbDAO {
             kind: 'testKind'
         };
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             key.partitionKey = 'dstestKey';
             this.sandbox.stub(axios, 'get').resolves();
             const mockResult = {
@@ -162,10 +159,9 @@ export class TestAzureCosmosDbDAO {
             this.sandbox.stub(Item.prototype, 'read').returns(mockResult);
             const [result] = await this.cosmos.get(key);
             assert.deepEqual(mockResult.resource.data, result, 'Get returned wrong object');
-            done();
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const mockResult = {
                 resource: {
                     data: {
@@ -178,10 +174,9 @@ export class TestAzureCosmosDbDAO {
             this.sandbox.stub(Item.prototype, 'read').returns(mockResult);
             const [result] = await this.cosmos.get(key);
             assert.deepEqual(mockResult.resource.data, result, 'Get returned wrong object');
-            done();
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const mockResult = {
                 resource: undefined,
                 statusCode: 404
@@ -189,7 +184,7 @@ export class TestAzureCosmosDbDAO {
 
             this.sandbox.stub(Item.prototype, 'read').returns(Promise.resolve(mockResult));
             const [res] = await this.cosmos.get(key);
-            Tx.checkTrue(res === undefined, done);
+            Tx.checkTrue(res === undefined);
         });
 
     }
@@ -197,19 +192,18 @@ export class TestAzureCosmosDbDAO {
     private static delete() {
         Tx.sectionInit('delete');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(Item.prototype, 'delete').resolves();
             await this.cosmos.delete({ partitionKey: 'entity' });
-            done();
         });
     }
 
     private static createQuery() {
         Tx.sectionInit('createQuery');
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.cosmos.createQuery('namespace', 'kind');
-            Tx.checkTrue(res !== undefined, done);
+            Tx.checkTrue(res !== undefined);
         });
 
     }
@@ -252,38 +246,38 @@ export class TestAzureCosmosDbDAO {
             kind: ''
         };
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             azureCosmosDbQuery.kind = 'subprojects';
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
-            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
+            Tx.checkTrue(res[1].endCursor === 'continuationToken');
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             azureCosmosDbQuery.kind = 'apps';
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
-            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
+            Tx.checkTrue(res[1].endCursor === 'continuationToken');
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
-            azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}}];
+            azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}, type: 'STRING'}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
-            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
+            Tx.checkTrue(res[1].endCursor === 'continuationToken');
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
-            azureCosmosDbQuery.filters = [{property: 'property', operator: 'CONTAINS', value: {value: 'value'}}];
+            azureCosmosDbQuery.filters = [{property: 'property', operator: 'RegexMatch', value: {value: 'value'}, type: 'STRING'}];
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             azureCosmosDbQuery.pagingStart = '';
             azureCosmosDbQuery.pagingLimit = 0;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel)
-            Tx.checkTrue(res[1].endCursor === 'continuationToken', done);
+            Tx.checkTrue(res[1].endCursor === 'continuationToken');
         });
 
     }
@@ -369,7 +363,7 @@ export class TestAzureCosmosDbDAO {
         const distinctPathsQuery = 'SELECT DISTINCT VALUE c.data.path FROM c WHERE c.data.subproject = "'
             + datasetModel.subproject + '" AND STARTSWITH(c.data.path, "' + datasetModel.path + '", false)';
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
             AzureConfig.ENABLE_OPTIMISED_QUERY = true;
 
@@ -406,10 +400,10 @@ export class TestAzureCosmosDbDAO {
 
             expect(actualPaths).to.have.same.members(expectedPaths);
 
-            done();
+
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
             AzureConfig.ENABLE_OPTIMISED_QUERY = false;
 
@@ -445,27 +439,27 @@ export class TestAzureCosmosDbDAO {
 
             expect(actualPaths).to.have.same.members(expectedPaths);
 
-            done();
+
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             AzureConfig.ENABLE_OPTIMISED_QUERY = true;
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
             this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, distinctPathsQuery);
-            done();
+
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             AzureConfig.ENABLE_OPTIMISED_QUERY = false;
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
             this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, subfoldersQuery);
-            done();
+
         });
 
     }
@@ -484,7 +478,7 @@ export class TestAzureCosmosDbDAO {
         let query =  'SELECT * FROM c WHERE c.data.subproject = "' + subproject +
             '" AND c.data.path = "' + path + '"'
         let queryIterator: QueryIterator<any> = this.getQueryIterator() as any;
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
@@ -496,10 +490,9 @@ export class TestAzureCosmosDbDAO {
             let res = await this.cosmos.listDatasets(dataset);
             let expectedQuery = 'SELECT * FROM c WHERE c.data.subproject = "' + dataset.subproject + '"';
             sinon.assert.calledWith(sinonStub, expectedQuery);
-            done();
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
@@ -511,10 +504,10 @@ export class TestAzureCosmosDbDAO {
 
             let res = await this.cosmos.listDatasets(dataset);
             sinon.assert.calledWith(sinonStub, query);
-            done();
+
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test( async() => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
@@ -529,10 +522,10 @@ export class TestAzureCosmosDbDAO {
                 continuationToken: pagination.cursor,
                 maxItemCount: pagination.limit
             });
-            done();
+
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test( async() => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
@@ -554,10 +547,9 @@ export class TestAzureCosmosDbDAO {
                 continuationToken: pagination.cursor,
                 maxItemCount: pagination.limit
             });
-            done();
         });
 
-        Tx.test( async(done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
@@ -601,10 +593,10 @@ export class TestAzureCosmosDbDAO {
             expect(results[0]).to.have.same.members(expectedDatasets);
             expect(results[1].endCursor).to.be.undefined
 
-            done();
+
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
@@ -651,10 +643,10 @@ export class TestAzureCosmosDbDAO {
             expect(results[0]).to.have.same.members(expectedDatasets);
             expect(results[1].endCursor).to.not.be.undefined
 
-            done();
+
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
@@ -700,7 +692,111 @@ export class TestAzureCosmosDbDAO {
                 },
             );
 
-            done();
+
+        });
+    }
+
+    private static getSize() {
+      Tx.sectionInit("getSize");
+
+      let subproject = "subproject1";
+      let path = "path1";
+      let name = "name1";
+      const expectedQuery: SqlQuerySpec = {
+        query:
+          "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject",
+        parameters: [
+          { name: "@subproject", value: subproject },
+        ],
+      };
+        this.getSizeCase(
+        {
+          subproject: subproject,
+        } as DatasetModel,
+        {
+          query:
+            "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject",
+          parameters: [
+            { name: "@subproject", value: subproject },
+          ],
+        }
+      );
+
+      this.getSizeCase(
+        {
+          subproject: subproject,
+          path: path,
+        } as DatasetModel,
+        {
+          query:
+            "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject AND STARTSWITH(c.data.path, @path, false)",
+          parameters: [
+            { name: "@subproject", value: subproject },
+            { name: "@path", value: path },
+          ],
+        }
+      );
+
+      this.getSizeCase(
+        {
+          subproject: subproject,
+          path: path,
+          name: name,
+        } as DatasetModel,
+        {
+          query:
+            "SELECT count(1) as count, SUM(c.data.computed_size) as size_bytes FROM c WHERE c.data.subproject = @subproject AND c.data.name = @name AND STARTSWITH(c.data.path, @path, false)",
+          parameters: [
+            { name: "@subproject", value: subproject },
+            { name: "@name", value: name }, 
+            { name: "@path", value: path },
+          ],
+        }
+      );
+
+      Tx.test(async () => {
+          const dataset = {
+              subproject: subproject,
+              name: name,
+          } as DatasetModel;
+          AzureConfig.SIDECAR_ENABLE_QUERY = false;
+
+          try {
+              await this.cosmos.getSize(dataset);
+          } catch (error) {
+              expect(error.error.message).to.equal("[seismic-store-service] Path needs to be provided.");
+              expect(error.error.status).to.equal("BAD_REQUEST");
+              expect(error.error.code).to.equal(400);
+          }
+      });
+    }
+
+    private static getSizeCase(dataset: DatasetModel, expectedQuery: SqlQuerySpec) {
+        const size_bytes = 56;
+        const count = 34;
+        const mockResult = [
+          {
+            size_bytes: size_bytes,
+            count: count,
+          },
+        ] as any;
+        let queryIterator: QueryIterator<any> = this.getQueryIterator(
+          mockResult
+        ) as any;
+
+        Tx.test(async () => {
+          AzureConfig.SIDECAR_ENABLE_QUERY = false;
+          let sinonStub = this.sandbox.stub(Items.prototype, "query");
+
+          sinonStub.returns(queryIterator);
+
+          let res = await this.cosmos.getSize(dataset);
+          expect(res).to.deep.equal({
+            size_bytes: size_bytes,
+            dataset_count: count,
+          });
+
+          sinon.assert.calledWith(sinonStub, expectedQuery);
         });
     }
 
@@ -733,7 +829,7 @@ export class TestAzureCosmosDbDAO {
     private static createKey() {
         Tx.sectionInit('create key');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const specs = {
                 namespace: 'testNamespace',
                 path: [AzureConfig.TENANTS_KIND, 'tnName']
@@ -743,10 +839,9 @@ export class TestAzureCosmosDbDAO {
 
             const key = this.cosmos.createKey(specs);
             assert.deepEqual(key, expectedKey, 'Keys do not match');
-            done();
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const specs = {
                 namespace: 'testNamespace',
                 path: [AzureConfig.SUBPROJECTS_KIND, 'spName']
@@ -756,10 +851,9 @@ export class TestAzureCosmosDbDAO {
 
             const key = this.cosmos.createKey(specs);
             assert.deepEqual(key, expectedKey, 'Keys do not match');
-            done();
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const specs = {
                 namespace: Config.SEISMIC_STORE_NS + '-tenant-sp',
                 path: [Config.DATASETS_KIND],
@@ -770,10 +864,9 @@ export class TestAzureCosmosDbDAO {
 
             const key = this.cosmos.createKey(specs) as { name: string, partitionKey: string, kind: string };
             assert.deepEqual(key, expectedKey, 'Keys do not match');
-            done();
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             const specs = {
                 namespace: 'testNamespace',
                 path: [AzureConfig.APPS_KIND, 'apName']
@@ -783,16 +876,15 @@ export class TestAzureCosmosDbDAO {
 
             const key = this.cosmos.createKey(specs);
             assert.deepEqual(key, expectedKey, 'Keys do not match');
-            done();
         });
     }
 
     private static getTransaction() {
         Tx.sectionInit('getTransaction');
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.cosmos.getTransaction();
-            Tx.checkTrue(res !== undefined, done);
+            Tx.checkTrue(res !== undefined);
         });
 
     }
@@ -800,9 +892,9 @@ export class TestAzureCosmosDbDAO {
     private static getQueryFilterSymbolContains() {
         Tx.sectionInit('getQueryFilterSymbolContains');
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.cosmos.getQueryFilterSymbolContains();
-            Tx.checkTrue(res === 'CONTAINS', done);
+            Tx.checkTrue(res === "CONTAINS");
         });
 
     }
@@ -810,27 +902,27 @@ export class TestAzureCosmosDbDAO {
     private static queryFilter() {
         Tx.sectionInit('filter');
 
-        Tx.test((done: any) => {
+        Tx.test(() => {
             const res = this.query.filter('property');
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.filter('property', undefined, undefined);
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.filter('', undefined, undefined);
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.filter('property', '=', {});
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
     }
@@ -839,16 +931,16 @@ export class TestAzureCosmosDbDAO {
     private static queryStart() {
         Tx.sectionInit('Start');
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.start('start');
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const start = {} as Buffer;
             const res = this.query.start(start);
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
     }
@@ -857,9 +949,9 @@ export class TestAzureCosmosDbDAO {
     private static queryLimit() {
         Tx.sectionInit('Limit');
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.limit(1);
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
     }
@@ -867,15 +959,15 @@ export class TestAzureCosmosDbDAO {
     private static querygroupBy() {
         Tx.sectionInit('groupBy');
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.groupBy('fieldName');
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.groupBy([]);
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
     }
@@ -883,22 +975,22 @@ export class TestAzureCosmosDbDAO {
     private static querySelect() {
         Tx.sectionInit('Select');
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.select('fieldName');
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
 
-        Tx.test( (done: any) => {
+        Tx.test( () => {
             const res = this.query.select([]);
-            Tx.checkTrue(res === this.query , done);
+            Tx.checkTrue(res === this.query );
 
         });
     }
 
-    private static getQueryIterator() {
+    private static getQueryIterator(resources = ['resources']) {
         let feedResponse: FeedResponse<any> = {
-            resources: ["resources"],
+            resources: resources,
             headers: undefined,
             hasMoreResults: false,
             continuation: '',

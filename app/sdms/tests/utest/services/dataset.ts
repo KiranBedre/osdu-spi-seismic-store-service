@@ -121,29 +121,27 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('listPost');
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
+            expReq.method = 'POST';
             expReq.query.ctag = 'xxx';
 
-            DatasetParser.listPost(expReq);
-            done();
-
+            DatasetParser.list(expReq);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
+            expReq.method = 'POST';
             // expReq.query.ctag = 'xxx';
             // expReq.body = {};
 
-            DatasetParser.listPost(expReq);
-            done();
-
+            DatasetParser.list(expReq);
         });
 
-        // Tx.testExp(async (done: any, expReq: expRequest) => {
+        // Tx.testExpAsync(async (expReq: expRequest) => {
         //     // expReq.query.ctag = 'xxx';
         //     expReq.body.gtag = "tag";
 
         //     DatasetParser.listPost(expReq);
-        //     done();
+        //
 
         // });
     }
@@ -152,7 +150,7 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('ctag');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.params.path = '/';
             expReq.query.ctag = '000000000000000xxxxx';
             const dataset = {
@@ -160,22 +158,22 @@ export class TestDatasetSVC {
             } as DatasetModel;
             this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.CheckCTag);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.params.path = '/';
             expReq.query.ctag = '000000000000000xxxxx';
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.CheckCTag);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest) => {
+        Tx.testExpAsync(async (expReq: expRequest) => {
             expReq.query.ctag = 'xxx';
             try {
                 DatasetParser.checkCTag(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
     }
@@ -185,7 +183,7 @@ export class TestDatasetSVC {
         Tx.sectionInit('register');
         let datasetCopy = JSON.parse(JSON.stringify(this.dataset))
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([] as any);
             this.sandbox.stub(DatasetDAO, 'register').resolves();
             this.sandbox.stub(DatasetParser, 'register').resolves(datasetCopy);
@@ -197,19 +195,19 @@ export class TestDatasetSVC {
             this.sandbox.stub(Locker, 'removeWriteLock').resolves();
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Register);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetParser, 'register').resolves(datasetCopy);
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ ltag: 'l' }] as any);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Register);
-            Tx.check409(expRes.statusCode, done)
+            Tx.check409(expRes.statusCode)
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.journal.runQuery.resolves([[], {}] as never);
             this.journal.save.resolves({} as never);
 
@@ -219,10 +217,9 @@ export class TestDatasetSVC {
             });
 
             await DatasetDAO.register(this.journal, { key: datasetKey, data: this.dataset });
-            done();
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.seismicmeta = {
                 data: { msg: 'seismic metadata' },
                 kind: 'slb:seistore:seismic2d:1.0.0',
@@ -238,17 +235,17 @@ export class TestDatasetSVC {
             this.sandbox.stub(Locker, 'removeWriteLock');
             this.sandbox.stub(DESUtils, 'getDataPartitionID').resolves('tenant-a');
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Register);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.transaction.run.throws();
             this.transaction.rollback.resolves();
 
             const writeErrorStub = this.sandbox.stub(Response, 'writeError');
             writeErrorStub.resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Register);
-            Tx.checkTrue(writeErrorStub.calledOnce, done);
+            Tx.checkTrue(writeErrorStub.calledOnce);
         });
 
     }
@@ -259,7 +256,7 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('get');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ sbit: null, ltag: '123' }, 'key'] as any);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
@@ -268,10 +265,10 @@ export class TestDatasetSVC {
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             this.sandbox.stub(DESStorage, 'getRecord');
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Get);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.openmode = 'write';
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ sbit: null }, 'key'] as any);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves(true);
@@ -279,29 +276,28 @@ export class TestDatasetSVC {
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Get);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ sbit: 'R', sbit_count: 1 }, 'key'] as any);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Get);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Get);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.journal.runQuery.resolves([[], {}] as never);
             await DatasetDAO.get(this.journal, this.dataset);
-            done();
         });
 
     }
@@ -310,17 +306,17 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('list');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             Config.USER_ASSOCIATION_SVC_PROVIDER = 'ccm-internal';
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [{} as DatasetModel], nextPageCursor: null });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.limit = '10';
             Config.USER_ASSOCIATION_SVC_PROVIDER = 'ccm-internal';
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
@@ -331,10 +327,10 @@ export class TestDatasetSVC {
             responseStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
             const data = responseStub.getCall(0).args[1];
-            Tx.checkTrue(data.datasets[0] === this.dataset && data.nextPageCursor === 'cursor', done);
+            Tx.checkTrue(data.datasets[0] === this.dataset && data.nextPageCursor === 'cursor');
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.limit = '10';
             Config.USER_ASSOCIATION_SVC_PROVIDER = 'ccm-internal';
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
@@ -345,7 +341,7 @@ export class TestDatasetSVC {
             responseStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
             const data = responseStub.getCall(0).args[1];
-            Tx.checkTrue(data.datasets[0] === this.dataset && data.nextPageCursor === '', done);
+            Tx.checkTrue(data.datasets[0] === this.dataset && data.nextPageCursor === '');
         });
 
     }
@@ -354,7 +350,7 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('delete');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const dataset = {
                 gcsurl: 'gcs/path1',
                 name: 'name',
@@ -371,10 +367,10 @@ export class TestDatasetSVC {
             this.sandbox.stub(Locker, 'releaseMutex').resolves();
             this.sandbox.stub(Locker, 'unlock').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Delete);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const dataset = {
                 gcsurl: 'gcs/path1',
                 name: 'name',
@@ -387,10 +383,10 @@ export class TestDatasetSVC {
             const writeErrorStub = this.sandbox.stub(Response, 'writeError');
             writeErrorStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Delete);
-            Tx.checkTrue(writeErrorStub.calledOnce === true, done);
+            Tx.checkTrue(writeErrorStub.calledOnce === true);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const dataset = {
                 name: 'name',
                 path: 'path',
@@ -402,10 +398,10 @@ export class TestDatasetSVC {
             const writeErrorStub = this.sandbox.stub(Response, 'writeError');
             writeErrorStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Delete);
-            Tx.checkTrue(writeErrorStub.calledOnce === true, done);
+            Tx.checkTrue(writeErrorStub.calledOnce === true);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const dataset = {
                 gcsurl: 'gcs/path1',
                 name: 'name',
@@ -422,7 +418,7 @@ export class TestDatasetSVC {
             this.sandbox.stub(Locker, 'releaseMutex').resolves();
             this.sandbox.stub(Locker, 'unlock').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Delete);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
     }
@@ -431,7 +427,7 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('patch');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.metadata = { 'k1': 'v1', 'k2': 'v2', 'k3': { 'k4': 'v4' } };
             expReq.body.filemetadata = { 'type': 'GENERIC', 'size': 1021 };
             expReq.body.gtags = ['tagA', 'tagB'];
@@ -471,10 +467,10 @@ export class TestDatasetSVC {
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'releaseMutex').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.metadata = { 'k1': 'v1', 'k2': 'v2', 'k3': { 'k4': 'v4' } };
             expReq.body.filemetadata = { 'type': 'GENERIC', 'size': 1021 };
             expReq.body.gtags = ['tagA', 'tagB'];
@@ -508,10 +504,10 @@ export class TestDatasetSVC {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.metadata = { 'k1': 'v1', 'k2': 'v2', 'k3': { 'k4': 'v4' } };
             expReq.body.filemetadata = { 'type': 'GENERIC', 'size': 1021 };
             expReq.body.gtags = ['tagA', 'tagB'];
@@ -545,18 +541,18 @@ export class TestDatasetSVC {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ sbit: 'R', sbit_count: 1 }, 'key'] as any);
             this.sandbox.stub(Auth, 'isReadAuthorized').throws();
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
-            Tx.check400(expRes.statusCode, done);
+            Tx.check400(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
 
             expReq.body.metadata = { 'k1': 'v1', 'k2': 'v2', 'k3': { 'k4': 'v4' } };
             const metadata = { 'k1': 'v1', 'k2': 'v2', 'k3': { 'k4': 'v4' } };
@@ -611,7 +607,7 @@ export class TestDatasetSVC {
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
 
-            Tx.check409(expRes.statusCode, done);
+            Tx.check409(expRes.statusCode);
         });
 
     }
@@ -620,34 +616,33 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('exist');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.datasets = ['spx01/dsx01', '/'];
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'get').resolves(undefined);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Exists);
-            done();
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.datasets = [];
             try {
                 DatasetParser.exists(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.datasets = [''];
             try {
                 DatasetParser.exists(expReq);
-            } catch (e) { Tx.check400(e.error.code, done); }
+            } catch (e) { Tx.check400(e.error.code); }
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.datasets = ['spx01/dsx01', '/'];
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Exists);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
     }
@@ -656,22 +651,21 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('sizes');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.datasets = ['spx01/dsx01', '/'];
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'get').resolves(undefined);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Sizes);
-            done();
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.body.datasets = ['spx01/dsx01', '/'];
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             this.sandbox.stub(DatasetParser, 'sizes').returns([this.dataset]);
             this.dataset.filemetadata = { size: 100 };
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Sizes);
-            Tx.checkTrue(expRes.statusCode === 200, done);
+            Tx.checkTrue(expRes.statusCode === 200);
         });
 
     }
@@ -680,7 +674,7 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('size');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const dataset = {
                 gcsurl: 'gcs/path1',
                 name: 'name',
@@ -718,13 +712,13 @@ export class TestDatasetSVC {
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.ComputeSize);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.ComputeSize);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
     }
@@ -733,12 +727,12 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('contents');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const expectedValue = ({ datasets: ['dataset01'], directories: ['a', 'd'] });
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'listContent').resolves(expectedValue);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.ListContent);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
     }
@@ -747,15 +741,15 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('permissions');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves(undefined);
             const responseErrorStub = this.sandbox.stub(Response, 'writeError');
             responseErrorStub.resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Permission);
-            Tx.checkTrue(responseErrorStub.calledOnce === true, done);
+            Tx.checkTrue(responseErrorStub.calledOnce === true);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const tenant = {
                 name: 'tenant-a',
                 gcpid: 'gcp-id'
@@ -764,10 +758,10 @@ export class TestDatasetSVC {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Permission);
-            Tx.checkTrue(expRes.statusCode === 200, done);
+            Tx.checkTrue(expRes.statusCode === 200);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             const tenant = {
                 name: 'tenant-a',
                 gcpid: 'gcp-id'
@@ -776,7 +770,7 @@ export class TestDatasetSVC {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Permission);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
     }
@@ -785,11 +779,10 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('others');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.journal.listDatasets.resolves([[{}], {}] as never);
             this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves();
             await DatasetDAO.list(this.journal, this.dataset, null, null, null);
-            done();
         });
 
     }
@@ -797,15 +790,14 @@ export class TestDatasetSVC {
     private static putTags() {
         Tx.sectionInit('put tags');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.gtag = ['tagA', 'tagB'];
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ name: 'dataset-a' } as IDatasetModel, undefined]);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.PutTags);
-            done();
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves(
                 [{ name: 'dataset-a', gtags: ['tag01', 'tag02'] } as IDatasetModel, undefined]);
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
@@ -817,10 +809,10 @@ export class TestDatasetSVC {
             await DatasetHandler.handler(expReq, expRes, DatasetOP.PutTags);
 
             Tx.checkTrue(JSON.stringify(
-                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02', undefined]), done);
+                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02', undefined]));
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves(
                 [{ name: 'dataset-a', gtags: ['tag01', 'tag02'] } as IDatasetModel, undefined]);
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
@@ -832,15 +824,15 @@ export class TestDatasetSVC {
             await DatasetHandler.handler(expReq, expRes, DatasetOP.PutTags);
 
             Tx.checkTrue(JSON.stringify(
-                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02', undefined]), done);
+                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02', undefined]));
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'releaseMutex').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.PutTags);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
     }
@@ -849,7 +841,7 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('lock');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetParser, 'lock').returns(
                 { dataset: this.dataset, open4write: true, wid: undefined });
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
@@ -858,20 +850,20 @@ export class TestDatasetSVC {
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Lock);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetParser, 'lock').returns(
                 { dataset: this.dataset, open4write: true, wid: undefined });
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Lock);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetParser, 'lock').returns(
                 { dataset: this.dataset, open4write: false, wid: undefined });
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
@@ -880,11 +872,11 @@ export class TestDatasetSVC {
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Lock);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.dataset.ltag = 'ltag';
             this.sandbox.stub(DatasetParser, 'lock').returns(
                 { dataset: this.dataset, open4write: false, wid: undefined });
@@ -895,10 +887,10 @@ export class TestDatasetSVC {
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Lock);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.openmode = 'write';
             expReq.query.wid = 'sbit';
             expReq.params.datasetid = 'dataset-01';
@@ -912,15 +904,15 @@ export class TestDatasetSVC {
                 result.dataset.subproject === 'subproject-01' &&
                 result.dataset.tenant === 'tenant-01' &&
                 result.open4write === true &&
-                result.wid === 'sbit'), done);
+                result.wid === 'sbit'));
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.openmode = 'wrong_mode';
             try {
                 DatasetParser.lock(expReq);
             } catch (e) {
-                Tx.check400(e.error.code, done);
+                Tx.check400(e.error.code);
             }
         });
 
@@ -930,18 +922,18 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('unlock');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
             this.sandbox.stub(Locker, 'unlock').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.UnLock);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.UnLock);
-            Tx.check404(expRes.statusCode, done);
+            Tx.check404(expRes.statusCode);
         });
 
     }
@@ -980,18 +972,18 @@ export class TestDatasetSVC {
             }
         };
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             const data = await DatasetParser.register(expReq);
-            Tx.checkTrue(data.created_by === undefined, done);
+            Tx.checkTrue(data.created_by === undefined);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(true);
             this.sandbox.stub(AuthProviderFactory, 'build').returns(iAuthProvider);
             this.sandbox.stub(expReq, 'get').returns(context);
             const data = await DatasetParser.register(expReq);
-            Tx.checkTrue(data.created_by === info.user, done);
+            Tx.checkTrue(data.created_by === info.user);
         });
 
     }

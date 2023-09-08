@@ -1,9 +1,13 @@
-# Seismic Store Docker Images
+# Seismic Store Docker Images #
 
-This folder contain a [docker](https://www.docker.com/) create the final distribution image
+This folder contain a [docker](https://www.docker.com/) create the final 
+distribution image
 
-- `runtime.Dockerfile`, builds the distribution and create the final image to use in a runtime env. The dockerfile require 1 argument:
-  - `docker_node_image_version`, the image version of the node docker image to use for the final distribution image. It must be capable to host and execute a nodejs application, for example **10.15.3**(default value) that corresponds to node:10.15.3
+- `runtime.Dockerfile`, builds the distribution and create the final image to
+use in a runtime env. The dockerfile require 1 argument:
+  - `docker_node_image_version`, the image version of the node docker image to
+use for the final distribution image. It must be capable to host and execute a 
+nodejs application, for example **10.15.3**(default value) that corresponds to node:10.15.3
 
   ```bash
   # execute this script from the repository root directory

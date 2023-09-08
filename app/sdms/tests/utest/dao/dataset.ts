@@ -78,31 +78,29 @@ export class TestDataset {
 	private static testRegister() {
 		Tx.sectionInit('register');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.journal.save.resolves({} as never);
 			await DatasetDAO.register(this.journal, { key: { 'key': 'dataset_key' }, data: TestDataset.dataset });
-			done();
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.journal.save.resolves();
 			await DatasetDAO.register(this.journal, { key: { 'key': 'dataset_key' }, data: TestDataset.dataset });
-			done();
 		});
 	}
 
 	private static testGet() {
 		Tx.sectionInit('get');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.journal.runQuery.resolves([[], undefined]);
 
 			const results = await DatasetDAO.get(this.journal, this.dataset);
 
-			Tx.checkTrue(results[0] === undefined && results[1] === undefined, done);
+			Tx.checkTrue(results[0] === undefined && results[1] === undefined);
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const entity: Entity = {
 				ctag: '123',
 				name: 'ds01',
@@ -119,10 +117,10 @@ export class TestDataset {
 
 			const result = await DatasetDAO.get(this.journal, this.dataset);
 
-			Tx.checkTrue(result[0] === entity, done);
+			Tx.checkTrue(result[0] === entity);
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const entity: Entity = {};
 			entity[Datastore.KEY] = this.journal.createKey({
 				namespace: 'seismic-store-ns',
@@ -133,28 +131,27 @@ export class TestDataset {
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(entity);
 
 			const result = await DatasetDAO.get(this.journal, this.dataset);
-			Tx.checkTrue(result[0][Datastore.KEY].name === '123', done);
+			Tx.checkTrue(result[0][Datastore.KEY].name === '123');
 		});
 	}
 
 	private static testUpdate() {
 		Tx.sectionInit('update');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.journal.save.resolves();
 			await DatasetDAO.update(
 				this.journal,
 				this.dataset,
 				this.journal.createKey({ namespace: 'datasets', path: '324' })
 			);
-			done();
 		});
 	}
 
 	private static testList1() {
 		Tx.sectionInit('list ');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const expectedResult = [
 				{
 					created_by: 'user@email',
@@ -188,11 +185,10 @@ export class TestDataset {
 
 			Tx.checkTrue(
 				this.journal.runQuery.calledWith(query) && result[0] === expectedResult[0],
-				done
 			);
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{
@@ -232,8 +228,7 @@ export class TestDataset {
 			const result = await DatasetDAO.list(this.journal, this.dataset, null, null, null);
 
 			Tx.checkTrue(
-				this.journal.runQuery.calledWith(query) && result[0] === expectedResult[0],
-				done
+				this.journal.runQuery.calledWith(query) && result[0] === expectedResult[0]
 			);
 		});
 	}
@@ -241,7 +236,7 @@ export class TestDataset {
 	private static testList() {
 		Tx.sectionInit('list ');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const expectedResult = [
 				{
 					created_by: 'user@email',
@@ -272,10 +267,9 @@ export class TestDataset {
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
-			done()
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{
@@ -313,10 +307,9 @@ export class TestDataset {
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
-			done()
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			Config.CLOUDPROVIDER = 'azure';
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
@@ -355,10 +348,9 @@ export class TestDataset {
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
-			done()
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			Config.CLOUDPROVIDER = 'azure';
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
@@ -397,7 +389,6 @@ export class TestDataset {
 			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
-			done()
 		});
 	}
 
@@ -405,7 +396,7 @@ export class TestDataset {
 	private static testDelete() {
 		Tx.sectionInit('delete');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const entity: Entity = {};
 			entity[Datastore.KEY] = this.journal.createKey({
 				namespace: 'seismic-store-ns',
@@ -415,14 +406,14 @@ export class TestDataset {
 
 			await DatasetDAO.delete(this.journal, entity);
 
-			Tx.checkTrue(this.journal.delete.calledWith(entity[Datastore.KEY]), done);
+			Tx.checkTrue(this.journal.delete.calledWith(entity[Datastore.KEY]));
 		});
 	}
 
 	private static testDeleteAll() {
 		Tx.sectionInit('delete all');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const entityOne: Entity = {};
 			entityOne[Datastore.KEY] = this.journal.createKey({
 				namespace: 'seismic-store-ns',
@@ -449,8 +440,7 @@ export class TestDataset {
 			Tx.checkTrue(
 				this.journal.runQuery.calledWith(query) &&
 				this.journal.delete.getCall(0).calledWith(entityOne[Datastore.KEY]) &&
-				this.journal.delete.getCall(1).calledWith(entityTwo[Datastore.KEY]),
-				done
+				this.journal.delete.getCall(1).calledWith(entityTwo[Datastore.KEY])
 			);
 		});
 	}
@@ -458,7 +448,7 @@ export class TestDataset {
 	private static testPaginatedListContent() {
 		Tx.sectionInit('pagination');
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const pagination: IPaginationModel = {
 				cursor: undefined,
 				limit: 5,
@@ -467,10 +457,9 @@ export class TestDataset {
 			this.journal.listDatasets.resolves([[{}], { endCursor: 'NO_MORE_RESULTS' }]);
 			this.journal.listFolders.resolves([[{path: '/a/b/c/'}], { endCursor: 'NO_MORE_RESULTS' }]);
 			await DatasetDAO.paginatedListContent(this.journal, this.dataset, Config.LS_MODE.ALL, pagination);
-			done()
 		});
 
-		Tx.test(async (done: any) => {
+		Tx.test(async () => {
 			const pagination: IPaginationModel = {
 				cursor: 'cursor',
 				limit: 5,
@@ -486,31 +475,31 @@ export class TestDataset {
 
 			await DatasetDAO.paginatedListContent(this.journal, this.dataset, Config.LS_MODE.ALL, pagination);
 
-			Tx.checkTrue(this.journal.listDatasets.calledWith(this.dataset, pagination), done);
+			Tx.checkTrue(this.journal.listDatasets.calledWith(this.dataset, pagination));
 		});
 	}
 
 	private static testFixOldModel() {
 		Tx.sectionInit('fix old model');
-		Tx.testExp(async (done: any) => {
+		Tx.test(async () => {
 			this.sandbox.stub(Locker, 'getLock').resolves('WriteLockValue');
 			const result = await DatasetDAO.fixOldModel(this.dataset, 'tenant-a', 'subproject-a');
-			Tx.checkTrue(result.sbit === 'WriteLockValue' && result.sbit_count === 1, done);
+			Tx.checkTrue(result.sbit === 'WriteLockValue' && result.sbit_count === 1);
 		});
 
-		Tx.testExp(async (done: any) => {
+		Tx.test(async () => {
 			this.sandbox.stub(Locker, 'getLock').resolves(['RAxBxCx', 'RDxExFx']);
 			const result = await DatasetDAO.fixOldModel(this.dataset, 'tenant-a', 'subproject-a');
-			Tx.checkTrue(result.sbit === 'RAxBxCx,RDxExFx' && result.sbit_count === 2, done);
+			Tx.checkTrue(result.sbit === 'RAxBxCx,RDxExFx' && result.sbit_count === 2);
 		});
 
-		Tx.testExp(async (done: any) => {
+		Tx.test(async () => {
 			this.sandbox.stub(Locker, 'getLock').resolves(undefined);
 			const result = await DatasetDAO.fixOldModel(this.dataset, 'tenant-a', 'subproject-a');
-			Tx.checkTrue(result.sbit === null && result.sbit_count === 0, done);
+			Tx.checkTrue(result.sbit === null && result.sbit_count === 0);
 		});
 
-		Tx.testExp(async (done: any) => {
+		Tx.test(async () => {
 			this.sandbox.stub(Locker, 'getLock').resolves(undefined);
 			const dataset = { name: 'dataset-a' } as DatasetModel;
 			const result = await DatasetDAO.fixOldModel(dataset, 'tenant-a', 'subproject-a');
@@ -521,14 +510,14 @@ export class TestDataset {
 				result.tenant === 'tenant-a' &&
 				result.subproject === 'subproject-a' &&
 				result.ctag === '0000000000000000';
-			Tx.checkTrue(validationResult === true, done);
+			Tx.checkTrue(validationResult === true);
 		});
 	}
 
 	private static testListContent() {
 		Tx.sectionInit('test list content');
 
-		Tx.testExp(async (done: any) => {
+		Tx.test(async () => {
 
 			const dataset = {
 				name: 'dataset01',
@@ -568,7 +557,7 @@ export class TestDataset {
 
 			Tx.checkTrue(
 				JSON.stringify(result.datasets) === JSON.stringify(
-					['dataset01']) && JSON.stringify(result.directories) === JSON.stringify(['a/', 'd/']), done);
+					['dataset01']) && JSON.stringify(result.directories) === JSON.stringify(['a/', 'd/']));
 
 		});
 	}

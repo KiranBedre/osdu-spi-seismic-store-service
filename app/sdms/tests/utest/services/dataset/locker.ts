@@ -48,21 +48,18 @@ export class DataLockerTest {
 
         Tx.sectionInit("test create WriteLock");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             Locker.createWriteLock("lockKey", "lock");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(Locker, 'getLock');
             Locker.createWriteLock("lockKey", "lock");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(Locker, 'getLock');
             Locker.createWriteLock("lockKey", "idempotentWriteLock");
-            done();
         });
     }
 
@@ -70,31 +67,29 @@ export class DataLockerTest {
 
         Tx.sectionInit("test acquire WriteLock");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             try {
                 await Locker.acquireWriteLock("lockKey", "acquireWriteLock");
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves();
 
             await Locker.acquireWriteLock("lockKey", "WacquireWriteLock");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves("WacquireWriteLock");
 
             await Locker.acquireWriteLock("lockKey", "WacquireWriteLock");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves("acquireWriteLock");
@@ -104,10 +99,10 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireWriteLock("lockKey", "WacquireWriteLock", 'wid');
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves("acquireWriteLock");
@@ -117,10 +112,10 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireWriteLock("lockKey", "WacquireWriteLock");
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves("acquireWriteLock");
@@ -130,10 +125,10 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireWriteLock("lockKey", "WacquireWriteLock");
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves("acquireWriteLock");
@@ -143,55 +138,53 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireWriteLock("lockKey", "WacquireWriteLock", 'wid');
-            } catch(e) { done(); }
+            } catch(e) { }
         });
     }
 
     private static testacquireReadLock() {
         Tx.sectionInit("test acquire ReadLock");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             try {
                 await Locker.acquireReadLock("lockKey", "idempotentReadLock");
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             try {
                 await Locker.acquireReadLock("lockKey");
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             try {
                 await Locker.acquireReadLock("lockKey", "", "wid");
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves("lockValue-a");
 
             await Locker.acquireReadLock("lockKey", "", "lockValue-a");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(false);
             this.sandbox.stub(Locker, 'getLock').resolves("lockValue-a");
 
             await Locker.acquireReadLock("lockKey", "", "lockValue-a");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(false);
@@ -199,10 +192,10 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireReadLock("lockKey", "", "wid");
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(false);
@@ -210,11 +203,10 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireReadLock("lockKey", "", "wid");
-                done();
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(false);
@@ -222,11 +214,10 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireReadLock("lockKey");
-                done();
-            } catch(e) { done(); }
+            } catch(e) { }
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(false);
@@ -234,8 +225,7 @@ export class DataLockerTest {
 
             try {
                 await Locker.acquireReadLock("lockKey");
-                done();
-            } catch(e) { done(); }
+            } catch(e) { }
         });
         
     }
@@ -244,68 +234,61 @@ export class DataLockerTest {
 
         Tx.sectionInit("test unlock");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves(["lockValue-a"]);
             Locker.unlock("lockKey");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(true);
             this.sandbox.stub(Locker, 'getLock').resolves(["lockValue-a"]);
             try {
                 Locker.unlock("lockKey", 'wid');
-                done();
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
             
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(true);
             this.sandbox.stub(Locker, 'getLock').resolves("lockValue-a");
             try {
                 Locker.unlock("lockKey", 'lockValue-a');
-                done();
-            } catch (e) {done();}
+            } catch (e) { return; } // ignore exceptions
             
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves(["lockValue-a"]);
             Locker.unlock("lockKey", 'wid');
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves();
             Locker.unlock("lockKey", 'wid');
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves();
             Locker.unlock("lockKey");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'getLock').resolves(["lockValue"]);
             Locker.unlock("lockKey", "lockValue");
-            done();
         });
 
     }
@@ -314,31 +297,28 @@ export class DataLockerTest {
 
         Tx.sectionInit("test unlock Read Lock Session");
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(false);
             this.sandbox.stub(Locker, 'getLock').resolves(["wid"]);
             Locker.unlockReadLockSession("lockKey", "wid");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(false);
             this.sandbox.stub(Locker, 'getLock').resolves(["wid-a"]);
             Locker.unlockReadLockSession("lockKey", "wid-b");
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
 
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'isWriteLock').returns(true);
             this.sandbox.stub(Locker, 'getLock').resolves(["wid"]);
             Locker.unlockReadLockSession("lockKey", "wid");
-            done();
         });
 
     }

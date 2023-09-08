@@ -53,59 +53,54 @@ export class TestAzureStorage {
 
     private static createBucket() {
         // Tx.sectionInit('createBucket');
-        // Tx.test(async (done: any) => {
+        // Tx.test(async () => {
         //     this.sandbox.stub(ContainerClient.prototype, 'create').resolves();
         //     await this.storage.createBucket('entity','location','class');
-        //     done();
+        //
         // });
     }
 
     private static deleteBucket() {
         Tx.sectionInit('deleteBucket');
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ContainerClient.prototype, 'delete').resolves();
             await this.storage.deleteBucket('entity');
-            done();
         });
     }
 
     private static saveObject() {
         Tx.sectionInit('saveObject');
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(BlockBlobClient.prototype, 'uploadStream').resolves();
             await this.storage.saveObject('entity', 'name', 'data');
-            done();
         });
     }
 
     private static bucketExists() {
         Tx.sectionInit('bucketExists');
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(ContainerClient.prototype, 'exists').resolves();
             await this.storage.bucketExists('entity');
-            done();
         });
     }
 
     private static deleteFiles() {
         Tx.sectionInit('deleteFiles');
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(AzureCloudStorage.prototype, 'generateBlobUrls').resolves(
             ['url1','url2','url3']);
             this.sandbox.stub(BlobBatchClient.prototype, 'deleteBlobs').resolves();
             await this.storage.deleteFiles('entity');
-            done();
         });
     }
 
     private static deleteObjects() {
         Tx.sectionInit('deleteObjects');
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             this.sandbox.stub(AzureCloudStorage.prototype, 'generateBlobUrls').resolves(
             ['url1','url2','url3']);
             this.sandbox.stub(BlobBatchClient.prototype, 'deleteBlobs').resolves();
             await this.storage.deleteObjects('entity', 'prefix');
-            done();
         });
     }
 

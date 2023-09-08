@@ -784,6 +784,62 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/size":
+    get:
+      summary: Retrieve the size of datasets
+      description: |
+        <ul>
+        <li>Required roles: subproject.viewer</li></ul>
+      operationId: get-size
+      tags:
+        - Dataset
+      parameters:
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: query
+          name: datasetid
+          required: false
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Size of the dataset and the date of when the size was computed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComputedSize"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
   "/dataset/tenant/{tenantid}/subproject/{subprojectid}/readdsdirfulllist":
     get:
       summary: Content list.
@@ -839,13 +895,15 @@ paths:
       tags:
         - Dataset
       parameters:
-        - description: "Select multiple fields to return example: select=[name,subproject...]"
+        - description: "Select multiple fields that belong to a dataset's metadata. (ex: select=[name,subproject...])"
           in: query
           name: select
           required: false
           default: ""
           type: string
-        - description: "Select single SQL like search parameter example: search=name=file%"
+        - description: |
+            Select single SQL like search parameter example: search=name=file%
+            Supported fields: name, tenant, subproject, path, ltag, created_by, gcsurl, ctag, readonly
           in: query
           name: search
           required: false
@@ -2285,7 +2343,9 @@ components:
         gtags:
           - tagA
           - tagB
-        limit: 10
+        limit: "10"
+        search: "name=mib%"
+        select: "[name, path, created_by]"
         cursor: next-page-token-931fvm19vm1-vm1v1
     DatasetLsBody:
       type: object
@@ -3040,3 +3100,17 @@ components:
       example:
         computed_size: "35461"
         computed_size_date: Thu Mar 16 2023 16:16:40 GMT-0500 (Central Daylight Time)
+    ComputedSize:
+      required:
+        - size_bytes
+        - dataset_count
+      properties:
+        size_bytes:
+          type: number
+          description: The size of the datasets in bytes.
+        dataset_count:
+          type: number
+          description: The number of datasets in the path (inlcluding nested folders).
+      example:
+        size_bytes: 35461
+        dataset_count: 2

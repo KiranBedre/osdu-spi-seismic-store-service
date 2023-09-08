@@ -47,9 +47,9 @@ export class TestGeneralSVC {
 
         Tx.sectionInit('status');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             await GeneralHandler.handler(expReq, expRes, GeneralOP.Status);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
     }
@@ -58,9 +58,9 @@ export class TestGeneralSVC {
 
         Tx.sectionInit('status access');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             await GeneralHandler.handler(expReq, expRes, GeneralOP.Access);
-            Tx.check200(expRes.statusCode, done);
+            Tx.check200(expRes.statusCode);
         });
 
     }
@@ -69,9 +69,9 @@ export class TestGeneralSVC {
 
         Tx.sectionInit('others');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             await GeneralHandler.handler(expReq, expRes, undefined);
-            Tx.check500(expRes.statusCode, done);
+            Tx.check500(expRes.statusCode);
         });
 
     }

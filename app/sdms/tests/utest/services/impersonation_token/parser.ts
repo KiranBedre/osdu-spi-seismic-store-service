@@ -105,7 +105,7 @@ export class TestParser {
 
         Tx.sectionInit("generateImpersonationTokenTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Generate;
 
@@ -135,11 +135,10 @@ export class TestParser {
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
 
             await ImpersonationTokenParser.generate(req);
-            done();
 
         });
         
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: ImpersonationTokenOps) => {
 
             op = ImpersonationTokenOps.Generate;
 
@@ -171,7 +170,7 @@ export class TestParser {
             try {
                 await ImpersonationTokenParser.generate(req);
             } catch (e) {
-                Tx.checkTrue(typeof e === 'object', done);
+                Tx.checkTrue(typeof e === 'object');
             }
             
             

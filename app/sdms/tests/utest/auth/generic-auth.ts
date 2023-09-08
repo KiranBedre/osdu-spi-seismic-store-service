@@ -52,13 +52,12 @@ export class GenericAuth {
 
         Tx.sectionInit('generate AuthCredential');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
 
             try {
                 this.provider.generateAuthCredential();
-                done();
-            } catch (e) { 
-                Tx.check400(e.error.code, done); }
+            } catch (e) {
+                Tx.check400(e.error.code); }
          });
 
     }
@@ -66,12 +65,12 @@ export class GenericAuth {
 
         Tx.sectionInit('generate Scoped AuthCredential');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
 
             try {
                 const result =  this.provider.generateScopedAuthCredential([]);
             } catch (e) { 
-                Tx.check501(e.error.code, done); }
+                Tx.check501(e.error.code); }
         }); 
 
     }
@@ -79,13 +78,13 @@ export class GenericAuth {
 
         Tx.sectionInit('convert To Impersonation TokenModel');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
 
             // this.sandbox.stub(this.provider, 'convertToImpersonationTokenModel').throws();
             try {
                 this.provider.convertToImpersonationTokenModel('credential-a');
             } catch (e) { 
-                Tx.check501(e.error.code, done); }
+                Tx.check501(e.error.code); }
         });
 
     }
@@ -93,12 +92,11 @@ export class GenericAuth {
 
         Tx.sectionInit('get ClientID');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 this.provider.getClientID();
-                done();
-            } catch (e) { 
-                Tx.check501(e.error.code, done); }
+            } catch (e) {
+                Tx.check501(e.error.code); }
         }); 
 
     }
@@ -108,11 +106,11 @@ export class GenericAuth {
 
         Tx.sectionInit('get ClientID');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 this.provider.getClientSecret();
             } catch (e) { 
-                Tx.check501(e.error.code, done); }
+                Tx.check501(e.error.code); }
         });
         
     }
@@ -120,11 +118,11 @@ export class GenericAuth {
 
         Tx.sectionInit('exchangeCredentialAudience');
 
-        Tx.test(async (done: any) => {
+        Tx.test(async () => {
             try {
                 this.provider.exchangeCredentialAudience('credential', 'audience');
             } catch (e) { 
-                Tx.check501(e.error.code, done); }
+                Tx.check501(e.error.code); }
         });
 
     }

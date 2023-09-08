@@ -1,10 +1,13 @@
 # OSDU on AWS Service Helm Chart
 
 ## Introduction
+
 The following document outlines how to deploy and update the service application onto an existing Kubernetes deployment using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
+
 The below software must be installed before continuing:
+
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/)
 * [Helm](https://helm.sh/docs/intro/install/)
@@ -13,6 +16,7 @@ The below software must be installed before continuing:
 Additionally, an OSDU on AWS environment must be deployed.
 
 ## Installation/Updating
+
 To install or update the service application by executing the following command in the CHART folder:
 
 ```bash
@@ -20,16 +24,19 @@ helm upgrade [RELEASE_NAME] . -i -n [NAMESPACE]
 ```
 
 To observe the Kubernetes resources before deploying them using the command:
+
 ```bash
 helm upgrade [RELEASE_NAME] . -i -n [NAMESPACE] --dry-run --debug
 ```
 
 To observe the history of the current release, use the following command:
+
 ```bash
 helm history [RELEASE_NAME] -n [NAMESPACE]
 ```
 
 To revert to a previous release, use the following command:
+
 ```bash
 helm rollback [RELEASE] [REVISION] -n [NAMESPACE]
 ```
@@ -37,9 +44,11 @@ helm rollback [RELEASE] [REVISION] -n [NAMESPACE]
 Refer to the [Helm CLI guide](https://helm.sh/docs/helm/helm/) for additional commands.
 
 ## Customizing the Deployment
+
 It is possible to modify the default values specified in the **values.yaml** file using the --set option. The below parameters can be modified by advanced users to customize the deployment configuration:
 
 ### Globals
+
 Global Helm values apply to all services within the parent chart deployment. Global values will not override service defaults or locally set values.
 | Name | Example Value | Description | Type | Required |
 | ---  | ------------- | ----------- | ---- | -------- |
@@ -50,6 +59,7 @@ Global Helm values apply to all services within the parent chart deployment. Glo
 | `global.securityContext` | `fsGroup: 1337` | The security context is the container specific security context. Will inherit [pod security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) | str | no |
 
 ### Local
+
 Local Helm values apply to specific services. Local Helm values will override global values and default presets.
 | Name | Example Value | Description | Type | Required |
 | ---  | ------------- | ----------- | ---- | -------- |
@@ -85,6 +95,7 @@ Local Helm values apply to specific services. Local Helm values will override gl
 | `securityContext` | `fsGroup: 1337` | The security context is the container specific security context. Will inherit [pod security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) | str | no |
 
 ## Uninstalling the Chart
+
 To uninstall the helm release:
 
 ```bash

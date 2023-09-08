@@ -46,44 +46,44 @@ export class TestErrorSHD {
    private static testMake() {
       Tx.sectionInit('make');
 
-      Tx.test((done) => {
+      Tx.test(() => {
          const result = Error.make(500, 'message', 'mexprefix');
          Tx.checkTrue(result.error.code === 500 && result.error.message === 'mexprefix message'
-            && result.error.status === 'UNKNOWN', done);
+            && result.error.status === 'UNKNOWN');
 
       });
 
-      Tx.test((done) => {
+      Tx.test(() => {
          const result = Error.make(409, 'message', 'mexprefix');
          Tx.checkTrue(result.error.code === 409 && result.error.message === 'mexprefix message'
-            && result.error.status === 'ALREADY_EXISTS', done);
+            && result.error.status === 'ALREADY_EXISTS');
 
       });
 
-      Tx.test((done) => {
+      Tx.test(() => {
          const result = Error.make(423, 'message', 'mexprefix');
          Tx.checkTrue(result.error.code === 423 && result.error.message === 'mexprefix message'
-            && result.error.status === 'LOCKED', done);
+            && result.error.status === 'LOCKED');
 
       });
 
-      Tx.test((done) => {
+      Tx.test(() => {
          const result = Error.make(404, 'message', 'mexprefix');
          Tx.checkTrue(result.error.code === 404 && result.error.message === 'mexprefix message'
-            && result.error.status === 'NOT_FOUND', done);
+            && result.error.status === 'NOT_FOUND');
 
       });
 
-      Tx.test((done) => {
+      Tx.test(() => {
          const result = Error.make(403, 'message', 'mexprefix');
          Tx.checkTrue(result.error.code === 403 && result.error.message === 'mexprefix message'
-            && result.error.status === 'PERMISSION_DENIED', done);
+            && result.error.status === 'PERMISSION_DENIED');
       });
 
-      Tx.test((done) => {
+      Tx.test(() => {
          const result = Error.make(401, 'message', 'mexprefix');
          Tx.checkTrue(result.error.code === 401 && result.error.message === 'mexprefix message'
-            && result.error.status === 'UNAUTHENTICATED', done);
+            && result.error.status === 'UNAUTHENTICATED');
       });
 
    }
@@ -92,7 +92,7 @@ export class TestErrorSHD {
 
       Tx.sectionInit('testMakeForHttpRequest');
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const result = Error.makeForHTTPRequest({
             error: 'error',
             message: 'error',
@@ -101,31 +101,31 @@ export class TestErrorSHD {
          });
          Tx.checkTrue(result.error.code === 402 &&
             result.error.message === '[seismic-store-service] error' &&
-            result.error.status === 'UNKNOWN', done);
+            result.error.status === 'UNKNOWN');
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const result = Error.makeForHTTPRequest({
             error: 'error',
             message: 'error',
             name: 'StatusCodeError'
          });
-         // done();
-         Tx.checkTrue(result[0] === undefined, done);
+         //
+         Tx.checkTrue(result[0] === undefined);
 
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          const result = Error.makeForHTTPRequest({
             error: {} as object,
             message: 'error',
             name: 'StatusCodeError'
          });
-         Tx.checkTrue(result[0] === undefined, done);
+         Tx.checkTrue(result[0] === undefined);
 
       });
 
-      Tx.test((done: any) => {
+      Tx.test(() => {
          this.sandbox.stub(axios, 'isAxiosError').resolves(true);
          this.sandbox.stub(Error, 'make').resolves();
 
@@ -139,7 +139,7 @@ export class TestErrorSHD {
             statusCode: 402,
          });
          
-         Tx.checkTrue(result[0] === undefined, done);
+         Tx.checkTrue(result[0] === undefined);
 
          
       });
@@ -148,10 +148,10 @@ export class TestErrorSHD {
    private static get423WriteLockReason() {
 
       Tx.sectionInit('get423WriteLockReason');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          this.sandbox.stub(Error, <any>'create423Reason').resolves();
          const result = Error.get423WriteLockReason();
-         Tx.checkTrue(result[0] === undefined, done);
+         Tx.checkTrue(result[0] === undefined);
       });
 
    }
@@ -159,10 +159,10 @@ export class TestErrorSHD {
    private static get423ReadLockReason() {
 
       Tx.sectionInit('get423ReadLockReason');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          this.sandbox.stub(Error, <any>'create423Reason').resolves();
          const result = Error.get423ReadLockReason();
-         Tx.checkTrue(result[0] === undefined, done);
+         Tx.checkTrue(result[0] === undefined);
       });
 
    }
@@ -170,10 +170,10 @@ export class TestErrorSHD {
    private static get423CannotLockReason() {
 
       Tx.sectionInit('get423CannotLockReason');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          this.sandbox.stub(Error, <any>'create423Reason').resolves();
          const result = Error.get423CannotLockReason();
-         Tx.checkTrue(result[0] === undefined, done);
+         Tx.checkTrue(result[0] === undefined);
       });
 
    }
@@ -181,10 +181,10 @@ export class TestErrorSHD {
    private static get423CannotUnlockReason() {
 
       Tx.sectionInit('get423CannotUnlockReason');
-      Tx.test((done: any) => {
+      Tx.test(() => {
          this.sandbox.stub(Error, <any>'create423Reason').resolves();
          const result = Error.get423CannotUnlockReason();
-         Tx.checkTrue(result[0] === undefined, done);
+         Tx.checkTrue(result[0] === undefined);
       }); 
 
    }

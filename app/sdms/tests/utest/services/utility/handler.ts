@@ -115,7 +115,7 @@ export class TestServicesUtilityHandler {
 
         Tx.sectionInit("getGCSAccessTokenTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.GCSTOKEN;
 
@@ -134,11 +134,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(CredentialsFactory, "build").returns(iCredentials);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.GCSTOKEN;
 
@@ -157,11 +157,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(CredentialsFactory, "build").returns(iCredentials);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.GCSTOKEN;
 
@@ -180,11 +180,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(CredentialsFactory, "build").returns(iCredentials);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.GCSTOKEN;
 
@@ -202,7 +202,7 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(CredentialsFactory, "build").returns(iCredentials);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
         
@@ -212,7 +212,7 @@ export class TestServicesUtilityHandler {
 
         Tx.sectionInit("lsTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.LS;
 
@@ -229,11 +229,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(DatasetDAO, "paginatedListContent").resolves({ datasets: [""], nextPageCursor: "" } );
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.LS;
 
@@ -256,11 +256,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(DESEntitlement, "getUserGroups").resolves([iDESEntitlementGroupModel]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.LS;
 
@@ -273,11 +273,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(TenantDAO, 'getAll').resolves([tenantModel]);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.LS;
 
@@ -288,11 +288,11 @@ export class TestServicesUtilityHandler {
             req.query.cursor = "";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.LS;
 
@@ -303,11 +303,11 @@ export class TestServicesUtilityHandler {
             req.query.cursor = "cursor";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.LS;
 
@@ -318,11 +318,11 @@ export class TestServicesUtilityHandler {
             req.query.cursor = "cursor";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.LS;
 
@@ -333,7 +333,7 @@ export class TestServicesUtilityHandler {
             req.query.cursor = "cursor";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
         
@@ -343,7 +343,7 @@ export class TestServicesUtilityHandler {
 
         Tx.sectionInit("cpTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -359,11 +359,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(DESStorage, 'getRecord').resolves({ id: "" });
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -385,11 +385,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(DESStorage, 'getRecord').resolves({ id: "" });
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -411,11 +411,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(DESStorage, 'getRecord').resolves({ id: "" });
 
             await Handler.handler(req, res, op);
-            Tx.check202(res.statusCode, done)
+            Tx.check202(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -435,11 +435,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(DESStorage, 'getRecord').resolves({ id: "" });
 
             await Handler.handler(req, res, op);
-            Tx.check404(res.statusCode, done)
+            Tx.check404(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -448,11 +448,11 @@ export class TestServicesUtilityHandler {
             req.query.sdpath_to = "sd://tenant1/subproject/path2/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -461,11 +461,11 @@ export class TestServicesUtilityHandler {
             req.query.sdpath_to = "sd://tenant1/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -474,11 +474,11 @@ export class TestServicesUtilityHandler {
             req.query.sdpath_to = "sd:/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -487,11 +487,11 @@ export class TestServicesUtilityHandler {
             req.query.sdpath_to = "sd:/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.CP;
 
@@ -500,7 +500,7 @@ export class TestServicesUtilityHandler {
             req.query.sdpath_to = "sd:/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
         
@@ -510,7 +510,7 @@ export class TestServicesUtilityHandler {
 
         Tx.sectionInit("getConnectionStringTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.UPLOAD_CONNECTION_STRING;
 
@@ -524,11 +524,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(CredentialsFactory, "build").returns(iCredentials);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.DOWNLOAD_CONNECTION_STRING;
 
@@ -542,11 +542,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(CredentialsFactory, "build").returns(iCredentials);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.UPLOAD_CONNECTION_STRING;
 
@@ -565,11 +565,11 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(CredentialsFactory, "build").returns(iCredentials);
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.UPLOAD_CONNECTION_STRING;
 
@@ -577,11 +577,11 @@ export class TestServicesUtilityHandler {
             req.query.sdpath = "sd://tenant/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.UPLOAD_CONNECTION_STRING;
 
@@ -589,11 +589,11 @@ export class TestServicesUtilityHandler {
             req.query.sdpath = "sd:/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.UPLOAD_CONNECTION_STRING;
 
@@ -601,7 +601,7 @@ export class TestServicesUtilityHandler {
             req.query.sdpath = "sd:/";
 
             await Handler.handler(req, res, op);
-            Tx.check400(res.statusCode, done)
+            Tx.check400(res.statusCode)
 
         } );
         
@@ -611,12 +611,12 @@ export class TestServicesUtilityHandler {
 
         Tx.sectionInit("listStorageTiersTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = UtilityOP.STORAGE_TIERS;
 
             await Handler.handler(req, res, op);
-            Tx.check200(res.statusCode, done)
+            Tx.check200(res.statusCode)
 
         } );
         
@@ -626,12 +626,12 @@ export class TestServicesUtilityHandler {
 
         Tx.sectionInit("errorTest");
 
-        Tx.testExp(async (done: any, req: expRequest, res: expResponse, op: UtilityOP) => {
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
 
             op = 10;
 
             await Handler.handler(req, res, op);
-            Tx.check500(res.statusCode, done)
+            Tx.check500(res.statusCode)
 
         } );
         

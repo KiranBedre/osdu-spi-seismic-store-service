@@ -49,9 +49,9 @@ export class TestDataEcoSystem {
   private static getUserAssociationSvcBaseUrlPath() {
     Tx.sectionInit('service account email');
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
         const result = this.service.getUserAssociationSvcBaseUrlPath();
-        Tx.checkTrue(result === 'userAssociation/v1', done);
+        Tx.checkTrue(result === 'userAssociation/v1');
     });
 
   }
@@ -59,9 +59,9 @@ export class TestDataEcoSystem {
   private static getPolicySvcBaseUrlPath() {
     Tx.sectionInit('service account email');
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
         const result = this.service.getPolicySvcBaseUrlPath();
-        Tx.checkTrue(result === 'api/policy/v1', done);
+        Tx.checkTrue(result === 'api/policy/v1');
     });
 
   }
@@ -69,10 +69,10 @@ export class TestDataEcoSystem {
   private static fixGroupMembersResponse() {
     Tx.sectionInit('service account email');
 
-    Tx.testExp(async (done: any) => {
+    Tx.test(async () => {
         let group = {} as IDESEntitlementGroupMembersModel ;
         const result = this.service.fixGroupMembersResponse(group);
-        Tx.checkTrue(result === group, done);
+        Tx.checkTrue(result === group);
     });
 
   }

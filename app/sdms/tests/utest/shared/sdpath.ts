@@ -30,7 +30,7 @@ export class TestSDPathSHD {
    private static testGetFromString() {
       Tx.sectionInit('sdpath getfromstring');
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const sdpath = SDPath.getFromString('sd://tnx01/spx01/a/b/c/ds01');
          const expectedResult: ISDPathModel = {
             dataset: 'ds01',
@@ -39,10 +39,10 @@ export class TestSDPathSHD {
             tenant: 'tnx01',
          };
 
-         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult), done);
+         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult));
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const sdpath = SDPath.getFromString('sd://tnx01/spx01/ds01');
          const expectedResult: ISDPathModel = {
             dataset: 'ds01',
@@ -51,10 +51,10 @@ export class TestSDPathSHD {
             tenant: 'tnx01',
          };
 
-         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult), done);
+         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult));
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const sdpath = SDPath.getFromString('sd://tnx01/spx01');
          const expectedResult: ISDPathModel = {
             dataset: undefined,
@@ -63,10 +63,10 @@ export class TestSDPathSHD {
             tenant: 'tnx01',
          };
 
-         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult), done);
+         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult));
       });
 
-      Tx.testExp((done: any) => {
+      Tx.testExp(() => {
          const sdpath = SDPath.getFromString('sd://tnx01/spx01/');
          const expectedResult: ISDPathModel = {
             dataset: undefined,
@@ -75,7 +75,7 @@ export class TestSDPathSHD {
             tenant: 'tnx01',
          };
 
-         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult), done);
+         Tx.checkTrue(JSON.stringify(sdpath) === JSON.stringify(expectedResult));
       });
    }
 

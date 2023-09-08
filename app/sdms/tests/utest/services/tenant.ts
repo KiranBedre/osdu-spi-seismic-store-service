@@ -74,18 +74,16 @@ export class TestTenantSVC {
 
         Tx.sectionInit('get');
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             this.journal.get.resolves([{ esd: 'partition.something' }] as never);
             await TenantDAO.get('tnx');
-            done();
         });
 
-        Tx.testExp(async (done: any) => {
+        Tx.test(async () => {
             process.env.GCLOUD_PROJECT = 'ON';
             this.journal.get.resolves([{ name: 'name', esd: 'partition.something' }] as never);
             await TenantDAO.get('tnx');
             delete process.env.GCLOUD_PROJECT;
-            done();
         });
 
     }
@@ -94,12 +92,12 @@ export class TestTenantSVC {
 
         Tx.sectionInit('get tenant sdpath');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.sandbox.stub(Auth, 'isUserRegistered').resolves();
             this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant01', default_acls: 'x', esd: 'datapartition.domain.com', gcpid: 'any' });
             this.sandbox.stub(TenantDAO, 'getAll').resolves([{ name: 'tenant01', default_acls: 'x', esd: 'datapartition.domain.com', gcpid: 'any' }]);
-            Tx.checkTrue((await TenantHandler.getTenantSDPath(expReq)) === Config.SDPATHPREFIX + 'tenant01', done);
+            Tx.checkTrue((await TenantHandler.getTenantSDPath(expReq)) === Config.SDPATHPREFIX + 'tenant01');
         });
 
     }
@@ -109,7 +107,7 @@ export class TestTenantSVC {
         Tx.sectionInit('create tenant');
 
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.sandbox.stub(TenantParser, 'create').returns(this.tenant);
             this.sandbox.stub(Response, 'writeError').returns();
@@ -117,10 +115,9 @@ export class TestTenantSVC {
             this.sandbox.stub(TenantDAO, 'register').resolves();
 
             await TenantHandler.handler(expReq, expRes, TenantOP.CREATE);
-            done();
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.tenant.default_acls = undefined;
             this.sandbox.stub(TenantParser, 'create').returns(this.tenant);
@@ -128,11 +125,11 @@ export class TestTenantSVC {
             errorStub.returns();
 
             await TenantHandler.handler(expReq, expRes, TenantOP.CREATE);
-            Tx.checkTrue(errorStub.calledOnce === true, done);
+            Tx.checkTrue(errorStub.calledOnce === true);
         });
 
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.sandbox.stub(TenantParser, 'create').returns(this.tenant);
             this.sandbox.stub(TenantDAO, 'register').resolves();
@@ -142,7 +139,7 @@ export class TestTenantSVC {
             errorStub.returns();
 
             await TenantHandler.handler(expReq, expRes, TenantOP.CREATE);
-            Tx.checkTrue(errorStub.calledOnce === true, done);
+            Tx.checkTrue(errorStub.calledOnce === true);
 
         });
 
@@ -152,24 +149,24 @@ export class TestTenantSVC {
 
         Tx.sectionInit('get tenant');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.sandbox.stub(TenantDAO, 'get').resolves(this.tenant);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
 
             await TenantHandler.handler(expReq, expRes, TenantOP.GET);
-            Tx.checkTrue(expRes.statusCode === 200, done);
+            Tx.checkTrue(expRes.statusCode === 200);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.sandbox.stub(TenantDAO, 'get').resolves(this.tenant);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves(false);
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
 
             await TenantHandler.handler(expReq, expRes, TenantOP.GET);
-            Tx.checkTrue(expRes.statusCode === 200, done);
+            Tx.checkTrue(expRes.statusCode === 200);
         });
     }
 
@@ -177,7 +174,7 @@ export class TestTenantSVC {
 
         Tx.sectionInit('delete tenant');
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.sandbox.stub(TenantDAO, 'get').resolves(this.tenant);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves(true);
@@ -187,12 +184,12 @@ export class TestTenantSVC {
 
 
             await TenantHandler.handler(expReq, expRes, TenantOP.DELETE);
-            Tx.checkTrue(expRes.statusCode === 200, done);
+            Tx.checkTrue(expRes.statusCode === 200);
         });
 
 
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.sandbox.stub(TenantDAO, 'get').resolves(this.tenant);
             this.sandbox.stub(TenantDAO, 'delete').resolves();
@@ -212,10 +209,10 @@ export class TestTenantSVC {
             errorStub.returns();
 
             await TenantHandler.handler(expReq, expRes, TenantOP.DELETE);
-            Tx.checkTrue(errorStub.calledOnce === true, done);
+            Tx.checkTrue(errorStub.calledOnce === true);
         });
 
-        Tx.testExp(async (done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
             this.tenant.default_acls = undefined;
             this.sandbox.stub(TenantDAO, 'get').resolves(this.tenant);
@@ -227,7 +224,7 @@ export class TestTenantSVC {
 
 
             await TenantHandler.handler(expReq, expRes, TenantOP.DELETE);
-            Tx.checkTrue(expRes.statusCode === 200, done);
+            Tx.checkTrue(expRes.statusCode === 200);
         });
     }
 
@@ -235,7 +232,7 @@ export class TestTenantSVC {
 
         Tx.sectionInit('tenant parser');
 
-        Tx.testExp((done: any, expReq: expRequest, expRes: expResponse) => {
+        Tx.testExp((expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'tenant-a';
             expReq.params.tenantid = 'tenant-a';
             expReq.body.esd = 'tenant-a.evt.group.com';
@@ -243,7 +240,6 @@ export class TestTenantSVC {
             expReq.body.default_acls = 'users.datalake.admin@tenant-a.evt.group.com';
             Config.CLOUDPROVIDER = 'google';
             TenantParser.create(expReq);
-            done();
         });
     }
 
