@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "5c58ef49-d9a1-4182-af93-06e92eee2847",
+		"_postman_id": "e50ace69-0f3a-4b07-95e4-c38d7cc772d4",
 		"name": "SDMS-E2E ver.M20 - Release 0.23",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10879044"
 	},
 	"item": [
 		{
@@ -20026,7 +20027,7 @@
 									"console.log('Dataset variables are initialized for datasets folder');",
 									"postman.setEnvironmentVariable('execCounter', 1)",
 									"if (pm.environment.get('serviceCloudProvider') !== 'azure') {",
-									"        postman.setNextRequest(\"CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"        postman.setNextRequest(\"BULK-DELETE CLEANUP STATUS UNSET: Cleanup test environment\");",
 									"}"
 								],
 								"type": "text/javascript"
