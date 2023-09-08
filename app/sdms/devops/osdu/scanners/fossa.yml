@@ -4,19 +4,21 @@ fossa-analyze:
   tags: ['osdu-medium']
   variables:
     FOSSA_OUTPUT_DIR: fossa-output
-    SDMS_PATH: app/$SDMS_SERVICE
     ALLOW_FOSSA_CACHE: 'false'
+  before_script:
+    - cd app/$SDMS_SERVICE
   script:
     # fossa-check-for-licensing-issues needs a CI_COMMIT_BRANCH defined to know how to parse the FOSSA API results
     # When building tags, this isn't defined by GitLab. In that case, we use the tag name instead. If that's not defined
-    # then things will fail, and we'll have to make this smarter
+    # then things will fail and we'll have to make this smarter
     - test -z "$CI_COMMIT_BRANCH" && export CI_COMMIT_BRANCH="$CI_COMMIT_TAG"
-    - cd "$SDMS_PATH"
     - npm ci --production
     - fossa-with-cache --merge-with NOTICE
+    - cd ../..
+    - mv app/$SDMS_SERVICE/fossa-output .
   artifacts:
     paths:
-      - $SDMS_PATH/$FOSSA_OUTPUT_DIR
+      - fossa-output
     when: always
     expire_in: 2 days
   rules:
