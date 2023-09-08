@@ -32,4 +32,4 @@ ARG PASS
 ENV ASPNETCORE_Kestrel__Certificates__Default__Password=${PASS}
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Sidecar.DeleteOperationRunner.dll"]
+ENTRYPOINT ["dotnet", "Sidecar.QueryRunner.dll"]
