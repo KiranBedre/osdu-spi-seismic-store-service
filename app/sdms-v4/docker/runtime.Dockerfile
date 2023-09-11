@@ -23,6 +23,7 @@ WORKDIR /service
 
 RUN apk --no-cache add --virtual python python3 \
     && npm install --quiet node-gyp -g \
+    && npm install --quiet husky -g \
     && npm install --production --quiet \
     && npm run build
 RUN mkdir /seistore-service

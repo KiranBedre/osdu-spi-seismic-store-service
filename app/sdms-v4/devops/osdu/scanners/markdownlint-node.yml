@@ -6,6 +6,7 @@ sdms_v4_markdownlint:
   allow_failure: true
   script:
     - cd app/$SDMS_V4_SERVICE
+    - cp ../../.markdownlint.json .
     - npm install -g typescript
     - npm install -g markdownlint-cli
     - markdownlint "**/*.md" > ../../markdownlint_report.txt
