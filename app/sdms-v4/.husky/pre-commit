@@ -17,7 +17,7 @@ for f in $(git diff --cached --name-only --diff-filter=ACM); do
     npx scan-for-secrets $f
   else
     dir="$(dirname "${f}")"
-    if [ "$dir" == *"app/sdms" ]; then
+    if [ "$dir" == *"app/sdms-v4" ]; then
       echo "Scanning $f"
       npx scan-for-secrets ${dir}/src
     fi

@@ -12,7 +12,8 @@
         "generate-docs": "node --trace-warnings ./dist/docs/docstart.js",
         "postbuild": "npm run generate-docs",
         "start-service": "node --trace-warnings --trace-uncaught ./dist/server/server-start.js",
-        "test": "mocha -r ts-node/register tests/e2e/test.ts --timeout 150000 --bail"
+        "test": "mocha -r ts-node/register tests/e2e/test.ts --timeout 150000 --bail",
+        "prepare": "cd ../.. && husky install ./app/sdms-v4/.husky"
     },
     "dependencies": {
         "@azure/core-auth": "^1.4.0",
@@ -50,6 +51,7 @@
         "eslint": "^8.31.0",
         "eslint-config-prettier": "^8.6.0",
         "eslint-plugin-prettier": "^4.2.1",
+        "husky": "^7.0.4",
         "mocha": "^10.2.0",
         "prettier": "^2.8.1",
         "ts-node": "^10.9.1"

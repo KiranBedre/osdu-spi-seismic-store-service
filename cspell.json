@@ -6,9 +6,15 @@
     "language": "en, en-US",
     // words - list of words to be always considered correct
     "words": [
+        "addgroup",
+        "adduser",
+        "appgroup",
+        "appuser",
         "appkey",
         "azure",
         "cloudprovider",
+        "commitlint",
+        "cspell",
         "ctag",
         "dataecosystem",
         "datapartition",
@@ -16,12 +22,15 @@
         "filemetadata",
         "gcpid",
         "gcstoken",
+        "gecos",
         "gtags",
         "idtoken",
         "imptoken",
         "istio",
         "legaltag",
         "ltag",
+        "markdownlint",
+        "nopasswd",
         "opendes",
         "openzgy",
         "osdu",
@@ -36,6 +45,7 @@
         "subproject",
         "svcapp",
         "svctoken",
+        "toplevel",
         "utest"
     ]
 }
