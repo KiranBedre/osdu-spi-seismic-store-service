@@ -6,6 +6,7 @@ sdms_cspell:
   allow_failure: true
   script:
     - cd app/$SDMS_SERVICE
+    - cp ../../cspell.json .
     - npm install -g typescript
     - npm install -g cspell
     - cspell "**" --quiet --gitignore --show-suggestions --reporter default > ../../cspell_report.txt
