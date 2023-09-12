@@ -137,7 +137,8 @@ export class ImpersonationTokenHandler {
             Config.SERVICE_AUTH_PROVIDER).getClientSecret();
 
         const encryptedContext = Utils.encrypt(JSON.stringify(context), authClientSecret);
-        impersonationToken.context = encryptedContext.encryptedText + '.' + encryptedContext.encryptedTextIV;
+        impersonationToken.context = encryptedContext.encryptedText + '.' + encryptedContext.encryptedTextIV
+        + '.' + encryptedContext.authTag;
 
         return impersonationToken;
     }
@@ -154,11 +155,23 @@ export class ImpersonationTokenHandler {
         const authClientSecret = AuthProviderFactory.build(
             Config.SERVICE_AUTH_PROVIDER).getClientSecret();
 
-        // decrypt the impersonation token context
-        const context = JSON.parse(Utils.decrypt(
+        // Context length will should equal 3 once old decrypt is removed
+        let context: ImpersonationTokenContextModel;
+        if(requestParams.gcm) {
+            // decrypt the impersonation token context
+            context = JSON.parse(Utils.decrypt(
+            requestParams.tokenContext.split('.')[0],
+            requestParams.tokenContext.split('.')[1],
+            requestParams.tokenContext.split('.')[2],
+            authClientSecret)) as ImpersonationTokenContextModel;
+        }
+        else {
+            // decrypt the impersonation token context
+            context = JSON.parse(Utils.decryptCBC(
             requestParams.tokenContext.split('.')[0],
             requestParams.tokenContext.split('.')[1],
             authClientSecret)) as ImpersonationTokenContextModel;
+        }
 
         const tenantName = context.resources[0].resource.split('/')[0];
         const tenant = await TenantDAO.get(tenantName);
@@ -230,12 +243,20 @@ export class ImpersonationTokenHandler {
     public static decodeContext(tokenContext: string): ImpersonationTokenContextModel {
         const authClientSecret = AuthProviderFactory.build(
             Config.SERVICE_AUTH_PROVIDER).getClientSecret();
-
-        // decrypt the impersonation token context
-        return JSON.parse(Utils.decrypt(
+        // Context length will should equal 3 once old decrypt is removed
+        if(tokenContext.split('.').length === 3) {
+            // decrypt the impersonation token context
+            return JSON.parse(Utils.decrypt(
+                tokenContext.split('.')[0],
+                tokenContext.split('.')[1],
+                tokenContext.split('.')[2],
+                authClientSecret)) as ImpersonationTokenContextModel;
+        }
+        else {
+            return JSON.parse(Utils.decryptCBC(
             tokenContext.split('.')[0],
             tokenContext.split('.')[1],
-            authClientSecret)) as ImpersonationTokenContextModel;
+            authClientSecret)) as ImpersonationTokenContextModel;}
     }
 
     private static getTokenExpireInSec(token: string) {

@@ -221,7 +221,7 @@ export class TestImpersonationTokenHandler {
             op = ImpersonationTokenOps.Refresh;
 
             req.headers['impersonation-token'] = "impersonation-token";
-            req.headers['impersonation-token-context'] = "impersonation-token.impersonation-token-context";
+            req.headers['impersonation-token-context'] = "aaaaa.bbbb.ccc";
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(Auth, 'isAppAuthorized').resolves(true);
@@ -239,7 +239,7 @@ export class TestImpersonationTokenHandler {
             op = ImpersonationTokenOps.Refresh;
 
             req.headers['impersonation-token'] = "impersonation-token";
-            req.headers['impersonation-token-context'] = "impersonation-token.impersonation-token-context";
+            req.headers['impersonation-token-context'] = "aaaaa.bbbb.ccc";
 
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
@@ -257,7 +257,7 @@ export class TestImpersonationTokenHandler {
             op = ImpersonationTokenOps.Refresh;
 
             req.headers['impersonation-token'] = "impersonation-token";
-            req.headers['impersonation-token-context'] = "impersonation-token.impersonation-token-context.xx";
+            req.headers['impersonation-token-context'] = "aaaaa.bbbb.ccc.xx";
 
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
@@ -283,7 +283,7 @@ export class TestImpersonationTokenHandler {
 
             op = ImpersonationTokenOps.Refresh;
 
-            req.headers['impersonation-token-context'] = "impersonation-token.impersonation-token-context";
+            req.headers['impersonation-token-context'] = "aaaaa.bbbb.ccc";
 
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
@@ -297,7 +297,7 @@ export class TestImpersonationTokenHandler {
             op = ImpersonationTokenOps.Refresh;
 
             req.headers['impersonation-token'] = "impersonation-token";
-            req.headers['impersonation-token-context'] = "impersonation-token.impersonation-token-context";
+            req.headers['impersonation-token-context'] = "aaaaa.bbbb.ccc";
 
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(Auth, 'isAppAuthorized').resolves(true);
