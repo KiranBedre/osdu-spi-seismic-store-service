@@ -101,7 +101,7 @@ export class Auth {
         esd: string, appkey: string, mustThrow = true): Promise<boolean> {
 
         const cacheKey = 'auth-' + (
-            createHash('sha1').update(authToken).digest('base64') + ',' + authGroupEmails.sort().join(','));
+            createHash('sha512').update(authToken).digest('base64') + ',' + authGroupEmails.sort().join(','));
 
         const cache = getInMemoryCacheInstance();
         let isAuthorized = cache.get<boolean>(cacheKey);
@@ -254,7 +254,7 @@ export class Auth {
                 'The request impersonation-token-context header has not been specified.'));
         }
 
-        if (tokenContext.split('.').length !== 2) {
+        if(!(tokenContext.split('.').length === 2 || tokenContext.split('.').length === 3)) {
             if (!mustThrow) { return false; }
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'Unauthorized Access to ' + 'sd://' + tenant.name + '/' + subprojectName +
@@ -264,11 +264,23 @@ export class Auth {
         const authClientSecret = AuthProviderFactory.build(
             Config.SERVICE_AUTH_PROVIDER).getClientSecret();
 
-        // decrypt the impersonation token context
-        const context = JSON.parse(Utils.decrypt(
-            tokenContext.split('.')[0],
-            tokenContext.split('.')[1],
-            authClientSecret)) as ImpersonationTokenContextModel;
+        // Context length will should equal 3 once old decrypt is removed
+        let context: ImpersonationTokenContextModel;
+        if(tokenContext.split('.').length === 3) {
+            // decrypt the impersonation token context
+            context = JSON.parse(Utils.decrypt(
+                tokenContext.split('.')[0],
+                tokenContext.split('.')[1],
+                tokenContext.split('.')[2],
+                authClientSecret)) as ImpersonationTokenContextModel;
+        }
+        else {
+            // decrypt the impersonation token context
+            context = JSON.parse(Utils.decryptCBC(
+                tokenContext.split('.')[0],
+                tokenContext.split('.')[1],
+                authClientSecret)) as ImpersonationTokenContextModel;
+        }
 
         const resource = context.resources.find((el) => el.resource === (tenant.name + '/' + subprojectName));
 
@@ -302,7 +314,7 @@ export class Auth {
                 'The request impersonation-token-context header has not been specified.'));
         }
 
-        if (tokenContext.split('.').length !== 2) {
+        if(!(tokenContext.split('.').length === 2 || tokenContext.split('.').length === 3)) {
             if (!mustThrow) { return false; }
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'Unauthorized Access to ' + 'sd://' + tenant.name + '/' + subprojectName +
@@ -312,11 +324,23 @@ export class Auth {
         const authClientSecret = AuthProviderFactory.build(
             Config.SERVICE_AUTH_PROVIDER).getClientSecret();
 
-        // decrypt the impersonation token context
-        const context = JSON.parse(Utils.decrypt(
-            tokenContext.split('.')[0],
-            tokenContext.split('.')[1],
-            authClientSecret)) as ImpersonationTokenContextModel;
+        // Context length will should equal 3 once old decrypt is removed
+        let context: ImpersonationTokenContextModel;
+        if(tokenContext.split('.').length === 3) {
+            // decrypt the impersonation token context
+            context = JSON.parse(Utils.decrypt(
+                tokenContext.split('.')[0],
+                tokenContext.split('.')[1],
+                tokenContext.split('.')[2],
+                authClientSecret)) as ImpersonationTokenContextModel;
+        }
+        else {
+            // decrypt the impersonation token context
+            context = JSON.parse(Utils.decryptCBC(
+                tokenContext.split('.')[0],
+                tokenContext.split('.')[1],
+                authClientSecret)) as ImpersonationTokenContextModel;
+        }
 
         const resource = context.resources.find((el) => el.resource === (tenant.name + '/' + subprojectName));
 
