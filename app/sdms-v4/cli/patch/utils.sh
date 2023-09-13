@@ -15,23 +15,12 @@
 # limitations under the License.
 # ============================================================================
 
-source ./patch/utils.sh
+removeProblems() {
+    printf "%s\n" "Removing problems in $2"
+    sed -i "/$3/d" $1$2
+}
 
-FOLDER_NAME1="./dist/go/api/"
-FOLDER_NAME2="./dist/go/"
-FILE_NAME1="swagger.yaml"
-FILE_NAME2="api_master_data2_d_interpretation_set.go"
-FILE_NAME3="api_master_data3_d_interpretation_set.go"
-REG1='-\snull'
-REG2='([[:space:].])(2dinterpretationset)'
-REG3='([[:space:].])(3dinterpretationset)'
-word1='\1a\2'
-
-set -e
-
-# copying necessary files
-cp -r "./$MODELS_LOCAL_DIRECTORY" "$FOLDER_NAME1" 
-
-removeProblems $FOLDER_NAME1 $FILE_NAME1 $REG1
-replaceProblems $FOLDER_NAME2 $FILE_NAME2 $REG2 $word1
-replaceProblems $FOLDER_NAME2 $FILE_NAME3 $REG3 $word1
+replaceProblems() {
+    printf "%s\n" "Replacing problems in $2"
+    find $1$2 -type f -exec sed -i -r "s@$3@$4@g" {} \;
+}

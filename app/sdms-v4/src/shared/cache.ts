@@ -38,7 +38,7 @@ export class SharedCache {
             }
             this.redisClient = new Redis(redisOptions);
             while (this.redisClient.status === 'connecting') {
-                await new Promise((resolve) => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
     }

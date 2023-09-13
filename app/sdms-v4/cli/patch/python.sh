@@ -1,5 +1,6 @@
+#!/bin/bash
 # ============================================================================
-# Copyright 2017-2022, Schlumberger
+# Copyright 2017-2023, Schlumberger
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +15,16 @@
 # limitations under the License.
 # ============================================================================
 
+source ./patch/utils.sh
 
-
-FILE_PATH='./dist/python/swagger_client/api/'
-FILE_NAME1='master_data_2_d_interpretation_set_api.py'
-FILE_NAME2='master_data_3_d_interpretation_set_api.py'
-REG1='([[:space:].])(2dinterpretationset)'
-REG2='([[:space:].])(3dinterpretationset)'
-word1='\1a\2'
-
-replaceproblems() {
-printf "%s\n" "Replacing problems in $2"
-find $1$2 -type f -exec sed -i -r "s@$3@$4@g" {} \;
-
-}
+FILE_PATH="./dist/python/swagger_client/api/"
+FILE_NAME1="master_data_2_d_interpretation_set_api.py"
+FILE_NAME2="master_data_3_d_interpretation_set_api.py"
+REG1="([[:space:].])(2dinterpretationset)"
+REG2="([[:space:].])(3dinterpretationset)"
+word1="\1a\2"
 
 set -e
-replaceproblems $FILE_PATH $FILE_NAME1 $REG1 $word1
-replaceproblems $FILE_PATH $FILE_NAME2 $REG2 $word1
 
-printf "%s\n" "python patched successfully"
+replaceProblems $FILE_PATH $FILE_NAME1 $REG1 $word1
+replaceProblems $FILE_PATH $FILE_NAME2 $REG2 $word1

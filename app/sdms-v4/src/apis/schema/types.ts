@@ -19,7 +19,7 @@ export interface SchemaEndpoint {
     kind: string;
     docDataType: string;
     hasBulks?: boolean;
-    docBulkExtention?: string;
+    docBulkExtension?: string;
 }
 
 export const SchemaEndpoints = [
@@ -28,21 +28,21 @@ export const SchemaEndpoints = [
         kind: 'osdu:wks:dataset--FileCollection.SEGY:1.0.0',
         docDataType: 'SEGY',
         hasBulks: true,
-        docBulkExtention: 'sgy',
+        docBulkExtension: 'sgy',
     },
     {
         name: 'openzgy',
         kind: 'osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0',
         docDataType: 'OpenZGY',
         hasBulks: true,
-        docBulkExtention: 'zgy',
+        docBulkExtension: 'zgy',
     },
     {
         name: 'openvds',
         kind: 'osdu:wks:dataset--FileCollection.Bluware.OpenVDS:1.0.0',
         docDataType: 'OpenVDS',
         hasBulks: true,
-        docBulkExtention: 'vds',
+        docBulkExtension: 'vds',
     },
     {
         name: 'generic',

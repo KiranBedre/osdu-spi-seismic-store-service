@@ -46,7 +46,7 @@ export class Error {
     }
 
     private static getKeyByValue(value: number): string | undefined {
-        return Object.keys(this.Status).find((key) => this.Status[key as keyof typeof Error.Status] === value);
+        return Object.keys(this.Status).find(key => this.Status[key as keyof typeof Error.Status] === value);
     }
 
     public static makeForHTTPRequest(error: any, mexPrefix: string = '[seismic-store-service]'): ErrorModel {

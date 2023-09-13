@@ -1,32 +1,25 @@
 {
     "env": {
-        "node": true,
-        "es2022": true,
-        "mocha": true
+      "browser": true,
+      "es2022": true,
+      "mocha": true,
+      "node": true
     },
     "extends": [
-        "eslint:recommended",
-        "plugin:prettier/recommended"
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "prettier"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": "latest",
-        "sourceType": "module"
+      "ecmaVersion": "latest",
+      "sourceType": "module"
     },
     "plugins": [
-        "prettier"
+      "@typescript-eslint"
     ],
     "rules": {
-        "prettier/prettier": "error",
-        "no-var": "error",
-        "no-duplicate-imports": "error",
-        "no-eval": "error",
-        "no-useless-escape": "error",
-        "no-caller": "error",
-        "require-await": "error",
-        "eqeqeq": "error",
-        "no-unused-vars": "off",
-        "sort-imports": "error"
+      "@typescript-eslint/no-explicit-any": "off"
     },
     "root": true
-}
+  }
