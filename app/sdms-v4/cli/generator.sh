@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# Copyright 2017-2022, Schlumberger
+# Copyright 2017-2023, Schlumberger
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 
 # get the current script directory
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -55,7 +54,6 @@ printf "%s\n" "--------------------------------------------"
 # move into script directory
 cd $SCRIPT_DIR
 
-
 # copy original yaml file to the client directory
 if [ -f $YAML_INPUT_FILE ]; then
     cp $YAML_INPUT_FILE $YAML_OUTPUT_FILE
@@ -75,21 +73,21 @@ else
     echo "Check if Java software is installed in the system: OK"
 fi
 
-#check if swagger-cli is installed in the system
-if ! command -v swagger-cli &> /dev/null; then
-    echo "[ERROR] swagger-cli is required to execute the cli-generator script but it has not be found in the system."
-    exit 1
-else 
-    echo "Check if swagger-cli module is installed in the system: OK"
-fi
+# check if swagger-cli is installed in the system
+# if ! command -v swagger-cli &> /dev/null; then
+#     echo "[ERROR] swagger-cli is required to execute the cli-generator script but it has not be found in the system."
+#     exit 1
+# else 
+#     echo "Check if swagger-cli module is installed in the system: OK"
+# fi
 
-#check if openapi-generator-cli is installed in the system
-if ! command -v openapi-generator-cli &> /dev/null; then
-    echo "[ERROR] openapi-generator-cli is required to execute the cli-generator script but it has not be found in the system."
-    exit 1
-else 
-    echo "Check if openapi-generator-cli module is installed in the system: OK"
-fi
+# check if openapi-generator-cli is installed in the system
+# if ! command -v openapi-generator-cli &> /dev/null; then
+#     echo "[ERROR] openapi-generator-cli is required to execute the cli-generator script but it has not be found in the system."
+#     exit 1
+# else 
+#     echo "Check if openapi-generator-cli module is installed in the system: OK"
+# fi
 
 # check if swagger-codegen-cli is installed in the system otherwise download it
 SWAGGER_CLI_CODEGEN_JAR=swagger-codegen-cli.jar
@@ -121,31 +119,31 @@ find $YAML_OUTPUT_FILE -type f -exec sed -i "s@$word1@$word2@g" {} \;
 printf "\n%s\n" "--------------------------------------------"
 printf "%s\n" "Generate Client Libraries"
 printf "%s\n" "--------------------------------------------"
-OUTPUT_DIST_FOLDER=dist
-mkdir -p $OUTPUT_DIST_FOLDER
+mkdir -p ./dist
 declare -a languages=(
     [0]=typescript-axios
-    [1]=go
-    [2]=java
-    [3]=python
+    # [1]=go
+    # [2]=java
+    # [3]=python
 )
 for i in "${languages[@]}"
 do
     printf "%s\n" "Generate $i client library"
-    java -jar $SWAGGER_CLI_CODEGEN_JAR generate -i $YAML_OUTPUT_FILE -l $i -o ./$OUTPUT_DIST_FOLDER/$i
+    java -jar $SWAGGER_CLI_CODEGEN_JAR generate -i $YAML_OUTPUT_FILE -l $i -o ./dist/$i
     echo "chmod +x ./patch/$i.sh" | /bin/bash
     echo "./patch/$i.sh" | /bin/bash
+    printf "%s\n" "$i patched successfully"
     printf "%s\n" "--------------------------------------------"
 done
 
+# cpp library must be generated separately
+# printf "%s\n" "Generate C++ client library"
+# swagger-cli bundle $YAML_OUTPUT_FILE --outfile bundled.yaml
+# openapi-generator-cli  generate --skip-validate-spec -i bundled.yaml -g cpp-qt-client -o ./dist/cpp-qt-client
 
-#cpp library must be generated separately
-swagger-cli bundle $YAML_OUTPUT_FILE --outfile bundled.yaml
-openapi-generator-cli  generate --skip-validate-spec -i bundled.yaml -g cpp-qt-client -o ./$OUTPUT_DIST_FOLDER/cpp-qt-client
-
-# cleanup/
-rm openapitools.json
-rm bundled.yaml
+# cleanup
+# rm openapitools.json
+# rm bundled.yaml
 rm $YAML_OUTPUT_FILE
 rm $SWAGGER_CLI_CODEGEN_JAR
 rm $MODELS_OUTPUT_ZIP

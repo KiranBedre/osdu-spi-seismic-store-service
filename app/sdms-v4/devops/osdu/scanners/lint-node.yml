@@ -14,9 +14,19 @@
 #  limitations under the License.
 #  ***************************************************************************
 
-apiVersion: v2
-name: seismic-ddms-v4
-appVersion: "latest"
-description: Helm Chart for installing sdms service.
-version: 0.1.0
-type: application
+sdms_v4_lint:
+  image: node
+  tags: ["osdu-small"]
+  stage: scan
+  needs: ['sdms_v4_push_runtime_image']
+  script:
+    - cd app/$SDMS_V4_SERVICE
+    - npm install
+    - npm run lint
+  only:
+    changes:
+      - devops/**/*
+      - app/sdms-v4/**/*
+    refs:
+      - branches
+      - merge_requests

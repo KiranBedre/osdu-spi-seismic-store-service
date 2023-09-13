@@ -32,16 +32,16 @@ import {
 import { Definition } from './operations';
 import { SchemaEndpoints } from '../apis/schema/types';
 
-const PathCollection = new Array();
-const ComponentCollection = new Array();
-const SchemaCollection = new Array();
-const PaginationCollection = new Array();
-const ExampleCollection = new Array();
-const PaginatedExampleCollection = new Array();
-const BodyCollection = new Array();
-const ResponseCollection = new Array();
-const PaginatedResponseCollection = new Array();
-const Collection = new Array();
+const PathCollection = [];
+const ComponentCollection = [];
+const SchemaCollection = [];
+const PaginationCollection = [];
+const ExampleCollection = [];
+const PaginatedExampleCollection = [];
+const BodyCollection = [];
+const ResponseCollection = [];
+const PaginatedResponseCollection = [];
+const Collection = [];
 
 export const GeneratePage = () => {
     //generates generic azure info
@@ -50,7 +50,7 @@ export const GeneratePage = () => {
     ExampleCollection.push(fixedExamples().join(''));
 
     //generates necessary information for each endpoint
-    SchemaEndpoints.forEach((endpoint) => {
+    SchemaEndpoints.forEach(endpoint => {
         PathCollection.push(pathGeneration(endpoint));
         SchemaCollection.push(schemaGeneration(endpoint));
         PaginationCollection.push(paginationGeneration(endpoint));
