@@ -23,5 +23,5 @@ printf "\n%s\n" "-------------------------------------------------------"
 echo "5 - validate commit message"
 printf "%s\n" "-------------------------------------------------------"
 npx --no-install commitlint --edit $1
-printf "\n%s\n%s\n" "commit message ok"
+printf "\n%s\n%s\n" "> Commit message compliant"
 printf "%s\n\n" "-------------------------------------------------------"

@@ -161,3 +161,9 @@ sdms_v4_azure_test:
       - branches
       - merge_requests
       - tags
+  artifacts:
+    when: always
+    paths:
+      - app/sdms-v4/junit-e2e-test-report.xml
+    reports:
+      junit: app/sdms-v4/junit-e2e-test-report.xml

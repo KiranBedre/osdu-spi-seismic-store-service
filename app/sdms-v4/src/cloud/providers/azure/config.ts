@@ -35,7 +35,7 @@ export class AzureConfig extends Config {
         AzureConfig.KEYVAULT_URL = process.env.KEYVAULT_URL;
         Config.checkRequiredConfig(AzureConfig.KEYVAULT_URL, 'KEYVAULT_URL');
         await AzureSecrets.loadSecrets();
-        // Initialize Insights
+        // Initialize insights
         AzureInsights.initialize();
     }
 }
