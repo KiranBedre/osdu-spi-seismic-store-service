@@ -14,8 +14,12 @@
 // Limitations under the License.
 // ============================================================================
 
-module.exports = {
+import type { UserConfig } from '@commitlint/types';
+
+const Configuration: UserConfig = {
     extends: ['@commitlint/config-conventional'],
     helpUrl:
-        'Commits need to follow conventional commits syntax https://www.conventionalcommits.org/en/v1.0.0/#summary',
+        'Commits need to follow conventional commits syntax hhttps://github.com/conventional-changelog/commitlint/#what-is-commitlint',
 };
+
+module.exports = Configuration;
