@@ -19,7 +19,7 @@ import type { UserConfig } from '@commitlint/types';
 const Configuration: UserConfig = {
     extends: ['@commitlint/config-conventional'],
     helpUrl:
-        'Commits need to follow conventional commits syntax hhttps://github.com/conventional-changelog/commitlint/#what-is-commitlint',
+        'Commits need to follow conventional commits syntax https://github.com/conventional-changelog/commitlint/#what-is-commitlint',
 };
 
 module.exports = Configuration;
