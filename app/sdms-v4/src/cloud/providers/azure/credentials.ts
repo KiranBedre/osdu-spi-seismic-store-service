@@ -24,10 +24,9 @@ import {
     generateBlobSASQueryParameters,
 } from '@azure/storage-blob';
 import { DefaultAzureCredential, DefaultAzureCredentialOptions, TokenCredential } from '@azure/identity';
-
 import { AzureConfig } from './config';
+import { AzureSecrets } from './secrets';
 import { ExponentialRetryPolicyOptions } from '@azure/core-rest-pipeline';
-import { PartitionCoreService } from '../../../services';
 
 const UserDelegationKeyValidityInMinutes = 60 * 4; // 4 hours
 const ExpirationLeadInMinutes = 15; // Expire 15 minutes before actual date
@@ -69,7 +68,7 @@ export class AzureCredentials extends AbstractCredentials {
         readonly: boolean,
         partition: string
     ): Promise<IAccessTokenModel> {
-        const accountName = await PartitionCoreService.getStorageResource(partition);
+        const accountName = await AzureSecrets.getStorageResourceSecrets(partition);
         const now = new Date();
         const expiration = this.addMinutes(now, SasExpirationInMinutes);
         const sasToken = await this.generateSASToken(accountName, bucket, expiration, readonly);

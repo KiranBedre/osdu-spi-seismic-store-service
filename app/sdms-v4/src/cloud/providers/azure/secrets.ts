@@ -14,14 +14,14 @@
 // Limitations under the License.
 // ============================================================================
 
-import { AbstractSecrets, SecretsFactory } from '../../secrets';
 import { AzureConfig } from './config';
 import { AzureCredentials } from './credentials';
 import { Config } from '../../config';
+import { PartitionCoreService } from '../../../services';
 import { SecretClient } from '@azure/keyvault-secrets';
+import { getInMemoryCacheInstance } from '../../../shared';
 
-@SecretsFactory.register('azure')
-export class AzureSecrets extends AbstractSecrets {
+export class AzureSecrets {
     // Application Resource ID
     private static APP_RESOURCE_ID_KEY: string = 'aad-client-id';
 
@@ -47,7 +47,27 @@ export class AzureSecrets extends AbstractSecrets {
         Config.REDIS_HOST = (Config.REDIS_HOST || (await client.getSecret(this.REDIS_HOST)).value)!;
     }
 
-    public async getSecret(key: string): Promise<string> {
+    public static async getSecret(key: string): Promise<string> {
         return (await AzureSecrets.CreateSecretClient().getSecret(key)).value;
+    }
+
+    public static async getStorageResourceSecrets(dataPartition: string): Promise<string> {
+        const cache = getInMemoryCacheInstance();
+
+        const res = cache.get<string>(dataPartition);
+        if (res !== undefined) {
+            return res;
+        }
+
+        const dataPartitionConfigurations = await PartitionCoreService.getPartitionConfiguration(dataPartition);
+        const storageConfigs = dataPartitionConfigurations[Config.CORE_SERVICE_PARTITION_STORAGE_ACCOUNT_KEY] as {
+            sensitive: boolean;
+            value: string;
+        };
+        if (storageConfigs.sensitive) {
+            storageConfigs.value = await AzureSecrets.getSecret(storageConfigs.value);
+        }
+        cache.set<string>(dataPartition, storageConfigs.value, 3600);
+        return storageConfigs.value;
     }
 }
