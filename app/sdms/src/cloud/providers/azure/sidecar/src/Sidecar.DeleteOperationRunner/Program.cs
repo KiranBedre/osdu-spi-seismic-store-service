@@ -26,7 +26,6 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
-using Sidecar.Common.HealthChecks;
 using Sidecar.Common.Utility;
 
 public class Program
@@ -185,15 +184,12 @@ public class Program
 
         _ = services
             .AddHealthChecks()
-            .AddCheck<TaskQueueExistenceCheck>(
-                "task-queue-existence-check",
-                timeout: TimeSpan.FromMinutes(1))
             .AddRedis(
-                sp => sp.GetRequiredService<RedisConnectionFactory>().GetRedisForLocks().GetConnection(),
+                sp => sp.GetRequiredService<IRedisConnectionFactory>().GetRedisForLocks().GetConnection(),
                 name: "redis-locks-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1))
             .AddRedis(
-                sp => sp.GetRequiredService<RedisConnectionFactory>().GetRedisForQueue().GetConnection(),
+                sp => sp.GetRequiredService<IRedisConnectionFactory>().GetRedisForQueue().GetConnection(),
                 name: "redis-queue-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1));
 
