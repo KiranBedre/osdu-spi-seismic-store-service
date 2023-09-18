@@ -22,7 +22,7 @@ import { TenantModel } from '../../../services/tenant';
 import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
 import { Config } from '../..';
-import { Error } from '../../../shared';
+import { Error, Utils } from '../../../shared';
 
 import axios, { AxiosInstance } from 'axios';
 import { DatasetModel, PaginationModel } from '../../../services/dataset';
@@ -311,8 +311,12 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
 
         if (searchParam) {
-            const [variable, value] = searchParam.split('=');
-            query = query.filter(variable, 'LIKE', value);
+            const param = searchParam.split('=');
+            const variable = param[0];
+            const type = Utils.isBoolean(param[1].toLowerCase()) ? 'BOOLEAN' : 'STRING';
+            const operator =  (type === 'BOOLEAN') ? '=' : 'LIKE';
+            const value = (type === 'BOOLEAN') ? param[1].toLowerCase() : param[1];
+            query = query.filter(variable, operator, value, type);
         }
 
         if (selectParam){ query = query.select(selectParam); }
@@ -423,7 +427,12 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 } else if (filter.operator === 'RegexMatch') {
                     filters.push('(RegexMatch(c.data.' + filter.property + ', \'' + filter.value + '\')' + ')')
                 } else {
-                    filters.push('c.data.' + filter.property + ' ' + filter.operator + ' "' + filter.value + '"')
+                    if (filter.type === 'BOOLEAN') {
+                        filters.push('c.data.' + filter.property + ' ' + filter.operator + ' ' + filter.value)
+                    }
+                    else {
+                        filters.push('c.data.' + filter.property + ' ' + filter.operator + ' "' + filter.value + '"')
+                    }
                 }
             }
             if (filters) {
@@ -564,6 +573,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
 }
 
 declare type Operator = '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch' | 'LIKE';
+declare type Type = 'STRING' | 'BOOLEAN';
 
 export class AzureCosmosDbQuery implements IJournalQueryModel {
 
@@ -572,7 +582,7 @@ export class AzureCosmosDbQuery implements IJournalQueryModel {
         this.kind = kind;
     }
 
-    filter(property: string, operator?: Operator, value?: {}): IJournalQueryModel {
+    filter(property: string, operator?: Operator, value?: {}, type?: Type): IJournalQueryModel {
 
         if (value === undefined) {
             value = operator;
@@ -587,7 +597,11 @@ export class AzureCosmosDbQuery implements IJournalQueryModel {
             value = '';
         }
 
-        this.filters.push({ property, operator, value });
+        if (type === undefined) {
+            type = 'STRING';
+        }
+
+        this.filters.push({ property, operator, value, type });
 
         return this;
     }
@@ -623,7 +637,7 @@ export class AzureCosmosDbQuery implements IJournalQueryModel {
         return this;
     }
 
-    public filters: { property: string; operator: Operator; value: {} }[] = [];
+    public filters: { property: string; operator: Operator; value: {}; type: Type; }[] = [];
     public projectedFieldNames: string[] = [];
     public groupByFieldNames: string[] = [];
     public pagingStart?: string;

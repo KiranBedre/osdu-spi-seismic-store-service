@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,18 +14,12 @@
 // Limitations under the License.
 // ============================================================================
 
-import { CloudFactory } from './cloud';
+import type { UserConfig } from '@commitlint/types';
 
-export interface ISecrets {
-    getSecret(key: string): Promise<string>;
-}
+const Configuration: UserConfig = {
+    extends: ['@commitlint/config-conventional'],
+    helpUrl:
+        'Commits need to follow conventional commits syntax https://github.com/conventional-changelog/commitlint/#what-is-commitlint',
+};
 
-export abstract class AbstractSecrets implements ISecrets {
-    public abstract getSecret(key: string): Promise<string>;
-}
-
-export class SecretsFactory extends CloudFactory {
-    public static build(providerLabel: string): ISecrets {
-        return CloudFactory.build(providerLabel, AbstractSecrets) as ISecrets;
-    }
-}
+module.exports = Configuration;

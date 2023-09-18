@@ -1,0 +1,51 @@
+// cSpell Settings
+{
+    // Version of the setting file.  Always 0.2
+    "version": "0.2",
+    // language - current active spelling language
+    "language": "en, en-US",
+    // words - list of words to be always considered correct
+    "words": [
+        "addgroup",
+        "adduser",
+        "appgroup",
+        "appuser",
+        "appkey",
+        "azure",
+        "cloudprovider",
+        "commitlint",
+        "cspell",
+        "ctag",
+        "dataecosystem",
+        "datapartition",
+        "ddms",
+        "filemetadata",
+        "gcpid",
+        "gcstoken",
+        "gecos",
+        "gtags",
+        "idtoken",
+        "imptoken",
+        "istio",
+        "legaltag",
+        "ltag",
+        "markdownlint",
+        "nopasswd",
+        "opendes",
+        "openzgy",
+        "osdu",
+        "sauth",
+        "sbit",
+        "segy",
+        "seismicmeta",
+        "seistore",
+        "sdms",
+        "sdpath",
+        "stoken",
+        "subproject",
+        "svcapp",
+        "svctoken",
+        "toplevel",
+        "utest"
+    ]
+}

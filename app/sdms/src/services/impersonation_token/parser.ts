@@ -81,7 +81,7 @@ export class ImpersonationTokenParser {
 
     }
 
-    public static refresh(req: expRequest): {token: string, tokenContext: string} {
+    public static refresh(req: expRequest): {token: string, tokenContext: string, gcm: boolean} {
 
         const token = req.headers['impersonation-token'] as string;
         if(!token) {
@@ -93,12 +93,15 @@ export class ImpersonationTokenParser {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The request impersonation-token-context header has not been specified.'));
         }
-        if(tokenContext.split('.').length !== 2) {
+        // Context length will should equal 3 once old decrypt is removed
+        if(!(tokenContext.split('.').length === 2 || tokenContext.split('.').length === 3)) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The request impersonation-token-context header value is not in the right form.'));
         }
 
-        return {token, tokenContext}
+        const gcm = tokenContext.split('.').length === 3 ? true : false;
+
+        return {token, tokenContext, gcm}
     }
 
 }

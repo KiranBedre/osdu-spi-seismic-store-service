@@ -122,18 +122,18 @@ export class TestDatasetSVC {
         Tx.sectionInit('listPost');
 
         Tx.testExpAsync(async (expReq: expRequest) => {
+            expReq.method = 'POST';
             expReq.query.ctag = 'xxx';
 
-            DatasetParser.listPost(expReq);
-
+            DatasetParser.list(expReq);
         });
 
         Tx.testExpAsync(async (expReq: expRequest) => {
+            expReq.method = 'POST';
             // expReq.query.ctag = 'xxx';
             // expReq.body = {};
 
-            DatasetParser.listPost(expReq);
-
+            DatasetParser.list(expReq);
         });
 
         // Tx.testExpAsync(async (expReq: expRequest) => {
@@ -949,7 +949,7 @@ export class TestDatasetSVC {
             impersonated_by: Math.random().toString(16).substring(2, 33),
         } as ImpersonationTokenContextModel;
         const encryptedContext = Utils.encrypt(JSON.stringify(info), clientsecret);
-        const context = encryptedContext.encryptedText + '.' + encryptedContext.encryptedTextIV;
+        const context = encryptedContext.encryptedText + '.' + encryptedContext.encryptedTextIV + '.' + encryptedContext.authTag;
 
         let iAuthProvider: IAuthProvider = {
             generateAuthCredential: function (): Promise<any> {

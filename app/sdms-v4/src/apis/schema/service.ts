@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Error, Response as SDMSResponse } from '../../shared';
 import { Router, Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './operations';
 import { SchemaHandler } from './handler';
@@ -43,10 +42,6 @@ SchemaRouter.get('/v1/record/:id/versions', async (req: expRequest, res: expResp
 
 SchemaRouter.get('/v1/record/:id/version/:version', async (req: expRequest, res: expResponse) => {
     await SchemaHandler.handler(req, res, Operation.GetVersionedSchema);
-});
-
-SchemaRouter.get('/v1/reindex', (req: expRequest, res: expResponse) => {
-    SDMSResponse.writeError(res, Error.make(Error.Status.NOT_IMPLEMENTED, 'method not implemented yet'));
 });
 
 export { SchemaRouter };

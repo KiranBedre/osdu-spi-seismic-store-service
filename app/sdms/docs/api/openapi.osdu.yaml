@@ -895,13 +895,15 @@ paths:
       tags:
         - Dataset
       parameters:
-        - description: "Select multiple fields to return example: select=[name,subproject...]"
+        - description: "Select multiple fields that belong to a dataset's metadata. (ex: select=[name,subproject...])"
           in: query
           name: select
           required: false
           default: ""
           type: string
-        - description: "Select single SQL like search parameter example: search=name=file%"
+        - description: |
+            Select single SQL like search parameter example: search=name=file%
+            Supported fields: name, tenant, subproject, path, ltag, created_by, gcsurl, ctag, readonly
           in: query
           name: search
           required: false
@@ -2422,7 +2424,9 @@ components:
         gtags:
           - tagA
           - tagB
-        limit: 10
+        limit: "10"
+        search: "name=mib%"
+        select: "[name, path, created_by]"
         cursor: next-page-token-931fvm19vm1-vm1v1
     DatasetLsBody:
       type: object

@@ -243,6 +243,9 @@ export abstract class Config implements IConfig {
     // ImpersonationToken cache expire margin
     public static IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN: number;
 
+    // Enable the search and select in Dataset List
+    public static ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST: boolean = false;
+
     public static setCloudProvider(cloudProvider: string) {
         Config.CLOUDPROVIDER = cloudProvider;
         if (Config.CLOUDPROVIDER === undefined) {

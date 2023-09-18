@@ -1,8 +1,44 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
-
+rootPath=$(git rev-parse --show-toplevel)
+cd "$rootPath"
 echo "-------------------------------------------------------"
 echo "1)"
-echo "scans for the inclusion of AWS keys"
-cd ./app/sdms && npx scan-for-secrets src/cloud/providers/aws
+echo "Install modules required"
+npm install -g cspell
+npm install -g markdownlint-cli
+npm install -g scan-for-secrets
+echo "-------------------------------------------------------"
+echo "2)"
+echo "Scans for secrets"
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+  if [ -d $f ]; then
+    echo "Scanning $f"
+    npx scan-for-secrets $f
+  else
+    dir="$(dirname "${f}")"
+    if [ "$dir" == *"app/sdms" ]; then
+      echo "Scanning $f"
+      npx scan-for-secrets ${dir}/src
+    fi
+  fi
+done
+echo "-------------------------------------------------------"
+echo "3)"
+echo "CSpell scan"
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+  if [[ ! "$f" == *"package.json"* && ! "$f" == *"package-lock.json"* && ! "$f" == *"npm-shrinkwrap.json"* && ! "$f" == *"markdownlint.json"* && ! "$f" == *"cspell.json"* ]]; then
+    echo "Scanning $f"
+    npx cspell $f --gitignore --show-suggestions
+  fi
+done
+echo "-------------------------------------------------------"
+echo "4)"
+echo "Markdown lint scan"
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+  if [ "$f" == *".md"* ]; then
+    echo "Scanning $f"
+    npx markdownlint $f
+  fi
+done
 echo "-------------------------------------------------------"

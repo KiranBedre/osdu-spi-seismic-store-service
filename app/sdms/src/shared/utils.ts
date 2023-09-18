@@ -119,19 +119,32 @@ export class Utils {
     public static encrypt(text: string, key: string) {
         const iv = crypto.randomBytes(16);
         const keySign = crypto.createHash('sha256').update(String(key)).digest('base64').substr(0, 32);
-        const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(keySign), iv);
+        const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(keySign), iv);
         let encrypted = cipher.update(text);
         encrypted = Buffer.concat([encrypted, cipher.final()]);
         return {
             encryptedText: encrypted.toString('hex'),
-            encryptedTextIV: iv.toString('hex')
+            encryptedTextIV: iv.toString('hex'),
+            authTag: cipher.getAuthTag().toString('hex')
         };
     }
 
-    public static decrypt(encryptedText: string, encryptedTextIV: string, key: string) {
+    // This method is temporary required by slb during while migrating from AES CBC to AES GCM
+    // To be removed
+    public static decryptCBC(encryptedText: string, encryptedTextIV: string, key: string) {
         const keySign = crypto.createHash('sha256').update(String(key)).digest('base64').substr(0, 32);
         const ivNew = Buffer.from(encryptedTextIV, 'hex');
         const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(keySign), ivNew);
+        let decrypted = decipher.update(Buffer.from(encryptedText, 'hex'));
+        decrypted = Buffer.concat([decrypted, decipher.final()]);
+        return decrypted.toString();
+    }
+
+    public static decrypt(encryptedText: string, encryptedTextIV: string, authTag: string, key: string) {
+        const keySign = crypto.createHash('sha256').update(String(key)).digest('base64').substr(0, 32);
+        const ivNew = Buffer.from(encryptedTextIV, 'hex');
+        const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(keySign), ivNew);
+        decipher.setAuthTag(Buffer.from(authTag, 'hex'));
         let decrypted = decipher.update(Buffer.from(encryptedText, 'hex'));
         decrypted = Buffer.concat([decrypted, decipher.final()]);
         return decrypted.toString();
@@ -145,6 +158,17 @@ export class Utils {
         }
         return true;
 
+    }
+
+    public static isBoolean(input: string): boolean {
+
+        switch(input.toLowerCase()) {
+            case 'true':
+            case 'false':
+                return true;
+            default:
+                return false;
+        }
     }
 
     // retry on error using exponential retry backOff strategy.
