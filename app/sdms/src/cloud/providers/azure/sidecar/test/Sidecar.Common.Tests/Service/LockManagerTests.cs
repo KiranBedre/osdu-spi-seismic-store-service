@@ -40,7 +40,7 @@ public class LockManagerTests
     }
 
     [Fact]
-    public async Task AcquireDeleteLock_WithLockWrite_ReturnsTrue()
+    public async Task AcquireDeleteLock_WithLockDelete_ReturnsTrue()
     {
         // Arrange
         var databaseMock = new Mock<IDatabase>();
@@ -57,8 +57,11 @@ public class LockManagerTests
         Assert.True(result);
     }
 
-    [Fact]
-    public async Task AcquireDeleteLock_WithValidLockRead_ReturnsFalse()
+    [Theory]
+    [InlineData("W24D0X03")]
+    [InlineData("R40JYX01")]
+    [InlineData("rms:R40JYX01:R40JYX02")]
+    public async Task AcquireDeleteLock_WithValidLockReadWrite_ReturnsFalse(string lockValue)
     {
         // Arrange
         var databaseMock = new Mock<IDatabase>();
@@ -66,7 +69,7 @@ public class LockManagerTests
         var key = "/path/file.tst";
         _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
             .ReturnsAsync(true);
-        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("RLockValue");
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync(lockValue);
 
         // Act
         var result = await _lockManager.AcquireDeleteLockAsync(key);
