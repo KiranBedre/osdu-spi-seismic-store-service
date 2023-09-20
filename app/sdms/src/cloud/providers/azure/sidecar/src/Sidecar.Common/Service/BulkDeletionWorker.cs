@@ -65,12 +65,14 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString());
             await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description());
             _logger.LogInformation("Finished deletion operation {OperationId} with errors", operationId);
+            await _deletionTasks.DeleteDeletionOperationAsync(operationId);
         }
         else
         {
             await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString());
             await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description());
             _logger.LogInformation("Finished deletion operation {OperationId} successfully", operationId);
+            await _deletionTasks.DeleteDeletionOperationAsync(operationId);
         }
 
     }

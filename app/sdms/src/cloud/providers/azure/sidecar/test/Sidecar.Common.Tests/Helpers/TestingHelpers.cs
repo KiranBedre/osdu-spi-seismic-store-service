@@ -165,6 +165,12 @@ internal static partial class TestingHelpers
                 return await cache.HashGetAllAsync(key);
             }).Verifiable();
 
+        db.Setup(d => d.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Returns<RedisKey, CommandFlags>(async (key, flags) =>
+            {
+                return await cache.KeyDeleteAsync(key);
+            }).Verifiable();
+
         return db;
     }
 

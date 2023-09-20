@@ -26,6 +26,8 @@ using Sidecar.Common.Utility;
 
 public class RedisDeletionTasksStorage : IDeletionTasksStorage
 {
+    private const int DELETION_STATUS_EXPIRY_SECONDS = 60 * 60 * 24 * 90; // 90 days
+
     private readonly ILogger<RedisDeletionTasksStorage> _logger;
     private readonly IOptionsQueueRedisQueueName _options;
     private readonly IRedisHandler _queue;
@@ -79,6 +81,13 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         return delOpData.FromHashEntries<DeleteOperationMessage>(true);
     }
 
+    public async Task DeleteDeletionOperationAsync(string operationId)
+    {
+        var db = _queue.GetDatabase();
+        var opDataKey = _options.QueueName + ":" + operationId;
+        _ = await db.KeyDeleteAsync(opDataKey, CommandFlags.None);
+    }
+
     private async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDatabase db, DeleteOperationMessage opMsg)
     {
 
@@ -103,6 +112,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         var statusKey = _options.QueueName + ":status:" + status.OperationId.ToLower();
 
         await db.HashSetAsync(statusKey, statusHash);
+        _ = await db.KeyExpireAsync(statusKey, TimeSpan.FromSeconds(DELETION_STATUS_EXPIRY_SECONDS));
 
         return status!;
     }

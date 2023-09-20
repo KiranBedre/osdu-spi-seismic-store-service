@@ -60,7 +60,21 @@ internal static partial class TestingHelpers
             return res;
         }
 
+        public bool KeyDelete(RedisKey key)
+        {
+            var keysToDelete = _cache.Keys.Where(e => e.Contains(key!));
+
+            foreach (var k in keysToDelete)
+            {
+                _ = _cache.Remove(k!);
+            }
+
+            return true;
+        }
+
         public async Task<RedisValue> ListLeftPopAsync(RedisKey key) => await Task.FromResult(ListLeftPop(key));
+
+        public async Task<bool> KeyDeleteAsync(RedisKey key) => await Task.FromResult(KeyDelete(key));
 
         public RedisValue HashGet(RedisKey key, RedisValue field)
         {
