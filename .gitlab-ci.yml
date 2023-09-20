@@ -2,6 +2,7 @@ include:
   # pipeline logic
   - project: "osdu/platform/ci-cd-pipelines"
     file: "standard-setup.yml"
+    ref: "az/sa-stage-environment"
 
   # global
   # scanners
