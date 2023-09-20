@@ -1,5 +1,6 @@
 filemetadata_azure_containerize:
   extends: .azure_containerize
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   variables:
     SHA_IMAGE: ${FILEMETADATA_LOCAL_SERVICE_NAME}:${CI_COMMIT_SHA}
     LATEST_IMAGE: ${FILEMETADATA_LOCAL_SERVICE_NAME}:latest
@@ -35,6 +36,7 @@ filemetadata_azure_containerize:
 
 filemetadata_azure_deploy:
   extends: .azure_deploy
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - filemetadata_azure_containerize
     - azure_containerize_helm
@@ -74,6 +76,7 @@ filemetadata_azure_deploy:
 
 filemetadata_azure_unit_test:
   image: node
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   extends: .azure_test
   stage: integration
   needs:
@@ -102,6 +105,7 @@ filemetadata_azure_unit_test:
 
 filemetadata_azure_integration_test:
   image: node
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   extends: .azure_test
   stage: integration
   needs:
@@ -135,6 +139,7 @@ filemetadata_azure_publish:
     - filemetadata_azure_containerize
     - azure_containerize_helm
   extends: .azure_publish
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   variables:
     SHA_IMAGE: ${FILEMETADATA_LOCAL_SERVICE_NAME}:${CI_COMMIT_SHA}
   script:
