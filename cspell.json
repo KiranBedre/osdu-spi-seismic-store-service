@@ -46,6 +46,16 @@
         "svcapp",
         "svctoken",
         "toplevel",
-        "utest"
+        "utest",
+        "newtonsoft",
+        "WDELETE",
+        "vals",
+        "hashentry",
+        "subproj",
+        "somequeue",
+        "hset",
+        "lset",
+        "hgetall",
+        "lpush"
     ]
 }
