@@ -315,6 +315,16 @@ export class DatasetParser {
         return dataset;
     }
 
+    public static bulkDelete(req: expRequest): string {
+        Params.checkString(req.query.path, 'path', false);
+        return req.query.path ? req.query.path as string : '';
+    }
+
+    public static bulkDeleteStatus(req: expRequest): string {
+        Params.checkString(req.query.operationid, 'operationid');
+        return req.query.operationid as string;
+    }
+
     private static createDatasetModelFromRequest(req: expRequest) {
         const dataset: DatasetModel = {} as DatasetModel;
         this.getSDPathFromRequest(dataset, req);

@@ -117,4 +117,14 @@ router.put('/tenant/:tenantid/subproject/:subprojectid/dataset/:datasetid/gtags'
         await DatasetHandler.handler(req, res, DatasetOP.PutTags);
     });
 
+// delete datasets with a given path within a subproject
+router.delete('/tenant/:tenantid/subproject/:subprojectid/bulk-delete', async (req: expRequest, res: expResponse) => {
+    await DatasetHandler.handler(req, res, DatasetOP.BulkDelete);
+});
+
+// get status of a bulk delete operation
+router.get('/tenant/:tenantid/subproject/:subprojectid/bulk-delete', async (req: expRequest, res: expResponse) => {
+    await DatasetHandler.handler(req, res, DatasetOP.BulkDeleteStatus);
+});
+
 export { router as DatasetRouter };

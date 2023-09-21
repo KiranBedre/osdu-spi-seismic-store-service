@@ -14,10 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
-import { DeleteJobRedisStore } from './redis';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { SubprojectAuth, SubProjectModel, IDeleteOperationModel, IDeleteOperationStatusModel } from '.';
+import { SubprojectAuth, SubProjectModel } from '.';
 import { Auth, AuthGroups, AuthRoles, UserRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
@@ -29,7 +28,6 @@ import { TenantAuth, TenantModel, TenantGroups } from '../tenant';
 import { TenantDAO } from '../tenant/dao';
 import { SubProjectDAO } from './dao';
 import { SubprojectGroups } from './groups';
-import { IDeleteOperationQueueTaskModel } from './model';
 import { SubProjectOP } from './optype';
 import { SubProjectParser } from './parser';
 
@@ -64,16 +62,6 @@ export class SubProjectHandler {
 
                 await this.delete(req, tenant);
                 Response.writeOK(res);
-
-            } else if (op === SubProjectOP.BulkDelete) {
-
-                const operation = await this.bulkDelete(req, tenant);
-                Response.writeOK(res, operation, 202);
-
-            } else if (op === SubProjectOP.BulkDeleteStatus) {
-
-                const status = await this.bulkDeleteStatus(req);
-                Response.writeOK(res, status);
 
             } else if (op === SubProjectOP.Patch) {
 
@@ -265,49 +253,6 @@ export class SubProjectHandler {
             LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
         });
 
-    }
-
-    // trigger bulk delete operation for datasets with a given path within the subproject
-    private static async bulkDelete(req: expRequest, tenant: TenantModel): Promise<IDeleteOperationModel> {
-
-        if (Config.CLOUDPROVIDER !== 'azure') {
-            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
-        }
-
-        const subprojectName = req.params.subprojectid;
-        const path = SubProjectParser.bulkDelete(req);
-
-        // auth check: tenant.admin
-        await Auth.isUserAuthorized(
-            req.headers.authorization, TenantAuth.getAuthGroups(tenant),
-            tenant.esd, req[Config.DE_FORWARD_APPKEY]);
-
-        const operationId = uuidv4();
-
-        const operation: IDeleteOperationQueueTaskModel = {
-            operation_id: operationId,
-            tenant: tenant.name,
-            subproject: subprojectName,
-            path,
-        };
-
-        await DeleteJobRedisStore.pushOperation(operation);
-
-        return {
-            operation_id: operationId
-        };
-    }
-
-    // get status of a bulk delete operation
-    private static async bulkDeleteStatus(req: expRequest): Promise<IDeleteOperationStatusModel> {
-
-        const operationId = SubProjectParser.bulkDeleteStatus(req);
-        const operationStatus = await DeleteJobRedisStore.getOperationStatus(operationId);
-        if (operationStatus === undefined) {
-            throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
-        }
-
-        return operationStatus;
     }
 
     // Patch the subproject

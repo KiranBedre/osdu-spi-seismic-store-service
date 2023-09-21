@@ -16,6 +16,7 @@
 
 import { Request as expRequest, Response as expResponse } from 'express';
 import url from 'url';
+import { v4 as uuidv4 } from 'uuid';
 import { DatasetModel, DatasetUtils } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
@@ -31,6 +32,8 @@ import { DatasetOP } from './optype';
 import { DatasetParser } from './parser';
 import { SchemaManagerFactory } from './schema-manager';
 import { ComputedSizeResponse, GetSizeResponse } from './model';
+import { IDeleteOperationModel, IDeleteOperationStatusModel, IDeleteOperationQueueTaskModel } from './model';
+import { DeleteJobRedisStore } from './redis';
 
 export class DatasetHandler {
 
@@ -79,6 +82,12 @@ export class DatasetHandler {
                 Response.writeOK(res, await this.listContent(req, tenant, subproject));
             } else if (op === DatasetOP.PutTags) {
                 Response.writeOK(res, await this.putTags(req, tenant, subproject));
+            } else if (op === DatasetOP.BulkDelete) {
+                const operation = await this.bulkDelete(req, tenant, subproject);
+                Response.writeOK(res, operation, 202);
+            } else if (op === DatasetOP.BulkDeleteStatus) {
+                const status = await this.bulkDeleteStatus(req);
+                Response.writeOK(res, status);
             } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
 
         } catch (error) {
@@ -1179,5 +1188,48 @@ export class DatasetHandler {
         res.delete = res.write;
         return res;
 
+    }
+
+    // trigger bulk delete operation for datasets with a given path within the subproject
+    private static async bulkDelete(req: expRequest, tenant: TenantModel, subproject: SubProjectModel): Promise<IDeleteOperationModel> {
+
+        if (Config.CLOUDPROVIDER !== 'azure') {
+            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+        }
+
+        const path = DatasetParser.bulkDelete(req);
+
+        // check if the caller is authorized
+        await Auth.isWriteAuthorized(req.headers.authorization,
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
+            tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
+            req.headers['impersonation-token-context'] as string);
+
+        const operationId = uuidv4();
+
+        const operation: IDeleteOperationQueueTaskModel = {
+            operation_id: operationId,
+            tenant: tenant.name,
+            subproject: subproject.name,
+            path,
+        };
+
+        await DeleteJobRedisStore.pushOperation(operation);
+
+        return {
+            operation_id: operationId
+        };
+    }
+
+    // get status of a bulk delete operation
+    private static async bulkDeleteStatus(req: expRequest): Promise<IDeleteOperationStatusModel> {
+
+        const operationId = DatasetParser.bulkDeleteStatus(req);
+        const operationStatus = await DeleteJobRedisStore.getOperationStatus(operationId);
+        if (operationStatus === undefined) {
+            throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
+        }
+
+        return operationStatus;
     }
 }

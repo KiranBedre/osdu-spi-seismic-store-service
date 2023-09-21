@@ -18,6 +18,7 @@ import sinon from 'sinon';
 
 import { Datastore } from '@google-cloud/datastore';
 import { Request as expRequest, Response as expResponse } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { Auth, AuthProviderFactory } from '../../../src/auth';
 import { IAuthProvider } from '../../../src/auth/auth';
 import { Config, google, StorageFactory } from '../../../src/cloud';
@@ -29,6 +30,7 @@ import { Locker } from '../../../src/services/dataset/locker';
 import { IDatasetModel } from '../../../src/services/dataset/model';
 import { DatasetOP } from '../../../src/services/dataset/optype';
 import { DatasetParser } from '../../../src/services/dataset/parser';
+import { DeleteJobRedisStore } from '../../../src/services/dataset/redis';
 import { SubProjectDAO, SubProjectModel } from '../../../src/services/subproject';
 import { TenantDAO, TenantModel } from '../../../src/services/tenant';
 import { Response } from '../../../src/shared';
@@ -112,6 +114,8 @@ export class TestDatasetSVC {
             this.unlock();
             this.listPost();
             this.parser();
+            this.bulkDelete();
+            this.bulkDeleteStatus();
 
         });
 
@@ -986,6 +990,76 @@ export class TestDatasetSVC {
             Tx.checkTrue(data.created_by === info.user);
         });
 
+    }
+
+    private static bulkDelete() {
+        
+        Tx.sectionInit('bulkDelete');
+        
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            Config.CLOUDPROVIDER = 'azure';
+            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
+            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').resolves();
+
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDelete);
+            Tx.check202(expRes.statusCode);
+        });
+
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            Config.CLOUDPROVIDER = 'azure';
+            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').throws();
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDelete);
+            Tx.check500(expRes.statusCode);
+
+        });
+    }
+
+    private static bulkDeleteStatus() {
+
+        Tx.sectionInit('bulkDeleteStatus');
+        
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            expReq.query.operationid = 'operationId';
+            
+            const operationStatus = {
+                operation_id: uuidv4(),
+                created_at: "string",
+                created_by: "string",
+                last_updated_at: "string",
+                status: "string",
+                dataset_cnt: 1000,
+                deleted_cnt: 10,
+                failed_cnt: 1
+            }
+
+            Config.CLOUDPROVIDER = 'azure';
+            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(operationStatus);
+            
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDeleteStatus);
+            Tx.check200(expRes.statusCode);
+        });
+
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            expReq.query.operationid = 'operationId';
+
+            Config.CLOUDPROVIDER = 'azure';
+            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
+            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
+            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(undefined);
+            
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDeleteStatus);
+            Tx.check404(expRes.statusCode);
+        });
     }
 
 }

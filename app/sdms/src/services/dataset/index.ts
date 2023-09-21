@@ -20,7 +20,8 @@ export {
   IDatasetModel as DatasetModel,
   IPaginationModel as PaginationModel,
   IDatasetListRequest as DatasetListRequest,
-  SchemaTransformModel
+  SchemaTransformModel,
+  IDeleteOperationModel, IDeleteOperationStatusModel
 } from './model';
 export { DatasetUtils } from './utils'
 

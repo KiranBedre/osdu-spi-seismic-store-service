@@ -20,7 +20,7 @@ import { StorageJobManager } from '../cloud/shared/queue';
 import { Locker } from '../services/dataset/locker';
 import { SchemaManagerFactory } from '../services/dataset/schema-manager';
 import { Feature, FeatureFlags, cacheShared } from '../shared';
-import { DeleteJobRedisStore } from '../services/subproject/redis';
+import { DeleteJobRedisStore } from '../services/dataset/redis';
 import { SwaggerManager } from './swagger-manager';
 
 async function ServerStart() {

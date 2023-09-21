@@ -1136,6 +1136,87 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/bulk-delete":
+    delete:
+      summary: Delete datasets in a given path within a subproject.
+      description: "<ul><li>Delete datasets within a subproject in seismic store.</li><li>Required roles: users.datalake.admin</li></ul>"
+      operationId: bulk-delete
+      tags:
+        - Dataset
+      parameters:
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Path of datasets to delete within the subproject.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Delete operation initiated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteOperation"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+    get:
+      summary: Get status of a bulk delete operation.
+      description: "<ul><li>Get status of a hierarchical delete operation.</li><li>Required roles: none</li></ul>"
+      operationId: bulk-delete-get
+      tags:
+        - Dataset
+      parameters:
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Id of a bulk delete operation.
+          in: query
+          name: operationid
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retrieved the delete operation successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteOperationStatus"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
   /utility/ls:
     get:
       summary: Retrieve the list of datasets and sub-directories inside a seismic store
@@ -1894,87 +1975,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SubProject"
-        "400":
-          description: Bad request.
-        "401":
-          description: Unauthorized.
-        "403":
-          description: Forbidden.
-        "404":
-          description: Not found.
-  "/subproject/tenant/{tenantid}/subproject/{subprojectid}/bulk-delete":
-    delete:
-      summary: Delete datasets in a given path within a subproject.
-      description: "<ul><li>Delete datasets within a subproject in seismic store.</li><li>Required roles: users.datalake.admin</li></ul>"
-      operationId: bulk-delete
-      tags:
-        - SubProject
-      parameters:
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - description: Name of the tenant.
-          in: path
-          name: tenantid
-          required: true
-          schema:
-            type: string
-        - description: Path of datasets to delete within the subproject.
-          in: query
-          name: path
-          required: false
-          schema:
-            type: string
-      responses:
-        "202":
-          description: Delete operation initiated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DeleteOperation"
-        "400":
-          description: Bad request.
-        "401":
-          description: Unauthorized.
-        "403":
-          description: Forbidden.
-        "404":
-          description: Not found.
-    get:
-      summary: Get status of a bulk delete operation.
-      description: "<ul><li>Get status of a hierarchical delete operation.</li><li>Required roles: none</li></ul>"
-      operationId: bulk-delete-get
-      tags:
-        - SubProject
-      parameters:
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - description: Name of the tenant.
-          in: path
-          name: tenantid
-          required: true
-          schema:
-            type: string
-        - description: Id of a bulk delete operation.
-          in: query
-          name: operationid
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Retrieved the delete operation successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DeleteOperationStatus"
         "400":
           description: Bad request.
         "401":
