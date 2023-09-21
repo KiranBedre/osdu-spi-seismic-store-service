@@ -113,4 +113,18 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
             .Should()
             .Be(0);
     }
+
+    [Fact]
+    public async Task DeleteDeletionOperationAsync()
+    {
+        // Arrange
+        var expectedMsg = await PushDeleteOperationMessage();
+
+        // Act
+        await _queue.DeleteDeletionOperationAsync(expectedMsg.OperationId);
+
+        // Assert
+        var result = await DbMock.Object.HashGetAllAsync(new RedisKey(QUEUE_NAME + ":" + expectedMsg.OperationId));
+        _ = result.Should().BeEmpty();
+    }
 }

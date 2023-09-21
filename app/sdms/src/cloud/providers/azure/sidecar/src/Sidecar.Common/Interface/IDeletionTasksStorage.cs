@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 public interface IDeletionTasksStorage
 {
     Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync();
+    Task DeleteDeletionOperationAsync(string operationId);
     Task IncrementCountAsync(string operationId, string field);
     Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue);
 }

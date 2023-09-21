@@ -124,7 +124,6 @@ public class RedisHandler : IRedisHandler
             return GetDatabase().HashSet(new RedisKey(key)
                 , new RedisValue(field)
                 , new RedisValue(value));
-
         }
         catch (Exception ex)
         {

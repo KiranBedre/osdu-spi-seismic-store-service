@@ -20,6 +20,7 @@ import { IDeleteOperationQueueTaskModel, IDeleteOperationStatusModel } from './m
 
 
 const defaultOperationStatus = 'NotStarted';
+const redisKeyExpirySeconds = 60 * 60 * 24 * 90; // 90 days
 
 export class DeleteJobRedisStore {
 
@@ -61,6 +62,7 @@ export class DeleteJobRedisStore {
         await this.redisClient
             .multi()
             .hset(operationKey, operation)
+            .expire(operationKey, redisKeyExpirySeconds)
             .lpush(Config.REDIS_DELETION_QUEUE, operation.operation_id)
             .exec();
     }

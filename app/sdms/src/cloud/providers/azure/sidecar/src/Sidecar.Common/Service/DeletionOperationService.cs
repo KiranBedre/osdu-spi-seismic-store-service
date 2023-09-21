@@ -111,20 +111,21 @@ public class DeletionOperationService : BackgroundService
 
         if (lockErrors || deletionErrors || unlockErrors)
         {
-            await UpdateOperationStatusAsync(op.OperationId, Status.CompletedWithErrors);
+            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.CompletedWithErrors);
             _logger.LogError("Finished deletion operation {op} with errors", op.OperationId);
         }
         else
         {
-            await UpdateOperationStatusAsync(op.OperationId, Status.Completed);
+            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.Completed);
             _logger.LogInformation("Finished deletion operation {op} successfully", op.OperationId);
         }
     }
 
-    private async Task UpdateOperationStatusAsync(string operationId, Status status)
+    private async Task UpdateStatusAndDeleteOperationAsync(string operationId, Status status)
     {
         await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, status.ToString());
         await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, status.Description());
+        await _deletionTasks.DeleteDeletionOperationAsync(operationId);
     }
 
     private async Task<bool> UnlockDatasetsAsync(IDeleteOperationStatus op, List<DeleteItem> itemsToUnlock)
