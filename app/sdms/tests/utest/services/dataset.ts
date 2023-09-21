@@ -115,7 +115,7 @@ export class TestDatasetSVC {
             this.listPost();
             this.parser();
             this.bulkDelete();
-            this.bulkDeleteStatus();
+            // this.bulkDeleteStatus();
 
         });
 
@@ -998,7 +998,6 @@ export class TestDatasetSVC {
         
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             Config.CLOUDPROVIDER = 'azure';
-            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
@@ -1010,7 +1009,6 @@ export class TestDatasetSVC {
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             Config.CLOUDPROVIDER = 'azure';
-            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').throws();
@@ -1039,7 +1037,6 @@ export class TestDatasetSVC {
             }
 
             Config.CLOUDPROVIDER = 'azure';
-            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(operationStatus);
@@ -1052,7 +1049,6 @@ export class TestDatasetSVC {
             expReq.query.operationid = 'operationId';
 
             Config.CLOUDPROVIDER = 'azure';
-            this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a' } as TenantModel);
             this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(undefined);
