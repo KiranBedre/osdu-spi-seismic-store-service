@@ -115,7 +115,7 @@ export class TestDatasetSVC {
             this.listPost();
             this.parser();
             this.bulkDelete();
-            // this.bulkDeleteStatus();
+            this.bulkDeleteStatus();
 
         });
 
