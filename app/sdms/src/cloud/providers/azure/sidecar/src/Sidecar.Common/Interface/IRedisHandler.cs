@@ -20,22 +20,17 @@ using StackExchange.Redis;
 
 public interface IRedisHandler
 {
-    public IConnectionMultiplexer GetConnection();
-    public IDatabase GetDatabase();
-    public Task<string?> GetAsync(string key);
-    public Task<bool> SetAsync(string key, string value);
-
+    IConnectionMultiplexer GetConnection();
+    IDatabase GetDatabase();
+    Task<string?> GetAsync(string key);
+    Task<bool> SetAsync(string key, string value);
     long HashIncrement(string key, string field, long? incBy = 1);
-
     Task<long> HashIncrementAsync(string key, string field, long? incBy = 1);
-
     long HashDecrement(string key, string field, long? decBy = 1);
     Task<long> HashDecrementAsync(string key, string field, long? decBy = 1);
-
     bool HashSet(string key, string field, string value);
-
     Task<bool> HashSetAsync(string key, string field, string value);
-
     T HashGet<T>(string key, string field) where T : unmanaged;
     Task<T> HashGetAsync<T>(string key, string field) where T : unmanaged;
+    Task<bool> DeleteAsync(string key);
 }

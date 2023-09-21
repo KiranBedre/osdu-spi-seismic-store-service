@@ -122,4 +122,23 @@ public class LockManagerTests
         // Assert
         Assert.False(result);
     }
+
+    [Fact]
+    public async Task RemoveDeleteLock_WithLockDelete_ReturnsTrue()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "/path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync($"{Constants.DELETE_LOCK_PREFIX}:lockValue");
+        _ = databaseMock.Setup(db => db.KeyDeleteAsync(key, CommandFlags.None)).ReturnsAsync(true);
+
+        // Act
+        var result = await _lockManager.RemoveDeleteLockAsync(key);
+
+        // Assert
+        Assert.True(result);
+    }
 }

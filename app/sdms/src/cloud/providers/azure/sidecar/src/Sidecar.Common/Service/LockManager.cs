@@ -79,4 +79,37 @@ public class LockManager : ILockManager
         await ReleaseMutexAsync(key);
         return result;
     }
+
+    /// <inheritdoc cref="ILockManager.RemoveDeleteLockAsync"/>
+    public async Task<bool> RemoveDeleteLockAsync(string key)
+    {
+        try
+        {
+            await AcquireMutexAsync(key);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Cannot acquire mutex {key}. ", key);
+            return false;
+        }
+
+        var lockValue = await GetLockAsync(key);
+        if (lockValue is string s)
+        {
+            if (s.StartsWith(Constants.DELETE_LOCK_PREFIX))
+            {
+                var deleteStatus = await _locksRedis.DeleteAsync(key);
+                await ReleaseMutexAsync(key);
+                return deleteStatus;
+            }
+
+            _logger.LogError("Could not delete lock for {key}. {value} is not a delete lock. ", key, lockValue);
+            await ReleaseMutexAsync(key);
+            return false;
+        }
+
+        _logger.LogError("Could not delete lock for {key}. Value is not a delete lock. ", key);
+        await ReleaseMutexAsync(key);
+        return false;
+    }
 }
