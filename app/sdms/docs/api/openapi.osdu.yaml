@@ -903,7 +903,7 @@ paths:
           type: string
         - description: |
             Select single SQL like search parameter example: search=name=file%
-            Supported fields: name, tenant, subproject, path, ltag, created_by, gcsurl, ctag, readonly
+            Supported fields: name, tenant, subproject, path, ltag, created_by, gcsurl
           in: query
           name: search
           required: false
