@@ -45,11 +45,11 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         _blobClientFactory = blobClientFactory;
     }
 
-    public async Task RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> itemsToDelete, bool foundErrros, CancellationToken ct)
+    public async Task<bool> RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> itemsToDelete, CancellationToken ct)
     {
         var blobClient = await _blobClientFactory.GetBlobClientAsync(dataPartitionId, ct);
 
-        _foundErrors = foundErrros;
+        _foundErrors = false;
 
         _logger.LogInformation("Started blob deletion, it will delete {Count} items", itemsToDelete.Count);
         await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString());
@@ -60,21 +60,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             async (item, innerCt) => await ProcessItemDeletionAsync(dataPartitionId, blobClient, operationId, item, innerCt)
             );
 
-        if (_foundErrors)
-        {
-            await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString());
-            await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description());
-            _logger.LogInformation("Finished deletion operation {OperationId} with errors", operationId);
-            await _deletionTasks.DeleteDeletionOperationAsync(operationId);
-        }
-        else
-        {
-            await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString());
-            await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description());
-            _logger.LogInformation("Finished deletion operation {OperationId} successfully", operationId);
-            await _deletionTasks.DeleteDeletionOperationAsync(operationId);
-        }
-
+        return _foundErrors;
     }
 
     private async Task ProcessItemDeletionAsync(string dataPartitionId, IBlobClient blobClient, string operationId, DeleteItem item, CancellationToken ct)
@@ -108,8 +94,15 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         if (virtualFolderName is not null)
         {
             _logger.LogInformation("Deleting blobs in container {ContainerName} with prefix {VirtualFolderName}", containerName, virtualFolderName);
-
-            await DeleteBlobsInBulkAsync(blobClient, containerName, virtualFolderName, containerClient, errors, ct);
+            try
+            {
+                await DeleteBlobsInBulkAsync(blobClient, containerName, virtualFolderName, containerClient, errors, ct);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Could not delete blobs in container {ContainerName} with prefix {VirtualFolderName}: {EMessage}", containerName, virtualFolderName, e.Message);
+                errors.Add(e.Message);
+            }
         }
         else
         {
@@ -130,6 +123,11 @@ public class BulkDeletionWorker : IBulkDeletionWorker
                     _logger.LogError("Could not delete container \'{ContainerName}\': {EMessage}", containerName, e.Message);
                     errors.Add(e.Message);
                 }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Could not delete container \'{ContainerName}\': {EMessage}", containerName, e.Message);
+                errors.Add(e.Message);
             }
         }
 

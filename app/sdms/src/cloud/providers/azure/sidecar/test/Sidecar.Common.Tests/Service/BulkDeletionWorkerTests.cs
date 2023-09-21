@@ -21,6 +21,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Azure.Cosmos;
+using Sidecar.Common.Service;
 using Sidecar.Common.Utility;
 using System.Net;
 
@@ -82,14 +83,15 @@ public class BulkDeletionWorkerTests
         var itemsToDelete = new List<DeleteItem> { item };
 
         // Act
-        await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
+        var foundErrors = await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+
+        // Assert
+        Assert.True(foundErrors);
 
         // Assert
         queueMock.Verify(q => q.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
         queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
         queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
     }
 
     [Fact]
@@ -114,14 +116,14 @@ public class BulkDeletionWorkerTests
         var operationId = "123";
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
+        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+
+        // Assert
+        Assert.False(foundErrors);
 
         queueMock.Verify(
             queue => queue.IncrementCountAsync(operationId, It.IsAny<string>()),
            Times.Never);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
-
     }
 
     [Fact]
@@ -196,16 +198,16 @@ public class BulkDeletionWorkerTests
             .Returns(mockedBlobsPages);
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
+        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
 
+        // Assert
+        Assert.False(foundErrors);
         queueMock.Verify(
             queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DELETED_CNT),
             Times.Exactly(itemsToDelete.Count));
 
         queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
         queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
     }
 
     [Fact]
@@ -276,14 +278,14 @@ public class BulkDeletionWorkerTests
               .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act
-        await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, false, CancellationToken.None);
+        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
 
+        //Assert
+        Assert.True(foundErrors);
         queueMock.Verify(
             queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
 
         queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
         queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
     }
 }

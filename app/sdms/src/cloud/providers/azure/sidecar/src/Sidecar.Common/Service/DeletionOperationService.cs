@@ -34,6 +34,7 @@ public class DeletionOperationService : BackgroundService
 
     private int _consecutiveFailures = 0;
     private const int MAX_CONSECUTIVE_FAILURES = 10;
+    private const int LOCK_ATTEMPTS = 5;
 
     public DeletionOperationService(ILogger<DeletionOperationService> logger,
         IDeletionTasksStorage deletionTasks,
@@ -72,29 +73,92 @@ public class DeletionOperationService : BackgroundService
         var op = await _deletionTasks.CheckForDeletionOperationAsync();
         if (op is null)
         {
-            Thread.Sleep(1000);
+            await Task.Delay(1000, cancellationToken);
             return;
         }
 
         //---start the deletion process
         _logger.LogInformation("Starting deletion operation {op}...", op.OperationId);
-
-        var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Path, cancellationToken);
-
-        _logger.LogInformation("Found {c} items to delete",
-            itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
-
-        await _deletionTasks.UpdateFieldStatusOperationAsync(
-            op.OperationId,
-            Constants.DeleteOperationStatus.DATASETS_CNT,
-            itemsToDelete.Count.ToString());
-
+        var deletionErrors = true;
+        var lockErrors = true;
         var successfullyLocked = new List<DeleteItem>();
 
-        var foundLockErrors = await LockDatasetsAsync(op, itemsToDelete, successfullyLocked);
+        bool unlockErrors;
+        try
+        {
+            var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Path, cancellationToken);
 
-        await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, foundLockErrors, cancellationToken);
+            _logger.LogInformation("Found {c} items to delete",
+                itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
+
+            await _deletionTasks.UpdateFieldStatusOperationAsync(
+                op.OperationId,
+                Constants.DeleteOperationStatus.DATASETS_CNT,
+                itemsToDelete.Count.ToString());
+
+            lockErrors = await LockDatasetsAsync(op, itemsToDelete, successfullyLocked);
+            deletionErrors = await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while deleting datasets {ex} ", ex.ToString());
+        }
+        finally
+        {
+            unlockErrors = await UnlockDatasetsAsync(op, successfullyLocked);
+        }
+
+
+        if (lockErrors || deletionErrors || unlockErrors)
+        {
+            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.CompletedWithErrors);
+            _logger.LogError("Finished deletion operation {op} with errors", op.OperationId);
+        }
+        else
+        {
+            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.Completed);
+            _logger.LogInformation("Finished deletion operation {op} successfully", op.OperationId);
+        }
     }
+
+    private async Task UpdateStatusAndDeleteOperationAsync(string operationId, Status status)
+    {
+        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, status.ToString());
+        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, status.Description());
+        await _deletionTasks.DeleteDeletionOperationAsync(operationId);
+    }
+
+    private async Task<bool> UnlockDatasetsAsync(IDeleteOperationStatus op, List<DeleteItem> itemsToUnlock)
+    {
+        var unlockErrors = false;
+        foreach (var item in itemsToUnlock)
+        {
+            var datasetName = GetDatasetName(item);
+            var lockKey = op.Tenant + "/" + op.Subproject + datasetName;
+            _logger.LogDebug("Removing lock for {n}", lockKey);
+            var unlocked = false;
+            var attempt = 0;
+
+            while (!unlocked && attempt < LOCK_ATTEMPTS)
+            {
+                unlocked = await _lockManager.RemoveDeleteLockAsync(lockKey);
+                if (!unlocked)
+                {
+                    _logger.LogError("Could not remove lock for {n} (Attempt {attempt})", lockKey, attempt + 1);
+                    await Task.Delay(100);
+                }
+                attempt++;
+            }
+
+            if (!unlocked)
+            {
+                unlockErrors = true;
+            }
+        }
+
+        return unlockErrors;
+    }
+
 
     private async Task<bool> LockDatasetsAsync(IDeleteOperationStatus op, List<DeleteItem> itemsToDelete, List<DeleteItem> successfullyLocked)
     {
@@ -103,16 +167,29 @@ public class DeletionOperationService : BackgroundService
         foreach (var item in itemsToDelete)
         {
             var datasetName = GetDatasetName(item);
-            _logger.LogDebug("Acquiring lock for {n}", datasetName);
             var lockKey = op.Tenant + "/" + op.Subproject + datasetName;
-            var locked = await _lockManager.AcquireDeleteLockAsync(lockKey);
+            _logger.LogDebug("Acquiring lock for {n}", lockKey);
+
+            var locked = false;
+            var attempt = 0;
+
+            while (!locked && attempt < LOCK_ATTEMPTS)
+            {
+                locked = await _lockManager.AcquireDeleteLockAsync(lockKey);
+                if (!locked)
+                {
+                    _logger.LogError("Could not acquire lock for {n} (Attempt {attempt})", lockKey, attempt + 1);
+                    await Task.Delay(100);
+                }
+                attempt++;
+            }
+
             if (locked)
             {
                 successfullyLocked.Add(item);
             }
             else
             {
-                _logger.LogError("Could not acquire lock for {n}", datasetName);
                 await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
                 foundLockErrors = true;
             }
