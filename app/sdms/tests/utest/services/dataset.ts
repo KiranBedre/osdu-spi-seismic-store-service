@@ -21,7 +21,7 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Auth, AuthProviderFactory } from '../../../src/auth';
 import { IAuthProvider } from '../../../src/auth/auth';
-import { Config, google, StorageFactory } from '../../../src/cloud';
+import { Config, google, StorageFactory, JournalFactoryTenantClient } from '../../../src/cloud';
 import { DESStorage, DESUtils } from '../../../src/dataecosystem';
 import { IStorage } from '../../../src/cloud/storage';
 import { DatasetDAO, DatasetModel } from '../../../src/services/dataset';
@@ -998,28 +998,27 @@ export class TestDatasetSVC {
         
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             Config.CLOUDPROVIDER = 'azure';
+            this.sandbox.stub(JournalFactoryTenantClient, 'get').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
-            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
-            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
             this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').resolves();
-
+            
             await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDelete);
             Tx.check202(expRes.statusCode);
         });
-
+        
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             Config.CLOUDPROVIDER = 'azure';
-            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
-            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(JournalFactoryTenantClient, 'get').resolves();
+            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
             this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').throws();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDelete);
             Tx.check500(expRes.statusCode);
 
         });
     }
-
+    
     private static bulkDeleteStatus() {
-
+        
         Tx.sectionInit('bulkDeleteStatus');
         
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
@@ -1035,22 +1034,20 @@ export class TestDatasetSVC {
                 deleted_cnt: 10,
                 failed_cnt: 1
             }
-
+            
             Config.CLOUDPROVIDER = 'azure';
-            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
-            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(JournalFactoryTenantClient, 'get').resolves();
             this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(operationStatus);
             
             await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDeleteStatus);
             Tx.check200(expRes.statusCode);
         });
-
+        
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.operationid = 'operationId';
-
+            
             Config.CLOUDPROVIDER = 'azure';
-            this.sandbox.stub(Auth, 'isUserAuthorized').resolves();
-            this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
+            this.sandbox.stub(JournalFactoryTenantClient, 'get').resolves();
             this.sandbox.stub(DeleteJobRedisStore, 'getOperationStatus').resolves(undefined);
             
             await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDeleteStatus);
