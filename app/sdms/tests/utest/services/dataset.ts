@@ -69,6 +69,7 @@ export class TestDatasetSVC {
     private static journal: any;
     private static transaction: any;
     private static testDb: Datastore;
+    private static cloudprovider: string;
 
     public static run() {
 
@@ -92,9 +93,13 @@ export class TestDatasetSVC {
                 this.journal.getTransaction.returns(this.transaction);
                 this.journal.getQueryFilterSymbolContains.returns('-');
                 this.journal.KEY = Datastore.KEY;
+                this.cloudprovider = Config.CLOUDPROVIDER;
             });
 
-            afterEach(() => { this.sandbox.restore(); });
+            afterEach(() => { 
+                this.sandbox.restore();
+                Config.CLOUDPROVIDER = this.cloudprovider;
+             });
 
             this.ctag();
             this.register();
@@ -1013,7 +1018,6 @@ export class TestDatasetSVC {
             this.sandbox.stub(DeleteJobRedisStore, 'pushOperation').throws();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.BulkDelete);
             Tx.check500(expRes.statusCode);
-
         });
     }
     
