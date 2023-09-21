@@ -1191,7 +1191,8 @@ export class DatasetHandler {
     }
 
     // trigger bulk delete operation for datasets with a given path within the subproject
-    private static async bulkDelete(req: expRequest, tenant: TenantModel, subproject: SubProjectModel): Promise<IDeleteOperationModel> {
+    private static async bulkDelete(req: expRequest, tenant: TenantModel, subproject: SubProjectModel): 
+    Promise<IDeleteOperationModel> {
 
         if (Config.CLOUDPROVIDER !== 'azure') {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
