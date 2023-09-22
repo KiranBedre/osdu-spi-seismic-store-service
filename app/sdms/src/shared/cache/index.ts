@@ -17,7 +17,8 @@
 import { Cache } from './cache';
 import { CacheOperations } from './operations';
 
-export { OperationType,  IOperation, IOperationStatus } from './operations';
+export { IOperation, IOperationStatus, IBulkDeleteOperationQueueTask } from './models';
+export { OperationType } from './operations';
 
 export const cacheShared = new Cache();
 export const cacheOperations = new CacheOperations();

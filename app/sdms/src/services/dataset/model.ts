@@ -84,18 +84,3 @@ export interface GetSizeResponse {
     size_bytes: number;
     dataset_count: number;
 }
-
-export interface IDeleteOperationQueueTask extends IOperation {
-    tenant: string;
-    subproject: string;
-    path: string;
-}
-
-export interface IDeleteOperationStatus extends IOperationStatus {
-    created_at?: string;
-    created_by?: string;
-    last_updated_at?: string;
-    dataset_cnt?: number;
-    deleted_cnt?: number;
-    failed_cnt?: number;
-}

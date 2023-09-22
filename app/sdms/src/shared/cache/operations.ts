@@ -16,18 +16,10 @@
 
 import { Config } from '../../cloud';
 import { CacheCore } from './core';
+import { IOperation, IOperationStatus } from './models';
 
 const OPERATION_DEFAULT_KEY_EXPIRE_TIME = 60 * 60 * 24 * 90; // 90 days;
 const OPERATION_DEFAULT_STATUS = 'NotStarted';
-
-export interface IOperation extends Record<string, string | number | Record<string, string | number>> {
-    operation_id: string;
-}
-
-export interface IOperationStatus extends IOperation {
-    status?: string;
-    result?: Record<string, string | number>
-}
 
 export enum OperationType {
     BULK_DELETE = 'BULK_DELETE'
@@ -77,12 +69,17 @@ export class CacheOperations extends CacheCore {
                 operation_id: operationId,
                 status: OPERATION_DEFAULT_STATUS
             } : undefined;
-        } else {
-            return {
-                operation_id: operationId,
-                result: operation,
-            };
-        }
+        } 
+        return {
+            operation_id: operation.OperationId,
+            status: operation.Status,
+            created_at: operation.CreatedAt,
+            created_by: operation.CreatedBy,
+            last_updated_at: operation.LastUpdatedAt,
+            dataset_cnt: +operation.DatasetsCnt || undefined,
+            deleted_cnt: +operation.DeletedCnt || undefined,
+            failed_cnt: +operation.FailedCnt || undefined
+        };
     }
 
 }

@@ -21,7 +21,7 @@ import { Auth, AuthRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
 import { DESStorage, DESUtils, UserAssociationServiceFactory } from '../../dataecosystem';
-import { IOperation, OperationType, cacheOperations } from '../../shared/cache'
+import { IBulkDeleteOperationQueueTask, IOperation, IOperationStatus, OperationType, cacheOperations } from '../../shared/cache'
 import { Error, ErrorModel, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { SubprojectAuth, SubProjectDAO, SubProjectModel } from '../subproject';
 import { TenantDAO, TenantGroups, TenantModel } from '../tenant';
@@ -31,8 +31,7 @@ import { IWriteLockSession, Locker } from './locker';
 import { DatasetOP } from './optype';
 import { DatasetParser } from './parser';
 import { SchemaManagerFactory } from './schema-manager';
-import { ComputedSizeResponse, GetSizeResponse,
-    IDeleteOperationQueueTask, IDeleteOperationStatus } from './model';
+import { ComputedSizeResponse, GetSizeResponse } from './model';
 
 export class DatasetHandler {
 
@@ -1212,35 +1211,20 @@ export class DatasetHandler {
             tenant: tenant.name,
             subproject: subproject.name,
             path,
-        } as IDeleteOperationQueueTask;
+        } as IBulkDeleteOperationQueueTask;
 
         return await cacheOperations.pushOperation(OperationType.BULK_DELETE, operation);
 
     }
 
     // get status of a bulk delete operation
-    private static async bulkDeleteStatus(req: expRequest): Promise<IDeleteOperationStatus> {
+    private static async bulkDeleteStatus(req: expRequest): Promise<IOperationStatus> {
 
         const operationId = DatasetParser.bulkDeleteStatus(req);
         const operationStatus = await cacheOperations.getOperationStatus(OperationType.BULK_DELETE, operationId);
         if (!operationStatus) {
             throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
         }
-
-        if (operationStatus.result) {
-            const result = operationStatus.result;
-            return {
-                operation_id: result.OperationId,
-                status: result.Status,
-                created_at: result.CreatedAt,
-                created_by: result.CreatedBy,
-                last_updated_at: result.LastUpdatedAt,
-                dataset_cnt: result.DatasetsCnt ? Number(result.DatasetsCnt) : undefined,
-                deleted_cnt: result.DeletedCnt ? Number(result.DeletedCnt) : undefined,
-                failed_cnt: result.FailedCnt ? Number(result.FailedCnt) : undefined
-            } as IDeleteOperationStatus;
-        }
-
         return operationStatus;
     }
 }
