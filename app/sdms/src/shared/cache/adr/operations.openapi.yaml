@@ -1,0 +1,201 @@
+openapi: 3.0.0
+info:
+  title: SDMS Operations
+  version: 1.0.0
+
+paths:
+
+  /operations/bulk-delete:
+    put:
+      summary: delete all datasets in path.
+      description: "<ul>
+                      <li>Description: delete all datasets in the specified sdms path.</li>
+                      <li>Roles: subproject.admin</li></ul>"
+      operationId: bulk-delete-push
+      tags:
+        - Operations
+      parameters:
+        - description: "The sdms subproject path as sd://tenant/subproject/(path)"
+          in: query
+          name: sdpath
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The operation id.
+          content:
+            application/json:
+              schema:
+                properties:
+                  operation_id:
+                    type: string
+                example:
+                  operation_id: "12521-fake-id-23214"
+  
+  /operations/bulk-delete/status:
+    get:
+      summary: get the bulk delete operation status.
+      description: "<ul>
+                      <li>Description: get the bulk delete operation status.</li>
+                      <li>Roles: subproject.viewer</li></ul>"
+      operationId: bulk-delete-get
+      tags:
+        - Operations
+      parameters:
+        - description: "The bulk delete operation id"
+          in: query
+          name: operation_id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The bulk delete operation status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+  
+  /operations/compute-size:
+    put:
+      summary: compute the size of all datasets in path.
+      description: "<ul>
+                      <li>Description: compute the size of all datasets in the specified sdms path.</li>
+                      <li>Roles: subproject.admin</li></ul>"
+      operationId: compute-size-push
+      tags:
+        - Operations
+      parameters:
+        - description: "The sdms subproject path as sd://tenant/subproject/(path)"
+          in: query
+          name: sdpath
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The operation id.
+          content:
+            application/json:
+              schema:
+                properties:
+                  operation_id:
+                    type: string
+                example:
+                  operation_id: "12521-fake-id-23214"
+  
+  /operations/compute-size/status:
+    get:
+      summary: get the compute size operation status.
+      description: "<ul>
+                      <li>Description: get the compute size operation status.</li>
+                      <li>Roles: subproject.viewer</li></ul>"
+      operationId: compute-size-get
+      tags:
+        - Operations
+      parameters:
+        - description: "The compute size operation id"
+          in: query
+          name: operation_id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The compute size operation status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+
+  /operations/copy:
+    put:
+      summary: copy a dataset.
+      description: "<ul>
+                      <li>Description: copy a dataset in another location within .</li>
+                      <li>Roles: subproject.admin</li></ul>"
+      operationId: copy-push
+      tags:
+        - Operations
+      parameters:
+        - description: "The source sdms subproject path as sd://tenant/subproject/(path)"
+          in: query
+          name: from
+          required: true
+          schema:
+            type: string
+        - description: "The destination sdms subproject path as sd://tenant/subproject/(path)"
+          in: query
+          name: to
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The operation id.
+          content:
+            application/json:
+              schema:
+                properties:
+                  operation_id:
+                    type: string
+                example:
+                  operation_id: "12521-fake-id-23214"
+  
+  /operations/copy/status:
+    get:
+      summary: get the copy operation status.
+      description: "<ul>
+                      <li>Description: get the copy operation status.</li>
+                      <li>Roles: subproject.viewer</li></ul>"
+      operationId: copy-get
+      tags:
+        - Operations
+      parameters:
+        - description: "The compute size operation id"
+          in: query
+          name: operation_id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The copy operation status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+
+components:
+  schemas:
+    Status:
+      required:
+        - operation_id
+        - status
+      properties:
+        operation_id:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+        created_by:
+          type: string
+        last_updated_at:
+          type: string
+        dataset_cnt:
+          type: number
+        completed_cnt:
+          type: number
+        failed_cnt:
+          type: number
+      example:
+        operation_id: "12521-fake-id-23214"
+        status: "Completed"
+        created_at: "Thu Jul 16 2023 04:30:41 GMT+0000 (Coordinated Universal Time)"
+        created_by: "fake-user"
+        last_updated_at: "Sat Jul 18 2023 06:22:11 GMT+0000 (Coordinated Universal Time)"
+        dataset_cnt: 24
+        completed_cnt: 22
+        failed_cnt: 2
