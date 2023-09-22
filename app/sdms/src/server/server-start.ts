@@ -19,8 +19,8 @@ import { Config, ConfigFactory, LoggerFactory, TraceFactory } from '../cloud';
 import { StorageJobManager } from '../cloud/shared/queue';
 import { Locker } from '../services/dataset/locker';
 import { SchemaManagerFactory } from '../services/dataset/schema-manager';
-import { Feature, FeatureFlags, cacheShared } from '../shared';
-import { DeleteJobRedisStore } from '../services/dataset/redis';
+import { Feature, FeatureFlags } from '../shared';
+import { cacheOperations, cacheShared } from '../shared/cache';
 import { SwaggerManager } from './swagger-manager';
 
 async function ServerStart() {
@@ -49,13 +49,13 @@ async function ServerStart() {
             Config.REDIS_SHARED_INSTANCE_TLS_DISABLE,
             'sdms-shared-cache');
 
-        console.log('- Initializing deletion job redis');
-        await DeleteJobRedisStore.init({
-            ADDRESS: Config.REDIS_SHARED_INSTANCE_ADDRESS,
-            PORT: Config.REDIS_SHARED_INSTANCE_PORT,
-            KEY: Config.REDIS_SHARED_INSTANCE_KEY,
-            DISABLE_TLS: Config.REDIS_SHARED_INSTANCE_TLS_DISABLE
-        });
+        console.log('- Initializing redis operations cache');
+        await cacheOperations.init(
+            Config.REDIS_SHARED_INSTANCE_ADDRESS,
+            Config.REDIS_SHARED_INSTANCE_PORT,
+            Config.REDIS_SHARED_INSTANCE_KEY,
+            Config.REDIS_SHARED_INSTANCE_TLS_DISABLE
+        );
 
         console.log('- Initializing storage transfer daemon');
         StorageJobManager.setup({

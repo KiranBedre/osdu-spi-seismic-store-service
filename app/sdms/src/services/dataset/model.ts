@@ -14,6 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
+import { IOperation, IOperationStatus } from '../../shared/cache';
+
 
 export interface IDatasetModel {
     name: string;
@@ -83,20 +85,13 @@ export interface GetSizeResponse {
     dataset_count: number;
 }
 
-export interface IDeleteOperationModel {
-    operation_id: string;
-}
-
-export interface IDeleteOperationQueueTaskModel {
-    operation_id: string;
+export interface IDeleteOperationQueueTask extends IOperation {
     tenant: string;
     subproject: string;
     path: string;
 }
 
-export interface IDeleteOperationStatusModel {
-    operation_id: string;
-    status: string;
+export interface IDeleteOperationStatus extends IOperationStatus {
     created_at?: string;
     created_by?: string;
     last_updated_at?: string;

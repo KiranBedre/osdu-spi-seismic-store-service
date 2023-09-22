@@ -14,36 +14,9 @@
 // Limitations under the License.
 // ============================================================================
 
-import Redis, { RedisOptions } from 'ioredis';
+import { CacheCore } from './core';
 
-export class Cache {
-
-    private redisClient: Redis;
-
-    public async init(
-        host: string, port: number, password: string,
-        disableTls: boolean, connectionName = 'sdms-cache'): Promise<void> {
-        if (host && port && !this.redisClient) {
-            const redisOptions = {
-                host,
-                port,
-                password,
-                retryStrategy: (times: number) => {
-                    return Math.pow(2, times) + Math.random() * 100;
-                },
-                maxRetriesPerRequest: 5,
-                commandTimeout: 5000,
-                connectionName
-            } as RedisOptions;
-            if (!disableTls) {
-                redisOptions.tls = { servername: host };
-            }
-            this.redisClient = new Redis(redisOptions);
-            while (this.redisClient.status === 'connecting') {
-                await new Promise((resolve) => setTimeout(resolve, 500));
-            }
-        }
-    }
+export class Cache extends CacheCore {
 
     public async get(key: string): Promise<any> {
         if (this.redisClient) {
@@ -65,7 +38,4 @@ export class Cache {
             return await this.redisClient.ttl(key);
         }
     }
-
 }
-
-export let cacheShared: Cache = new Cache();

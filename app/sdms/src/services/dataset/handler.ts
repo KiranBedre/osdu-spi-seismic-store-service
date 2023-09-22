@@ -15,13 +15,13 @@
 // ============================================================================
 
 import { Request as expRequest, Response as expResponse } from 'express';
-import url from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import { DatasetModel, DatasetUtils } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
 import { DESStorage, DESUtils, UserAssociationServiceFactory } from '../../dataecosystem';
+import { IOperation, OperationType, cacheOperations } from '../../shared/cache'
 import { Error, ErrorModel, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { SubprojectAuth, SubProjectDAO, SubProjectModel } from '../subproject';
 import { TenantDAO, TenantGroups, TenantModel } from '../tenant';
@@ -31,9 +31,8 @@ import { IWriteLockSession, Locker } from './locker';
 import { DatasetOP } from './optype';
 import { DatasetParser } from './parser';
 import { SchemaManagerFactory } from './schema-manager';
-import { ComputedSizeResponse, GetSizeResponse } from './model';
-import { IDeleteOperationModel, IDeleteOperationStatusModel, IDeleteOperationQueueTaskModel } from './model';
-import { DeleteJobRedisStore } from './redis';
+import { ComputedSizeResponse, GetSizeResponse,
+    IDeleteOperationQueueTask, IDeleteOperationStatus } from './model';
 
 export class DatasetHandler {
 
@@ -1192,7 +1191,7 @@ export class DatasetHandler {
 
     // trigger bulk delete operation for datasets with a given path within the subproject
     private static async bulkDelete(req: expRequest, tenant: TenantModel, subproject: SubProjectModel):
-    Promise<IDeleteOperationModel> {
+    Promise<IOperation> {
 
         if (Config.CLOUDPROVIDER !== 'azure') {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
@@ -1208,27 +1207,38 @@ export class DatasetHandler {
 
         const operationId = uuidv4();
 
-        const operation: IDeleteOperationQueueTaskModel = {
+        const operation = {
             operation_id: operationId,
             tenant: tenant.name,
             subproject: subproject.name,
             path,
-        };
+        } as IDeleteOperationQueueTask;
 
-        await DeleteJobRedisStore.pushOperation(operation);
+        return await cacheOperations.pushOperation(OperationType.BULK_DELETE, operation);
 
-        return {
-            operation_id: operationId
-        };
     }
 
     // get status of a bulk delete operation
-    private static async bulkDeleteStatus(req: expRequest): Promise<IDeleteOperationStatusModel> {
+    private static async bulkDeleteStatus(req: expRequest): Promise<IDeleteOperationStatus> {
 
         const operationId = DatasetParser.bulkDeleteStatus(req);
-        const operationStatus = await DeleteJobRedisStore.getOperationStatus(operationId);
-        if (operationStatus === undefined) {
+        const operationStatus = await cacheOperations.getOperationStatus(OperationType.BULK_DELETE, operationId);
+        if (!operationStatus) {
             throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
+        }
+
+        if (operationStatus.result) {
+            const result = operationStatus.result;
+            return {
+                operation_id: result.OperationId,
+                status: result.Status,
+                created_at: result.CreatedAt,
+                created_by: result.CreatedBy,
+                last_updated_at: result.LastUpdatedAt,
+                dataset_cnt: result.DatasetsCnt ? Number(result.DatasetsCnt) : undefined,
+                deleted_cnt: result.DeletedCnt ? Number(result.DeletedCnt) : undefined,
+                failed_cnt: result.FailedCnt ? Number(result.FailedCnt) : undefined
+            } as IDeleteOperationStatus;
         }
 
         return operationStatus;
