@@ -19,5 +19,5 @@ import { CacheOperations } from './operations';
 
 export { OperationType,  IOperation, IOperationStatus } from './operations';
 
-export let cacheShared = new Cache();
-export let cacheOperations = new CacheOperations();
+export const cacheShared = new Cache();
+export const cacheOperations = new CacheOperations();
