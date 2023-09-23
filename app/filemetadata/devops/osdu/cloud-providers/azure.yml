@@ -45,7 +45,7 @@ filemetadata_azure_deploy:
     - helm show chart $HELM_CHART_OCI --version $HELM_CHART_OCI_VERSION
     # Uninstall if found in default namespace
     - helm uninstall seismic-dms-file-metadata-service -n default --wait || echo [INFO] No seismic-dms-file-metadata-service in default
-    # Install/upgrade helm chart
+    # Install/Upgrade helm chart
     - >
       helm upgrade -i ${FILEMETADATA_LOCAL_SERVICE_NAME} $HELM_CHART_OCI --version $HELM_CHART_OCI_VERSION
       --set azure.tenant=$AZURE_TENANT_ID

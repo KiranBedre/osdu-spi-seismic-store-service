@@ -36,7 +36,7 @@ sdms_v4_azure_containerize:
     - docker build -t $SDMS_V4_UTEST_RUNTIME_IMAGE --file docker/runtime.Dockerfile .
     # Gitlab Container Registry
     - cd ../..
-    # Runtime image
+    # Runtime Image
     - docker tag $SDMS_V4_UTEST_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE
     - docker push ${CI_REGISTRY_IMAGE}/$SHA_IMAGE
     - docker tag $CI_REGISTRY_IMAGE/$SHA_IMAGE $CI_REGISTRY_IMAGE/$LATEST_IMAGE

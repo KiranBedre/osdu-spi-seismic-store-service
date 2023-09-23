@@ -59,7 +59,7 @@ sdms_azure_containerize:
     # Sidecar image
     - cd src/cloud/providers/azure/sidecar
     - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_SIDECAR_IMAGE .
-    # Gitlab Container Registry
+    # Gitlab Container Registry 
     - cd ../../../../..
     # Runtime image
     - docker tag $SDMS_UTEST_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE

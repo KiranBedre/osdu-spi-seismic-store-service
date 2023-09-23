@@ -15,7 +15,7 @@ include:
   # Google Cloud
   - local: "devops/osdu/cloud-providers/gc.yml"
 
-  # azure 
+  # azure
   - local: "devops/osdu/cloud-providers/azure.yml"
 
   # ibm
