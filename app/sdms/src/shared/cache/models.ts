@@ -24,7 +24,7 @@ export interface IOperationStatus extends IOperation {
     created_by?: string,
     last_updated_at?: string,
     dataset_cnt?: number,
-    deleted_cnt?: number,
+    completed_cnt?: number,
     failed_cnt?: number
 }
 

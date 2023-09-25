@@ -57,6 +57,64 @@ paths:
               schema:
                 $ref: "#/components/schemas/Status"
   
+  /operations/change-storage-tier:
+    put:
+      summary: change the storage tier to all datasets in path.
+      description: "<ul>
+                      <li>Description: change the dataset's objects storage tier to all datasets in the specified sdms path.</li>
+                      <li>Roles: subproject.admin</li></ul>"
+      operationId: change-storage-tier-push
+      tags:
+        - Operations
+      parameters:
+        - description: "The sdms subproject path as sd://tenant/subproject/(path)"
+          in: query
+          name: sdpath
+          required: true
+          schema:
+            type: string
+        - description: "The target tier (Hot/Cool/Archive)"
+          in: query
+          name: tier
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The operation id.
+          content:
+            application/json:
+              schema:
+                properties:
+                  operation_id:
+                    type: string
+                example:
+                  operation_id: "12521-fake-id-23214"
+  
+  /operations/change-storage-tier/status:
+    get:
+      summary: get the change storage tier operation status.
+      description: "<ul>
+                      <li>Description: get the change storage tier operation status.</li>
+                      <li>Roles: subproject.viewer</li></ul>"
+      operationId: change-storage-tier-get
+      tags:
+        - Operations
+      parameters:
+        - description: "The change storage tier operation id"
+          in: query
+          name: operation_id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The change storage tier operation status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+
   /operations/compute-size:
     put:
       summary: compute the size of all datasets in path.
