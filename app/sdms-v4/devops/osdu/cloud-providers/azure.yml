@@ -25,6 +25,7 @@ variables:
 
 sdms_v4_azure_containerize:
   extends: .azure_containerize
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   variables:
     SHA_IMAGE: ${SDMS_V4_SERVICE_NAME}:${CI_COMMIT_SHA}
     LATEST_IMAGE: ${SDMS_V4_SERVICE_NAME}:latest
@@ -35,7 +36,7 @@ sdms_v4_azure_containerize:
     - docker build -t $SDMS_V4_UTEST_RUNTIME_IMAGE --file docker/runtime.Dockerfile .
     # Gitlab Container Registry
     - cd ../..
-    # Runtime image
+    # Runtime Image
     - docker tag $SDMS_V4_UTEST_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE
     - docker push ${CI_REGISTRY_IMAGE}/$SHA_IMAGE
     - docker tag $CI_REGISTRY_IMAGE/$SHA_IMAGE $CI_REGISTRY_IMAGE/$LATEST_IMAGE
@@ -65,6 +66,7 @@ sdms_v4_azure_containerize:
 
 sdms_v4_azure_container_scanning:
   extends: .azure_container_scanning
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - sdms_v4_azure_containerize
   variables:
@@ -82,6 +84,7 @@ sdms_v4_azure_container_scanning:
 
 sdms_v4_azure_deploy:
   extends: .azure_deploy
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - sdms_v4_azure_containerize
   script:
@@ -139,6 +142,7 @@ sdms_v4_azure_deploy:
 sdms_v4_azure_test:
   image: node:18
   extends: .azure_test
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - sdms_v4_azure_deploy
   variables:
