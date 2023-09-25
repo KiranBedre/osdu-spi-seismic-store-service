@@ -1,6 +1,6 @@
 include:
   # azure-global
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/azure.yml"
+    file: "cloud-providers/azure.yml" 
 
   - local: "devops/osdu/cloud-providers/azure-common-pipeline.yml"
