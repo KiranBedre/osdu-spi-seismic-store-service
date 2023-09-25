@@ -30,6 +30,7 @@ async function ServerStart() {
         await SharedCache.init();
 
         console.log(`- Initializing header forwarding`);
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const hpropagate = require('hpropagate');
         Config.CALLER_FORWARD_HEADERS
             ? hpropagate({

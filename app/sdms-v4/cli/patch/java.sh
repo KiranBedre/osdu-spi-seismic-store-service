@@ -1,7 +1,6 @@
 #!/bin/bash
-
 # ============================================================================
-# Copyright 2017-2022, Schlumberger
+# Copyright 2017-2023, Schlumberger
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
 # limitations under the License.
 # ============================================================================
 
+source ./patch/utils.sh
 
 FILE_NAME1='pom.xml'
 FILE_NAME2='MasterData3DInterpretationSetApi.java'
@@ -27,14 +27,9 @@ REG2='([[:space:].])(3dinterpretation)'
 REG3='([[:space:].])(2dinterpretation)'
 word1='\18'
 word2='\1a\2'
-replaceproblems() {
-printf "%s\n" "Replacing problems in $2"
-find $1$2 -type f -exec sed -i -r "s@$3@$4@g" {} \;
 
-}
 set -e
-replaceproblems $FILE_PATH1 $FILE_NAME1 $REG1 $word1
-replaceproblems $FILE_PATH2 $FILE_NAME2 $REG2 $word2
-replaceproblems $FILE_PATH2 $FILE_NAME3 $REG3 $word2
 
-printf "%s\n" "java patched successfully"
+replaceProblems $FILE_PATH1 $FILE_NAME1 $REG1 $word1
+replaceProblems $FILE_PATH2 $FILE_NAME2 $REG2 $word2
+replaceProblems $FILE_PATH2 $FILE_NAME3 $REG3 $word2

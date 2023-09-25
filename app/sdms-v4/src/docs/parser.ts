@@ -14,36 +14,35 @@
 // Limitations under the License.
 // ============================================================================
 
-//receives info from handler
-//creates page data for all shared functions
-//if hasbulks, creates extra page data for those functions
-//returns each piece to handler
+// receives info from handler
+// creates page data for all shared functions
+// if hasBulks, creates extra page data for those functions
+// returns each piece to handler
 
 import { Definition, Operation } from './operations';
 import { SchemaCollections, SchemaComponents, SchemaExamples, pathHeader, toTitleCase } from './schema';
 import { SchemaEndpoint } from '../apis/schema/types';
-//generates a specific endpoint
+// generates a specific endpoint
 const endpointGeneration = (operation: Operation, schema: SchemaEndpoint) => {
     const group = schema.kind.split(':')[2].split('--')[0].replace(/-/gi, ' ');
     const dataReference = schema.kind.split('--')[1].split(':')[0];
     const version = schema.kind.split('--')[1].split(':')[1];
     let endpointURL = '';
-    let endpoint;
     let operationId;
     let request = 'get';
-    let descriptionString;
-    let sharedDescription;
-    let baseUrl = `https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/${group.replace(
+    let descriptionString: string;
+    let sharedDescription: string;
+    const baseUrl = `https://community.opengroup.org/osdu/data/data-definitions/-/blob/master/Generated/${group.replace(
         /\s+/g,
         '-'
     )}/${dataReference}.${version}.json`;
-    let adminRole = 'users.datalake.admin';
-    let editorRole = 'users.datalake.editors';
-    let viewerRole = 'users.datalake.viewers';
+    const adminRole = 'users.datalake.admin';
+    const editorRole = 'users.datalake.editors';
+    const viewerRole = 'users.datalake.viewers';
     let requiredRoles;
     let operationDefinitions;
     let type = 'component';
-    //add function that camel case
+    // add function that camel case
     let tag = `${toTitleCase(group)} ${schema.docDataType}`;
     if (schema.hasBulks) {
         type = 'dataset';
@@ -72,13 +71,13 @@ const endpointGeneration = (operation: Operation, schema: SchemaEndpoint) => {
 
         if (schema.hasBulks) {
             let dataArray;
-            if (schema.docBulkExtention) {
+            if (schema.docBulkExtension) {
                 dataArray = `"data": {
             "DatasetProperties": {
               "FileCollectionPath": "${schema.name}-dataset"
               "FileSourceInfos": [
-                { "FileSource": "data.01.${schema.docBulkExtention}" },
-                { "FileSource": "data.02.${schema.docBulkExtention}" } 
+                { "FileSource": "data.01.${schema.docBulkExtension}" },
+                { "FileSource": "data.02.${schema.docBulkExtension}" } 
               ]
             }
           }`;
@@ -271,7 +270,7 @@ const endpointGeneration = (operation: Operation, schema: SchemaEndpoint) => {
       ${operationDefinitions}`;
     }
 
-    endpoint = `  
+    const endpoint = `  
   ${endpointURL}
     ${request}:
       ${operationId}
@@ -279,9 +278,9 @@ const endpointGeneration = (operation: Operation, schema: SchemaEndpoint) => {
     return endpoint;
 };
 
-//generates all of the paths for an endpoint and returns to handler
+// generates all of the paths for an endpoint and returns to handler
 export const pathGeneration = (schema: SchemaEndpoint) => {
-    let endpointPathCollection = new Array();
+    const endpointPathCollection = [];
     endpointPathCollection.push(pathHeader(schema.docDataType));
     endpointPathCollection.push(endpointGeneration(Operation.Insert, schema));
     endpointPathCollection.push(endpointGeneration(Operation.List, schema));
@@ -289,16 +288,14 @@ export const pathGeneration = (schema: SchemaEndpoint) => {
     endpointPathCollection.push(endpointGeneration(Operation.Delete, schema));
     endpointPathCollection.push(endpointGeneration(Operation.GetVersions, schema));
     endpointPathCollection.push(endpointGeneration(Operation.GetVersion, schema));
-
-    //reindex is not being implemented, so not included
     return endpointPathCollection.join('');
 };
 
-//generates from generic azure info
+// generates from generic azure info
 export const fixedComponents = () => {
-    const FixedComponents = new Array();
+    const FixedComponents = [];
 
-    SchemaComponents.forEach((component) => {
+    SchemaComponents.forEach(component => {
         let require;
         let length;
         let sharedDescription;
@@ -362,11 +359,11 @@ export const fixedComponents = () => {
     return FixedComponents;
 };
 
-//generates from generic azure info
+// generates from generic azure info
 export const fixedSchemas = () => {
-    const FixedSchemas = new Array();
+    const FixedSchemas = [];
 
-    SchemaCollections.forEach((fixed) => {
+    SchemaCollections.forEach(fixed => {
         let item = ``;
         if (fixed.items) {
             item = `items:
@@ -374,12 +371,12 @@ export const fixedSchemas = () => {
         }
         if (fixed.properties) {
             item = `properties:`;
-            fixed.properties.forEach((property) => {
+            fixed.properties.forEach(property => {
                 item += ` 
         ${property}`;
             });
         }
-        let sharedDescription = `
+        const sharedDescription = `
     ${fixed.name}:
       title: ${fixed.title}
       description: ${fixed.description}
@@ -390,7 +387,7 @@ export const fixedSchemas = () => {
     return FixedSchemas;
 };
 
-//generates list schema for each endpoint
+// generates list schema for each endpoint
 export const schemaGeneration = (schema: SchemaEndpoint) => {
     const group = schema.kind.split(':')[2].split('--')[0].replace(/-/gi, ' ');
     const dataReference = schema.kind.split('--')[1].split(':')[0];
@@ -399,7 +396,7 @@ export const schemaGeneration = (schema: SchemaEndpoint) => {
     if (schema.hasBulks) {
         type = 'dataset';
     }
-    let refSchema = `
+    const refSchema = `
     ${schema.name}.${version}.list:
       title: ${schema.docDataType} ${version} ${type}s
       description: The list of ${schema.docDataType} ${version} ${type}s
@@ -413,7 +410,7 @@ export const schemaGeneration = (schema: SchemaEndpoint) => {
     return refSchema;
 };
 
-//generates pagination schema for each endpoint
+// generates pagination schema for each endpoint
 export const paginationGeneration = (schema: SchemaEndpoint) => {
     const group = schema.kind.split(':')[2].split('--')[0].replace(/-/gi, ' ');
     const dataReference = schema.kind.split('--')[1].split(':')[0];
@@ -422,7 +419,7 @@ export const paginationGeneration = (schema: SchemaEndpoint) => {
     if (schema.hasBulks) {
         type = 'dataset';
     }
-    let paginationSchema = `
+    const paginationSchema = `
     ${schema.name}.${version}.list.paginated:
       title: ${schema.docDataType} ${version} ${type}s paginated list
       description: The paginated list of ${schema.docDataType} ${version} ${type}s
@@ -440,11 +437,11 @@ export const paginationGeneration = (schema: SchemaEndpoint) => {
     return paginationSchema;
 };
 
-//generates from generic azure info
+// generates from generic azure info
 export const fixedExamples = () => {
-    const FixedExamples = new Array();
-    SchemaExamples.forEach((example) => {
-        let sharedDescription = `
+    const FixedExamples = [];
+    SchemaExamples.forEach(example => {
+        const sharedDescription = `
     ${example.title}:
       summary: ${example.summary}
       value: 
@@ -454,13 +451,13 @@ export const fixedExamples = () => {
     return FixedExamples;
 };
 
-//generates api endpoint example information
+// generates api endpoint example information
 export const exampleGeneration = (schema: SchemaEndpoint) => {
     const group = schema.kind.split(':')[2].split('--')[0].replace(/-/gi, ' ');
     const dataReference = schema.kind.split('--')[1].split(':')[0];
     const version = schema.kind.split('--')[1].split(':')[1];
     let type = 'components';
-    let baseURL = `https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/${group.replace(
+    const baseURL = `https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/${group.replace(
         /\s+/g,
         '-'
     )}/${dataReference}.${version}.json`;
@@ -469,22 +466,22 @@ export const exampleGeneration = (schema: SchemaEndpoint) => {
         type = 'datasets';
     }
 
-    let summary = `Seismic ${schema.docDataType} ${version} ${type}`;
+    const summary = `Seismic ${schema.docDataType} ${version} ${type}`;
 
-    let description = `
+    const description = `
     ${schema.name}.${version}.list:
       summary: ${summary}
       value: [$ref: "${baseURL}",]`;
     return description;
 };
 
-//generates api endpoint paginated example information
+// generates api endpoint paginated example information
 export const paginatedExampleGeneration = (schema: SchemaEndpoint) => {
     const group = schema.kind.split(':')[2].split('--')[0].replace(/-/gi, ' ');
     const dataReference = schema.kind.split('--')[1].split(':')[0];
     const version = schema.kind.split('--')[1].split(':')[1];
     let type = 'components';
-    let baseURL = `https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/${group.replace(
+    const baseURL = `https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/${group.replace(
         /\s+/g,
         '-'
     )}/${dataReference}.${version}.json`;
@@ -493,9 +490,9 @@ export const paginatedExampleGeneration = (schema: SchemaEndpoint) => {
         type = 'datasets';
     }
 
-    let summary = `Seismic ${schema.docDataType} ${version} ${type} (paginated)`;
+    const summary = `Seismic ${schema.docDataType} ${version} ${type} (paginated)`;
 
-    let description = `
+    const description = `
     ${schema.name}.${version}.list.paginated:
       summary: ${summary}
       value: 
@@ -505,15 +502,15 @@ export const paginatedExampleGeneration = (schema: SchemaEndpoint) => {
     return description;
 };
 
-//generates request body for information for an endpoint
+// generates request body for information for an endpoint
 export const bodyGeneration = (schema: SchemaEndpoint) => {
     const version = schema.kind.split('--')[1].split(':')[1];
     let type = 'components';
     if (schema.hasBulks) {
         type = 'datasets';
     }
-    let title = `${schema.name}.${version}.list`;
-    let description = `
+    const title = `${schema.name}.${version}.list`;
+    const description = `
     ${title}:
       description: The list of ${schema.docDataType} ${version} ${type}.
       required: true
@@ -527,17 +524,17 @@ export const bodyGeneration = (schema: SchemaEndpoint) => {
     return description;
 };
 
-//generates response body for list and paginated information for an endpoint
+// generates response body for list and paginated information for an endpoint
 export const responseGeneration = (schema: SchemaEndpoint, step: Definition) => {
     const group = schema.kind.split(':')[2].split('--')[0].replace(/-/gi, ' ');
     const dataReference = schema.kind.split('--')[1].split(':')[0];
     const version = schema.kind.split('--')[1].split(':')[1];
     let description;
-    let genURL = `"https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/${group.replace(
+    const genURL = `"https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Generated/${group.replace(
         /\s+/g,
         '-'
     )}/${dataReference}.${version}.json"`;
-    let exampleURL = `"https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/${group.replace(
+    const exampleURL = `"https://community.opengroup.org/osdu/data/data-definitions/-/raw/master/Examples/${group.replace(
         /\s+/g,
         '-'
     )}/${dataReference}.${version}.json"`;
@@ -545,8 +542,8 @@ export const responseGeneration = (schema: SchemaEndpoint, step: Definition) => 
     if (schema.hasBulks) {
         type = 'dataset';
     }
-    let title = `${schema.name}.${version}`;
-    let sharedDescription = `description: The ${schema.docDataType} ${version} ${type}`;
+    const title = `${schema.name}.${version}`;
+    const sharedDescription = `description: The ${schema.docDataType} ${version} ${type}`;
 
     if (step === 0) {
         description = `

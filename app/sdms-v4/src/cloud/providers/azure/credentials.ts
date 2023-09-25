@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -24,10 +24,9 @@ import {
     generateBlobSASQueryParameters,
 } from '@azure/storage-blob';
 import { DefaultAzureCredential, DefaultAzureCredentialOptions, TokenCredential } from '@azure/identity';
-
 import { AzureConfig } from './config';
+import { AzureSecrets } from './secrets';
 import { ExponentialRetryPolicyOptions } from '@azure/core-rest-pipeline';
-import { PartitionCoreService } from '../../../services';
 
 const UserDelegationKeyValidityInMinutes = 60 * 4; // 4 hours
 const ExpirationLeadInMinutes = 15; // Expire 15 minutes before actual date
@@ -69,7 +68,7 @@ export class AzureCredentials extends AbstractCredentials {
         readonly: boolean,
         partition: string
     ): Promise<IAccessTokenModel> {
-        const accountName = await PartitionCoreService.getStorageResource(partition);
+        const accountName = await AzureSecrets.getStorageResourceSecrets(partition);
         const now = new Date();
         const expiration = this.addMinutes(now, SasExpirationInMinutes);
         const sasToken = await this.generateSASToken(accountName, bucket, expiration, readonly);
@@ -183,6 +182,6 @@ class RetriableAzureCredential extends DefaultAzureCredential {
         }
 
         const prom = fn();
-        return prom.then((res) => prom).catch((err) => this.retry(fn, retries! - 1));
+        return prom.then(() => prom).catch(() => this.retry(fn, retries! - 1));
     }
 }

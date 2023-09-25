@@ -32,7 +32,7 @@ import path from 'path';
 export const OutputPage = (filename: string) => {
     GeneratePage();
 
-    let pageData = `
+    const pageData = `
 ${legal}
 
 ${serviceInfo}

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
 // ============================================================================
 
 import { AbstractStorage, StorageFactory } from '../../storage';
-
 import { AzureCredentials } from './credentials';
+import { AzureSecrets } from './secrets';
 import { BlobServiceClient } from '@azure/storage-blob';
-import { PartitionCoreService } from '../../../services';
 import { TokenCredential } from '@azure/identity';
 
 @StorageFactory.register('azure')
@@ -33,7 +32,7 @@ export class AzureCloudStorage extends AbstractStorage {
 
     public async getBlobServiceClient(): Promise<BlobServiceClient> {
         if (!this.blobServiceClient) {
-            const account = await PartitionCoreService.getStorageResource(this.dataPartition);
+            const account = await AzureSecrets.getStorageResourceSecrets(this.dataPartition);
             this.blobServiceClient = new BlobServiceClient(
                 `https://${account}.blob.core.windows.net`,
                 this.defaultAzureCredential

@@ -949,7 +949,7 @@ export class TestDatasetSVC {
             impersonated_by: Math.random().toString(16).substring(2, 33),
         } as ImpersonationTokenContextModel;
         const encryptedContext = Utils.encrypt(JSON.stringify(info), clientsecret);
-        const context = encryptedContext.encryptedText + '.' + encryptedContext.encryptedTextIV;
+        const context = encryptedContext.encryptedText + '.' + encryptedContext.encryptedTextIV + '.' + encryptedContext.authTag;
 
         let iAuthProvider: IAuthProvider = {
             generateAuthCredential: function (): Promise<any> {

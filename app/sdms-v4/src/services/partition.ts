@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Config, CredentialsFactory, SecretsFactory } from '../cloud';
-import { Error, Utils, getInMemoryCacheInstance } from '../shared';
+import { Config, CredentialsFactory } from '../cloud';
+import { Error, Utils } from '../shared';
 
 import axios from 'axios';
 
@@ -36,25 +36,5 @@ export class PartitionCoreService {
         } catch (error) {
             throw Error.makeForHTTPRequest(error);
         }
-    }
-
-    public static async getStorageResource(dataPartition: string): Promise<string> {
-        const cache = getInMemoryCacheInstance();
-
-        const res = cache.get<string>(dataPartition);
-        if (res !== undefined) {
-            return res;
-        }
-
-        const dataPartitionConfigurations = await this.getPartitionConfiguration(dataPartition);
-        const storageConfigs = dataPartitionConfigurations[Config.CORE_SERVICE_PARTITION_STORAGE_ACCOUNT_KEY] as {
-            sensitive: boolean;
-            value: string;
-        };
-        if (storageConfigs.sensitive) {
-            storageConfigs.value = await SecretsFactory.build(Config.CLOUD_PROVIDER).getSecret(storageConfigs.value);
-        }
-        cache.set<string>(dataPartition, storageConfigs.value, 3600);
-        return storageConfigs.value;
     }
 }

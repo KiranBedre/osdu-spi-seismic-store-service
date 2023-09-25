@@ -15,7 +15,7 @@ data:
   redisSdmsHost: ""
   redisSdmsPort: "6379"
   redisSdmsTlsDisabled: true
-  apiBasePath: "/api/v3"
+  apiBasePath: "/api/seismic-store/v3"
   serviceEnv: "dev"
   # Deployment
   requestsCpu: "5m"
@@ -30,7 +30,6 @@ data:
 conf:
   configmap: "seismic-store-config"
   appName: "seismic-store"
-  urlPrefix: "/api/seismic-store/v3"
   # onprem configuration
   database: "seismic-store-db-secret"
   keycloak: "seismic-store-keycloak-secret"

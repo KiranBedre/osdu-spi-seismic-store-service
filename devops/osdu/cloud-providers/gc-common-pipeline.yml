@@ -103,6 +103,11 @@ variables:
         export IMAGE_NAME=$IMAGE_NAME-release;
       fi
     - >
+      if [[ "$CI_COMMIT_REF_NAME" == "$CI_DEFAULT_BRANCH" ]];
+      then
+        export IMAGE_NAME=$IMAGE_NAME-master;
+      fi
+    - >
       if [[ "$CI_COMMIT_TAG" != "" ]];
       then
         IMAGE_TAG="$CI_COMMIT_TAG";

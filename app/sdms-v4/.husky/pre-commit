@@ -1,44 +1,46 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-rootPath=$(git rev-parse --show-toplevel)
-cd "$rootPath"
-echo "-------------------------------------------------------"
-echo "1)"
-echo "Install modules required"
-npm install -g cspell
-npm install -g markdownlint-cli
-npm install -g scan-for-secrets
-echo "-------------------------------------------------------"
-echo "2)"
-echo "Scans for secrets"
-for f in $(git diff --cached --name-only --diff-filter=ACM); do
-  if [ -d $f ]; then
-    echo "Scanning $f"
-    npx scan-for-secrets $f
-  else
-    dir="$(dirname "${f}")"
-    if [ "$dir" == *"app/sdms-v4" ]; then
-      echo "Scanning $f"
-      npx scan-for-secrets ${dir}/src
-    fi
-  fi
-done
-echo "-------------------------------------------------------"
-echo "3)"
-echo "CSpell scan"
-for f in $(git diff --cached --name-only --diff-filter=ACM); do
-  if [[ ! "$f" == *"package.json"* && ! "$f" == *"package-lock.json"* && ! "$f" == *"npm-shrinkwrap.json"* && ! "$f" == *"markdownlint.json"* && ! "$f" == *"cspell.json"* ]]; then
-    echo "Scanning $f"
-    npx cspell $f --gitignore --show-suggestions
-  fi
-done
-echo "-------------------------------------------------------"
-echo "4)"
-echo "Markdown lint scan"
-for f in $(git diff --cached --name-only --diff-filter=ACM); do
-  if [ "$f" == *".md"* ]; then
-    echo "Scanning $f"
-    npx markdownlint $f
-  fi
-done
-echo "-------------------------------------------------------"
+#!/usr/bin/env sh
+#  ***************************************************************************
+#  Copyright 2017 - 2023, Schlumberger
+#
+#  Licensed under the Apache License, Version 2.0(the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#  ***************************************************************************
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+cd ./app/sdms-v4 
+
+if [ ! -d "node_modules" ]
+then
+    echo "error: required modules not found, please run \"npm\" install before commit"
+    exit 1
+fi
+
+printf "\n%s\n" "-------------------------------------------------------"
+echo "1 - spelling errors check"
+printf "%s\n" "-------------------------------------------------------"
+npm run spell
+
+printf "\n%s\n" "-------------------------------------------------------"
+echo "2 - markdown linting"
+printf "%s\n" "-------------------------------------------------------"
+npm run markdown-lint
+
+printf "\n%s\n" "-------------------------------------------------------"
+echo "3 - code linting"
+printf "%s\n" "-------------------------------------------------------"
+npm run lint
+
+printf "%s\n" "-------------------------------------------------------"
+echo "4 - code formatting"
+printf "%s\n" "-------------------------------------------------------"
+npm run prettier

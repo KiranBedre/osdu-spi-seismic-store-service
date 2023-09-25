@@ -3,3 +3,4 @@ node_modules/
 .vscode
 .env
 dump.rdb
+junit-e2e-test-report.xml

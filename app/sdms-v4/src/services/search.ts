@@ -28,7 +28,7 @@ export class SearchService {
         Pagination?: Pagination
     ) {
         const url = Config.CORE_SERVICE_HOST + Config.CORE_SEARCH_BASE_PATH + '/query_with_cursor';
-        let data = {
+        const data = {
             kind: datasetKind,
         };
 
