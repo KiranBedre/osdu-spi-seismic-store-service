@@ -2,21 +2,21 @@ include:
   # gc-community
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-com-variables.yml"
-    ref: release/0.23
+    ref: v0.23.4
 
   # gc-dev2
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-dev2-variables.yml"
-    ref: release/0.23
+    ref: v0.23.4
 
   # baremetal
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-baremetal-variables.yml"
-    ref: release/0.23
+    ref: v0.23.4
 
   # preship
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-preship-variables.yml"
-    ref: release/0.23
+    ref: v0.23.4
 
   - local: "devops/osdu/cloud-providers/gc-common-pipeline.yml"
