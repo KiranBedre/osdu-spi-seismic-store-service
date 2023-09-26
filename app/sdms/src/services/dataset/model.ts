@@ -14,9 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-import { IOperation, IOperationStatus } from '../../shared/cache';
-
-
 export interface IDatasetModel {
     name: string;
     tenant: string;

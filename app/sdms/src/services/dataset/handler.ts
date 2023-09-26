@@ -15,13 +15,11 @@
 // ============================================================================
 
 import { Request as expRequest, Response as expResponse } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { DatasetModel, DatasetUtils } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
 import { DESStorage, DESUtils, UserAssociationServiceFactory } from '../../dataecosystem';
-import { IBulkDeleteOperationQueueTask, IOperation, IOperationStatus, OperationType, cacheOperations } from '../../shared/cache'
 import { Error, ErrorModel, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { SubprojectAuth, SubProjectDAO, SubProjectModel } from '../subproject';
 import { TenantDAO, TenantGroups, TenantModel } from '../tenant';
@@ -80,12 +78,6 @@ export class DatasetHandler {
                 Response.writeOK(res, await this.listContent(req, tenant, subproject));
             } else if (op === DatasetOP.PutTags) {
                 Response.writeOK(res, await this.putTags(req, tenant, subproject));
-            } else if (op === DatasetOP.BulkDelete) {
-                const operation = await this.bulkDelete(req, tenant, subproject);
-                Response.writeOK(res, operation, 202);
-            } else if (op === DatasetOP.BulkDeleteStatus) {
-                const status = await this.bulkDeleteStatus(req);
-                Response.writeOK(res, status);
             } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
 
         } catch (error) {
@@ -1186,45 +1178,5 @@ export class DatasetHandler {
         res.delete = res.write;
         return res;
 
-    }
-
-    // trigger bulk delete operation for datasets with a given path within the subproject
-    private static async bulkDelete(req: expRequest, tenant: TenantModel, subproject: SubProjectModel):
-    Promise<IOperation> {
-
-        if (Config.CLOUDPROVIDER !== 'azure') {
-            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
-        }
-
-        const path = DatasetParser.bulkDelete(req);
-
-        // check if the caller is authorized
-        await Auth.isWriteAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
-            tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
-            req.headers['impersonation-token-context'] as string);
-
-        const operationId = uuidv4();
-
-        const operation = {
-            operation_id: operationId,
-            tenant: tenant.name,
-            subproject: subproject.name,
-            path,
-        } as IBulkDeleteOperationQueueTask;
-
-        return await cacheOperations.pushOperation(OperationType.BULK_DELETE, operation);
-
-    }
-
-    // get status of a bulk delete operation
-    private static async bulkDeleteStatus(req: expRequest): Promise<IOperationStatus> {
-
-        const operationId = DatasetParser.bulkDeleteStatus(req);
-        const operationStatus = await cacheOperations.getOperationStatus(OperationType.BULK_DELETE, operationId);
-        if (!operationStatus) {
-            throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
-        }
-        return operationStatus;
     }
 }

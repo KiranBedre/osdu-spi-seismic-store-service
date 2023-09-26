@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,20 @@
 // limitations under the License.
 // ============================================================================
 
-export { Utils } from './utils';
-export { Params } from './params';
-export { Error, ErrorModel } from './error';
-export { TraceLog } from './tracelog';
-export { Response } from './response';
-export { SDPath, ISDPathModel as SDPathModel } from './sdpath';
-export { FeatureFlags, Feature } from './featureflags';
-export { getInMemoryCacheInstance } from './node-cache';
-export { CacheCore, cacheShared } from './cache';
+import { Request, Response, Router } from 'express';
+import { Handler } from './handler';
+import { Operation } from './optype';
+
+const router = Router();
+
+// push a bulk delete operation
+router.put('/bulk-delete', async (req: Request, res: Response) => {
+    await Handler.handler(req, res, Operation.BulkDeletePush);
+});
+
+// get the status of a bulk delete operation
+router.get('/bulk-delete/:operation-id', async (req: Request, res: Response) => {
+    await Handler.handler(req, res, Operation.BulkDeleteStatus);
+});
+
+export { router as OperationsRouter };

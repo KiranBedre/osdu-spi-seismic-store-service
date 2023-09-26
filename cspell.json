@@ -39,6 +39,7 @@
         "nopasswd",
         "opendes",
         "openzgy",
+        "optype",
         "osdu",
         "sauth",
         "sbit",
@@ -56,6 +57,7 @@
         "svctoken",
         "toplevel",
         "utest",
+        "uuidv",
         "vals",
         "WDELETE"
     ]

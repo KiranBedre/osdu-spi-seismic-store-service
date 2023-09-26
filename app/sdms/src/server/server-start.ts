@@ -19,8 +19,8 @@ import { Config, ConfigFactory, LoggerFactory, TraceFactory } from '../cloud';
 import { StorageJobManager } from '../cloud/shared/queue';
 import { Locker } from '../services/dataset/locker';
 import { SchemaManagerFactory } from '../services/dataset/schema-manager';
-import { Feature, FeatureFlags } from '../shared';
-import { cacheOperations, cacheShared } from '../shared/cache';
+import { queueOperations } from '../services/operations/queue';
+import { Feature, FeatureFlags, cacheShared } from '../shared';
 import { SwaggerManager } from './swagger-manager';
 
 async function ServerStart() {
@@ -50,7 +50,7 @@ async function ServerStart() {
             'sdms-shared-cache');
 
         console.log('- Initializing redis operations cache');
-        await cacheOperations.init(
+        await queueOperations.init(
             Config.REDIS_SHARED_INSTANCE_ADDRESS,
             Config.REDIS_SHARED_INSTANCE_PORT,
             Config.REDIS_SHARED_INSTANCE_KEY,

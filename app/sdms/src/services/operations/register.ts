@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,30 @@
 // limitations under the License.
 // ============================================================================
 
-export { Utils } from './utils';
-export { Params } from './params';
-export { Error, ErrorModel } from './error';
-export { TraceLog } from './tracelog';
-export { Response } from './response';
-export { SDPath, ISDPathModel as SDPathModel } from './sdpath';
-export { FeatureFlags, Feature } from './featureflags';
-export { getInMemoryCacheInstance } from './node-cache';
-export { CacheCore, cacheShared } from './cache';
+import { Config } from "../../cloud";
+
+// Operations Type
+
+export enum OperationType {
+    BULK_DELETE = 'BULK_DELETE',
+    CHANGE_TIER = 'CHANGE_TIER'
+}
+
+// Operations
+
+export const operations = { } as { [key in OperationType]: {
+    getQueue(): string
+}};
+
+operations.BULK_DELETE = {
+    getQueue(): string {
+        return Config.REDIS_DELETION_QUEUE;
+    },
+}
+
+operations.CHANGE_TIER = {
+    getQueue(): string {
+        return 'changeTier';
+    }
+}
+

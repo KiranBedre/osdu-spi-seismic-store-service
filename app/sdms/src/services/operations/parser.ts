@@ -14,11 +14,18 @@
 // limitations under the License.
 // ============================================================================
 
-import { Cache } from './cache';
-import { CacheOperations } from './operations';
+import { Request as expRequest } from 'express';
+import { Params } from '../../shared';
 
-export { IOperation, IOperationStatus, IBulkDeleteOperationQueueTask } from './models';
-export { OperationType } from './operations';
+export class Parser {
 
-export const cacheShared = new Cache();
-export const cacheOperations = new CacheOperations();
+    public static bulkDelete(req: expRequest): string {
+        Params.checkString(req.query.path, 'path');
+        return req.query.path as string;
+    }
+
+    public static bulkDeleteStatus(req: expRequest): string {
+        return req.params['operation-id'];
+    }
+
+}

@@ -52,6 +52,7 @@ paths:
               schema:
                 type: string
                 example: service OK
+  
   /svcstatus/access:
     get:
       summary: Seismic store service access check.
@@ -70,7 +71,8 @@ paths:
           description: Unauthorized.
         "403":
           description: Forbidden.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}:
     post:
       summary: Register a new dataset.
       description: "<ul><li>Register a new dataset in the seismic store.</li><li>Required roles: subproject.admin</li></ul>"
@@ -390,7 +392,7 @@ paths:
             <li>CL (Cannot be Locked).</li>
             <li>UL (Cannot be Unlocked).</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/lock":
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/lock:
     put:
       summary: Acquire a lock for a dataset id
       description: |
@@ -478,7 +480,7 @@ paths:
             <li>CL (Cannot be Locked).</li>
             <li>UL (Cannot be Unlocked).</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/unlock":
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/unlock:
     put:
       summary: Remove the lock associated with a dataset id.
       description: |
@@ -549,7 +551,7 @@ paths:
             <li>CL (Cannot be Locked).</li>
             <li>UL (Cannot be Unlocked).</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/permission":
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/permission:
     get:
       summary: Retrieve the access permissions of a user on a dataset id.
       description: |
@@ -616,7 +618,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/ctagcheck":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/ctagcheck:
     get:
       summary: Validate if a dataset ctag matches the pre-existing ctag in metadata catalog.
       description: "<ul><li>Check if the provided dataset cTag match the one stored in the metadata catalog.</li><li>Required roles: subproject.admin, subproject.viewer</li></ul>"
@@ -682,7 +685,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/gtags":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/gtags:
     put:
       summary: Upsert tags to a dataset.
       description: |
@@ -755,7 +759,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/readdsdirfulllist":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/readdsdirfulllist:
     get:
       summary: Content list.
       description: |
@@ -798,7 +803,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DatasetAndDirectories"
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}:
     get:
       summary: Get the list of datasets in a subproject.
       description: |
@@ -933,7 +939,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/exist":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/exist:
     post:
       summary: Check to see if a list of datasets exists in the subproject.
       description: |
@@ -987,7 +994,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/size":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/size:
     get:
       summary: Retrieve the size of datasets
       description: |
@@ -1043,7 +1051,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/sizes":
+  
+  /dataset/tenant/{tenantid}/subproject/{subprojectid}/sizes:
     post:
       summary: Retrieve the size of datasets.
       description: |
@@ -1097,87 +1106,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/dataset/tenant/{tenantid}/subproject/{subprojectid}/bulk-delete":
-    delete:
-      summary: Delete datasets in a given path within a subproject.
-      description: "<ul><li>Delete datasets within a subproject in seismic store.</li><li>Required roles: users.datalake.admin</li></ul>"
-      operationId: bulk-delete
-      tags:
-        - Dataset
-      parameters:
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - description: Name of the tenant.
-          in: path
-          name: tenantid
-          required: true
-          schema:
-            type: string
-        - description: Path of datasets to delete within the subproject.
-          in: query
-          name: path
-          required: false
-          schema:
-            type: string
-      responses:
-        "202":
-          description: Delete operation initiated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DeleteOperation"
-        "400":
-          description: Bad request.
-        "401":
-          description: Unauthorized.
-        "403":
-          description: Forbidden.
-        "404":
-          description: Not found.
-    get:
-      summary: Get status of a bulk delete operation.
-      description: "<ul><li>Get status of a hierarchical delete operation.</li><li>Required roles: none</li></ul>"
-      operationId: bulk-delete-get
-      tags:
-        - Dataset
-      parameters:
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - description: Name of the tenant.
-          in: path
-          name: tenantid
-          required: true
-          schema:
-            type: string
-        - description: Id of a bulk delete operation.
-          in: query
-          name: operationid
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Retrieved the delete operation successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DeleteOperationStatus"
-        "400":
-          description: Bad request.
-        "401":
-          description: Unauthorized.
-        "403":
-          description: Forbidden.
-        "404":
-          description: Not found.
+  
   /utility/ls:
     get:
       summary: Retrieve the list of datasets and sub-directories inside a seismic store
@@ -1242,6 +1171,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /utility/storage-tiers:
     get:
       summary: Retrieve the list of supported storage tiers
@@ -1260,6 +1190,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /utility/cp:
     post:
       summary: Copy dataset.
@@ -1380,6 +1311,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /utility/upload-connection-string:
     get:
       summary: Generate the upload connection credentials string
@@ -1463,6 +1395,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /utility/download-connection-string:
     get:
       summary: Generate the download connection credentials string
@@ -1546,6 +1479,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /imptoken:
     post:
       summary: Generate impersonation credentials token.
@@ -1640,6 +1574,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /impersonation-token:
     post:
       summary: Create an impersonation token credential.
@@ -1713,7 +1648,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/subproject/tenant/{tenantid}/subproject/{subprojectid}":
+  
+  /subproject/tenant/{tenantid}/subproject/{subprojectid}:
     post:
       summary: Create a new subproject.
       description: |
@@ -1909,7 +1845,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/subproject/tenant/{tenantid}":
+  
+  /subproject/tenant/{tenantid}:
     get:
       summary: List subprojects in a tenant.
       description: "<ul><li>Return the list of sub-projects in a tenant.</li><li>Required roles: users.datalake.admin</li></ul>"
@@ -1941,7 +1878,8 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  "/tenant/{tenantid}":
+  
+  /tenant/{tenantid}:
     post:
       summary: Register a seismic-dms tenant.
       description: "<ul><li>Register a data partition in seismic-dms.</li><li>Required roles: users.datalake.admin</li></ul>"
@@ -2007,6 +1945,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /tenant/sdpath:
     get:
       summary: Retrieve the tenant seismic store path.
@@ -2037,6 +1976,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /user:
     put:
       summary: Add a user to a seismic store subproject authorization group.
@@ -2133,6 +2073,7 @@ paths:
           description: Forbidden.
         '404':
           description: Not found.
+  
   /user/roles:
     get:
       summary: Retrieve user role in all subprojects of the tenant.
@@ -2162,6 +2103,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /app:
     post:
       summary: Register a new application.
@@ -2230,6 +2172,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+  
   /app/trusted:
     post:
       summary: Set a registered application as a trusted application.
@@ -2303,6 +2246,71 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+
+  /operations/bulk-delete:
+    put:
+      summary: delete all datasets in a subproject path.
+      description: "<ul>
+                      <li>Description: delete all datasets in the specified sdms subproject path.</li>
+                      <li>Roles: subproject.admin</li></ul>"
+      operationId: operation-bulk-delete-push
+      tags:
+        - Operations
+      parameters:
+        - description: "The sdms subproject path as sd://tenant/subproject/(path)"
+          in: query
+          name: sdpath
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Delete operation initiated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Operation"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+  
+  /operations/bulk-delete/{operation-id}:
+    get:
+      summary: get the bulk delete operation status.
+      description: "<ul>
+                      <li>Description: get the bulk delete operation status.</li>
+                      <li>Roles: subproject.viewer</li></ul>"
+      operationId: operation-bulk-delete-get
+      tags:
+        - Operations
+      parameters:
+        - description: "The bulk delete operation id"
+          in: path
+          name: operation_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retrieved the delete operation successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationStatus"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+
 security:
   - api-key: []
     google-seismic-store-impersonation: []
@@ -3117,3 +3125,51 @@ components:
       example:
         size_bytes: 35461
         dataset_count: 2
+    Operation:
+      required:
+        - operation_id
+      properties:
+        operation_id:
+          type: string
+          description: Operation id of the operation job.
+      example:
+        operation_id: c3d282e6-e7d1-40d8-8ac2-edc15b6d174c
+    OperationStatus:
+      required:
+        - operation_id
+        - status
+      properties:
+        operation_id:
+          type: string
+          description: Operation id of the operation job.
+        created_at:
+          type: string
+          description: Time when the operation was initiated.
+        created_by:
+          type: string
+          description: User who initiated the operation job.
+        last_updated_at:
+          type: string
+          description: Time when the operation status was last updated.
+        status:
+          type: string
+          description: Status of the operation job.
+        dataset_cnt:
+          type: number
+          description: Total number of datasets to process.
+        completed_cnt:
+          type: number
+          description: Number of datasets correctly processed.
+        failed_cnt:
+          type: number
+          description: Number of datasets which processing failed.
+      example:
+        operation_id: c3d282e6-e7d1-40d8-8ac2-edc15b6d174c
+        created_at: string
+        created_by: string
+        last_updated_at: string
+        status: Completed
+        dataset_cnt: 1000
+        completed_cnt: 997
+        failed_cnt: 3
+    

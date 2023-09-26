@@ -14,28 +14,14 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Config } from '../../cloud';
-import { CacheCore } from './core';
-import { IOperation, IOperationStatus } from './models';
+import { IOperation, IOperationStatus } from './model';
+import { CacheCore } from '../../shared';
+import { OperationType, operations } from './register'
 
 const OPERATION_DEFAULT_KEY_EXPIRE_TIME = 60 * 60 * 24 * 90; // 90 days;
 const OPERATION_DEFAULT_STATUS = 'NotStarted';
 
-export enum OperationType {
-    BULK_DELETE = 'BULK_DELETE'
-}
-
-const operations = { } as { [key in OperationType]: {
-    getQueue(): string
-}};
-
-operations.BULK_DELETE = {
-    getQueue(): string {
-        return Config.REDIS_DELETION_QUEUE;
-    },
-}
-
-export class CacheOperations extends CacheCore {
+export class QueueOperations extends CacheCore {
 
     private getOperationKey(queue: string, operationId: string): string {
         return queue + ':' + operationId;
@@ -77,9 +63,11 @@ export class CacheOperations extends CacheCore {
             created_by: operation.CreatedBy,
             last_updated_at: operation.LastUpdatedAt,
             dataset_cnt: +operation.DatasetsCnt || undefined,
-            deleted_cnt: +operation.DeletedCnt || undefined,
+            completed_cnt: +operation.DeletedCnt || undefined,
             failed_cnt: +operation.FailedCnt || undefined
         };
     }
 
 }
+
+export const queueOperations = new QueueOperations();
