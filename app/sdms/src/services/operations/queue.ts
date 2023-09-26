@@ -14,9 +14,9 @@
 // Limitations under the License.
 // ============================================================================
 
-import { IOperation, IOperationStatus } from './model';
-import { CacheCore } from '../../shared';
-import { OperationType, operations } from './register'
+import { IOperation, IOperationQueueTask, IOperationStatus } from './model';
+import { CacheCore, Error } from '../../shared';
+import { operations } from './register'
 
 const OPERATION_DEFAULT_KEY_EXPIRE_TIME = 60 * 60 * 24 * 90; // 90 days;
 const OPERATION_DEFAULT_STATUS = 'NotStarted';
@@ -31,8 +31,8 @@ export class QueueOperations extends CacheCore {
         return queue + ':status:' + operationId;
     }
 
-    public async pushOperation(type: OperationType, operation: IOperation): Promise<IOperation> {
-        const queue = operations[type].getQueue();
+    public async pushOperation(operation: IOperationQueueTask): Promise<IOperation> {
+        const queue = operations[operation.type].getQueue();
         const operationKey = this.getOperationKey(queue, operation.operation_id);
         await this.redisClient
             .multi()
@@ -45,26 +45,32 @@ export class QueueOperations extends CacheCore {
         }
     }
 
-    public async getOperationStatus(type: OperationType, operationId: string): Promise<IOperationStatus> {
-        const queue = operations[type].getQueue();
-        const operationStatusKey = this.getOperationStatusKey(queue, operationId);
-        const operation = await this.redisClient.hgetall(operationStatusKey);
-        if (operation?.OperationId === undefined) {
-            const operationKey = this.getOperationKey(queue, operationId);
+    public async getOperationStatus(operation: IOperationQueueTask): Promise<IOperationStatus> {
+        const queue = operations[operation.type].getQueue();
+        const operationStatusKey = this.getOperationStatusKey(queue, operation.operation_id);
+        const operationStatus = await this.redisClient.hgetall(operationStatusKey);
+        if (operationStatus?.OperationId === undefined) {
+            const operationKey = this.getOperationKey(queue, operation.operation_id);
             return this.redisClient.exists(operationKey) ? {
-                operation_id: operationId,
+                operation_id: operation.operation_id,
                 status: OPERATION_DEFAULT_STATUS
             } : undefined;
-        } 
+        }
+
+        if(operationStatus.Type != operation.type) {
+            throw Error.make(Error.Status.BAD_REQUEST,
+                "The request operation is of different type");
+        }
+
         return {
-            operation_id: operation.OperationId,
-            status: operation.Status,
-            created_at: operation.CreatedAt,
-            created_by: operation.CreatedBy,
-            last_updated_at: operation.LastUpdatedAt,
-            dataset_cnt: +operation.DatasetsCnt || undefined,
-            completed_cnt: +operation.DeletedCnt || undefined,
-            failed_cnt: +operation.FailedCnt || undefined
+            operation_id: operationStatus.OperationId,
+            status: operationStatus.Status,
+            created_at: operationStatus.CreatedAt,
+            created_by: operationStatus.CreatedBy,
+            last_updated_at: operationStatus.LastUpdatedAt,
+            dataset_cnt: operationStatus.DatasetsCnt ? +operationStatus.DatasetsCnt : undefined,
+            completed_cnt: operationStatus.CompletedCnt ? +operationStatus.CompletedCnt : undefined,
+            failed_cnt: operationStatus.FailedCnt ? +operationStatus.FailedCnt : undefined
         };
     }
 

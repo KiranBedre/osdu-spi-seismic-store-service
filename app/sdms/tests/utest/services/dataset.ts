@@ -1035,7 +1035,7 @@ export class TestDatasetSVC {
                 last_updated_at: "string",
                 status: "string",
                 dataset_cnt: 1000,
-                deleted_cnt: 10,
+                completed_cnt: 10,
                 failed_cnt: 1
             }
             

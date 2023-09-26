@@ -29,7 +29,7 @@ public interface IDeleteOperationStatus : IDeletionOperationMessage
 
     long DatasetsCnt { get; set; }
 
-    long DeletedCnt { get; set; }
+    long CompletedCnt { get; set; }
 
     long FailedCnt { get; set; }
 }

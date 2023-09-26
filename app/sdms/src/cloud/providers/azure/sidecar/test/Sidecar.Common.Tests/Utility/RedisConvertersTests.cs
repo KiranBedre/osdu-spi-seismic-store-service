@@ -26,14 +26,16 @@ public class RedisConvertersTests
         OperationId = Guid.NewGuid().ToString(),
         Tenant = "tenant001",
         Subproject = "subproj007",
-        Path = "tenant001/proj001/subproj007/"
+        Path = "tenant001/proj001/subproj007/",
+        Type = "BULK_DELETE"
     };
 
     private static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
-            new HashEntry(useJsonAttrNames?"path":"Path",msg.Path)
+            new HashEntry(useJsonAttrNames?"path":"Path",msg.Path),
+            new HashEntry(useJsonAttrNames?"type":"Type",msg.Type)
         };
 
     [Fact]
@@ -51,7 +53,8 @@ public class RedisConvertersTests
             .And.ContainSingle(h => h.Name == "OperationId" && h.Value == msg.OperationId)
             .And.ContainSingle(h => h.Name == "Tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "Subproject" && h.Value == msg.Subproject)
-            .And.ContainSingle(h => h.Name == "Path" && h.Value == msg.Path);
+            .And.ContainSingle(h => h.Name == "Path" && h.Value == msg.Path)
+            .And.ContainSingle(h => h.Name == "Type" && h.Value == msg.Type);
     }
 
     [Fact]
@@ -69,7 +72,8 @@ public class RedisConvertersTests
             .And.ContainSingle(h => h.Name == "operation_id" && h.Value == msg.OperationId)
             .And.ContainSingle(h => h.Name == "tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "subproject" && h.Value == msg.Subproject)
-            .And.ContainSingle(h => h.Name == "path" && h.Value == msg.Path);
+            .And.ContainSingle(h => h.Name == "path" && h.Value == msg.Path)
+            .And.ContainSingle(h => h.Name == "type" && h.Value == msg.Type);
     }
 
     [Fact]

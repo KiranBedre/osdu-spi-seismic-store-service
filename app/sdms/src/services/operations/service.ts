@@ -22,12 +22,12 @@ const router = Router();
 
 // push a bulk delete operation
 router.put('/bulk-delete', async (req: Request, res: Response) => {
-    await Handler.handler(req, res, Operation.BulkDeletePush);
+    await Handler.handle(req, res, Operation.BulkDeletePush);
 });
 
 // get the status of a bulk delete operation
-router.get('/bulk-delete/:operation-id', async (req: Request, res: Response) => {
-    await Handler.handler(req, res, Operation.BulkDeleteStatus);
+router.get('/bulk-delete/:operationid', async (req: Request, res: Response) => {
+    await Handler.handle(req, res, Operation.BulkDeleteStatus);
 });
 
-export { router as OperationsRouter };
+export { router as OperationRouter };

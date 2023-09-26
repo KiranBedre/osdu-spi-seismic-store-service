@@ -15,17 +15,18 @@
 // ============================================================================
 
 import { Request as expRequest } from 'express';
-import { Params } from '../../shared';
+import { Params, SDPath } from '../../shared';
+import { SDPathModel } from '../../shared';
 
 export class Parser {
 
-    public static bulkDelete(req: expRequest): string {
+    public static bulkDelete(req: expRequest): SDPathModel {
         Params.checkString(req.query.path, 'path');
-        return req.query.path as string;
+        return SDPath.getFromString(req.query.path as string);
     }
 
     public static bulkDeleteStatus(req: expRequest): string {
-        return req.params['operation-id'];
+        return req.params.operationid;
     }
 
 }

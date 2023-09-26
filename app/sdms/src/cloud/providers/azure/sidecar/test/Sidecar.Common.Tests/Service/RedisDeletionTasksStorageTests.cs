@@ -87,6 +87,9 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
         _ = statusMsg!.OperationId
             .Should()
             .Be(expectedMsg.OperationId);
+        _ = statusMsg!.Type
+            .Should()
+            .Be(expectedMsg.Type);
         _ = statusMsg!.Tenant
             .Should()
             .Be(expectedMsg.Tenant);
@@ -106,7 +109,7 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
         _ = statusMsg!.DatasetsCnt
             .Should()
             .Be(0);
-        _ = statusMsg!.DeletedCnt
+        _ = statusMsg!.CompletedCnt
             .Should()
             .Be(0);
         _ = statusMsg!.FailedCnt

@@ -94,6 +94,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         var status = new DeleteOperationStatus
         {
             OperationId = opMsg.OperationId,
+            Type = opMsg.Type,
             Tenant = opMsg.Tenant,
             Subproject = opMsg.Subproject,
             Path = opMsg.Path,
@@ -103,7 +104,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
             Status = Status.Started.ToString(),
             StatusDescription = Status.Started.Description(),
             DatasetsCnt = 0,
-            DeletedCnt = 0,
+            CompletedCnt = 0,
             FailedCnt = 0
         };
 

@@ -20,7 +20,6 @@ import { Config } from "../../cloud";
 
 export enum OperationType {
     BULK_DELETE = 'BULK_DELETE',
-    CHANGE_TIER = 'CHANGE_TIER'
 }
 
 // Operations
@@ -33,11 +32,5 @@ operations.BULK_DELETE = {
     getQueue(): string {
         return Config.REDIS_DELETION_QUEUE;
     },
-}
-
-operations.CHANGE_TIER = {
-    getQueue(): string {
-        return 'changeTier';
-    }
 }
 

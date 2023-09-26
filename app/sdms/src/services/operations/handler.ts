@@ -17,8 +17,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './optype';
-import { Error, Response, SDPath } from '../../shared';
-import { IBulkDeleteOperationQueueTask, IOperation, IOperationStatus } from './model';
+import { Error, Response } from '../../shared';
+import { IBulkDeleteOperationQueueTask, IOperation, IOperationQueueTask, IOperationStatus } from './model';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { Parser } from './parser';
 import { Auth, AuthRoles } from '../../auth';
@@ -30,7 +30,7 @@ import { queueOperations } from './queue';
 export class Handler {
 
     // handler for the [ /operations ] endpoints
-    public static async handler(req: expRequest, res: expResponse, op: Operation) {
+    public static async handle(req: expRequest, res: expResponse, op: Operation) {
 
         try {
 
@@ -57,8 +57,7 @@ export class Handler {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
 
-        const path = Parser.bulkDelete(req);
-        const sdPath = SDPath.getFromString(path);
+        const sdPath = Parser.bulkDelete(req);
 
         const tenant = await TenantDAO.get(sdPath.tenant);
         const subproject = await SubProjectDAO.get(
@@ -71,13 +70,14 @@ export class Handler {
             req.headers['impersonation-token-context'] as string);
 
         const operation = {
+            type: OperationType.BULK_DELETE,
             operation_id: uuidv4(),
             tenant: sdPath.tenant,
             subproject: sdPath.subproject,
-            path,
+            path: sdPath.path,
         } as IBulkDeleteOperationQueueTask;
 
-        return await queueOperations.pushOperation(OperationType.BULK_DELETE, operation);
+        return await queueOperations.pushOperation(operation);
 
     }
 
@@ -85,7 +85,13 @@ export class Handler {
     private static async bulkDeleteStatus(req: expRequest): Promise<IOperationStatus> {
 
         const operationId = Parser.bulkDeleteStatus(req);
-        const operationStatus = await queueOperations.getOperationStatus(OperationType.BULK_DELETE, operationId);
+
+        const operation = {
+            operation_id: operationId,
+            type: OperationType.BULK_DELETE
+        } as IOperationQueueTask
+
+        const operationStatus = await queueOperations.getOperationStatus(operation);
         if (!operationStatus) {
             throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
         }

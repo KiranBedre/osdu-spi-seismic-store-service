@@ -203,7 +203,7 @@ public class BulkDeletionWorkerTests
         // Assert
         Assert.False(foundErrors);
         queueMock.Verify(
-            queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DELETED_CNT),
+            queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.COMPLETED_CNT),
             Times.Exactly(itemsToDelete.Count));
 
         queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);

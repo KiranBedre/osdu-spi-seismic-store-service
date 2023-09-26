@@ -2318,7 +2318,7 @@ paths:
         "404":
           description: Not found.
   
-  /operations/bulk-delete:
+  /operation/bulk-delete:
     put:
       summary: delete all datasets in a subproject path.
       description: "<ul>
@@ -2350,7 +2350,7 @@ paths:
         "404":
           description: Not found.
   
-  /operations/bulk-delete/{operation-id}:
+  /operation/bulk-delete/{operation-id}:
     get:
       summary: get the bulk delete operation status.
       description: "<ul>

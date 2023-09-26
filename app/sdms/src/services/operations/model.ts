@@ -14,8 +14,14 @@
 // limitations under the License.
 // ============================================================================
 
+import { OperationType } from './register';
+
 export interface IOperation extends Record<string, string | number | Record<string, string | number>> {
     operation_id: string;
+}
+
+export interface IOperationQueueTask extends IOperation {
+    type: OperationType
 }
 
 export interface IOperationStatus extends IOperation {
@@ -30,7 +36,7 @@ export interface IOperationStatus extends IOperation {
 
 // Bulk Delete ------------------------------------------------------------
 
-export interface IBulkDeleteOperationQueueTask extends IOperation {
+export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
     tenant: string;
     subproject: string;
     path: string;
