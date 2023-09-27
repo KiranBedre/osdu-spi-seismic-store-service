@@ -16,20 +16,16 @@
 
 import { Config } from "../../cloud";
 
-// Operations Type
-
 export enum OperationType {
     BULK_DELETE = 'BULK_DELETE',
 }
 
-// Operations
-
 export const operations = { } as { [key in OperationType]: {
-    getQueue(): string
+    getQueueName(): string
 }};
 
 operations.BULK_DELETE = {
-    getQueue(): string {
+    getQueueName(): string {
         return Config.REDIS_DELETION_QUEUE;
     },
 }

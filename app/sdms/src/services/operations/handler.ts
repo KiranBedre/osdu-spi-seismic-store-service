@@ -29,7 +29,7 @@ import { queueOperations } from './queue';
 
 export class Handler {
 
-    // handler for the [ /operations ] endpoints
+    // handler for the [ /operation ] endpoints
     public static async handle(req: expRequest, res: expResponse, op: Operation) {
 
         try {
@@ -58,7 +58,6 @@ export class Handler {
         }
 
         const sdPath = Parser.bulkDelete(req);
-
         const tenant = await TenantDAO.get(sdPath.tenant);
         const subproject = await SubProjectDAO.get(
             JournalFactoryTenantClient.get(tenant), sdPath.tenant, sdPath.subproject);
@@ -84,17 +83,21 @@ export class Handler {
     // get status of a bulk delete operation
     private static async bulkDeleteStatus(req: expRequest): Promise<IOperationStatus> {
 
+        if (Config.CLOUDPROVIDER !== 'azure') {
+            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+        }
+
         const operationId = Parser.bulkDeleteStatus(req);
 
-        const operation = {
+        const operationStatus = await queueOperations.getOperationStatus({
             operation_id: operationId,
             type: OperationType.BULK_DELETE
-        } as IOperationQueueTask
+        });
 
-        const operationStatus = await queueOperations.getOperationStatus(operation);
         if (!operationStatus) {
             throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
         }
+
         return operationStatus;
     }
 

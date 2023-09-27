@@ -32,7 +32,7 @@ export class QueueOperations extends CacheCore {
     }
 
     public async pushOperation(operation: IOperationQueueTask): Promise<IOperation> {
-        const queue = operations[operation.type].getQueue();
+        const queue = operations[operation.type].getQueueName();
         const operationKey = this.getOperationKey(queue, operation.operation_id);
         await this.redisClient
             .multi()
@@ -46,7 +46,7 @@ export class QueueOperations extends CacheCore {
     }
 
     public async getOperationStatus(operation: IOperationQueueTask): Promise<IOperationStatus> {
-        const queue = operations[operation.type].getQueue();
+        const queue = operations[operation.type].getQueueName();
         const operationStatusKey = this.getOperationStatusKey(queue, operation.operation_id);
         const operationStatus = await this.redisClient.hgetall(operationStatusKey);
         if (operationStatus?.OperationId === undefined) {
@@ -54,7 +54,7 @@ export class QueueOperations extends CacheCore {
             return this.redisClient.exists(operationKey) ? {
                 operation_id: operation.operation_id,
                 status: OPERATION_DEFAULT_STATUS
-            } : undefined;
+            } : undefined as IOperationStatus;
         }
 
         if(operationStatus.Type != operation.type) {
@@ -71,7 +71,7 @@ export class QueueOperations extends CacheCore {
             dataset_cnt: operationStatus.DatasetsCnt ? +operationStatus.DatasetsCnt : undefined,
             completed_cnt: operationStatus.CompletedCnt ? +operationStatus.CompletedCnt : undefined,
             failed_cnt: operationStatus.FailedCnt ? +operationStatus.FailedCnt : undefined
-        };
+        } as IOperationStatus;
     }
 
 }
