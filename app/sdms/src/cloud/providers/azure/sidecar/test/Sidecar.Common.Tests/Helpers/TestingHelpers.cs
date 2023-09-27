@@ -30,7 +30,7 @@ internal static partial class TestingHelpers
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
-            new HashEntry(useJsonAttrNames?"path":"Path",msg.Path),
+            new HashEntry(useJsonAttrNames?"path":"Path",msg.Path)
         };
 
     internal static Mock<ILogger<T>> GetLogger<T>()
