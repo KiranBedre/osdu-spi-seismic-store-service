@@ -24,9 +24,6 @@ public class DeleteOperationMessage : IDeletionOperationMessage
     [JsonPropertyName("operation_id")]
     public string OperationId { get; set; } = "";
 
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = "";
-
     [JsonPropertyName("tenant")]
     public string Tenant { get; set; } = "";
 

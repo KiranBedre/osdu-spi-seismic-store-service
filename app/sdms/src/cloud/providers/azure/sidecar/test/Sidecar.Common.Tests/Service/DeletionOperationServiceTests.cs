@@ -238,7 +238,6 @@ public class DeletionOperationServiceTests
         Tenant = "tenant",
         Subproject = "subproject",
         Path = "/path/",
-        Type = "BULK_DELETE",
         CreatedAt = DateTime.UtcNow,
         LastUpdatedAt = DateTime.UtcNow,
         CreatedBy = "Sidecar.QueueHandlerRedis",

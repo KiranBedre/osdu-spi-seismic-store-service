@@ -94,7 +94,6 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         var status = new DeleteOperationStatus
         {
             OperationId = opMsg.OperationId,
-            Type = opMsg.Type,
             Tenant = opMsg.Tenant,
             Subproject = opMsg.Subproject,
             Path = opMsg.Path,

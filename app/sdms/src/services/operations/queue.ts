@@ -33,6 +33,7 @@ export class QueueOperations extends CacheCore {
 
     public async pushOperation(operation: IOperationQueueTask): Promise<IOperation> {
         const queue = operations[operation.type].getQueueName();
+        delete operation.type;
         const operationKey = this.getOperationKey(queue, operation.operation_id);
         await this.redisClient
             .multi()
@@ -56,12 +57,7 @@ export class QueueOperations extends CacheCore {
                 status: OPERATION_DEFAULT_STATUS
             } : undefined as IOperationStatus;
         }
-
-        if(operationStatus.Type != operation.type) {
-            throw Error.make(Error.Status.BAD_REQUEST,
-                "The request operation is of different type");
-        }
-
+        
         return {
             operation_id: operationStatus.OperationId,
             status: operationStatus.Status,
