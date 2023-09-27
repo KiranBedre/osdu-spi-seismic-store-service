@@ -57,7 +57,7 @@ export class QueueOperations extends CacheCore {
                 status: OPERATION_DEFAULT_STATUS
             } : undefined as IOperationStatus;
         }
-        
+
         return {
             operation_id: operationStatus.OperationId,
             status: operationStatus.Status,

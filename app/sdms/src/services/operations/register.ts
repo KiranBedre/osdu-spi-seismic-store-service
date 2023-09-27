@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import { Config } from "../../cloud";
+import { Config } from '../../cloud';
 
 export enum OperationType {
     BULK_DELETE = 'BULK_DELETE',
