@@ -2362,7 +2362,7 @@ paths:
       parameters:
         - description: "The bulk delete operation id"
           in: path
-          name: operation_id
+          name: operation-id
           required: true
           schema:
             type: string

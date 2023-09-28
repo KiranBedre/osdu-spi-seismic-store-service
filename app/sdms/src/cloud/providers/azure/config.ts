@@ -112,7 +112,7 @@ export class AzureConfig extends Config {
 
             // redis deletion queue
             AzureConfig.REDIS_DELETION_QUEUE = process.env.REDIS_DELETION_QUEUE ||
-                AzureConfig.REDIS_DELETION_QUEUE || 'deletionqueue';
+                AzureConfig.REDIS_DELETION_QUEUE || 'sdms-queue-bulkdelete';
 
             // set the auth provider
             AzureConfig.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;

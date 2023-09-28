@@ -67,7 +67,13 @@ export class Handler {
             SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
             tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
+        
+        //check if the path exists
+        if (!await JournalFactoryTenantClient.get(tenant).pathExists(subproject.name, sdPath.path)) {
+            throw (Error.make(Error.Status.NOT_FOUND, 'Path not found'));
+        }
 
+        // push the bulk delete operation
         const operation = {
             type: OperationType.BULK_DELETE,
             operation_id: uuidv4(),

@@ -22,7 +22,7 @@ export class Parser {
 
     public static bulkDelete(req: expRequest): SDPathModel {
         Params.checkString(req.query.path, 'path');
-        return SDPath.getFromString(req.query.path as string);
+        return SDPath.getFromString(req.query.path as string, false);
     }
 
     public static bulkDeleteStatus(req: expRequest): string {
