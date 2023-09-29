@@ -84,7 +84,7 @@ export abstract class AbstractJournal implements IJournal {
             .select(['path']).groupBy('path');
         const query = q.filter('path', '>', dataset.path).filter('path', '<', dataset.path + '\ufffd');
         const [res] = [await this.runQuery(query)];
-        return res;   
+        return res;
     }
     public async listDatasets(
         dataset: DatasetModel,

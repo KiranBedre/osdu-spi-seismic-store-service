@@ -18,14 +18,16 @@ import sinon from 'sinon';
 import { v4 as uuidv4 } from 'uuid';
 import { Tx } from '../utils';
 import { Request, Response } from 'express';
-import { Config, JournalFactoryTenantClient } from '../../../src/cloud';
+import { azure, Config, JournalFactoryTenantClient, IJournal } from '../../../src/cloud';
 import { Auth } from '../../../src/auth';
+import { Utils } from '../../../src/shared';
 import { QueueOperations } from '../../../src/services/operations/queue'
 import { Handler } from '../../../src/services/operations/handler'
 import { Operation } from '../../../src/services/operations/optype'
 import { TenantDAO } from '../../../src/services/tenant';
 import { SubProjectDAO, SubprojectAuth } from '../../../src/services/subproject';
 import { IOperationStatus } from '../../../src/services/operations/model';
+import { promiseHooks } from 'v8';
 
 export class TestOperationHandler {
 
@@ -57,11 +59,15 @@ export class TestOperationHandler {
 
         Tx.testExpAsync(async (req: Request, res: Response) => {
             req.query.path = 'sd://tenant/subproject/path';
+            req.params.userId = 'userId';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
-            this.sandbox.stub(JournalFactoryTenantClient, 'get').resolves();
+            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
             this.sandbox.stub(SubProjectDAO, 'get').resolves({ name: 'subproject' } as any);
             this.sandbox.stub(SubprojectAuth, 'getAuthGroups').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
+            let journalStub = this.sandbox.createStubInstance<IJournal>(azure.AzureCosmosDbDAO);
+            journalStub.pathExists.returns(Promise.resolve(true));
+            this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(journalStub);
             this.sandbox.stub(QueueOperations.prototype, 'pushOperation').resolves();
             await Handler.handle(req, res, Operation.BulkDeletePush);
             Tx.check202(res.statusCode);
@@ -98,6 +104,7 @@ export class TestOperationHandler {
                 failed_cnt: 1
             } as IOperationStatus
             this.sandbox.stub(QueueOperations.prototype, 'getOperationStatus').resolves(operationStatus);
+            this.sandbox.stub(Auth, 'isUserRegistered').resolves(undefined);
             await Handler.handle(req, expRes, Operation.BulkDeleteStatus);
             Tx.check200(expRes.statusCode);
         });
@@ -105,6 +112,8 @@ export class TestOperationHandler {
         Tx.testExpAsync(async (req: Request, res: Response) => {
             req.query.operationid = 'operationId';
             this.sandbox.stub(QueueOperations.prototype, 'getOperationStatus').resolves(undefined);
+            this.sandbox.stub()
+            this.sandbox.stub(Auth, 'isUserRegistered').resolves(undefined);
             await Handler.handle(req, res, Operation.BulkDeleteStatus);
             Tx.check404(res.statusCode);
         });

@@ -47,8 +47,9 @@ public class RedisConvertersTests
 
         // Assert
         _ = he.Should().NotBeEmpty()
-            .And.HaveCount(4)
+            .And.HaveCount(5)
             .And.ContainSingle(h => h.Name == "OperationId" && h.Value == msg.OperationId)
+            .And.ContainSingle(h => h.Name == "CreatedBy" && h.Value == msg.CreatedBy.ToString())
             .And.ContainSingle(h => h.Name == "Tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "Subproject" && h.Value == msg.Subproject)
             .And.ContainSingle(h => h.Name == "Path" && h.Value == msg.Path);
@@ -65,8 +66,9 @@ public class RedisConvertersTests
 
         // Assert
         _ = he.Should().NotBeEmpty()
-            .And.HaveCount(4)
+            .And.HaveCount(5)
             .And.ContainSingle(h => h.Name == "operation_id" && h.Value == msg.OperationId)
+            .And.ContainSingle(h => h.Name == "createdBy" && h.Value == msg.CreatedBy.ToString())
             .And.ContainSingle(h => h.Name == "tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "subproject" && h.Value == msg.Subproject)
             .And.ContainSingle(h => h.Name == "path" && h.Value == msg.Path);
