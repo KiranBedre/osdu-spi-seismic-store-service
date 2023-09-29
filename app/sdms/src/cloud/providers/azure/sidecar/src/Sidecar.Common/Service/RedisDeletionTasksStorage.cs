@@ -99,7 +99,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
             Path = opMsg.Path,
             CreatedAt = DateTime.UtcNow,
             LastUpdatedAt = DateTime.UtcNow,
-            CreatedBy = "Sidecar.QueueHandlerRedis",
+            CreatedBy = opMsg.CreatedBy,
             Status = Status.Started.ToString(),
             StatusDescription = Status.Started.Description(),
             DatasetsCnt = 0,

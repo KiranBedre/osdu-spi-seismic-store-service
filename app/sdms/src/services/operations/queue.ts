@@ -52,8 +52,7 @@ export class QueueOperations extends CacheCore {
         const operationStatus = await this.redisClient.hgetall(operationStatusKey);
         if (operationStatus?.OperationId === undefined) {
             const operationKey = this.getOperationKey(queue, operation.operation_id);
-            var exists = await this.redisClient.exists(operationKey);
-            return exists ? {
+            return (await this.redisClient.exists(operationKey)) ? {
                 operation_id: operation.operation_id,
                 status: OPERATION_DEFAULT_STATUS
             } : undefined as IOperationStatus;

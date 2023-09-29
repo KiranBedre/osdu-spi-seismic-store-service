@@ -27,9 +27,6 @@ public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationSta
     [JsonPropertyName("lastUpdatedAt")]
     public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 
-    [JsonPropertyName("createdBy")]
-    public string CreatedBy { get; set; } = "";
-
     [JsonPropertyName("status")]
     public string Status { get; set; } = "";
 

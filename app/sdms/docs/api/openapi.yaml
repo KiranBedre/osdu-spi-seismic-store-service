@@ -2295,6 +2295,12 @@ paths:
           required: true
           schema:
             type: string
+        - description: "Data partition id"
+          in: header
+          name: data-partition-id
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Retrieved the delete operation successfully.

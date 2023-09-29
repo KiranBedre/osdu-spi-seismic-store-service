@@ -17,7 +17,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './optype';
-import { Error, Response } from '../../shared';
+import { Error, Response, Utils } from '../../shared';
 import { IBulkDeleteOperationQueueTask, IOperation, IOperationQueueTask, IOperationStatus } from './model';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { Parser } from './parser';
@@ -73,10 +73,15 @@ export class Handler {
             throw (Error.make(Error.Status.NOT_FOUND, 'Path not found'));
         }
 
+        var user = req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization);
+        if (!user) {
+            throw (Error.make(Error.Status.BAD_REQUEST, 'User not found'));
+        }
         // push the bulk delete operation
         const operation = {
             type: OperationType.BULK_DELETE,
             operation_id: uuidv4(),
+            createdBy: user,
             tenant: sdPath.tenant,
             subproject: sdPath.subproject,
             path: sdPath.path,
@@ -92,6 +97,9 @@ export class Handler {
         if (Config.CLOUDPROVIDER !== 'azure') {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
+
+        // Check if user has read access
+        await Auth.isUserRegistered(req.headers.authorization, req.headers['data-partition-id'] + ".esd", req[Config.DE_FORWARD_APPKEY]);
 
         const operationId = Parser.bulkDeleteStatus(req);
 

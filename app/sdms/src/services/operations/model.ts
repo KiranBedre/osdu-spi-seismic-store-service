@@ -37,6 +37,7 @@ export interface IOperationStatus extends IOperation {
 // Bulk Delete ------------------------------------------------------------
 
 export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
+    createdBy: string;
     tenant: string;
     subproject: string;
     path: string;
