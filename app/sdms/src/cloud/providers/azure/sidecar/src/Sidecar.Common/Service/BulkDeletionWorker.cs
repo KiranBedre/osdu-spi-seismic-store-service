@@ -143,7 +143,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             try
             {
                 await _metadataDeletionWorker.DeleteMetadataAsync(dataPartitionId, datasetId);
-                await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.DELETED_CNT);
+                await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.COMPLETED_CNT);
             }
             catch (Exception e)
             {

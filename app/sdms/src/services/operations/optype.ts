@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,4 @@
 // limitations under the License.
 // ============================================================================
 
-export { DatasetAuth } from './auth';
-export { DatasetDAO } from './dao';
-export {
-  IDatasetModel as DatasetModel,
-  IPaginationModel as PaginationModel,
-  IDatasetListRequest as DatasetListRequest,
-  SchemaTransformModel,
-} from './model';
-export { DatasetUtils } from './utils'
-
-export * as Schemamanagement from './schema-manager';
-
-
-
+export enum Operation { BulkDeletePush, BulkDeleteStatus }

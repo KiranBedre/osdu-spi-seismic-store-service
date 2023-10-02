@@ -68,7 +68,7 @@ public static class Constants
         public const string STATUS = "Status";
         public const string STATUS_DESCRIPTION = "StatusDescription";
         public const string DATASETS_CNT = "DatasetsCnt";
-        public const string DELETED_CNT = "DeletedCnt";
+        public const string COMPLETED_CNT = "CompletedCnt";
         public const string FAILED_CNT = "FailedCnt";
     }
 }

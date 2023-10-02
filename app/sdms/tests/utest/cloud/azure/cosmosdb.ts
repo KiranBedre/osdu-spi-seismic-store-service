@@ -118,6 +118,7 @@ export class TestAzureCosmosDbDAO {
             this.querygroupBy();
             this.listDatasets();
             this.listFolders();
+            this.pathExists();
         });
     }
 
@@ -447,7 +448,6 @@ export class TestAzureCosmosDbDAO {
             );
 
             expect(actualPaths).to.have.same.members(expectedPaths);
-
 
         });
 
@@ -1045,6 +1045,39 @@ export class TestAzureCosmosDbDAO {
             _init: undefined,
             handleSplitError: undefined
         };
+    }
+
+
+    private static pathExists() {
+        const datasetModel1: DatasetModel = this.getDatasetModel('dataset1.txt');
+        const datasetModel2: DatasetModel = this.getDatasetModel('dataset2.txt');
+        let tenant = 'tenant'
+        let subproject = 'subproject'
+        let path = 'path'
+
+        Tx.sectionInit('pathExists');
+
+        let query =  'select top 1 * from c where c.data.subproject = @subproject ' +
+            'and c.data.path = @path'
+        let queryIterator: QueryIterator<any> = this.getQueryIterator() as any;
+
+        Tx.test(async () => {
+            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
+            sinonStub.returns(queryIterator);
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+
+            let res = await this.cosmos.pathExists(subproject, path);
+            sinon.assert.calledWith(sinonStub, {
+                query: query,
+                parameters: [
+                    { name: '@subproject', value: subproject },
+                    { name: '@path', value: path }
+                ]
+            });
+        });
     }
 
 }

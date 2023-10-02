@@ -27,9 +27,6 @@ public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationSta
     [JsonPropertyName("lastUpdatedAt")]
     public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 
-    [JsonPropertyName("createdBy")]
-    public string CreatedBy { get; set; } = "";
-
     [JsonPropertyName("status")]
     public string Status { get; set; } = "";
 
@@ -39,8 +36,8 @@ public class DeleteOperationStatus : DeleteOperationMessage, IDeleteOperationSta
     [JsonPropertyName("datasetsCnt")]
     public long DatasetsCnt { get; set; } = 0;
 
-    [JsonPropertyName("deletedCnt")]
-    public long DeletedCnt { get; set; } = 0;
+    [JsonPropertyName("completedCnt")]
+    public long CompletedCnt { get; set; } = 0;
 
     [JsonPropertyName("failedCnt")]
     public long FailedCnt { get; set; } = 0;

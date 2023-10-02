@@ -228,6 +228,16 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         })
     }
 
+    public async pathExists(subproject: string, path: string) : Promise<boolean> {
+        let query = 'select top 1 * from c where c.data.subproject = @subproject and c.data.path = @path';
+        const parameters = [
+            {name: '@subproject', value: subproject},
+            {name: '@path', value: path}
+        ]
+        const results = (await (await this.getCosmoContainer()).items.query({query, parameters}).fetchAll()).resources;
+        return (results?.length > 0);
+    }
+
     public async delete(key: any): Promise<void> {
         await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).delete();
     }

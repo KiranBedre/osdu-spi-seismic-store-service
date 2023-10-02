@@ -240,11 +240,11 @@ public class DeletionOperationServiceTests
         Path = "/path/",
         CreatedAt = DateTime.UtcNow,
         LastUpdatedAt = DateTime.UtcNow,
-        CreatedBy = "Sidecar.QueueHanderRedis",
+        CreatedBy = "Sidecar.QueueHandlerRedis",
         Status = Status.Started.ToString(),
         StatusDescription = Status.Started.Description(),
         DatasetsCnt = 0,
-        DeletedCnt = 0,
+        CompletedCnt = 0,
         FailedCnt = 0
     };
 

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,20 @@
 // limitations under the License.
 // ============================================================================
 
-export { DatasetAuth } from './auth';
-export { DatasetDAO } from './dao';
-export {
-  IDatasetModel as DatasetModel,
-  IPaginationModel as PaginationModel,
-  IDatasetListRequest as DatasetListRequest,
-  SchemaTransformModel,
-} from './model';
-export { DatasetUtils } from './utils'
+import { Request, Response, Router } from 'express';
+import { Handler } from './handler';
+import { Operation } from './optype';
 
-export * as Schemamanagement from './schema-manager';
+const router = Router();
 
+// push a bulk delete operation
+router.put('/bulk-delete', async (req: Request, res: Response) => {
+    await Handler.handle(req, res, Operation.BulkDeletePush);
+});
 
+// get the status of a bulk delete operation
+router.get('/bulk-delete/:operationid', async (req: Request, res: Response) => {
+    await Handler.handle(req, res, Operation.BulkDeleteStatus);
+});
 
+export { router as OperationRouter };

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,19 @@
 // limitations under the License.
 // ============================================================================
 
-export { DatasetAuth } from './auth';
-export { DatasetDAO } from './dao';
-export {
-  IDatasetModel as DatasetModel,
-  IPaginationModel as PaginationModel,
-  IDatasetListRequest as DatasetListRequest,
-  SchemaTransformModel,
-} from './model';
-export { DatasetUtils } from './utils'
+import { Request as expRequest } from 'express';
+import { Params, SDPath } from '../../shared';
+import { SDPathModel } from '../../shared';
 
-export * as Schemamanagement from './schema-manager';
+export class Parser {
 
+    public static bulkDelete(req: expRequest): SDPathModel {
+        Params.checkString(req.query.path, 'path');
+        return SDPath.getFromString(req.query.path as string, false);
+    }
 
+    public static bulkDeleteStatus(req: expRequest): string {
+        return req.params.operationid;
+    }
 
+}

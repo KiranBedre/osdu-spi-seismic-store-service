@@ -106,7 +106,7 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
         _ = statusMsg!.DatasetsCnt
             .Should()
             .Be(0);
-        _ = statusMsg!.DeletedCnt
+        _ = statusMsg!.CompletedCnt
             .Should()
             .Be(0);
         _ = statusMsg!.FailedCnt

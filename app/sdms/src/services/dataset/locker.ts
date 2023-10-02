@@ -117,6 +117,7 @@ export class Locker {
                 });
             }
 
+            // tslint:disable-next-line:no-floating-promises
             this.redisClient.config('SET', 'notify-keyspace-events', 'Ex');
 
             // This will automatically remove the wid entries from the main read lock
