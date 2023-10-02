@@ -19,7 +19,7 @@
 // if hasBulks, creates extra page data for those functions
 // returns each piece to handler
 
-import { Definition, Operation } from './operation';
+import { Definition, Operation } from './operations';
 import { SchemaCollections, SchemaComponents, SchemaExamples, pathHeader, toTitleCase } from './schema';
 import { SchemaEndpoint } from '../apis/schema/types';
 // generates a specific endpoint

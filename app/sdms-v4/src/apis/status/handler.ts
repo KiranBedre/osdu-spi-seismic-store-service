@@ -17,7 +17,7 @@
 import { Config, ReadinessFactory } from '../../cloud';
 import { Error, Response } from '../../shared';
 
-import { Operation } from './operation';
+import { Operation } from './operations';
 import express from 'express';
 
 export class StatusHandler {

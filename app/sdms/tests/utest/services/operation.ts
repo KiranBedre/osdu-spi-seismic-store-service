@@ -41,7 +41,6 @@ export class TestOperationHandler {
             beforeEach(() => {
                 backup = Config.CLOUDPROVIDER;
                 Config.CLOUDPROVIDER = 'azure';
-                //this.sandbox.restore();
             });
 
             afterEach(()=>{

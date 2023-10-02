@@ -29,7 +29,7 @@ import {
     responseGeneration,
     schemaGeneration,
 } from './parser';
-import { Definition } from './operation';
+import { Definition } from './operations';
 import { SchemaEndpoints } from '../apis/schema/types';
 
 const PathCollection = [];

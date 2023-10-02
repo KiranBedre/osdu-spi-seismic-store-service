@@ -18,7 +18,7 @@ import { Config, CredentialsFactory } from '../../cloud';
 import { Error, Response, Utils } from '../../shared';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Context } from '../../shared/context';
-import { Operation } from './operation';
+import { Operation } from './operations';
 import { Parser } from './parser';
 import { StorageCoreService } from '../../services';
 
