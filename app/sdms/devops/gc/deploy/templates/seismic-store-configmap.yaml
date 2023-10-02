@@ -14,7 +14,7 @@ data:
   DES_SERVICE_HOST_PARTITION: {{ .Values.data.partitionHost | quote}}
   ENTITLEMENT_BASE_URL_PATH: "/api/entitlements/v2"
   PORT: {{ .Values.data.port | quote }}
-  SDMS_PREFIX: {{ .Values.conf.urlPrefix | quote }}
+  SDMS_PREFIX: {{ .Values.data.apiBasePath | quote }}
   LOG_LEVEL: {{ .Values.data.logLevel | quote }}
   {{- if .Values.global.onPremEnabled }}
   SERVICE_ENV: {{ .Values.data.serviceEnv | quote }}

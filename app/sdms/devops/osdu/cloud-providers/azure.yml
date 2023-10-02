@@ -50,6 +50,7 @@ sdms_azure_dotnet_ci:
 
 sdms_azure_containerize:
   extends: .azure_containerize
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - job: sdms_azure_dotnet_ci
       optional: true
@@ -177,6 +178,7 @@ sdms_azure_containerize:
 
 sdms_azure_container_scanning:
   extends: .azure_container_scanning
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - sdms_azure_containerize
   variables:
@@ -224,6 +226,7 @@ sdms_azure_container_scanning:
 
 sdms_azure_deploy:
   extends: .azure_deploy
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - sdms_azure_containerize
     - azure_containerize_helm
@@ -293,6 +296,7 @@ sdms_azure_deploy:
 sdms_azure_test:
   image: node:18
   extends: .azure_test
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - sdms_azure_deploy
   variables:
@@ -356,6 +360,7 @@ sdms_azure_publish:
     - sdms_azure_containerize
     - azure_containerize_helm
   extends: .azure_publish
+  environment: $DEPLOY_ENVIRONMENT_AZURE
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
     SHA_SIDECAR_IMAGE: ${SDMS_SIDECAR_NAME}:${CI_COMMIT_SHA}
