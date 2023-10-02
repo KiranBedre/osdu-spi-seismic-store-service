@@ -2323,7 +2323,7 @@ paths:
       summary: delete all datasets in a subproject path.
       description: "<ul>
                       <li>Description: delete all datasets in the specified sdms subproject path.</li>
-                      <li>Roles: subproject.admin</li></ul>"
+                      <li>Roles: any</li></ul>"
       operationId: operation-bulk-delete-push
       tags:
         - Operations

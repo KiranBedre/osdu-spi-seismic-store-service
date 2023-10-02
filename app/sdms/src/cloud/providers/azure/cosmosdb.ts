@@ -235,7 +235,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             {name: '@path', value: path}
         ]
         const results = (await (await this.getCosmoContainer()).items.query({query, parameters}).fetchAll()).resources;
-        return (results.length > 0);
+        return (results?.length > 0);
     }
 
     public async delete(key: any): Promise<void> {

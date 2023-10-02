@@ -2284,7 +2284,7 @@ paths:
       summary: get the bulk delete operation status.
       description: "<ul>
                       <li>Description: get the bulk delete operation status.</li>
-                      <li>Roles: subproject.viewer</li></ul>"
+                      <li>Roles: any</li></ul>"
       operationId: operation-bulk-delete-get
       tags:
         - Operations
