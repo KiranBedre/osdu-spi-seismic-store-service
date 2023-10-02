@@ -80,6 +80,12 @@
         "chardet",
         "SUBDIR",
         "jsonschema",
-        "pytest"
+        "pytest",
+        "onprem",
+        "keycloak",
+        "minio",
+        "OPTIMISED",
+        "SUBPROJECTS",
+        "ctoken"
     ]
 }

@@ -67,13 +67,13 @@ export class Handler {
             SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
             tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
-        
-        //check if the path exists
+
+        // check if the path exists
         if (!await JournalFactoryTenantClient.get(tenant).pathExists(subproject.name, sdPath.path)) {
             throw (Error.make(Error.Status.NOT_FOUND, 'Path not found'));
         }
 
-        var user = req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization);
+        const user = req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization);
         if (!user) {
             throw (Error.make(Error.Status.BAD_REQUEST, 'User not found'));
         }
@@ -99,7 +99,9 @@ export class Handler {
         }
 
         // Check if user has read access
-        await Auth.isUserRegistered(req.headers.authorization, req.headers['data-partition-id'] + ".esd", req[Config.DE_FORWARD_APPKEY]);
+        await Auth.isUserRegistered(req.headers.authorization,
+            req.headers['data-partition-id'] + '.esd',
+            req[Config.DE_FORWARD_APPKEY]);
 
         const operationId = Parser.bulkDeleteStatus(req);
 

@@ -138,7 +138,7 @@ export abstract class AbstractJournal implements IJournal {
     }
      public pathExists(subproject: string, path: string) : Promise<boolean> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
-    }   
+    }
 }
 
 export abstract class AbstractJournalTransaction implements IJournalTransaction {
