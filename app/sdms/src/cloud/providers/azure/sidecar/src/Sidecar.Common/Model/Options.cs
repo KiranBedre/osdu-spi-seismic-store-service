@@ -21,7 +21,7 @@ using Interface;
 
 # pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
-public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount, IOptionsDataEcosystemService
+public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount, IOptionsDataEcosystemService, IOptionsCentralStorageAccount
 {
     [Option("port", Required = false, Default = "6000", HelpText = "Port on which to expose the endpoints")]
     public string WebHostPort { get; set; }
@@ -70,4 +70,10 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option("appInsightsInstrumentationKey", Required = false, HelpText = "AppInsights instrumentation key")]
     public string AppInsightsInstrumentationKey { get; set; }
+
+    [Option("centralStorageAccountName", Required = false, HelpText = "Name of the central storage account")]
+    public string CentralStorageAccountName { get; set; }
+
+    [Option("centralStorageAccountKey", Required = false, HelpText = "Key of the central storage account")]
+    public string CentralStorageAccountKey { get; set; }
 }

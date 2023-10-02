@@ -18,6 +18,7 @@ namespace Sidecar.DeleteOperationRunner;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Azure.Storage.Queues;
 using CommandLine;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -78,7 +79,9 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID),
-            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY));
+            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY),
+            secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_ACCOUNT_NAME),
+            secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_ACCOUNT_KEY));
 
         _logger?.LogInformation("Got variables from Key Vault...");
 
@@ -90,8 +93,10 @@ public class Program
         opts.RedisQueuePassword ??= secrets[3];
         opts.AppResourceId ??= secrets[4];
         opts.AppInsightsInstrumentationKey ??= secrets[5];
+        opts.CentralStorageAccountName ??= secrets[6];
+        opts.CentralStorageAccountKey ??= secrets[7];
     }
-
+    
     private static async Task RunAsync(Options opts)
     {
         var webApplicationBuilder = WebApplication.CreateBuilder();
@@ -177,8 +182,14 @@ public class Program
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-            .AddSingleton<IDeletionTasksQueue, RedisDeletionTasksQueue>()
+            .AddSingleton<IDeletionTasksQueue, StorageQueueDeletionTasksQueue>()
             .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTasksQueue>()
+            .AddSingleton<QueueClient>(_ =>
+            {
+                var cs =
+                    $"DefaultEndpointsProtocol=https;AccountName={opts.CentralStorageAccountName};AccountKey={opts.CentralStorageAccountKey}";
+                return new(connectionString: cs, queueName: Constants.STORAGE_QUEUE_NAME);
+            })
             .AddHostedService<DeletionOperationService>()
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IDataAccess, Cosmos>();

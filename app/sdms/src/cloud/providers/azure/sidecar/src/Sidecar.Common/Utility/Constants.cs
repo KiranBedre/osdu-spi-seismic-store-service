@@ -56,11 +56,23 @@ public static class Constants
         /// Instrumentation key of Application Insights.
         /// </summary>
         public const string APP_INSIGHTS_INSTRUMENTATION_KEY = "appinsights-key";
+
+        /// <summary>
+        /// Name of the central storage account.
+        /// </summary>
+        public const string CENTRAL_STORAGE_ACCOUNT_NAME = "tbl-storage";
+
+        /// <summary>
+        /// Key of the central storage account.
+        /// </summary>
+        public const string CENTRAL_STORAGE_ACCOUNT_KEY = "tbl-storage-key";
     }
 
     public const int BLOB_BULK_DELETE_BATCH_SIZE = 1000;
 
     public const string DELETE_LOCK_PREFIX = "WDELETE";
+
+    public const string STORAGE_QUEUE_NAME = "delete-tasks";
 
     public static class DeleteOperationStatus
     {
