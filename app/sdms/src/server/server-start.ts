@@ -19,7 +19,7 @@ import { Config, ConfigFactory, LoggerFactory, TraceFactory } from '../cloud';
 import { StorageJobManager } from '../cloud/shared/queue';
 import { Locker } from '../services/dataset/locker';
 import { SchemaManagerFactory } from '../services/dataset/schema-manager';
-import { queueOperations } from '../services/operations/queue';
+import { queueOperations } from '../services/operation/queue';
 import { Feature, FeatureFlags, cacheShared } from '../shared';
 import { SwaggerManager } from './swagger-manager';
 

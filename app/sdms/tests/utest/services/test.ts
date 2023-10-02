@@ -32,7 +32,7 @@ import { DataLockerTest } from './dataset/locker';
 import { OpenzgyTest } from './dataset/openzgy-v1-manager';
 import { TestSeismicmeta, TestSegyManager } from './seismicmeta';
 import { Tx } from '../utils';
-import { TestOperationHandler } from './operations';
+import { TestOperationHandler } from './operation';
 
 export class TestServices {
 	public static run() {

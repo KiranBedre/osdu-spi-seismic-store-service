@@ -18,7 +18,7 @@ import { Config, StorageFactory } from '../../cloud';
 import { Response, Utils } from '../../shared';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Context } from '../../shared/context';
-import { Operation } from './operations';
+import { Operation } from './operation';
 import { Parser } from './parser';
 import { SearchService } from '../../services/search';
 import { StorageCoreService } from '../../services';

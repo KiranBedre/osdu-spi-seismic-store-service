@@ -60,6 +60,11 @@
         "utest",
         "uuidv",
         "vals",
-        "WDELETE"
+        "WDELETE",
+        "LOCKSMAP",
+        "hpropagate",
+        "traceparent",
+        "svcstatus",
+        "Testgroups"
     ]
 }

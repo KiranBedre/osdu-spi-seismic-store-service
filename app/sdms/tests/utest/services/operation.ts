@@ -21,12 +21,12 @@ import { Request, Response } from 'express';
 import { azure, Config, JournalFactoryTenantClient, IJournal } from '../../../src/cloud';
 import { Auth } from '../../../src/auth';
 import { Utils } from '../../../src/shared';
-import { QueueOperations } from '../../../src/services/operations/queue'
-import { Handler } from '../../../src/services/operations/handler'
-import { Operation } from '../../../src/services/operations/optype'
+import { QueueOperations } from '../../../src/services/operation/queue'
+import { Handler } from '../../../src/services/operation/handler'
+import { Operation } from '../../../src/services/operation/optype'
 import { TenantDAO } from '../../../src/services/tenant';
 import { SubProjectDAO, SubprojectAuth } from '../../../src/services/subproject';
-import { IOperationStatus } from '../../../src/services/operations/model';
+import { IOperationStatus } from '../../../src/services/operation/model';
 import { promiseHooks } from 'v8';
 
 export class TestOperationHandler {
@@ -35,17 +35,18 @@ export class TestOperationHandler {
 
     public static run() {
 
-        describe(Tx.testInit('dataset'), () => {
+        describe(Tx.testInit('operations'), () => {
 
             let backup: string;
             beforeEach(() => {
                 backup = Config.CLOUDPROVIDER;
                 Config.CLOUDPROVIDER = 'azure';
-                this.sandbox.restore();
+                //this.sandbox.restore();
             });
 
             afterEach(()=>{
                 Config.CLOUDPROVIDER = backup;
+                this.sandbox.restore();
             })
 
             this.bulkDelete();
@@ -104,7 +105,7 @@ export class TestOperationHandler {
                 failed_cnt: 1
             } as IOperationStatus
             this.sandbox.stub(QueueOperations.prototype, 'getOperationStatus').resolves(operationStatus);
-            this.sandbox.stub(Auth, 'isUserRegistered').resolves(undefined);
+            this.sandbox.stub(Auth, 'isUserRegistered').resolves();
             await Handler.handle(req, expRes, Operation.BulkDeleteStatus);
             Tx.check200(expRes.statusCode);
         });
@@ -113,7 +114,7 @@ export class TestOperationHandler {
             req.query.operationid = 'operationId';
             this.sandbox.stub(QueueOperations.prototype, 'getOperationStatus').resolves(undefined);
             this.sandbox.stub()
-            this.sandbox.stub(Auth, 'isUserRegistered').resolves(undefined);
+            this.sandbox.stub(Auth, 'isUserRegistered').resolves();
             await Handler.handle(req, res, Operation.BulkDeleteStatus);
             Tx.check404(res.statusCode);
         });

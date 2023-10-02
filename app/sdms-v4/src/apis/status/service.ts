@@ -16,7 +16,7 @@
 
 import { Router, Request as expRequest, Response as expResponse } from 'express';
 
-import { Operation } from './operations';
+import { Operation } from './operation';
 import { StatusHandler } from './handler';
 
 const router = Router();

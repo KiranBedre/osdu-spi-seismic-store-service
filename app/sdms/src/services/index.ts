@@ -25,7 +25,7 @@ import { SvcAppRouter } from './svcapp/service';
 import { TenantRouter } from './tenant/service';
 import { UserRouter } from './user/service';
 import { UtilityRouter } from './utility/service';
-import { OperationRouter } from './operations/service';
+import { OperationRouter } from './operation/service';
 
 const router = Router();
 

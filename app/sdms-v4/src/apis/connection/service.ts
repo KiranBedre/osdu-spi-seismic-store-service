@@ -17,7 +17,7 @@
 import { Router, Request as expRequest, Response as expResponse } from 'express';
 
 import { ConnectionsHandler } from './handler';
-import { Operation } from './operations';
+import { Operation } from './operation';
 
 const ConnectionStringRouter = Router();
 

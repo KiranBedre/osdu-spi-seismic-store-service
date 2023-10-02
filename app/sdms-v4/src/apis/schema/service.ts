@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { Router, Request as expRequest, Response as expResponse } from 'express';
-import { Operation } from './operations';
+import { Operation } from './operation';
 import { SchemaHandler } from './handler';
 
 const SchemaRouter = Router();
