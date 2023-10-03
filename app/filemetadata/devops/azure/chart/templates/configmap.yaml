@@ -9,3 +9,5 @@ metadata:
 data:
   CLOUDPROVIDER: {{ .Values.configEnv.cloudProvider }}
   SDMS_SERVICE_HOST: https://{{ .Values.configEnv.desServiceHost }}/seistore-svc/api/v3
+  FEATURE_FLAG_LOGGING: "{{ .Values.configEnv.featureFlagLogging }}"
+  KEYVAULT_URL: {{ .Values.configEnv.keyvaultUrl }}
