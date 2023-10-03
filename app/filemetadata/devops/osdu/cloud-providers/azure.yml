@@ -91,7 +91,7 @@ filemetadata_azure_unit_test:
     - apt-get install python3-venv -y
     - python3 -m venv seimicenv
     - source seimicenv/bin/activate
-    - pip3 install requests msal fastapi python-dotenv httpx
+    - pip3 install requests msal fastapi python-dotenv httpx applicationinsights azure-keyvault-secrets azure-identity
     - cd app/$FILEMETADATA_SERVICE/app
     - python3 -m unittest discover -s test -p test_* -v
   only:

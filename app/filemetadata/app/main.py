@@ -1,4 +1,6 @@
 import uvicorn
+import uuid
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -11,6 +13,8 @@ from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.routes.base import api_router
 from core.config import settings
+from loggers.azure.insights import AzureInsightsLogger
+import time
 
 def start_application():
     application = FastAPI(title=settings.PROJECT_TITLE, version=settings.PROJECT_VERSION,
@@ -47,10 +51,18 @@ async def custom_swagger_ui_html():
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
+    st = time.time()
+    AzureInsightsLogger.CORRELATION_ID = uuid.uuid4().hex
     response = await call_next(request)
+    et = time.time()
 
     response.headers[
         "Content-Security-Policy"] = "script-src 'unsafe-inline' 'self'"
+
+    excluded = ('service-status', 'swagger-ui.html', 'openapi.json', 'swagger-ui.css', 'swagger-ui-bundle.js', 'favicon.ico')
+    if not str(request.url).endswith(excluded):
+        AzureInsightsLogger.info(AzureInsightsLogger.buildTraceInfo(request))
+        AzureInsightsLogger.request(request, response, (et - st))
     return response
 
 
