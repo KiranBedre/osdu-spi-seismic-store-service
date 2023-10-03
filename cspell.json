@@ -86,6 +86,7 @@
         "minio",
         "OPTIMISED",
         "SUBPROJECTS",
-        "ctoken"
+        "ctoken",
+        "pycache"
     ]
 }

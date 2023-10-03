@@ -9,6 +9,7 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from api.dependencies.authentication import get_bearer, get_api_key, configure_remote_access
 from core.config import settings
+from loggers.azure.insights import AzureInsightsLogger
 VERSION = 1
 
 router = APIRouter()
@@ -35,9 +36,9 @@ async def get_revision(
     try:
         revision = segy.get_revision()
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return revision
 
@@ -50,9 +51,9 @@ async def get_is_3d(
     try:
         is_3d = segy.is_3d()
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return is_3d == 1
 
@@ -65,9 +66,9 @@ async def get_trace_header_field_count(
     try:
         count = segy.get_trace_header_field_count()
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return count
 
@@ -81,9 +82,9 @@ async def get_textual_header(
         ascii_headers_as_json = segy.get_ascii_headers_as_json()
         json_header = json.loads(ascii_headers_as_json)["Textualheader"]
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return {"header": f"{json_header}"}
 
@@ -97,9 +98,9 @@ async def get_extended_textual_headers(
         get_extended_ascii_headers_as_json = segy.get_extended_ascii_headers_as_json()
         json_header = json.loads(get_extended_ascii_headers_as_json)
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return {"header": f"{json_header}"}
 
@@ -112,9 +113,9 @@ async def get_binary_header(
     try:
         header = segy.get_binary_header_as_json()
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return {"header": f"{header}"}
 
@@ -129,9 +130,9 @@ async def get_raw_trace_headers(
     try:
         header = segy.get_raw_trace_headers_as_json(start_trace, traces_to_dump)
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return {"header": f"{header}"}
 
@@ -146,9 +147,9 @@ async def get_scaled_trace_headers(
     try:
         header = segy.get_scaled_trace_headers_as_json(start_trace, traces_to_dump)
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
     return {"header": f"{header}"}
 
@@ -157,6 +158,6 @@ def __create_segy_session(bearer, api_key, sdpath):
         configure_remote_access(bearer, api_key)
         return segysdk.create_session(sdpath, '{}')    
     except segysdk.SegyException as se:
-        raise segy_error(se)
+        raise AzureInsightsLogger.error(segy_error(se))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))

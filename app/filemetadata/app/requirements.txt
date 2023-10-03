@@ -20,3 +20,8 @@ behave==1.2.6
 
 #for .env
 python-dotenv==1.0.0
+
+#for logging
+applicationinsights==0.11.10
+azure-keyvault-secrets==4.7.0
+azure-identity==1.14.0
