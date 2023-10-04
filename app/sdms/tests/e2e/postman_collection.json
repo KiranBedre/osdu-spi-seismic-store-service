@@ -1,9 +1,8 @@
 {
 	"info": {
-		"_postman_id": "4e8191e1-3fec-496c-a9f7-6cfce422eaa2",
-		"name": "SDMS-E2E ver.M20 - Release 0.23",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "11702291"
+		"_postman_id": "aebe04bc-837c-47d6-80cb-edd89fbe7475",
+		"name": "SDMS-E2E ver.M21 - Release 0.24",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -1664,6 +1663,270 @@
 								"{{tenant}}",
 								"subproject",
 								"{{subproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SUBPROJECT REGISTER: Create a new test subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (responseCode.code != 200) && (responseCode.code != 409)) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200 or 409\", function () {",
+									"        pm.expect(pm.response.code).to.be.oneOf([200,409]);",
+									"    });",
+									"",
+									"    if (pm.response.code === 200) {",
+									"        pm.test(\"Subproject created\", function () {",
+									"            var jsonData = pm.response.json();",
+									"            let seismic_default_admins = jsonData.acls.admins[0];",
+									"            let seismic_default_viewers = jsonData.acls.viewers[0];",
+									"            pm.collectionVariables.set('seismic_default_admins', seismic_default_admins)",
+									"            pm.collectionVariables.set('seismic_default_viewers', seismic_default_viewers)",
+									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subproject\")+\"-test\");",
+									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.gcs_bucket).to.exist;",
+									"        });",
+									"    };",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "ltag",
+								"value": "{{legaltag01}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"storage_class\": \"REGIONAL\",\n\t\"storage_location\": \"US-CENTRAL1\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}-test",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}-test"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SUBPROJECT DATASET REGISTER: Register a new dataset dsx01 in test subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\")+\"-test\");",
+									"    });",
+									"",
+									"    pm.test(\"ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}-test/dataset/{{dsx01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}-test",
+								"dataset",
+								"{{dsx01}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SUBPROJECT DELETE: Delete a test subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}-test",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}-test"
 							]
 						}
 					},
@@ -20206,6 +20469,16 @@
 					""
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"key": "seismic_default_admins",
+			"value": ""
+		},
+		{
+			"key": "seismic_default_viewers",
+			"value": ""
 		}
 	]
 }
