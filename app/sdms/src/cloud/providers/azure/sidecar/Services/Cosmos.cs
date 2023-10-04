@@ -38,7 +38,7 @@ namespace Sidecar.Services
                 MaxItemCount = limit ?? -1,
                 // number of parallel tasks is min(32, number of partitions that needs to be visited for answering a query)
                 // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v3&pivots=programming-language-csharp#tune-the-degree-of-parallelism
-                MaxConcurrency = 32 
+                MaxConcurrency = 32
             };
             FeedIterator<Object> query = container.GetItemQueryIterator<Object>(
                 sql,

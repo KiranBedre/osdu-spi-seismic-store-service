@@ -34,11 +34,27 @@ for f in $(git diff --cached --name-only --diff-filter=ACM); do
 done
 echo "-------------------------------------------------------"
 echo "4)"
-echo "Markdown lint scan"
+echo "Markdown lint"
 for f in $(git diff --cached --name-only --diff-filter=ACM); do
   if [ "$f" == *".md"* ]; then
-    echo "Scanning $f"
+    echo "Markdown linting $f"
     npx markdownlint $f
   fi
 done
 echo "-------------------------------------------------------"
+echo "5)"
+echo "lint & test .NET if necessary"
+dotnet_changed=$(
+  git diff --name-only --cached |  # only check the files that will be committed
+  grep "app/sdms/src/cloud/providers/azure/sidecar/.*.cs" |  # select only the C# files
+  head -n 1
+)
+if [ ! -z "$dotnet_changed" ]
+then
+  cd app/sdms/src/cloud/providers/azure/sidecar/
+  dotnet format --severity warn --verify-no-changes
+  dotnet test
+  cd ../../../../../../..
+fi
+echo "-------------------------------------------------------"
+

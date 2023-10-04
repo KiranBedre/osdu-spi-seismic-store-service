@@ -10,6 +10,8 @@ global:
 configEnv:
   cloudProvider: #{PROVIDER_NAME}#
   desServiceHost: #{DNS_HOST}#
+  keyvaultUrl: ""
+  featureFlagLogging: false
 
 image:
   repository: #{CONTAINER_REGISTRY_NAME}#

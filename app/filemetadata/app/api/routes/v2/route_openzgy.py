@@ -13,6 +13,7 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from api.dependencies.authentication import get_bearer, get_api_key, configure_remote_access
 from core.config import settings
+from loggers.azure.insights import AzureInsightsLogger
 VERSION = 2
 
 router = APIRouter()
@@ -183,9 +184,9 @@ async def get_headers(
             }
             return json.loads(json.dumps(headers, indent=2))
     except zgy.ZgyError as ze:
-        raise zgy_error(ze)
+        raise AzureInsightsLogger.error(zgy_error(ze))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
 
 
 @router.get(PATH + "openzgy/bingrid", tags=["OPENZGY"], description=api_description("bingrid", Role.viewer))
@@ -217,6 +218,6 @@ async def get_bingrid(
             zgyToBinGrid = ZGYToBinGrid(point00, point10, point01, point11, inline, xline)
             return json.loads(zgyToBinGrid.getValusAsJson())
     except zgy.ZgyError as ze:
-        raise zgy_error(ze)
+        raise AzureInsightsLogger.error(zgy_error(ze))
     except Exception as e:
-        raise internal_server_error(e)
+        raise AzureInsightsLogger.error(internal_server_error(e))
