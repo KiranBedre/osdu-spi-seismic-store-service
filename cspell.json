@@ -87,6 +87,15 @@
         "OPTIMISED",
         "SUBPROJECTS",
         "ctoken",
-        "pycache"
+        "pycache".
+        "gcsurl",
+        "mydata",
+        "wmode",
+        "uuidv",
+        "optype",
+        "subproject",
+        "Subproject",
+        "CLOUDPROVIDER",
+        "APPKEY"
     ]
 }

@@ -73,6 +73,28 @@ export class TestOperationHandler {
             Tx.check202(res.statusCode);
         });
 
+        Tx.testExpAsync(async (req: Request, res: Response) => {
+            req.query.path = 'sd://tenant/subproject/';
+            req.params.userId = 'userId';
+            this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
+            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
+            this.sandbox.stub(SubProjectDAO, 'get').resolves({ name: 'subproject' } as any);
+            this.sandbox.stub(SubprojectAuth, 'getAuthGroups').resolves();
+            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
+            let journalStub = this.sandbox.createStubInstance<IJournal>(azure.AzureCosmosDbDAO);
+
+            journalStub.pathExists
+            .withArgs(sinon.match.any)
+            .throws(new Error('Path not found'))
+            .withArgs(sinon.match.any, "/")
+            .returns(Promise.resolve(true));
+
+            this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(journalStub);
+            this.sandbox.stub(QueueOperations.prototype, 'pushOperation').resolves();
+            await Handler.handle(req, res, Operation.BulkDeletePush);
+            Tx.check202(res.statusCode);
+        });
+
 
         Tx.testExpAsync(async (req: Request, res: Response) => {
             req.query.path = 'sd://tenant/subproject/path';
