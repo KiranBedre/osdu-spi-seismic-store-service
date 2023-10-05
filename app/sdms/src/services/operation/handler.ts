@@ -61,8 +61,8 @@ export class Handler {
         const tenant = await TenantDAO.get(sdPath.tenant);
         const subproject = await SubProjectDAO.get(
             JournalFactoryTenantClient.get(tenant), sdPath.tenant, sdPath.subproject);
-            
-        //if the path is not defined, assume root    
+
+        // if the path is not defined, assume root
         sdPath.path = sdPath.path || '/';
 
         // check if the caller is write authorized (subproject admin)

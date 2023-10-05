@@ -115,6 +115,7 @@ export class TestOperationHandler {
 
         Tx.testExpAsync(async (req: Request, expRes: Response) => {
             req.params.operationid = 'operationId';
+            req.headers['data-partition-id'] = 'tenant';
             const operationStatus = {
                 operation_id: uuidv4(),
                 created_at: "string",
@@ -133,6 +134,7 @@ export class TestOperationHandler {
 
         Tx.testExpAsync(async (req: Request, res: Response) => {
             req.query.operationid = 'operationId';
+            req.headers['data-partition-id'] = 'tenant';
             this.sandbox.stub(QueueOperations.prototype, 'getOperationStatus').resolves(undefined);
             this.sandbox.stub()
             this.sandbox.stub(Auth, 'isUserRegistered').resolves();
