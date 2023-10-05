@@ -42,7 +42,7 @@ public class Program
     {
         _logger?.LogWarning("Checking environment variables for options...");
 
-        opts.WebHostPort ??= Environment.GetEnvironmentVariable("SDMS_PORT")!;
+        opts.WebHostPort ??= Environment.GetEnvironmentVariable("HOST_PORT")!;
 
         opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
         opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
