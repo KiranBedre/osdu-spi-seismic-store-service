@@ -36,6 +36,11 @@ export interface IOperationStatus extends IOperation {
 
 // Bulk Delete ------------------------------------------------------------
 
+export interface IBulkDeleteOperationStatusRequest {
+    dataPartitionId: string;
+    operationId: string;
+}
+
 export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
     createdBy: string;
     tenant: string;

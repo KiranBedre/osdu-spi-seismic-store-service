@@ -15,8 +15,9 @@
 // ============================================================================
 
 import { Request as expRequest } from 'express';
-import { Params, SDPath } from '../../shared';
+import { Error, Params, SDPath } from '../../shared';
 import { SDPathModel } from '../../shared';
+import { IBulkDeleteOperationStatusRequest } from './model';
 
 export class Parser {
 
@@ -25,8 +26,19 @@ export class Parser {
         return SDPath.getFromString(req.query.path as string, false);
     }
 
-    public static bulkDeleteStatus(req: expRequest): string {
-        return req.params.operationid;
+    public static bulkDeleteStatus(req: expRequest): IBulkDeleteOperationStatusRequest {
+
+        const args = {
+            dataPartitionId: req.headers['data-partition-id'] as string,
+            operationId: req.params.operationid
+        } as IBulkDeleteOperationStatusRequest
+
+        if(!args.dataPartitionId) {
+            throw (Error.make(
+                Error.Status.BAD_REQUEST, 'The \'data-partition-id\' header key has not been specified.'));
+        }
+
+        return args;
     }
 
 }

@@ -18,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './optype';
 import { Error, Response, Utils } from '../../shared';
-import { IBulkDeleteOperationQueueTask, IOperation, IOperationQueueTask, IOperationStatus } from './model';
+import { IBulkDeleteOperationQueueTask, IOperation, IOperationStatus } from './model';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { Parser } from './parser';
 import { Auth, AuthRoles } from '../../auth';
@@ -101,15 +101,15 @@ export class Handler {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
 
+        const args = Parser.bulkDeleteStatus(req);
+
         // Check if user has read access
         await Auth.isUserRegistered(req.headers.authorization,
-            req.headers['data-partition-id'] + '.esd',
-            req[Config.DE_FORWARD_APPKEY]);
-
-        const operationId = Parser.bulkDeleteStatus(req);
+            args.dataPartitionId + '.esd',
+            req[Config.DE_FORWARD_APPKEY]);        
 
         const operationStatus = await queueOperations.getOperationStatus({
-            operation_id: operationId,
+            operation_id: args.operationId,
             type: OperationType.BULK_DELETE
         });
 
