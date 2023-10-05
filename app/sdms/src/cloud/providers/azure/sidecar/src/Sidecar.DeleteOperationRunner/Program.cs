@@ -42,7 +42,7 @@ public class Program
     {
         _logger?.LogWarning("Checking environment variables for options...");
 
-        opts.WebHostPort ??= Environment.GetEnvironmentVariable("SDMS_PORT")!;
+        opts.WebHostPort ??= Environment.GetEnvironmentVariable("HOST_PORT")!;
 
         opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
         opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
@@ -114,9 +114,10 @@ public class Program
             ).
             AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Debug);
 
-
-
-        _ = webApplicationBuilder.WebHost.UseUrls($"http://0.0.0.0:{opts.WebHostPort}");
+        var localUrl = $"http://0.0.0.0:{opts.WebHostPort}";
+        _ = webApplicationBuilder.WebHost.UseUrls(localUrl);
+        _logger?.LogInformation("Application will bind to {LocalUrl}", localUrl);
+        
         var webapp = webApplicationBuilder.Build();
 
         _ = webapp.UseHealthChecks("/healthz");
