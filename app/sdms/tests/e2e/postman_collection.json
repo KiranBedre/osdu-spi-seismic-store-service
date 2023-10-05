@@ -1691,7 +1691,7 @@
 									"            let seismic_default_viewers = jsonData.acls.viewers[0];",
 									"            pm.collectionVariables.set('seismic_default_admins', seismic_default_admins)",
 									"            pm.collectionVariables.set('seismic_default_viewers', seismic_default_viewers)",
-									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subproject\")+\"-test\");",
+									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subproject\")+\"test\");",
 									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
 									"            pm.expect(jsonData.ltag).to.exist;",
 									"            pm.expect(jsonData.gcs_bucket).to.exist;",
@@ -1741,7 +1741,7 @@
 							"raw": "{\n\t\"storage_class\": \"REGIONAL\",\n\t\"storage_location\": \"US-CENTRAL1\"\n}"
 						},
 						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}-test",
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}test",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -1750,7 +1750,7 @@
 								"tenant",
 								"{{tenant}}",
 								"subproject",
-								"{{subproject}}-test"
+								"{{subproject}}test"
 							]
 						}
 					},
@@ -1787,7 +1787,7 @@
 									"    });",
 									"",
 									"    pm.test(\"subproject\", function () {",
-									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\")+\"-test\");",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\")+\"test\");",
 									"    });",
 									"",
 									"    pm.test(\"ltag\", function () {",
@@ -1867,7 +1867,7 @@
 							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
 						},
 						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}-test/dataset/{{dsx01}}",
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}test/dataset/{{dsx01}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -1876,7 +1876,7 @@
 								"tenant",
 								"{{tenant}}",
 								"subproject",
-								"{{subproject}}-test",
+								"{{subproject}}test",
 								"dataset",
 								"{{dsx01}}"
 							]
@@ -1936,7 +1936,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}-test",
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}test",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -1945,7 +1945,7 @@
 								"tenant",
 								"{{tenant}}",
 								"subproject",
-								"{{subproject}}-test"
+								"{{subproject}}test"
 							]
 						}
 					},
@@ -1972,7 +1972,7 @@
 									"    pm.test(\"Find deleted subproject in subproject list\", function () {",
 									"        var list = jsonData.length;",
 									"        var check = 'not found';",
-									"        var subproject = pm.environment.get('subproject')+\"-test\";",
+									"        var subproject = pm.environment.get('subproject')+\"test\";",
 									"        for(var i = 0; i < list; i++) {",
 									"            if(jsonData[i][0] == subproject) {",
 									"                check = 'found';",
