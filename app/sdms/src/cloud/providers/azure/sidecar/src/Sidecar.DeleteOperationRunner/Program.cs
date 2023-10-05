@@ -117,7 +117,7 @@ public class Program
         var localUrl = $"http://0.0.0.0:{opts.WebHostPort}";
         _ = webApplicationBuilder.WebHost.UseUrls(localUrl);
         _logger?.LogInformation("Application will bind to {LocalUrl}", localUrl);
-        
+
         var webapp = webApplicationBuilder.Build();
 
         _ = webapp.UseHealthChecks("/healthz");

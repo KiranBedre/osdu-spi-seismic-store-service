@@ -87,7 +87,7 @@
         "OPTIMISED",
         "SUBPROJECTS",
         "ctoken",
-        "pycache".
+        "pycache",
         "gcsurl",
         "mydata",
         "wmode",
@@ -96,6 +96,10 @@
         "subproject",
         "Subproject",
         "CLOUDPROVIDER",
-        "APPKEY"
+        "APPKEY",
+        "CONNSTR",
+        "bulkdelete",
+        "APPINSIGHTS",
+        "healthz"
     ]
 }
