@@ -7,32 +7,24 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
 data:
   CLOUDPROVIDER: {{ .Values.data.cloudProvider | quote }}
-  DATA_PARTITION_REST_HEADER_KEY: "data-partition-id"
   DES_SERVICE_HOST_COMPLIANCE: {{ .Values.data.legalHost | quote}}
   DES_SERVICE_HOST_ENTITLEMENT: {{ .Values.data.entitlementsHost | quote}}
   DES_SERVICE_HOST_STORAGE: {{ .Values.data.storageHost | quote}}
   DES_SERVICE_HOST_PARTITION: {{ .Values.data.partitionHost | quote}}
   ENTITLEMENT_BASE_URL_PATH: "/api/entitlements/v2"
   PORT: {{ .Values.data.port | quote }}
-  SDMS_PREFIX: {{ .Values.data.apiBasePath | quote }}
   LOG_LEVEL: {{ .Values.data.logLevel | quote }}
   {{- if .Values.global.onPremEnabled }}
   SERVICE_ENV: {{ .Values.data.serviceEnv | quote }}
-  API_BASE_PATH: {{ .Values.data.apiBasePath | quote }}
-  APP_ENVIRONMENT_IDENTIFIER: "dev"
   DES_SERVICE_HOST: "http://des"
   {{- else }}
   USER_ID_FROM_PROVIDER_API: "true"
   TENANT_JOURNAL_ON_DATA_PARTITION: "true"
   {{- end }}
   {{- if .Values.data.redisSdmsHost }}
-  DES_REDIS_INSTANCE_ADDRESS: {{ .Values.data.redisSdmsHost | quote }}
   LOCKSMAP_REDIS_INSTANCE_ADDRESS: {{ .Values.data.redisSdmsHost | quote }}
   {{- else }}
-  DES_REDIS_INSTANCE_ADDRESS: {{ printf "redis-%s" .Values.conf.appName | quote }}
   LOCKSMAP_REDIS_INSTANCE_ADDRESS: {{ printf "redis-%s" .Values.conf.appName | quote }}
   {{- end}}
-  DES_REDIS_INSTANCE_PORT: {{ .Values.data.redisSdmsPort | quote }}
-  DES_REDIS_INSTANCE_TLS_DISABLE: {{ .Values.data.redisSdmsTlsDisabled | quote }}
   LOCKSMAP_REDIS_INSTANCE_PORT: {{ .Values.data.redisSdmsPort | quote }}
   LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE: {{ .Values.data.redisSdmsTlsDisabled | quote }}
