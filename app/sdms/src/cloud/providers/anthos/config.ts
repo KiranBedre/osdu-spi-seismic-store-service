@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import process from 'process';
 import { Config, ConfigFactory } from '../../config';
 
 
@@ -51,16 +52,12 @@ export class AnthosConfig extends Config {
         await Config.initServiceConfiguration({
             SERVICE_ENV: process.env.SERVICE_ENV,
             SERVICE_PORT: +process.env.PORT || 5000,
-            API_BASE_PATH: process.env.API_BASE_PATH,
+            API_BASE_PATH: process.env.API_BASE_PATH || '/api/seismic-store/v3',
             IMP_SERVICE_ACCOUNT_SIGNER: process.env.IMP_SERVICE_ACCOUNT_SIGNER || '',
             LOCKSMAP_REDIS_INSTANCE_ADDRESS: process.env.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
             LOCKSMAP_REDIS_INSTANCE_PORT: +process.env.LOCKSMAP_REDIS_INSTANCE_PORT,
             LOCKSMAP_REDIS_INSTANCE_KEY: process.env.LOCKSMAP_REDIS_INSTANCE_KEY || '',
             LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE: process.env.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE === 'true',
-            DES_REDIS_INSTANCE_ADDRESS: process.env.DES_REDIS_INSTANCE_ADDRESS,
-            DES_REDIS_INSTANCE_PORT: +process.env.DES_REDIS_INSTANCE_PORT,
-            DES_REDIS_INSTANCE_KEY: process.env.DES_REDIS_INSTANCE_KEY,
-            DES_REDIS_INSTANCE_TLS_DISABLE: process.env.DES_REDIS_INSTANCE_TLS_DISABLE === 'true',
             DES_SERVICE_HOST_COMPLIANCE: process.env.DES_SERVICE_HOST_COMPLIANCE,
             DES_SERVICE_HOST_ENTITLEMENT: process.env.DES_SERVICE_HOST_ENTITLEMENT,
             DES_SERVICE_HOST_STORAGE: process.env.DES_SERVICE_HOST_STORAGE,
@@ -94,7 +91,7 @@ export class AnthosConfig extends Config {
             USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC: process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC ?
                 process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC : 'email',
             USER_ASSOCIATION_SVC_PROVIDER: process.env.USER_ASSOCIATION_SVC_PROVIDER,
-            SDMS_PREFIX: process.env.SDMS_PREFIX ? process.env.SDMS_PREFIX : '/seistore-svc/api/v3',
+            SDMS_PREFIX: process.env.SDMS_PREFIX  || '/api/seismic-store/v3',
             DES_POLICY_SERVICE_HOST: process.env.DES_POLICY_SERVICE_HOST || process.env.DES_SERVICE_HOST,
             FEATURE_FLAG_POLICY_SVC_INTERACTION: process.env.FEATURE_FLAG_POLICY_SVC_INTERACTION === 'true',
         });
