@@ -177,7 +177,8 @@ public class Program
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-            .AddSingleton<IDeletionTasksStorage, RedisDeletionTasksStorage>()
+            .AddSingleton<IDeletionTasksQueue, RedisDeletionTasksQueue>()
+            .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTasksQueue>()
             .AddHostedService<DeletionOperationService>()
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IDataAccess, Cosmos>();

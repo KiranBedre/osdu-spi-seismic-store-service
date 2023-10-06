@@ -62,7 +62,7 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTasksStorage>();
+        var queueMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClientFactory>();
 
@@ -73,7 +73,7 @@ public class BulkDeletionWorkerTests
             blobClientMock.Object
         );
 
-        var tenant = "asda";
+        var tenant = "someTenant";
         var operationId = "123";
         var item = new DeleteItem
         {
@@ -99,7 +99,7 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTasksStorage>();
+        var queueMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClientFactory>();
 
@@ -131,7 +131,7 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTasksStorage>();
+        var queueMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClient>();
         var blobClientFactoryMock = new Mock<IBlobClientFactory>();
@@ -215,7 +215,7 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTasksStorage>();
+        var queueMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClient>();
         var blobClientFactoryMock = new Mock<IBlobClientFactory>();

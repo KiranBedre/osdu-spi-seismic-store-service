@@ -22,7 +22,7 @@ namespace Sidecar.Common.Tests.Service;
 public class RedisDeletionTasksStorageTests : RedisHandlerTests
 {
     private const string QUEUE_NAME = "somequeue";
-    private readonly RedisDeletionTasksStorage _queue;
+    private readonly RedisDeletionTasksQueue _queue;
 
     public RedisDeletionTasksStorageTests()
     {
@@ -35,7 +35,7 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
             ));
 
         _queue = new(
-            TestingHelpers.GetLogger<RedisDeletionTasksStorage>().Object,
+            TestingHelpers.GetLogger<RedisDeletionTasksQueue>().Object,
             new Options { QueueName = QUEUE_NAME },
             RedisConnectionFactory.Object);
     }
@@ -64,8 +64,8 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
         _ = await PushDeleteOperationMessage();
 
         // Act
-        _ = await _queue.CheckForDeletionOperationAsync();
-        var statusMsg = await _queue.CheckForDeletionOperationAsync();
+        _ = await _queue.TryGetTaskAsync();
+        var statusMsg = await _queue.TryGetTaskAsync();
 
         // Assert
         Assert.Null(statusMsg);
@@ -78,7 +78,7 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
         var expectedMsg = await PushDeleteOperationMessage();
 
         // Act
-        var statusMsg = await _queue.CheckForDeletionOperationAsync();
+        var statusMsg = await _queue.TryGetTaskAsync();
 
         // Assert
         _ = statusMsg.Should()
@@ -121,7 +121,7 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
         var expectedMsg = await PushDeleteOperationMessage();
 
         // Act
-        await _queue.DeleteDeletionOperationAsync(expectedMsg.OperationId);
+        await _queue.MarkTaskCompleteAsync(expectedMsg.OperationId);
 
         // Assert
         var result = await DbMock.Object.HashGetAllAsync(new RedisKey(QUEUE_NAME + ":" + expectedMsg.OperationId));

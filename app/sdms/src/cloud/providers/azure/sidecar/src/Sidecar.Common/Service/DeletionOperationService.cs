@@ -27,7 +27,8 @@ using Sidecar.Common.Utility;
 public class DeletionOperationService : BackgroundService
 {
     private readonly ILogger<DeletionOperationService> _logger;
-    private readonly IDeletionTasksStorage _deletionTasks;
+    private readonly IDeletionTasksQueue _deletionTasks;
+    private readonly IDeletionTaskStatusStorage _deletionTaskStatusStorage;
     private readonly IItemsRetriever _itemsRetriever;
     private readonly IBulkDeletionWorker _bulkDeletionWorker;
     private readonly ILockManager _lockManager;
@@ -36,14 +37,17 @@ public class DeletionOperationService : BackgroundService
     private const int MAX_CONSECUTIVE_FAILURES = 10;
     private const int LOCK_ATTEMPTS = 5;
 
-    public DeletionOperationService(ILogger<DeletionOperationService> logger,
-        IDeletionTasksStorage deletionTasks,
+    public DeletionOperationService(
+        ILogger<DeletionOperationService> logger,
+        IDeletionTasksQueue deletionTasks,
+        IDeletionTaskStatusStorage deletionTaskStatusStorage,
         IItemsRetriever itemsRetriever,
         IBulkDeletionWorker bulkDeletionWorker,
         ILockManager lockManager)
     {
         _logger = logger;
         _deletionTasks = deletionTasks;
+        _deletionTaskStatusStorage = deletionTaskStatusStorage;
         _itemsRetriever = itemsRetriever;
         _bulkDeletionWorker = bulkDeletionWorker;
         _lockManager = lockManager;
@@ -70,7 +74,7 @@ public class DeletionOperationService : BackgroundService
 
     private async Task TryFetchAndExecuteTaskAsync(CancellationToken cancellationToken)
     {
-        var op = await _deletionTasks.CheckForDeletionOperationAsync();
+        var op = await _deletionTasks.TryGetTaskAsync(cancellationToken);
         if (op is null)
         {
             await Task.Delay(1000, cancellationToken);
@@ -91,7 +95,7 @@ public class DeletionOperationService : BackgroundService
             _logger.LogInformation("Found {c} items to delete",
                 itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
 
-            await _deletionTasks.UpdateFieldStatusOperationAsync(
+            await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(
                 op.OperationId,
                 Constants.DeleteOperationStatus.DATASETS_CNT,
                 itemsToDelete.Count.ToString());
@@ -119,13 +123,14 @@ public class DeletionOperationService : BackgroundService
             await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.Completed);
             _logger.LogInformation("Finished deletion operation {op} successfully", op.OperationId);
         }
+
+        await _deletionTasks.MarkTaskCompleteAsync(op.OperationId, cancellationToken);
     }
 
     private async Task UpdateStatusAndDeleteOperationAsync(string operationId, Status status)
     {
-        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, status.ToString());
-        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, status.Description());
-        await _deletionTasks.DeleteDeletionOperationAsync(operationId);
+        await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, status.ToString());
+        await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, status.Description());
     }
 
     private async Task<bool> UnlockDatasetsAsync(IDeleteOperationStatus op, List<DeleteItem> itemsToUnlock)
@@ -190,7 +195,7 @@ public class DeletionOperationService : BackgroundService
             }
             else
             {
-                await _deletionTasks.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
+                await _deletionTaskStatusStorage.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
                 foundLockErrors = true;
             }
         }

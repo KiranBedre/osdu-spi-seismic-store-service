@@ -28,14 +28,14 @@ using Sidecar.Common.Utility;
 public class BulkDeletionWorker : IBulkDeletionWorker
 {
     private readonly ILogger<BulkDeletionWorker> _logger;
-    private readonly IDeletionTasksStorage _deletionTasks;
+    private readonly IDeletionTaskStatusStorage _deletionTasks;
     private readonly IMetadataDeletionWorker _metadataDeletionWorker;
     private readonly IBlobClientFactory _blobClientFactory;
     private bool _foundErrors = false;
 
     public BulkDeletionWorker(
         ILogger<BulkDeletionWorker> logger,
-        IDeletionTasksStorage deletionTasks,
+        IDeletionTaskStatusStorage deletionTasks,
         IMetadataDeletionWorker metadataDeletionWorker,
         IBlobClientFactory blobClientFactory)
     {

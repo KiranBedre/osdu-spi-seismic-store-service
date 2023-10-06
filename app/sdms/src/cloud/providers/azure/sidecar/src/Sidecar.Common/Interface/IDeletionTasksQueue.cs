@@ -18,10 +18,8 @@ namespace Sidecar.Common.Interface;
 
 using System.Threading.Tasks;
 
-public interface IDeletionTasksStorage
+public interface IDeletionTasksQueue
 {
-    Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync();
-    Task DeleteDeletionOperationAsync(string operationId);
-    Task IncrementCountAsync(string operationId, string field);
-    Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue);
+    Task<IDeleteOperationStatus?> TryGetTaskAsync(CancellationToken ct);
+    Task MarkTaskCompleteAsync(string operationId, CancellationToken ct);
 }

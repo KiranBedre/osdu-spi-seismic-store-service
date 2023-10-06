@@ -24,16 +24,16 @@ using Interface;
 using Model;
 using Sidecar.Common.Utility;
 
-public class RedisDeletionTasksStorage : IDeletionTasksStorage
+public class RedisDeletionTasksQueue : IDeletionTasksQueue, IDeletionTaskStatusStorage
 {
     private const int DELETION_STATUS_EXPIRY_SECONDS = 60 * 60 * 24 * 90; // 90 days
 
-    private readonly ILogger<RedisDeletionTasksStorage> _logger;
+    private readonly ILogger<RedisDeletionTasksQueue> _logger;
     private readonly IOptionsQueueRedisQueueName _options;
     private readonly IRedisHandler _queue;
 
-    public RedisDeletionTasksStorage(
-        ILogger<RedisDeletionTasksStorage> logger,
+    public RedisDeletionTasksQueue(
+        ILogger<RedisDeletionTasksQueue> logger,
         IOptionsQueueRedisQueueName options,
         IRedisConnectionFactory redisConnectionFactory)
     {
@@ -42,7 +42,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         _queue = redisConnectionFactory.GetRedisForQueue();
     }
 
-    public async Task<IDeleteOperationStatus?> CheckForDeletionOperationAsync()
+    public async Task<IDeleteOperationStatus?> TryGetTaskAsync(CancellationToken ct = default)
     {
         var db = _queue.GetDatabase();
 
@@ -55,7 +55,6 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         var statusMsg = await CreateDeletionOperationStatusAsync(db, opMsg);
 
         return statusMsg;
-
     }
 
     private async Task<DeleteOperationMessage?> GetDeletionOperationMessageAsync(IDatabase db)
@@ -81,7 +80,7 @@ public class RedisDeletionTasksStorage : IDeletionTasksStorage
         return delOpData.FromHashEntries<DeleteOperationMessage>(true);
     }
 
-    public async Task DeleteDeletionOperationAsync(string operationId)
+    public async Task MarkTaskCompleteAsync(string operationId, CancellationToken ct = default)
     {
         var db = _queue.GetDatabase();
         var opDataKey = _options.QueueName + ":" + operationId;

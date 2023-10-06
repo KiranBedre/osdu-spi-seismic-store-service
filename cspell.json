@@ -42,6 +42,7 @@
         "operationid",
         "optype",
         "osdu",
+        "pageable",
         "sauth",
         "sbit",
         "sdms",
