@@ -106,7 +106,7 @@ export class Handler {
         // Check if user has read access
         await Auth.isUserRegistered(req.headers.authorization,
             args.dataPartitionId + '.esd',
-            req[Config.DE_FORWARD_APPKEY]);        
+            req[Config.DE_FORWARD_APPKEY]);
 
         const operationStatus = await queueOperations.getOperationStatus({
             operation_id: args.operationId,
