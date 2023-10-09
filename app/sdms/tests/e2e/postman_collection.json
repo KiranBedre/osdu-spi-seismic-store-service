@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "e340552f-16ae-4722-aa92-2762c87f7d1d",
+		"_postman_id": "6fd98839-9670-4de9-aa79-5b71c5b0f80d",
 		"name": "SDMS-E2E ver.M21 - Release 0.24",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -223,7 +223,7 @@
 							},
 							{
 								"key": "data-partition-id",
-								"value": "opendes"
+								"value": "{{datapartition}}"
 							},
 							{
 								"key": "Authorization",
@@ -1685,13 +1685,13 @@
 									"    });",
 									"",
 									"    if (pm.response.code === 200) {",
-									"        pm.test(\"Subproject created\", function () {",
+									"        pm.test(\"SubprojectTest created\", function () {",
 									"            var jsonData = pm.response.json();",
 									"            let seismic_default_admins = jsonData.acls.admins[0];",
 									"            let seismic_default_viewers = jsonData.acls.viewers[0];",
 									"            pm.collectionVariables.set('seismic_default_admins', seismic_default_admins)",
 									"            pm.collectionVariables.set('seismic_default_viewers', seismic_default_viewers)",
-									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subproject\")+\"test\");",
+									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subprojectTest\"));",
 									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
 									"            pm.expect(jsonData.ltag).to.exist;",
 									"            pm.expect(jsonData.gcs_bucket).to.exist;",
@@ -1703,6 +1703,25 @@
 									"    pm.environment.unset(key);",
 									"    postman.setEnvironmentVariable('execCounter', 1);",
 									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"subprojectTest\", makeID_dataset(16));"
 								],
 								"type": "text/javascript"
 							}
@@ -1741,7 +1760,7 @@
 							"raw": "{\n\t\"storage_class\": \"REGIONAL\",\n\t\"storage_location\": \"US-CENTRAL1\"\n}"
 						},
 						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}test",
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subprojectTest}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -1750,7 +1769,7 @@
 								"tenant",
 								"{{tenant}}",
 								"subproject",
-								"{{subproject}}test"
+								"{{subprojectTest}}"
 							]
 						}
 					},
@@ -1787,7 +1806,7 @@
 									"    });",
 									"",
 									"    pm.test(\"subproject\", function () {",
-									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\")+\"test\");",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subprojectTest\"));",
 									"    });",
 									"",
 									"    pm.test(\"ltag\", function () {",
@@ -1867,7 +1886,7 @@
 							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
 						},
 						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}test/dataset/{{dsx01}}",
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subprojectTest}}/dataset/{{dsx01}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -1876,7 +1895,7 @@
 								"tenant",
 								"{{tenant}}",
 								"subproject",
-								"{{subproject}}test",
+								"{{subprojectTest}}",
 								"dataset",
 								"{{dsx01}}"
 							]
@@ -1936,7 +1955,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subproject}}test",
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subprojectTest}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -1945,7 +1964,7 @@
 								"tenant",
 								"{{tenant}}",
 								"subproject",
-								"{{subproject}}test"
+								"{{subprojectTest}}"
 							]
 						}
 					},
@@ -1969,10 +1988,10 @@
 									"        pm.response.to.have.status(200);",
 									"    });",
 									"",
-									"    pm.test(\"Find deleted subproject in subproject list\", function () {",
+									"    pm.test(\"Find deleted subprojectTest in subproject list\", function () {",
 									"        var list = jsonData.length;",
 									"        var check = 'not found';",
-									"        var subproject = pm.environment.get('subproject')+\"test\";",
+									"        var subproject = pm.environment.get('subprojectTest');",
 									"        for(var i = 0; i < list; i++) {",
 									"            if(jsonData[i][0] == subproject) {",
 									"                check = 'found';",
@@ -1980,6 +1999,8 @@
 									"        }",
 									"        pm.expect(check).to.eql('not found');",
 									"    });",
+									"",
+									"   pm.environment.unset('subprojectTest'); ",
 									"",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
