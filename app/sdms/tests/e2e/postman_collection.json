@@ -8894,7 +8894,7 @@
 									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
 									"    });",
 									"",
-									"    pm.test(\"Check seismicmetadata\", () => {",
+									"    pm.test(\"Check seismicmetadata \", () => {",
 									"        pm.expect(jsonData.seismicmeta_guid).not.equal(null);",
 									"    });",
 									"",
