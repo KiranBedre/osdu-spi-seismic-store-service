@@ -22,7 +22,7 @@ namespace Sidecar.Common.Tests.Service;
 public class RedisDeletionTasksStorageTests : RedisHandlerTests
 {
     private const string QUEUE_NAME = "somequeue";
-    private readonly RedisDeletionTasksQueue _queue;
+    private readonly RedisDeletionTaskStatusStorage _queue;
 
     public RedisDeletionTasksStorageTests()
     {
@@ -34,9 +34,7 @@ public class RedisDeletionTasksStorageTests : RedisHandlerTests
                     ConnectionMultiplexer.Object
             ));
 
-        _queue = new(
-            TestingHelpers.GetLogger<RedisDeletionTasksQueue>().Object,
-            new Options { QueueName = QUEUE_NAME },
+        _queue = new(new Options { QueueName = QUEUE_NAME },
             RedisConnectionFactory.Object);
     }
 

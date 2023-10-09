@@ -16,10 +16,12 @@
 
 namespace Sidecar.Common.Interface;
 
+using Sidecar.Common.Model;
 using System.Threading.Tasks;
 
 public interface IDeletionTaskStatusStorage
 {
+    Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(DeleteOperationMessage opMsg);
     Task IncrementCountAsync(string operationId, string field);
     Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue);
 }

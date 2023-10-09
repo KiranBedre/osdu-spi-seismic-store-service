@@ -1,88 +1,44 @@
-// ============================================================================
-// Copyright 2017-2023, Microsoft
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// ============================================================================
+namespace Sidecar.Common.TaskQueue;
 
-namespace Sidecar.Common.Service;
-
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
-
-using Interface;
+using Newtonsoft.Json;
+using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
+using System.Globalization;
 
-public class DeletionOperationService : BackgroundService
+public class DeletionTaskExecutor: ITaskExecutor<string>
 {
-    private readonly ILogger<DeletionOperationService> _logger;
-    private readonly IDeletionTasksQueue _deletionTasks;
+    private readonly ILogger<DeletionTaskExecutor> _logger;
     private readonly IDeletionTaskStatusStorage _deletionTaskStatusStorage;
     private readonly IItemsRetriever _itemsRetriever;
     private readonly IBulkDeletionWorker _bulkDeletionWorker;
     private readonly ILockManager _lockManager;
 
-    private int _consecutiveFailures = 0;
-    private const int MAX_CONSECUTIVE_FAILURES = 10;
     private const int LOCK_ATTEMPTS = 5;
 
-    public DeletionOperationService(
-        ILogger<DeletionOperationService> logger,
-        IDeletionTasksQueue deletionTasks,
+    public DeletionTaskExecutor(
+        ILogger<DeletionTaskExecutor> logger,
         IDeletionTaskStatusStorage deletionTaskStatusStorage,
         IItemsRetriever itemsRetriever,
         IBulkDeletionWorker bulkDeletionWorker,
         ILockManager lockManager)
     {
         _logger = logger;
-        _deletionTasks = deletionTasks;
         _deletionTaskStatusStorage = deletionTaskStatusStorage;
         _itemsRetriever = itemsRetriever;
         _bulkDeletionWorker = bulkDeletionWorker;
         _lockManager = lockManager;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    public async Task Process(string message, CancellationToken cancellationToken)
     {
-        while (!cancellationToken.IsCancellationRequested && _consecutiveFailures < MAX_CONSECUTIVE_FAILURES)
-        {
-            try
-            {
-                await TryFetchAndExecuteTaskAsync(cancellationToken);
-                _consecutiveFailures = 0;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error {m} while processing deletion operation.", _consecutiveFailures / MAX_CONSECUTIVE_FAILURES);
-                _consecutiveFailures++;
-            }
-
-            await Task.Delay(1000, cancellationToken);
-        }
-    }
-
-    private async Task TryFetchAndExecuteTaskAsync(CancellationToken cancellationToken)
-    {
-        var op = await _deletionTasks.TryGetTaskAsync(cancellationToken);
-        if (op is null)
-        {
-            await Task.Delay(1000, cancellationToken);
-            return;
-        }
+        var op = JsonConvert.DeserializeObject<DeleteOperationMessage>(message);
 
         //---start the deletion process
         _logger.LogInformation("Starting deletion operation {op}...", op.OperationId);
+        var status = await _deletionTaskStatusStorage.CreateDeletionOperationStatusAsync(op);
+
         var deletionErrors = true;
         var lockErrors = true;
         var successfullyLocked = new List<DeleteItem>();
@@ -100,7 +56,7 @@ public class DeletionOperationService : BackgroundService
                 Constants.DeleteOperationStatus.DATASETS_CNT,
                 itemsToDelete.Count.ToString());
 
-            lockErrors = await LockDatasetsAsync(op, itemsToDelete, successfullyLocked);
+            lockErrors = await LockDatasetsAsync(status, itemsToDelete, successfullyLocked);
             deletionErrors = await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
         }
         catch (Exception ex)
@@ -109,9 +65,8 @@ public class DeletionOperationService : BackgroundService
         }
         finally
         {
-            unlockErrors = await UnlockDatasetsAsync(op, successfullyLocked);
+            unlockErrors = await UnlockDatasetsAsync(status, successfullyLocked);
         }
-
 
         if (lockErrors || deletionErrors || unlockErrors)
         {
@@ -123,8 +78,6 @@ public class DeletionOperationService : BackgroundService
             await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.Completed);
             _logger.LogInformation("Finished deletion operation {op} successfully", op.OperationId);
         }
-
-        await _deletionTasks.MarkTaskCompleteAsync(op.OperationId, cancellationToken);
     }
 
     private async Task UpdateStatusAndDeleteOperationAsync(string operationId, Status status)

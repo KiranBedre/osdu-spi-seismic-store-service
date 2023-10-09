@@ -16,80 +16,29 @@
 
 namespace Sidecar.Common.Service;
 
-using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System.Threading.Tasks;
 
 using Interface;
 using Model;
 using Sidecar.Common.Utility;
 
-public class RedisDeletionTasksQueue : IDeletionTasksQueue, IDeletionTaskStatusStorage
+public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
 {
-    private const int DELETION_STATUS_EXPIRY_SECONDS = 60 * 60 * 24 * 90; // 90 days
+    private readonly TimeSpan _deletionStatusExpirySeconds = TimeSpan.FromDays(90);
 
-    private readonly ILogger<RedisDeletionTasksQueue> _logger;
     private readonly IOptionsQueueRedisQueueName _options;
     private readonly IRedisHandler _queue;
 
-    public RedisDeletionTasksQueue(
-        ILogger<RedisDeletionTasksQueue> logger,
-        IOptionsQueueRedisQueueName options,
+    public RedisDeletionTaskStatusStorage(IOptionsQueueRedisQueueName options,
         IRedisConnectionFactory redisConnectionFactory)
     {
-        _logger = logger;
         _options = options;
         _queue = redisConnectionFactory.GetRedisForQueue();
     }
 
-    public async Task<IDeleteOperationStatus?> TryGetTaskAsync(CancellationToken ct = default)
+    public async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(DeleteOperationMessage opMsg)
     {
         var db = _queue.GetDatabase();
-
-        var opMsg = await GetDeletionOperationMessageAsync(db);
-        if (opMsg == null)
-        {
-            return null;
-        }
-
-        var statusMsg = await CreateDeletionOperationStatusAsync(db, opMsg);
-
-        return statusMsg;
-    }
-
-    private async Task<DeleteOperationMessage?> GetDeletionOperationMessageAsync(IDatabase db)
-    {
-        var delQ = _options.QueueName;
-
-        var op = await db.ListLeftPopAsync(delQ);
-
-        if (!op.HasValue)
-        {
-            Thread.Sleep(1000);
-            return null;
-        }
-
-        var opDataKey = _options.QueueName + ":" + op.ToString();
-        var delOpData = await db.HashGetAllAsync(opDataKey);
-
-        if (delOpData.Length == 0)
-        {
-            _logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
-            throw new RedisException("Failed to get operation data from queue");
-        }
-        return delOpData.FromHashEntries<DeleteOperationMessage>(true);
-    }
-
-    public async Task MarkTaskCompleteAsync(string operationId, CancellationToken ct = default)
-    {
-        var db = _queue.GetDatabase();
-        var opDataKey = _options.QueueName + ":" + operationId;
-        _ = await db.KeyDeleteAsync(opDataKey, CommandFlags.None);
-    }
-
-    private async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDatabase db, DeleteOperationMessage opMsg)
-    {
-
         var status = new DeleteOperationStatus
         {
             OperationId = opMsg.OperationId,
@@ -103,7 +52,7 @@ public class RedisDeletionTasksQueue : IDeletionTasksQueue, IDeletionTaskStatusS
             StatusDescription = Status.Started.Description(),
             DatasetsCnt = 0,
             CompletedCnt = 0,
-            FailedCnt = 0
+            FailedCnt = 0,
         };
 
         var statusHash = status.ToHashEntries();
@@ -111,9 +60,9 @@ public class RedisDeletionTasksQueue : IDeletionTasksQueue, IDeletionTaskStatusS
         var statusKey = _options.QueueName + ":status:" + status.OperationId.ToLower();
 
         await db.HashSetAsync(statusKey, statusHash);
-        _ = await db.KeyExpireAsync(statusKey, TimeSpan.FromSeconds(DELETION_STATUS_EXPIRY_SECONDS));
+        _ = await db.KeyExpireAsync(statusKey, _deletionStatusExpirySeconds);
 
-        return status!;
+        return status;
     }
 
     public async Task IncrementCountAsync(string operationId, string field)

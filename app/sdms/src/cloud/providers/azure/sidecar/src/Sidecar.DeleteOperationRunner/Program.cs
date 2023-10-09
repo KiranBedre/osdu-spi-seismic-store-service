@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Sidecar.Common.HealthChecks;
+using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
 
 public class Program
@@ -182,15 +183,17 @@ public class Program
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-            .AddSingleton<IDeletionTasksQueue, StorageQueueDeletionTasksQueue>()
-            .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTasksQueue>()
+            .AddSingleton<StorageQueueLockRenewer>()
+            .AddSingleton<ITaskQueueFramework, StorageQueueTaskQueueFramework>()
+            .AddSingleton<ITaskExecutor<string>, DeletionTaskExecutor>()
+            .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTaskStatusStorage>()
             .AddSingleton<QueueClient>(_ =>
             {
                 var cs =
                     $"DefaultEndpointsProtocol=https;AccountName={opts.CentralStorageAccountName};AccountKey={opts.CentralStorageAccountKey}";
                 return new(connectionString: cs, queueName: Constants.STORAGE_QUEUE_NAME);
             })
-            .AddHostedService<DeletionOperationService>()
+            .AddHostedService<TaskQueueBackgroundService>()
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IDataAccess, Cosmos>();
 
