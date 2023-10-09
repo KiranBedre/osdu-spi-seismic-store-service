@@ -15,7 +15,6 @@ data:
   redisSdmsHost: ""
   redisSdmsPort: "6379"
   redisSdmsTlsDisabled: true
-  apiBasePath: "/api/seismic-store/v3"
   serviceEnv: "dev"
   # Deployment
   requestsCpu: "5m"

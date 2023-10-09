@@ -92,7 +92,7 @@ export class ConfigGoogle extends Config {
             ConfigGoogle.SERVICE_CLOUD_PROJECT = process.env.SERVICE_CLOUD_PROJECT;
 
             // set the base service path
-            ConfigGoogle.API_BASE_URL_PATH = process.env.API_BASE_URL_PATH || ConfigGoogle.API_BASE_URL_PATH;
+            ConfigGoogle.API_BASE_URL_PATH = process.env.API_BASE_URL_PATH || '/api/seismic-store/v3';
 
             // load service identity from credential file (for local dev - on cloud use work-load identities)
             ConfigGoogle.SERVICE_IDENTITY_KEY_FILENAME = process.env.SERVICE_IDENTITY_KEY_FILENAME;
@@ -118,11 +118,11 @@ export class ConfigGoogle extends Config {
             await Config.initServiceConfiguration({
                 SERVICE_ENV: process.env.APP_ENVIRONMENT_IDENTIFIER || '',
                 SERVICE_PORT: +process.env.PORT || 5000,
-                API_BASE_PATH: ConfigGoogle.API_BASE_URL_PATH,
+                API_BASE_PATH: ConfigGoogle.API_BASE_URL_PATH || '/api/seismic-store/v3',
                 IMP_SERVICE_ACCOUNT_SIGNER: process.env.IMP_SERVICE_ACCOUNT_SIGNER || '',
                 LOCKSMAP_REDIS_INSTANCE_ADDRESS: process.env.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
                 LOCKSMAP_REDIS_INSTANCE_PORT: +process.env.LOCKSMAP_REDIS_INSTANCE_PORT,
-                LOCKSMAP_REDIS_INSTANCE_KEY: process.env.LOCKSMAP_REDIS_INSTANCE_KEY,
+                LOCKSMAP_REDIS_INSTANCE_KEY: process.env.LOCKSMAP_REDIS_INSTANCE_KEY || '',
                 LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE: process.env.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE === 'true',
                 DES_REDIS_INSTANCE_ADDRESS: process.env.DES_REDIS_INSTANCE_ADDRESS,
                 DES_REDIS_INSTANCE_PORT: +process.env.DES_REDIS_INSTANCE_PORT,
@@ -174,7 +174,7 @@ export class ConfigGoogle extends Config {
                 USER_ASSOCIATION_SVC_PROVIDER: process.env.USER_ASSOCIATION_SVC_PROVIDER ?
                     process.env.USER_ASSOCIATION_SVC_PROVIDER
                     : 'ccm-internal',
-                SDMS_PREFIX: process.env.SDMS_PREFIX ? process.env.SDMS_PREFIX : '/seistore-svc/api/v3'
+                SDMS_PREFIX: process.env.SDMS_PREFIX || '/api/seismic-store/v3'
             });
 
         }
