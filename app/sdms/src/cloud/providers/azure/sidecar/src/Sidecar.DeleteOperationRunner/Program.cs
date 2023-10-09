@@ -184,8 +184,9 @@ public class Program
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
             .AddSingleton<StorageQueueLockRenewer>()
-            .AddSingleton<ITaskQueueFramework, StorageQueueTaskQueueFramework>()
-            .AddSingleton<ITaskExecutor<string>, DeletionTaskExecutor>()
+            .AddSingleton<ITaskQueueWorker, StorageQueueWorker<IDeletionOperationMessage>>()
+            .AddSingleton<ITaskDeserializer<string, IDeletionOperationMessage>, DeletionTaskJsonDeserializer>()
+            .AddSingleton<ITaskExecutor<IDeletionOperationMessage>, DeletionTaskExecutor>()
             .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTaskStatusStorage>()
             .AddSingleton<QueueClient>(_ =>
             {

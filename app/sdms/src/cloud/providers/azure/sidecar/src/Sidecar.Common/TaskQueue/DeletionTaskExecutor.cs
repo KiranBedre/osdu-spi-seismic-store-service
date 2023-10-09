@@ -1,13 +1,12 @@
 namespace Sidecar.Common.TaskQueue;
 
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
 using System.Globalization;
 
-public class DeletionTaskExecutor: ITaskExecutor<string>
+public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
 {
     private readonly ILogger<DeletionTaskExecutor> _logger;
     private readonly IDeletionTaskStatusStorage _deletionTaskStatusStorage;
@@ -31,10 +30,8 @@ public class DeletionTaskExecutor: ITaskExecutor<string>
         _lockManager = lockManager;
     }
 
-    public async Task Process(string message, CancellationToken cancellationToken)
+    public async Task Process(IDeletionOperationMessage op, CancellationToken cancellationToken)
     {
-        var op = JsonConvert.DeserializeObject<DeleteOperationMessage>(message);
-
         //---start the deletion process
         _logger.LogInformation("Starting deletion operation {op}...", op.OperationId);
         var status = await _deletionTaskStatusStorage.CreateDeletionOperationStatusAsync(op);

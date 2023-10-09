@@ -5,24 +5,27 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 
-public class StorageQueueTaskQueueFramework: ITaskQueueFramework
+public class StorageQueueWorker: ITaskQueueWorker
 {
-    private readonly ITaskExecutor<string> _executor;
-    private readonly ILogger<StorageQueueTaskQueueFramework> _logger;
+    private readonly ITaskExecutor<IDeletionOperationMessage> _executor;
+    private readonly ILogger<StorageQueueWorker> _logger;
     private readonly QueueClient _queueClient;
     private readonly StorageQueueLockRenewer _lockAutoRenewer;
+    private readonly ITaskDeserializer<string, IDeletionOperationMessage> _taskDeserializer;
     private readonly int _maxDequeueCount;
 
-    public StorageQueueTaskQueueFramework(
-        ILogger<StorageQueueTaskQueueFramework> logger,
+    public StorageQueueWorker(
+        ILogger<StorageQueueWorker> logger,
         QueueClient queueClient,
         StorageQueueLockRenewer lockAutoRenewer,
-        ITaskExecutor<string> executor,
+        ITaskDeserializer<string, IDeletionOperationMessage> taskDeserializer,
+        ITaskExecutor<IDeletionOperationMessage> executor,
         int maxDequeueCount = 5)
     {
         _logger = logger;
         _queueClient = queueClient;
         _lockAutoRenewer = lockAutoRenewer;
+        _taskDeserializer = taskDeserializer;
         _executor = executor;
         _maxDequeueCount = maxDequeueCount;
     }
@@ -48,7 +51,8 @@ public class StorageQueueTaskQueueFramework: ITaskQueueFramework
         {
             try
             {
-                await _executor.Process(message.MessageText, taskExecutionCtSource.Token);
+                var task = _taskDeserializer.Deserialize(message.MessageText);
+                await _executor.Process(task, taskExecutionCtSource.Token);
             }
             finally
             {

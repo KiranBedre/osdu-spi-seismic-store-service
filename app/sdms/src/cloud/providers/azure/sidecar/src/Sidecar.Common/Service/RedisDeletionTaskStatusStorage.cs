@@ -36,7 +36,7 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
         _queue = redisConnectionFactory.GetRedisForQueue();
     }
 
-    public async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(DeleteOperationMessage opMsg)
+    public async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg)
     {
         var db = _queue.GetDatabase();
         var status = new DeleteOperationStatus

@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 public interface IDeletionTaskStatusStorage
 {
-    Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(DeleteOperationMessage opMsg);
+    Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg);
     Task IncrementCountAsync(string operationId, string field);
     Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue);
 }
