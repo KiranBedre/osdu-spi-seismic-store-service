@@ -76,4 +76,7 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option("centralStorageAccountKey", Required = false, HelpText = "Key of the central storage account")]
     public string CentralStorageAccountKey { get; set; }
+
+    [Option("centralStorageQueueEndpoint", Required = false, HelpText = "Queue endpoint of the central storage account")]
+    public string CentralStorageQueueEndpoint { get; set; }
 }

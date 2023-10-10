@@ -8,26 +8,27 @@ using Sidecar.Common.Interface;
 /// <summary>
 /// Worker for Azure Storage Queue.
 /// </summary>
-public class StorageQueueWorker<T>: ITaskQueueWorker
+public class StorageQueueWorker<T, TD, TE>: ITaskQueueWorker
+    where TD: ITaskDeserializer<string, T>
+    where TE: ITaskExecutor<T>
 {
     private readonly ITaskExecutor<T> _executor;
-    private readonly ILogger<StorageQueueWorker<T>> _logger;
+    private readonly ILogger<StorageQueueWorker<T, TD, TE>> _logger;
     private readonly QueueClient _queueClient;
-    private readonly StorageQueueLockRenewer _lockAutoRenewer;
-    private readonly ITaskDeserializer<string, T> _taskDeserializer;
+    private readonly TD _taskDeserializer;
     private readonly int _maxDequeueCount;
+    private readonly TimeSpan _lockDuration = TimeSpan.FromMinutes(5);  // should be greater than _lockRenewalPeriod
+    private readonly TimeSpan _lockRenewalPeriod = TimeSpan.FromMinutes(3);  // should be less than _lockDuration
 
     public StorageQueueWorker(
-        ILogger<StorageQueueWorker<T>> logger,
+        ILogger<StorageQueueWorker<T, TD, TE>> logger,
         QueueClient queueClient,
-        StorageQueueLockRenewer lockAutoRenewer,
-        ITaskDeserializer<string, T> taskDeserializer,
-        ITaskExecutor<T> executor,
+        TD taskDeserializer,
+        TE executor,
         int maxDequeueCount = 5)
     {
         _logger = logger;
         _queueClient = queueClient;
-        _lockAutoRenewer = lockAutoRenewer;
         _taskDeserializer = taskDeserializer;
         _executor = executor;
         _maxDequeueCount = maxDequeueCount;
@@ -42,42 +43,57 @@ public class StorageQueueWorker<T>: ITaskQueueWorker
         {
             return;
         }
-        
-        // task should be stopped if the lock is lost or cancellation is requested
-        var taskExecutionCtSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        // lock should be kept until the executor finishes or cancellation is requested
-        var bgThreadCtSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var bgThreadToken = bgThreadCtSource.Token;
-        var bgThread = Task.Run(() => _lockAutoRenewer.AutoRenew(
-            message,
-            lockLostCallback: taskExecutionCtSource.Cancel, // if lock is lost, cancel the task
-            bgThreadToken), bgThreadToken);
 
-        try
-        {
-            try
+        // task should be stopped if the lock is lost or the cancellation is requested
+        var taskExecutionCtSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var messagePayload = message.MessageText;
+        var taskExecution = Task.Run(
+            async () =>
             {
-                var task = _taskDeserializer.Deserialize(message.MessageText);
+                var task = _taskDeserializer.Deserialize(messagePayload);
                 await _executor.Process(task, taskExecutionCtSource.Token);
-            }
-            finally
+            }, taskExecutionCtSource.Token);
+        
+        while (true)
+        {
+            // wait for either the task execution to be complete, or for the time to update the message lock
+            await Task.WhenAny(new[]
             {
-                bgThreadCtSource.Cancel();
+                taskExecution,
+                Task.Delay(_lockRenewalPeriod, ct),
+            });
+
+            if (taskExecution.IsCompleted)
+            {
                 try
                 {
-                    await bgThread;
+                    await taskExecution;
                 }
-                catch(OperationCanceledException)
+                catch (Exception e)
                 {
-                    // this is expected, do nothing
+                    _logger.LogError(e, "Exception processing the message {}. Returning it to the queue", message.MessageId);
+                    await UpdateVisibility(message, TimeSpan.Zero, ct);
+                    throw;
                 }
+                break;
             }
-            await RemoveFromQueue(message, ct);
+
+            // update message lock
+            try
+            {
+                message = await UpdateVisibility(message, _lockDuration, ct);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Lost the lock for message {}", message.MessageId);
+                taskExecutionCtSource.Cancel();  // cancel task execution
+                await taskExecution;  // wait for task execution to complete
+                throw;
+            }
         }
-        catch (Exception)
-        {
-            await TryReleaseLock(message, ct);
-        }
+        
+        _logger.LogInformation("Completed message {}", message.MessageId);
+        await DeleteFromQueue(message, ct);
     }
     
     private async Task<QueueMessage?> TryGetTaskAsync(CancellationToken ct)
@@ -86,12 +102,12 @@ public class StorageQueueWorker<T>: ITaskQueueWorker
         {
             _logger.LogInformation("Receiving message...");
             var response = await _queueClient.ReceiveMessageAsync(
-                visibilityTimeout: TimeSpan.FromMinutes(5),
+                visibilityTimeout: _lockDuration,
                 cancellationToken: ct);
         
-            if (!response.HasValue)
+            if (!response.HasValue || response.Value is null)
             {
-                _logger.LogInformation("Got no response from Azure Queue...");
+                _logger.LogInformation("No message available on Azure Queue...");
                 return null;
             }
 
@@ -100,46 +116,41 @@ public class StorageQueueWorker<T>: ITaskQueueWorker
             _logger.LogInformation("Received message {}", message.MessageId);
             if (message.DequeueCount > _maxDequeueCount)
             {
-                _logger.LogInformation("Deleting message {}, dequeue count too high...", message.MessageId);
-                await _queueClient.DeleteMessageAsync(
-                    messageId: message.MessageId,
-                    popReceipt: message.PopReceipt,
-                    cancellationToken: ct);
+                _logger.LogInformation(
+                    "Deleting message {}, dequeue count {} is too high",
+                    message.MessageId, message.DequeueCount);
+                await DeleteFromQueue(message, ct);
                 continue;
             }
 
             return message;
         }
     }
-    
-    private Task RemoveFromQueue(QueueMessage message, CancellationToken ct)
+
+    /// <summary>
+    /// Update the lock duration (i.e. visibility timeout) on the message.
+    /// </summary>
+    /// <returns>QueueMessage with the actualized PopReceipt - it can be used for message updates/deletes.</returns>
+    /// <exception cref="Exception">Unexpected exception</exception>
+    private async Task<QueueMessage> UpdateVisibility(QueueMessage message, TimeSpan visibilityTimeout, CancellationToken ct)
     {
-        
-        _logger.LogInformation("Deleting message {}, dequeue count too high...", message.MessageId);
+        var updateReceipt = await _queueClient.UpdateMessageAsync(
+            messageId: message.MessageId,
+            popReceipt: message.PopReceipt,
+            visibilityTimeout: visibilityTimeout,
+            cancellationToken: ct);
+        if (!updateReceipt.HasValue || updateReceipt.Value is null)
+        {
+            throw new Exception("Unexpected error: could not update message visibility");
+        }
+        return message.Update(updateReceipt.Value);
+    }
+    
+    private Task DeleteFromQueue(QueueMessage message, CancellationToken ct)
+    {
         return _queueClient.DeleteMessageAsync(
             messageId: message.MessageId,
             popReceipt: message.PopReceipt,
             cancellationToken: ct);
-    }
-    
-    
-    private async Task TryReleaseLock(QueueMessage message, CancellationToken ct)
-    {
-        _logger.LogInformation("Returning message {} back to the queue", message.MessageId);
-        try
-        {
-            await _queueClient.UpdateMessageAsync(
-                messageId: message.MessageId,
-                popReceipt: message.PopReceipt,
-                visibilityTimeout: TimeSpan.Zero,
-                cancellationToken: ct);
-        }
-        catch (Exception e)
-        {
-            _logger.LogWarning(
-                e,
-                "Could not reset visibility of message {} to zero. Perhaps the message was already taken from the queue",
-                message.MessageId);
-        }
     }
 }
