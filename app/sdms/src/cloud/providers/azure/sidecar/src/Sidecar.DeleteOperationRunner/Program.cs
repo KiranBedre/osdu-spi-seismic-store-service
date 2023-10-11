@@ -187,16 +187,29 @@ public class Program
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
             .AddSingleton<DeletionTaskJsonDeserializer>()
+            .AddSingleton<DeletionTaskHashEntriesDeserializer>()
             .AddSingleton<DeletionTaskExecutor>()
             .AddSingleton<StorageQueueWorker<
                 IDeletionOperationMessage,
                 DeletionTaskJsonDeserializer,
                 DeletionTaskExecutor
             >>()
+            .AddSingleton<RedisListWorker<
+                IDeletionOperationMessage,
+                DeletionTaskHashEntriesDeserializer,
+                DeletionTaskExecutor
+            >>()
             .AddHostedService<TaskQueueBackgroundService<
                 StorageQueueWorker<
                     IDeletionOperationMessage,
                     DeletionTaskJsonDeserializer,
+                    DeletionTaskExecutor
+                >
+            >>()
+            .AddHostedService<TaskQueueBackgroundService<
+                RedisListWorker<
+                    IDeletionOperationMessage,
+                    DeletionTaskHashEntriesDeserializer,
                     DeletionTaskExecutor
                 >
             >>()

@@ -1,0 +1,82 @@
+namespace Sidecar.Common.TaskQueue;
+
+using Microsoft.Extensions.Logging;
+using Sidecar.Common.Interface;
+using StackExchange.Redis;
+
+/// <summary>
+/// Worker that consumes tasks from Redis list.
+///
+/// Task queue architecture:
+/// - list by the key "{queue_name}" that contains operation_id for each task to execute 
+/// - for each operation_id, a redis hash by the key "{queue_name}:{operation_id}" containing detailed operation data. 
+/// </summary>
+public class RedisListWorker<T, TD, TE>: ITaskQueueWorker
+    where TD: ITaskDeserializer<HashEntry[], T>
+    where TE: ITaskExecutor<T>
+{
+    private readonly ILogger<RedisListWorker<T, TD, TE>> _logger;
+    private readonly TD _deserializer;
+    
+    private readonly IOptionsQueueRedisQueueName _options;
+    private readonly IRedisHandler _queue;
+    private readonly TE _executor;
+
+    public RedisListWorker(
+        ILogger<RedisListWorker<T, TD, TE>> logger,
+        TD deserializer,
+        TE executor, 
+        IRedisConnectionFactory redisConnectionFactory, 
+        IOptionsQueueRedisQueueName options)
+    {
+        _logger = logger;
+        _executor = executor;
+        _queue = redisConnectionFactory.GetRedisForQueue();
+        _options = options;
+        _deserializer = deserializer;
+    }
+
+    public async Task HandleNextTask(CancellationToken ct)
+    {
+        var db = _queue.GetDatabase();
+
+        var queueName = _options.QueueName;
+
+        var op = await db.ListLeftPopAsync(queueName);
+
+        if (!op.HasValue)
+        {
+            _logger.LogInformation("No tasks found in the queue {Queue}", queueName);
+            return;
+        }
+
+        var opDataKey = $"{queueName}:{op}";
+        var delOpData = await db.HashGetAllAsync(opDataKey);
+
+        if (delOpData.Length == 0)
+        {
+            // consider the operation poison message, do not return it back to the queue
+            _logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
+            throw new RedisException("Failed to get operation data from queue");
+        }
+
+        try
+        {
+            var task = _deserializer.Deserialize(delOpData);
+            await _executor.Process(task, ct);
+        }
+        catch (Exception e)
+        {
+            // Simplicity tradeoffs:
+            // - it is possible that we fail to return the task to the queue, and it will be lost forever.
+            // - we don't limit the retry count, a "poison message" will be repeatedly re-consumed forever.
+            _logger.LogError(e, "Failed to process operation {}. Returning it to the queue", op);
+            await db.ListRightPushAsync(queueName, op);
+            throw;
+        }
+
+        // successfully processed task.
+        // deleting the operation data from the queue.
+        await db.KeyDeleteAsync(opDataKey);
+    }
+}

@@ -30,7 +30,7 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Got an error when trying to handle a task");
+                _logger.LogError(e, "Error when handling a task. Continue...");
             }
             await Task.Delay(_pauseBetweenTasks, stoppingToken);
         }
