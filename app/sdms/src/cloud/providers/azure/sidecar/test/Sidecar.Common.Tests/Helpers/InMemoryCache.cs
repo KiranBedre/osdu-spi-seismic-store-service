@@ -30,8 +30,8 @@ internal static partial class TestingHelpers
         public bool KeyExists(string key) => _cache.ContainsKey(key) || _queueCache.ContainsKey(key);
 
         public Task<bool> KeyExistsAsync(string key) => Task.FromResult(KeyExists(key));
-
-        public long ListLeftPush(RedisKey key, string item)
+        
+        public long ListRightPush(RedisKey key, string item)
         {
             var list = _queueCache.ContainsKey(key!) ? _queueCache[key!] : new List<RedisValue>();
 
@@ -41,8 +41,42 @@ internal static partial class TestingHelpers
             return list.Count;
         }
 
+        public async Task<long> ListRightPushAsync(RedisKey key, string item) => await Task.FromResult(ListRightPush(key, item));
+
+        public long ListLeftPush(RedisKey key, string item)
+        {
+            var list = _queueCache.ContainsKey(key!) ? _queueCache[key!] : new List<RedisValue>();
+
+            var rv = new RedisValue(item);
+            list.Insert(0, rv);
+            _queueCache[key!] = list;
+            return list.Count;
+        }
+
         public async Task<long> ListLeftPushAsync(RedisKey key, string item) => await Task.FromResult(ListLeftPush(key, item));
 
+        public RedisValue[] ListRange(RedisKey key, long start, long stop)
+        {
+            if (!_queueCache.ContainsKey(key!))
+            {
+                return Array.Empty<RedisValue>();
+            }
+
+            var vals = _queueCache[key!];
+
+            if (start < 0)
+            {
+                start += vals.Count;
+            }
+
+            if (stop < 0)
+            {
+                stop += vals.Count;
+            }
+
+            return vals.Skip((int)start).Take((int)(stop - start + 1)).ToArray();
+        }
+        
         public RedisValue ListLeftPop(RedisKey key)
         {
             if (!_queueCache.ContainsKey(key!))
@@ -71,6 +105,8 @@ internal static partial class TestingHelpers
 
             return true;
         }
+
+        public async Task<RedisValue[]> ListRangeAsync(RedisKey key, long start, long stop) => await Task.FromResult(ListRange(key, start, stop));
 
         public async Task<RedisValue> ListLeftPopAsync(RedisKey key) => await Task.FromResult(ListLeftPop(key));
 
@@ -113,21 +149,25 @@ internal static partial class TestingHelpers
 
         public async Task<bool> HashSetAsync(RedisKey key, RedisValue field, RedisValue value) => await Task.FromResult(HashSet(key, field, value));
 
-        public async Task<bool> HashSetAsync(RedisKey key, HashEntry[] hash)
+        public Task<bool> HashSetAsync(RedisKey key, HashEntry[] hash)
         {
             foreach (var field in hash)
             {
-                _ = await Task.FromResult(HashSet(key, new RedisValue(field!.Name!), new RedisValue(hash!.ToString()!)));
+                _ = HashSet(key, field.Name, field.Value);
             }
-            return true;
+            return Task.FromResult(true);
         }
 
         //---since the "cache" is a dictionary with a compound key for each hashentry, when reconstructing
         //---the hash entry form the dictionary, the key prefix needs to be replaced
-        //---note the patter is "<queue name>:<key>:<property name>"
-        public HashEntry[] HashGetAll(RedisKey key) => _cache
-                    .Where(e => e.Key.Contains(key!))
-                    .Select(e => new HashEntry(_keyPrefixMatcher.Replace(e.Key, "").Replace(":", ""), e.Value)).ToArray();
+        //---note the pattern is "<key>:<property name>:" (see the GetHashKey method)
+        public HashEntry[] HashGetAll(RedisKey key)
+        {
+            string hashPrefix = $"{key}:";
+            return _cache
+                .Where(e => e.Key.StartsWith(hashPrefix))
+                .Select(e => new HashEntry(e.Key[hashPrefix.Length..].TrimEnd(':'), e.Value)).ToArray();
+        }
 
         public async Task<HashEntry[]> HashGetAllAsync(RedisKey key) => await Task.FromResult(HashGetAll(key));
 

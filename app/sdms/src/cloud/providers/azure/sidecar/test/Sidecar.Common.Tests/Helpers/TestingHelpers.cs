@@ -63,8 +63,15 @@ internal static partial class TestingHelpers
 
     internal static Mock<IDatabase> GetDatabase()
     {
-        var db = new Mock<IDatabase>();
+        var db = new Mock<IDatabase>(MockBehavior.Strict);
         var cache = new InMemoryCache();
+
+        db.Setup(d => d.KeyExpire(It.IsAny<RedisKey>(), It.IsAny<TimeSpan?>(), It.IsAny<ExpireWhen>(), It.IsAny<CommandFlags>()))
+            .Returns(true).Verifiable();
+        
+        db.Setup(d => d.KeyExpireAsync(It.IsAny<RedisKey>(), It.IsAny<TimeSpan?>(), It.IsAny<ExpireWhen>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true).Verifiable();
+        
         db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, RedisValue, When, CommandFlags>((key, field, value, when, flags) =>
             {
@@ -141,12 +148,30 @@ internal static partial class TestingHelpers
                 return await cache.ListLeftPushAsync(key, value!);
             }).Verifiable();
 
+        db.Setup(d => d.ListRightPush(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
+            .Returns<RedisKey, RedisValue, When, CommandFlags>((key, value, when, flags) =>
+            {
+                return cache.ListRightPush(key, value!);
+            }).Verifiable();
+
+        db.Setup(d => d.ListRightPushAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
+            .Returns<RedisKey, RedisValue, When, CommandFlags>(async (key, value, when, flags) =>
+            {
+                return await cache.ListRightPushAsync(key, value!);
+            }).Verifiable();
+
         db.Setup(d => d.ListLeftPop(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>((key, flags) =>
             {
                 return cache.ListLeftPop(key);
             }).Verifiable();
 
+        db.Setup(d => d.ListRange(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<long>(), It.IsAny<CommandFlags>()))
+            .Returns<RedisKey, long, long, CommandFlags>((key, start, stop, flags) =>
+            {
+                return cache.ListRange(key, start, stop);
+            }).Verifiable();
+        
         db.Setup(d => d.ListLeftPopAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>(async (key, flags) =>
             {
