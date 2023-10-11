@@ -82,8 +82,6 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY),
-            secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_ACCOUNT_NAME),
-            secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_ACCOUNT_KEY),
             secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_QUEUE_ENDPOINT));
 
         _logger?.LogInformation("Got variables from Key Vault...");
@@ -96,9 +94,7 @@ public class Program
         opts.RedisQueuePassword ??= secrets[3];
         opts.AppResourceId ??= secrets[4];
         opts.AppInsightsInstrumentationKey ??= secrets[5];
-        opts.CentralStorageAccountName ??= secrets[6];
-        opts.CentralStorageAccountKey ??= secrets[7];
-        opts.CentralStorageQueueEndpoint ??= secrets[8];
+        opts.CentralStorageQueueEndpoint ??= secrets[6];
     }
     
     private static async Task RunAsync(Options opts)

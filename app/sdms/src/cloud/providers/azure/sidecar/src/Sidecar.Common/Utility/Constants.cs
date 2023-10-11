@@ -58,16 +58,6 @@ public static class Constants
         public const string APP_INSIGHTS_INSTRUMENTATION_KEY = "appinsights-key";
 
         /// <summary>
-        /// Name of the central storage account.
-        /// </summary>
-        public const string CENTRAL_STORAGE_ACCOUNT_NAME = "tbl-storage";
-
-        /// <summary>
-        /// Key of the central storage account.
-        /// </summary>
-        public const string CENTRAL_STORAGE_ACCOUNT_KEY = "tbl-storage-key";
-
-        /// <summary>
         /// Endpoint for working with Azure Storage Queues on the central storage account.
         /// </summary>
         public const string CENTRAL_STORAGE_QUEUE_ENDPOINT = "queue-storage-endpoint";
