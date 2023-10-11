@@ -14,7 +14,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { AWSStorage } from '.';
-import { Response as expResponse } from 'express';
 import { SubProjectModel } from '../../../services/subproject';
 import { TenantModel } from '../../../services/tenant';
 import { Error, Utils } from '../../../shared';
@@ -31,7 +30,6 @@ export class AwsSeistore extends AbstractSeistore {
         return internalSwapForSauth ? Utils.checkSauthV1EmailDomainName(email) : email;
     }
 
-    // [TODO] Push an event when a subproject is created
     public async notifySubprojectCreationStatus(subproject: SubProjectModel,
         status: string): Promise<string> {
         return 'Not Implemented';
