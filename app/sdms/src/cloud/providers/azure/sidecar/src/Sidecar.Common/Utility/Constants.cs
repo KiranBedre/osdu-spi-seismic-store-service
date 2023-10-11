@@ -56,18 +56,11 @@ public static class Constants
         /// Instrumentation key of Application Insights.
         /// </summary>
         public const string APP_INSIGHTS_INSTRUMENTATION_KEY = "appinsights-key";
-
-        /// <summary>
-        /// Endpoint for working with Azure Storage Queues on the central storage account.
-        /// </summary>
-        public const string CENTRAL_STORAGE_QUEUE_ENDPOINT = "queue-storage-endpoint";
     }
 
     public const int BLOB_BULK_DELETE_BATCH_SIZE = 1000;
 
     public const string DELETE_LOCK_PREFIX = "WDELETE";
-
-    public const string STORAGE_QUEUE_NAME = "delete-tasks";
 
     public static class DeleteOperationStatus
     {

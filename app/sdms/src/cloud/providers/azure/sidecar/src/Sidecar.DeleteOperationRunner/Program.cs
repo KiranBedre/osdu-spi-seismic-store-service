@@ -18,14 +18,12 @@ namespace Sidecar.DeleteOperationRunner;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using Azure.Storage.Queues;
 using CommandLine;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Sidecar.Common.HealthChecks;
@@ -81,8 +79,7 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID),
-            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY),
-            secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_QUEUE_ENDPOINT));
+            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY));
 
         _logger?.LogInformation("Got variables from Key Vault...");
 
@@ -94,7 +91,6 @@ public class Program
         opts.RedisQueuePassword ??= secrets[3];
         opts.AppResourceId ??= secrets[4];
         opts.AppInsightsInstrumentationKey ??= secrets[5];
-        opts.CentralStorageQueueEndpoint ??= secrets[6];
     }
     
     private static async Task RunAsync(Options opts)
@@ -182,25 +178,12 @@ public class Program
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-            .AddSingleton<DeletionTaskJsonDeserializer>()
             .AddSingleton<DeletionTaskHashEntriesDeserializer>()
             .AddSingleton<DeletionTaskExecutor>()
-            .AddSingleton<StorageQueueWorker<
-                IDeletionOperationMessage,
-                DeletionTaskJsonDeserializer,
-                DeletionTaskExecutor
-            >>()
             .AddSingleton<RedisListWorker<
                 IDeletionOperationMessage,
                 DeletionTaskHashEntriesDeserializer,
                 DeletionTaskExecutor
-            >>()
-            .AddHostedService<TaskQueueBackgroundService<
-                StorageQueueWorker<
-                    IDeletionOperationMessage,
-                    DeletionTaskJsonDeserializer,
-                    DeletionTaskExecutor
-                >
             >>()
             .AddHostedService<TaskQueueBackgroundService<
                 RedisListWorker<
@@ -210,15 +193,6 @@ public class Program
                 >
             >>()
             .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTaskStatusStorage>()
-            .AddSingleton<QueueClient>(sp =>
-            {
-                var queueUri = new QueueUriBuilder(new(opts.CentralStorageQueueEndpoint))
-                {
-                    QueueName = Constants.STORAGE_QUEUE_NAME,
-                }.ToUri();
-                var credential = sp.GetRequiredService<TokenCredential>();
-                return new(queueUri, credential);
-            })
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IDataAccess, Cosmos>();
 

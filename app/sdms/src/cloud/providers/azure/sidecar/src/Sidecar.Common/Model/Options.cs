@@ -70,7 +70,4 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option("appInsightsInstrumentationKey", Required = false, HelpText = "AppInsights instrumentation key")]
     public string AppInsightsInstrumentationKey { get; set; }
-
-    [Option("centralStorageQueueEndpoint", Required = false, HelpText = "Queue endpoint of the central storage account")]
-    public string CentralStorageQueueEndpoint { get; set; }
 }
