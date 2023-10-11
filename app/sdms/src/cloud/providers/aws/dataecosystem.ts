@@ -28,11 +28,11 @@ interface PartitionInfoAws {
 @DataEcosystemCoreFactory.register('aws')
 export class AWSDataEcosystemServices extends AbstractDataEcosystemCore {
     public getDataPartitionIDRestHeaderName(): string { return 'data-partition-id'; }
-    public getEntitlementBaseUrlPath(): string { return '/api/entitlements/v2'; };
-    public getComplianceBaseUrlPath(): string { return '/api/legal/v1'; };
-    public getStorageBaseUrlPath(): string { return '/api/storage/v2'; };
+    public getEntitlementBaseUrlPath(): string { return '/api/entitlements/v2'; }
+    public getComplianceBaseUrlPath(): string { return '/api/legal/v1'; }
+    public getStorageBaseUrlPath(): string { return '/api/storage/v2'; }
     public getUserAssociationSvcBaseUrlPath(): string { return 'userAssociation/v1'; }
-    public static getPartitionBaseUrlPath(): string { return '/api/partition/v1/partitions/'; };
+    public static getPartitionBaseUrlPath(): string { return '/api/partition/v1/partitions/'; }
     public getPolicySvcBaseUrlPath(): string { return 'api/policy/v1'; }
 
     public async getAuthorizationHeader(userToken: string): Promise<string> {
@@ -57,8 +57,7 @@ export class AWSDataEcosystemServices extends AbstractDataEcosystemCore {
         const res = cache.get<string>(cacheKey);
         if (res !== undefined) {
             return res;
-        };
-
+        }
         const token = await AWSCredentials.getServiceCredentials();
         const options = {
             headers: {
@@ -66,7 +65,6 @@ export class AWSDataEcosystemServices extends AbstractDataEcosystemCore {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             }
-            // url: 'https://kogliny.dev.osdu.aws/api/partition/v1/partitions/' + dataPartitionID
         };
         const url = AWSConfig.DES_SERVICE_HOST_PARTITION +
         AWSDataEcosystemServices.getPartitionBaseUrlPath() + dataPartitionID;

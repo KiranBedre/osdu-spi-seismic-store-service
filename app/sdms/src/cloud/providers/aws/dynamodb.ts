@@ -29,17 +29,19 @@ export class AWSDynamoDbDAO extends AbstractJournal {
     public KEY = Symbol('id');
     private dataPartition: string;
     private tenant: TenantModel;
+    private db: DynamoDB;
     private tenantTablePrefix: string;
     private static ALLOWED_NAMES_REGEX: Map<string, RegExp> = new Map([
         [AWSConfig.SUBPROJECTS_KIND, new RegExp('^[^\\-]+$')]
     ]);
 
-    public constructor(tenant: TenantModel) {
+    public constructor(tenant: TenantModel, db: DynamoDB = new DynamoDB({})) {
         super();
         this.tenant = tenant;
         this.dataPartition = tenant.esd.indexOf('.') !== -1 ? tenant.esd.split('.')[0] : tenant.esd;
         AWS.config.update({ region: AWSConfig.AWS_REGION });
         this.tenantTablePrefix='';
+        this.db = db;
     }
 
     public async getPartitionTenant()
@@ -53,8 +55,7 @@ export class AWSDynamoDbDAO extends AbstractJournal {
     public async getTableName(table:string): Promise<string>{
         await this.getPartitionTenant();
         const lastIndex = table.lastIndexOf('-');
-        const ret = table.substring(0, lastIndex)+'-'+this.tenantTablePrefix+table.substring(lastIndex);
-        return ret;
+        return table.substring(0, lastIndex)+'-'+this.tenantTablePrefix+table.substring(lastIndex);
     }
     public async save(datasetEntity: any): Promise<void> {
         if (!(datasetEntity instanceof Array)) {
@@ -99,8 +100,7 @@ export class AWSDynamoDbDAO extends AbstractJournal {
                 TableName: tenantTable,
                 Item: itemMarshall
             };
-            const db = new DynamoDB({});
-            await db.putItem(para).promise();
+            await this.db.putItem(para).promise();
         }
     }
 
@@ -114,8 +114,7 @@ export class AWSDynamoDbDAO extends AbstractJournal {
             TableName: tenantTable,
             Key: itemMarshall
         };
-        const db = new DynamoDB({});
-        const data = await db.getItem(params).promise();
+        const data = await this.db.getItem(params).promise();
         const ret = converter.unmarshall(data.Item);
         if (Object.keys(ret).length === 0)
             return [undefined];
@@ -138,8 +137,8 @@ export class AWSDynamoDbDAO extends AbstractJournal {
             TableName: tenantTable,
             Key: itemMarshall
         };
-        const db = new DynamoDB({});
-        await db.deleteItem(params).promise();
+
+        await this.db.deleteItem(params).promise();
     }
 
     public createQuery(namespace: string, kind: string): IJournalQueryModel {
@@ -236,7 +235,7 @@ export class AWSDynamoDbTransactionDAO extends AbstractJournalTransaction {
     public async get(key: any): Promise<[any | any[]]> {
         // tslint:disable-next-line:no-console
         console.log('aws Transaction get ' + JSON.stringify(key));
-        return await this.owner.get(key);
+        return this.owner.get(key);
     }
 
     public async delete(key: any): Promise<void> {
@@ -255,7 +254,7 @@ export class AWSDynamoDbTransactionDAO extends AbstractJournalTransaction {
     public async runQuery(query: IJournalQueryModel): Promise<[any[], { endCursor?: string }]> {
         // tslint:disable-next-line:no-console
         console.log('aws Transaction runQuery ' + JSON.stringify(query));
-        return await this.owner.runQuery(query);
+        return this.owner.runQuery(query);
     }
 
     public async run(): Promise<void> {
@@ -399,10 +398,11 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
         if (typeof fieldNames === 'string') {
             this.queryStatement.ProjectionExpression += fieldNames;
         } else {
-            if(fieldNames[0] === 'path')
-            this.queryStatement.ProjectionExpression += '#p';
-            else
-            this.queryStatement.ProjectionExpression += fieldNames.join(',');
+            if(fieldNames[0] === 'path') {
+                this.queryStatement.ProjectionExpression += '#p';
+            } else {
+                this.queryStatement.ProjectionExpression += fieldNames.join(',');
+            }
         }
         return this;
     }

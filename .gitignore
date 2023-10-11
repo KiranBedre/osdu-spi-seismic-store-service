@@ -20,3 +20,9 @@
 dist/
 node_modules/
 dev/
+
+
+# test   
+.nyc_output
+coverage  
+test-results.xml

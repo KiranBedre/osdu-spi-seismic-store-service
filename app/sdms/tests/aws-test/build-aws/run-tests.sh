@@ -28,7 +28,7 @@ mkdir test-reports
 echo "Creating tmp/sdmsawstest dir"
 mkdir -p /tmp/sdmsawstest
 pushd /tmp/sdmsawstest
-npm install newman
+npm install newman@v5.3.2
 echo "check if node_modules exists"
 [ -d "/tmp/sdmsawstest/node_modules" ] && echo "Directory /tmp/sdmsawstest/node_modules exists." || echo "Error: Directory /tmp/sdmsawstest/node_modules does not exists."
 echo "Copying node_modules now.."

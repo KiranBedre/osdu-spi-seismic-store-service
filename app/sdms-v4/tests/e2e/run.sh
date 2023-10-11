@@ -167,7 +167,7 @@ if [ -z "${partition}" ]; then usage "partition not defined"; fi
 # optional parameters default value
 if [ -z "${sdms_svc_path}" ]; then sdms_svc_path="/seistore-svc/api/v4"; fi
 
-# compute osdu resources 
+# compute osdu resources
 if [ -z "${legal_tag}" ]; then
   printf "\n"
   legal_tag="sdms-e2e" 
