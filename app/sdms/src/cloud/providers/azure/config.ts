@@ -25,6 +25,9 @@ export class AzureConfig extends Config {
     // Application resource id
     public static APP_RESOURCE_ID: string;
 
+    // Azure Storage Queue (task queues for the long-running operations)
+    public static AZURE_STORAGE_QUEUE_ENDPOINT: string;
+
     // Instrumentation key
     public static AI_INSTRUMENTATION_KEY: string;
     public static CORRELATION_ID = 'correlation-id';
