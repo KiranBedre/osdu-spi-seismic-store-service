@@ -18,6 +18,7 @@ namespace Sidecar.DeleteOperationRunner;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Azure.Storage.Queues;
 using CommandLine;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -67,6 +68,9 @@ public class Program
         opts.DesUrl ??= Environment.GetEnvironmentVariable("DES_SERVICE_HOST")!;
 
         opts.AppInsightsInstrumentationKey ??= Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATION_KEY")!;
+
+        opts.StorageQueueTaskQueueName = Environment.GetEnvironmentVariable("STORAGE_QUEUE_NAME") ??
+                                         opts.StorageQueueTaskQueueName;
     }
 
     private static async Task AttemptOptionsFromKeyVaultAsync(Options opts)
@@ -80,7 +84,8 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_SHARED_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID),
-            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY));
+            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY),
+            secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_QUEUE_ENDPOINT));
 
         _logger?.LogInformation("Got variables from Key Vault...");
 
@@ -92,6 +97,7 @@ public class Program
         opts.RedisQueuePassword ??= secrets[3];
         opts.AppResourceId ??= secrets[4];
         opts.AppInsightsInstrumentationKey ??= secrets[5];
+        opts.StorageQueueEndpoint ??= secrets[6];
     }
 
     private static async Task RunAsync(Options opts)
@@ -173,22 +179,44 @@ public class Program
             .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
             {
                 WaitTimeIfTaskNotFound = TimeSpan.FromSeconds(5),
             })
+            .AddSingleton(new StorageQueueWorkerOptions
+            {
+                LockDuration = TimeSpan.FromMinutes(5),
+                LockRenewalPeriod = TimeSpan.FromMinutes(3),
+                MaxDequeueCount = 5,
+            });
+
+        _ = services
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
             .AddSingleton<IRedisConnectionFactory, RedisConnectionFactory>()
             .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
+            .AddSingleton<DeletionTaskJsonDeserializer>()
             .AddSingleton<DeletionTaskHashEntriesDeserializer>()
             .AddSingleton<DeletionTaskExecutor>()
+            .AddSingleton<StorageQueueWorker<
+                IDeletionOperationMessage,
+                DeletionTaskJsonDeserializer,
+                DeletionTaskExecutor
+            >>()
             .AddSingleton<RedisListWorker<
                 IDeletionOperationMessage,
                 DeletionTaskHashEntriesDeserializer,
                 DeletionTaskExecutor
+            >>()
+            .AddHostedService<TaskQueueBackgroundService<
+                StorageQueueWorker<
+                    IDeletionOperationMessage,
+                    DeletionTaskJsonDeserializer,
+                    DeletionTaskExecutor
+                >
             >>()
             .AddHostedService<TaskQueueBackgroundService<
                 RedisListWorker<
@@ -198,6 +226,8 @@ public class Program
                 >
             >>()
             .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTaskStatusStorage>()
+            .AddSingleton<QueueClientFactory>()
+            .AddSingleton<QueueClient>(sp => sp.GetRequiredService<QueueClientFactory>().Build())
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IDataAccess, Cosmos>();
 

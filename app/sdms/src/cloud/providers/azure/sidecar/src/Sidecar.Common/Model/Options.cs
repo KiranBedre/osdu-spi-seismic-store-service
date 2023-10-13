@@ -21,7 +21,7 @@ using Interface;
 
 # pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
-public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsStorageAccount, IOptionsDataEcosystemService
+public class Options : IOptions
 {
     [Option("port", Required = false, Default = "6000", HelpText = "Port on which to expose the endpoints")]
     public string WebHostPort { get; set; }
@@ -70,4 +70,10 @@ public class Options : IOptions, IOptionsQueueRedis, IOptionsCosmos, IOptionsSto
 
     [Option("appInsightsInstrumentationKey", Required = false, HelpText = "AppInsights instrumentation key")]
     public string AppInsightsInstrumentationKey { get; set; }
+
+    [Option("storageQueueEndpoint", Required = false, HelpText = "Queue endpoint to connect to the task queue on Azure Storage")]
+    public string StorageQueueEndpoint { get; set; }
+
+    [Option("storageQueueTaskQueueName", Required = false, Default = "delete-tasks", HelpText = "Name of the task queue")]
+    public string StorageQueueTaskQueueName { get; set; }
 }
