@@ -6,7 +6,7 @@ using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
 using System.Globalization;
 
-public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
+public class DeletionTaskExecutor : ITaskExecutor<IDeletionOperationMessage>
 {
     private readonly ILogger<DeletionTaskExecutor> _logger;
     private readonly IDeletionTaskStatusStorage _deletionTaskStatusStorage;

@@ -163,7 +163,7 @@ internal static partial class TestingHelpers
         //---note the pattern is "<key>:<property name>:" (see the GetHashKey method)
         public HashEntry[] HashGetAll(RedisKey key)
         {
-            string hashPrefix = $"{key}:";
+            var hashPrefix = $"{key}:";
             return _cache
                 .Where(e => e.Key.StartsWith(hashPrefix))
                 .Select(e => new HashEntry(e.Key[hashPrefix.Length..].TrimEnd(':'), e.Value)).ToArray();

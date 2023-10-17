@@ -8,7 +8,7 @@ using Sidecar.Common.Interface;
 /// Background service that works on the given task queue until cancellation.
 /// </summary>
 public class TaskQueueBackgroundService<TW> : BackgroundService
-    where TW: ITaskQueueWorker
+    where TW : ITaskQueueWorker
 {
     private readonly ILogger<TaskQueueBackgroundService<TW>> _logger;
     private readonly TW _worker;

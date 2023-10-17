@@ -7,8 +7,6 @@ using StackExchange.Redis;
 
 public class DeletionTaskHashEntriesDeserializer : ITaskDeserializer<HashEntry[], IDeletionOperationMessage>
 {
-    public IDeletionOperationMessage Deserialize(HashEntry[] task)
-    {
-        return task.FromHashEntries<DeleteOperationMessage>(true);
-    }
+    public IDeletionOperationMessage Deserialize(HashEntry[] task) =>
+        task.FromHashEntries<DeleteOperationMessage>(true);
 }

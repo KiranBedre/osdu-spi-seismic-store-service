@@ -23,7 +23,7 @@ using FluentAssertions.ArgumentMatchers.Moq;
 using Sidecar.Common.TaskQueue;
 
 // type alias for readability
-using WorkerType = Sidecar.Common.TaskQueue.RedisListWorker<
+using WorkerType = TaskQueue.RedisListWorker<
     IDeletionOperationMessage,
     TaskQueue.DeletionTaskHashEntriesDeserializer,
     ITaskExecutor<IDeletionOperationMessage>
@@ -94,9 +94,9 @@ public class RedisListWorkerTests
     private async Task ExecutorFinishingSuccessfully_DeletesMessageFromQueue(int extraMessageCount)
     {
         // Arrange
-        for (int i = 0; i < extraMessageCount; ++i)
+        for (var i = 0; i < extraMessageCount; ++i)
         {
-            await PushDeleteOperationMessage();
+            _ = await PushDeleteOperationMessage();
         }
         var expectedMsg = await PushDeleteOperationMessage();
 
@@ -107,7 +107,7 @@ public class RedisListWorkerTests
         _executorMock.Verify(e => e.Process(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
-        queueItems.Length.Should().Be(extraMessageCount);
+        _ = queueItems.Length.Should().Be(extraMessageCount);
     }
 
     [Theory]
@@ -117,23 +117,23 @@ public class RedisListWorkerTests
     private async Task ExecutorRaisingError_ReturnsMessageToTheQueue(int extraMessageCount)
     {
         // Arrange
-        for (int i = 0; i < extraMessageCount; ++i)
+        for (var i = 0; i < extraMessageCount; ++i)
         {
-            await PushDeleteOperationMessage();
+            _ = await PushDeleteOperationMessage();
         }
         var expectedMsg = await PushDeleteOperationMessage();
 
-        _executorMock.Setup(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>())).Throws<TestException>();
+        _ = _executorMock.Setup(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>())).Throws<TestException>();
 
         // Act
         var action = async () => await _worker.HandleNextTaskAsync(CancellationToken.None);
-        await action.Should().ThrowAsync<TestException>();
+        _ = await action.Should().ThrowAsync<TestException>();
 
         // Assert
         _executorMock.Verify(e => e.Process(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
-        queueItems.Length.Should().Be(extraMessageCount + 1);
+        _ = queueItems.Length.Should().Be(extraMessageCount + 1);
     }
 
     private class TestException : Exception {}
