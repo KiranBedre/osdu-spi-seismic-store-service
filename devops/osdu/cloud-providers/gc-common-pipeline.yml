@@ -2,63 +2,26 @@ variables:
   GC_GCR_REGISTRY: "gcr.io/osdu-anthos"
   APP_VERSION: "$GC_HELM_PACKAGE_VERSION-SNAPSHOT"
 
+.gc_obtain_credentials:
+  script:
+    - |
+      echo "$GITLAB_OIDC_TOKEN" > token.txt
+      gcloud iam workload-identity-pools create-cred-config \
+      projects/${GC_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${GC_POOL_ID}/providers/${GC_PROVIDER_ID} \
+      --service-account=${GC_SA_EMAIL} \
+      --service-account-token-lifetime-seconds=1800 \
+      --output-file=$CI_PROJECT_DIR/credentials.json \
+      --credential-source-file=token.txt
+    - export GOOGLE_APPLICATION_CREDENTIALS=$CI_PROJECT_DIR/credentials.json
+    - gcloud auth login --cred-file=$CI_PROJECT_DIR/credentials.json
+
 .gc_common:
   script:
-    - gcloud auth activate-service-account --key-file $GC_DEPLOY_FILE
-    - gcloud config set project $GC_PROJECT
+    - apk add --no-cache bash jq
     - gcloud components install kubectl --quiet
     - export USE_GKE_GCLOUD_AUTH_PLUGIN=True
     - gcloud container clusters get-credentials $GC_CLUSTER --zone $GC_ZONE --project $GC_PROJECT
-    - curl https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz -s -o helm.tgz; tar -zxf helm.tgz; mv linux-amd64/helm /usr/local/bin/
-    - apk update && apk add jq
-    - >
-      if helm status $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE -n $GC_HELM_NAMESPACE;
-      then
-        HELM_REVISION=$(helm history $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE -o json | jq '.[] | select(.status == "pending-upgrade").revision')
-        if [[ ! -z "$HELM_REVISION" ]]; then kubectl delete secret sh.helm.release.v1.$SEISMIC_GC_HELM_DEPLOYMENT_SERVICE.v$HELM_REVISION; fi
-      fi
-
-.gc_common-dev2:
-  script:
-    - gcloud auth activate-service-account --key-file $GC_DEV2_DEPLOY_FILE
-    - gcloud config set project $GC_PROJECT
-    - gcloud components install kubectl --quiet
-    - export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-    - gcloud container clusters get-credentials $GC_CLUSTER --zone $GC_ZONE --project $GC_PROJECT
-    - curl https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz -s -o helm.tgz; tar -zxf helm.tgz; mv linux-amd64/helm /usr/local/bin/
-    - apk update && apk add jq
-    - >
-      if helm status $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE -n $GC_HELM_NAMESPACE;
-      then
-        HELM_REVISION=$(helm history $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE -o json | jq '.[] | select(.status == "pending-upgrade").revision')
-        if [[ ! -z "$HELM_REVISION" ]]; then kubectl delete secret sh.helm.release.v1.$SEISMIC_GC_HELM_DEPLOYMENT_SERVICE.v$HELM_REVISION; fi
-      fi
-
-.gc_common-preship:
-  script:
-    - gcloud auth activate-service-account --key-file $GC_PRESHIP_DEPLOY_FILE
-    - gcloud config set project $GC_PROJECT
-    - gcloud components install kubectl --quiet
-    - export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-    - gcloud container clusters get-credentials $GC_CLUSTER --zone $GC_ZONE --project $GC_PROJECT
-    - curl https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz -s -o helm.tgz; tar -zxf helm.tgz; mv linux-amd64/helm /usr/local/bin/
-    - apk update && apk add jq
-    - >
-      if helm status $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE -n $GC_HELM_NAMESPACE;
-      then
-        HELM_REVISION=$(helm history $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE -o json | jq '.[] | select(.status == "pending-upgrade").revision')
-        if [[ ! -z "$HELM_REVISION" ]]; then kubectl delete secret sh.helm.release.v1.$SEISMIC_GC_HELM_DEPLOYMENT_SERVICE.v$HELM_REVISION; fi
-      fi
-
-.gc_common-baremetal:
-  script:
-    - gcloud auth activate-service-account --key-file $GC_BAREMETAL_DEPLOY_FILE
-    - gcloud config set project $GC_PROJECT
-    - gcloud components install kubectl --quiet
-    - export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-    - gcloud container clusters get-credentials $GC_CLUSTER --zone $GC_ZONE --project $GC_PROJECT
-    - curl https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz -s -o helm.tgz; tar -zxf helm.tgz; mv linux-amd64/helm /usr/local/bin/
-    - apk update && apk add jq
+    - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | VERIFY_CHECKSUM=false bash
     - >
       if helm status $SEISMIC_GC_HELM_DEPLOYMENT_SERVICE -n $GC_HELM_NAMESPACE;
       then
@@ -177,15 +140,20 @@ variables:
       when: on_success
 
 .gc-helm-charts-release-gcr:
+  environment:
+    name: GC_Baremetal
   stage: containerize
   tags: ["osdu-small"]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://iam.googleapis.com/projects/${GC_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${GC_POOL_ID}/providers/${GC_PROVIDER_ID}
   image:
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
     entrypoint: [""]
   before_script:
-    - apk add --no-cache curl bash
+    - apk add --no-cache bash
     - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | VERIFY_CHECKSUM=false bash
-    - gcloud auth activate-service-account --key-file=${GC_BAREMETAL_DEPLOY_FILE}
+    - !reference [.gc_obtain_credentials, script]
     - gcloud auth configure-docker gcr.io --quiet
     - !reference [.gc_set_image_name, script]
     - !reference [.gc_substitute_image_in_helm, script]
@@ -215,15 +183,20 @@ variables:
       when: on_success
 
 .gc-containerize-gcr:
+  environment:
+    name: GC_Baremetal
   stage: containerize
   tags: ["osdu-medium"]
-  extends: .gc-variables
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://iam.googleapis.com/projects/${GC_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${GC_POOL_ID}/providers/${GC_PROVIDER_ID}
+  extends: .gc-baremetal-variables
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   cache: {}
   services:
     - docker:dind
   before_script:
-    - gcloud auth activate-service-account --key-file=${GC_BAREMETAL_DEPLOY_FILE}
+    - !reference [.gc_obtain_credentials, script]
     - gcloud auth configure-docker gcr.io --quiet
     - cd app/$SDMS_SERVICE
     - sed -i 's|#{SDMS_PREFIX}#|'$GC_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
@@ -235,13 +208,19 @@ variables:
       when: on_success
 
 .gc-deploy:
+  environment:
+    name: Google_Cloud
   stage: deploy
   retry: 1
   tags: ["osdu-small"]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://iam.googleapis.com/projects/${GC_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${GC_POOL_ID}/providers/${GC_PROVIDER_ID}
   extends: .gc-variables
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   cache: {}
   script:
+    - !reference [.gc_obtain_credentials, script]
     - !reference [.gc_common, script]
     - !reference [.gc_define_version, script]
     - !reference [.gc_set_image_name, script]
@@ -266,13 +245,19 @@ variables:
       when: on_success
 
 .gc-dev2-deploy:
+  environment:
+    name: GC_Dev2
   stage: deploy
   retry: 1
   tags: ["osdu-small"]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://iam.googleapis.com/projects/${GC_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${GC_POOL_ID}/providers/${GC_PROVIDER_ID}
   extends: .gc-dev2-variables
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   script:
-    - !reference [.gc_common-dev2, script]
+    - !reference [.gc_obtain_credentials, script]
+    - !reference [.gc_common, script]
     - !reference [.gc_define_version, script]
     - !reference [.gc_set_image_name, script]
     - >
@@ -297,13 +282,19 @@ variables:
       when: on_success
 
 .gc-preship-deploy:
+  environment:
+    name: GC_Preship
   stage: deploy_preship
   retry: 1
   tags: ["osdu-small"]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://iam.googleapis.com/projects/${GC_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${GC_POOL_ID}/providers/${GC_PROVIDER_ID}
   extends: .gc-preship-variables
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   script:
-    - !reference [.gc_common-preship, script]
+    - !reference [.gc_obtain_credentials, script]
+    - !reference [.gc_common, script]
     - !reference [.gc_define_version, script]
     - !reference [.gc_set_image_name, script]
     - >
@@ -330,14 +321,19 @@ variables:
       allow_failure: true
 
 .gc-baremetal-deploy:
+  environment:
+    name: GC_Baremetal
   stage: deploy
   retry: 1
   tags: ["osdu-small"]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://iam.googleapis.com/projects/${GC_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${GC_POOL_ID}/providers/${GC_PROVIDER_ID}
   extends: .gc-baremetal-variables
   image: gcr.io/google.com/cloudsdktool/cloud-sdk:alpine
   script:
-    - gcloud auth activate-service-account --key-file $GC_BAREMETAL_DEPLOY_FILE
-    - !reference [.gc_common-baremetal, script]
+    - !reference [.gc_obtain_credentials, script]
+    - !reference [.gc_common, script]
     - !reference [.gc_define_version, script]
     - !reference [.gc_set_image_name, script]
     - >

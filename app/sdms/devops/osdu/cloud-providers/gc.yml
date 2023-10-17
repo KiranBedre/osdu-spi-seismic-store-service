@@ -90,12 +90,15 @@ sdms-gc-helm-charts-release-gitlab:
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
 
 sdms-gc-helm-charts-release-gcr:
-  extends: .gc-helm-charts-release-gcr
+  extends:
+    - .gc-helm-charts-release-gcr
+    - .gc-baremetal-variables
   needs: ["sdms-gc-containerize-gitlab"]
   variables:
     SEISMIC_GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"
     SEISMIC_GC_SERVICE: seismic-store
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
+    GC_SA_EMAIL: $GC_SA_GCR_EMAIL
 
 sdms-gc-containerize-gitlab:
   extends: .gc-containerize-gitlab
@@ -183,6 +186,7 @@ sdms-gc-containerize-gcr:
   variables:
     SEISMIC_GC_SERVICE: seismic-store
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
+    GC_SA_EMAIL: $GC_SA_GCR_EMAIL
   rules:
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
@@ -215,6 +219,7 @@ sdms-gc-deploy:
     SEISMIC_GC_HELM_DEPLOYMENT_SERVICE: seismic-store-deploy
     SEISMIC_GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"
     SEISMIC_GC_SERVICE: seismic-store
+    GC_SA_EMAIL: $GC_SA_GKE_EMAIL
   rules:
     - if: "$CI_COMMIT_BRANCH =~ /^release/"
       when: never
@@ -253,6 +258,7 @@ sdms-gc-dev2-deploy:
     SEISMIC_GC_SERVICE: seismic-store
     SEISMIC_GC_CHART: gc-seismic-store-sdms-deploy #var used only in release and tagged pipelines
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
+    GC_SA_EMAIL: $GC_SA_GKE_EMAIL
   rules:
     - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
       when: on_success
@@ -310,6 +316,7 @@ sdms-gc-preship-deploy:
     SEISMIC_GC_SERVICE: seismic-store
     SEISMIC_GC_CHART: gc-seismic-store-sdms-deploy #var used only in release and tagged pipelines
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
+    GC_SA_EMAIL: $GC_SA_GKE_EMAIL
   rules:
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: manual
@@ -367,6 +374,7 @@ sdms-gc-baremetal-deploy:
     SEISMIC_GC_HELM_DEPLOYMENT_SERVICE: seismic-store-deploy
     SEISMIC_GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"
     SEISMIC_GC_SERVICE: seismic-store
+    GC_SA_EMAIL: $GC_SA_GKE_EMAIL
   rules:
     - if: "$CI_COMMIT_BRANCH =~ /^release/"
       when: never
