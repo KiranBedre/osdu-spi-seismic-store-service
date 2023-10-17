@@ -19,12 +19,12 @@ namespace Sidecar.Common.Tests.Service;
 
 using Sidecar.Common.Utility;
 
-public class DeletionTasksStatusStorageTests : RedisHandlerTests
+public class RedisDeletionTaskStatusStorageTests : RedisHandlerTests
 {
     private readonly RedisDeletionTaskStatusStorage _statusStorage;
     private const string QUEUE_NAME = "somequeue";
 
-    public DeletionTasksStatusStorageTests()
+    public RedisDeletionTaskStatusStorageTests()
     {
         _ = RedisConnectionFactory
             .Setup(m => m.GetRedisForQueue())
@@ -52,37 +52,22 @@ public class DeletionTasksStatusStorageTests : RedisHandlerTests
         var msgFromRedis = ConnectionMultiplexer.Object.GetDatabase().HashGetAll(expectedMsgKeyInRedis).FromHashEntries<DeleteOperationStatus>();
 
         // Assert
-        _ = statusMsg.Should().BeEquivalentTo(msgFromRedis);  // TODO: fix this
-
-        _ = statusMsg.Should()
-                .NotBeNull();
+        _ = msgFromRedis.Should().BeEquivalentTo(statusMsg);
+        _ = statusMsg.Should().BeEquivalentTo(opMsg);
         
-        _ = statusMsg!.OperationId
-            .Should()
-            .Be(opMsg.OperationId);
-        _ = statusMsg!.Tenant
-            .Should()
-            .Be(opMsg.Tenant);
-        _ = statusMsg!.Path
-            .Should()
-            .Be(opMsg.Path);
-        _ = statusMsg!.Subproject
-            .Should()
-            .Be(opMsg.Subproject);
-        
-        _ = statusMsg!.Status
+        _ = statusMsg.Status
             .Should()
             .Be(Status.Started.ToString());
-        _ = statusMsg!.StatusDescription
+        _ = statusMsg.StatusDescription
             .Should()
             .Be(Status.Started.Description());
-        _ = statusMsg!.DatasetsCnt
+        _ = statusMsg.DatasetsCnt
             .Should()
             .Be(0);
-        _ = statusMsg!.CompletedCnt
+        _ = statusMsg.CompletedCnt
             .Should()
             .Be(0);
-        _ = statusMsg!.FailedCnt
+        _ = statusMsg.FailedCnt
             .Should()
             .Be(0);
     }
