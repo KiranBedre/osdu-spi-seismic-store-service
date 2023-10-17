@@ -36,7 +36,7 @@ public class RedisListWorker<T, TD, TE>: ITaskQueueWorker
         _deserializer = deserializer;
     }
 
-    public async Task HandleNextTask(CancellationToken ct)
+    public async Task HandleNextTaskAsync(CancellationToken ct)
     {
         var db = _queue.GetDatabase();
 

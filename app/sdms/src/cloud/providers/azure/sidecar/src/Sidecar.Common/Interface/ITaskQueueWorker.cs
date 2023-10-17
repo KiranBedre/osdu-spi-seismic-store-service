@@ -5,5 +5,5 @@ namespace Sidecar.Common.Interface;
 /// </summary>
 public interface ITaskQueueWorker
 {
-    public Task HandleNextTask(CancellationToken ct);
+    public Task HandleNextTaskAsync(CancellationToken ct);
 }

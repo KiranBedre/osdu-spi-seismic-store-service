@@ -26,7 +26,7 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
         {
             try
             {
-                await _worker.HandleNextTask(stoppingToken);
+                await _worker.HandleNextTaskAsync(stoppingToken);
             }
             catch (Exception e)
             {

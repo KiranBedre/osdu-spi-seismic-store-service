@@ -81,7 +81,7 @@ public class RedisListWorkerTests
         // do nothing
 
         // Act
-        await _worker.HandleNextTask(CancellationToken.None);
+        await _worker.HandleNextTaskAsync(CancellationToken.None);
 
         // Assert
         _executorMock.Verify(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -101,7 +101,7 @@ public class RedisListWorkerTests
         var expectedMsg = await PushDeleteOperationMessage();
 
         // Act
-        await _worker.HandleNextTask(CancellationToken.None);
+        await _worker.HandleNextTaskAsync(CancellationToken.None);
 
         // Assert
         _executorMock.Verify(e => e.Process(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
@@ -126,7 +126,7 @@ public class RedisListWorkerTests
         _executorMock.Setup(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>())).Throws<TestException>();
 
         // Act
-        var action = async () => await _worker.HandleNextTask(CancellationToken.None);
+        var action = async () => await _worker.HandleNextTaskAsync(CancellationToken.None);
         await action.Should().ThrowAsync<TestException>();
 
         // Assert
