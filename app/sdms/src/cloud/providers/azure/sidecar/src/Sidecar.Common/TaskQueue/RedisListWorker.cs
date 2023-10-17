@@ -42,41 +42,43 @@ public class RedisListWorker<T, TD, TE>: ITaskQueueWorker
 
         var queueName = _options.QueueName;
 
-        var op = await db.ListLeftPopAsync(queueName);
+        var operationId = await db.ListLeftPopAsync(queueName);
 
-        if (!op.HasValue)
+        if (!operationId.HasValue)
         {
             _logger.LogInformation("No tasks found in the queue {Queue}", queueName);
             return;
         }
 
-        var opDataKey = $"{queueName}:{op}";
-        var delOpData = await db.HashGetAllAsync(opDataKey);
+        var operationDataKey = $"{queueName}:{operationId}";
+        var operationData = await db.HashGetAllAsync(operationDataKey);
 
-        if (delOpData.Length == 0)
+        if (operationData.Length == 0)
         {
             // consider the operation poison message, do not return it back to the queue
-            _logger.LogError("Failed to get operation data from queue for operation id {q}", opDataKey);
+            _logger.LogError(
+                "Failed to get operation data from queue for operation id {OperationDataKey}",
+                operationDataKey);
             throw new RedisException("Failed to get operation data from queue");
         }
 
         try
         {
-            var task = _deserializer.Deserialize(delOpData);
+            var task = _deserializer.Deserialize(operationData);
             await _executor.Process(task, ct);
         }
-        catch (Exception e)
+        catch (Exception e) when (e is not OperationCanceledException)
         {
             // Simplicity tradeoffs:
             // - it is possible that we fail to return the task to the queue, and it will be lost forever.
             // - we don't limit the retry count, a "poison message" will be repeatedly re-consumed forever.
-            _logger.LogError(e, "Failed to process operation {}. Returning it to the queue", op);
-            await db.ListRightPushAsync(queueName, op);
+            _logger.LogError(e, "Failed to process operation {OperationId}. Returning it to the queue", operationId);
+            await db.ListRightPushAsync(queueName, operationId);
             throw;
         }
 
         // successfully processed task.
         // deleting the operation data from the queue.
-        await db.KeyDeleteAsync(opDataKey);
+        await db.KeyDeleteAsync(operationDataKey);
     }
 }
