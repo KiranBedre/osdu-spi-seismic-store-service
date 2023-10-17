@@ -98,7 +98,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             {
                 await DeleteBlobsInBulkAsync(blobClient, containerName, virtualFolderName, containerClient, errors, ct);
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 _logger.LogError("Could not delete blobs in container {ContainerName} with prefix {VirtualFolderName}: {EMessage}", containerName, virtualFolderName, e.Message);
                 errors.Add(e.Message);
@@ -124,7 +124,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
                     errors.Add(e.Message);
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 _logger.LogError("Could not delete container \'{ContainerName}\': {EMessage}", containerName, e.Message);
                 errors.Add(e.Message);
@@ -145,7 +145,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
                 await _metadataDeletionWorker.DeleteMetadataAsync(dataPartitionId, datasetId);
                 await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.COMPLETED_CNT, ct);
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 _logger.LogError("Could not delete metadata for {DatasetId}: {EMessage}", datasetId, e.Message);
                 await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT, ct);

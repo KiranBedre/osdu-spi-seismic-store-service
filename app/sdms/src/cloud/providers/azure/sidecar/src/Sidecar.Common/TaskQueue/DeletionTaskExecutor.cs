@@ -57,9 +57,9 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
             lockErrors = await LockDatasetsAsync(status, itemsToDelete, successfullyLocked, ct);
             deletionErrors = await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, ct);
         }
-        catch (Exception ex)
+        catch (Exception e) when (e is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error while deleting datasets {ex} ", ex.ToString());
+            _logger.LogError(e, "Error while deleting datasets");
         }
         finally
         {

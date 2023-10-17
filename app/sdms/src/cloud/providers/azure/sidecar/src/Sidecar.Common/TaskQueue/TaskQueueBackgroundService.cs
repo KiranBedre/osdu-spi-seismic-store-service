@@ -28,7 +28,7 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
             {
                 await _worker.HandleNextTaskAsync(stoppingToken);
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 _logger.LogError(e, "Error when handling a task. Continue...");
             }
