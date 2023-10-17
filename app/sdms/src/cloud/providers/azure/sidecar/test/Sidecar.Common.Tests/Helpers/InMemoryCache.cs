@@ -30,7 +30,7 @@ internal static partial class TestingHelpers
         public bool KeyExists(string key) => _cache.ContainsKey(key) || _queueCache.ContainsKey(key);
 
         public Task<bool> KeyExistsAsync(string key) => Task.FromResult(KeyExists(key));
-        
+
         public long ListRightPush(RedisKey key, string item)
         {
             var list = _queueCache.ContainsKey(key!) ? _queueCache[key!] : new List<RedisValue>();
@@ -76,7 +76,7 @@ internal static partial class TestingHelpers
 
             return vals.Skip((int)start).Take((int)(stop - start + 1)).ToArray();
         }
-        
+
         public RedisValue ListLeftPop(RedisKey key)
         {
             if (!_queueCache.ContainsKey(key!))

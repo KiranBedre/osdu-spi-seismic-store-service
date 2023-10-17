@@ -8,8 +8,8 @@ using StackExchange.Redis;
 /// Worker that consumes tasks from Redis list.
 ///
 /// Task queue architecture:
-/// - list by the key "{queue_name}" that contains operation_id for each task to execute 
-/// - for each operation_id, a redis hash by the key "{queue_name}:{operation_id}" containing detailed operation data. 
+/// - list by the key "{queue_name}" that contains operation_id for each task to execute
+/// - for each operation_id, a redis hash by the key "{queue_name}:{operation_id}" containing detailed operation data.
 /// </summary>
 public class RedisListWorker<T, TD, TE>: ITaskQueueWorker
     where TD: ITaskDeserializer<HashEntry[], T>
@@ -17,7 +17,7 @@ public class RedisListWorker<T, TD, TE>: ITaskQueueWorker
 {
     private readonly ILogger<RedisListWorker<T, TD, TE>> _logger;
     private readonly TD _deserializer;
-    
+
     private readonly IOptionsQueueRedisQueueName _options;
     private readonly IRedisHandler _queue;
     private readonly TE _executor;
@@ -25,8 +25,8 @@ public class RedisListWorker<T, TD, TE>: ITaskQueueWorker
     public RedisListWorker(
         ILogger<RedisListWorker<T, TD, TE>> logger,
         TD deserializer,
-        TE executor, 
-        IRedisConnectionFactory redisConnectionFactory, 
+        TE executor,
+        IRedisConnectionFactory redisConnectionFactory,
         IOptionsQueueRedisQueueName options)
     {
         _logger = logger;

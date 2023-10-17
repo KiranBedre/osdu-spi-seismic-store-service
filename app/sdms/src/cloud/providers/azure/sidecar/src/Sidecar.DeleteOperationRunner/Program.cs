@@ -92,11 +92,11 @@ public class Program
         opts.AppResourceId ??= secrets[4];
         opts.AppInsightsInstrumentationKey ??= secrets[5];
     }
-    
+
     private static async Task RunAsync(Options opts)
     {
         var webApplicationBuilder = WebApplication.CreateBuilder();
-        
+
         ConfigureServices(webApplicationBuilder.Services, opts);
 
         _ = webApplicationBuilder.Logging

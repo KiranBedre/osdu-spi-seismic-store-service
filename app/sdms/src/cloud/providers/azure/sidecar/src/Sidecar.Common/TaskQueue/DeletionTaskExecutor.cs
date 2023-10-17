@@ -118,9 +118,9 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
     }
 
     private async Task<bool> LockDatasetsAsync(
-        IDeletionOperationMessage op, 
-        List<DeleteItem> itemsToDelete, 
-        List<DeleteItem> successfullyLocked, 
+        IDeletionOperationMessage op,
+        List<DeleteItem> itemsToDelete,
+        List<DeleteItem> successfullyLocked,
         CancellationToken ct)
     {
         var foundLockErrors = false;

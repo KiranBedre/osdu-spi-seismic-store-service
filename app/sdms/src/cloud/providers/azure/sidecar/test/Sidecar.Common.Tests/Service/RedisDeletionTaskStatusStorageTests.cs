@@ -35,7 +35,7 @@ public class RedisDeletionTaskStatusStorageTests : RedisHandlerTests
                 ));
 
         var opts = new Options { QueueName = QUEUE_NAME };
-            
+
         _statusStorage = new(opts, RedisConnectionFactory.Object);
     }
 
@@ -54,7 +54,7 @@ public class RedisDeletionTaskStatusStorageTests : RedisHandlerTests
         // Assert
         _ = msgFromRedis.Should().BeEquivalentTo(statusMsg);
         _ = statusMsg.Should().BeEquivalentTo(opMsg);
-        
+
         _ = statusMsg.Status
             .Should()
             .Be(Status.Started.ToString());

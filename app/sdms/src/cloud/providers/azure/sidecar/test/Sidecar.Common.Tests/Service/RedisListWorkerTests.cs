@@ -53,7 +53,7 @@ public class RedisListWorkerTests
                 ));
 
         var opts = new Options { QueueName = QUEUE_NAME };
-            
+
         _worker = new(_loggerMock.Object, _deserializer, _executorMock.Object, redisConnectionFactory.Object, opts);
     }
 
@@ -73,7 +73,7 @@ public class RedisListWorkerTests
 
         return expectedMsg;
     }
-    
+
     [Fact]
     public async Task CheckForDeletionOperationAsync_QueueIsEmpty_DoesNotCallExecutor()
     {
@@ -109,7 +109,7 @@ public class RedisListWorkerTests
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         queueItems.Length.Should().Be(extraMessageCount);
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -135,6 +135,6 @@ public class RedisListWorkerTests
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         queueItems.Length.Should().Be(extraMessageCount + 1);
     }
-    
+
     private class TestException : Exception {}
 }

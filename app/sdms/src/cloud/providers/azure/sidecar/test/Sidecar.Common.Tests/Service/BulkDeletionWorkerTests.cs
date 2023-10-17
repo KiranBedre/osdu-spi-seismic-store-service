@@ -210,10 +210,10 @@ public class BulkDeletionWorkerTests
             Times.Exactly(itemsToDelete.Count));
 
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-                operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), 
+                operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()),
             Times.Once);
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-                operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), 
+                operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
