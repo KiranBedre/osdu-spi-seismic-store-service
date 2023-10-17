@@ -136,5 +136,5 @@ public class RedisListWorkerTests
         _ = queueItems.Length.Should().Be(extraMessageCount + 1);
     }
 
-    private class TestException : Exception {}
+    private class TestException : Exception { }
 }
