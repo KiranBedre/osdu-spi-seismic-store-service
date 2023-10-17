@@ -36,7 +36,7 @@ public static class RedisConverters
                 var hashValue = propertyValue switch
                 {
                     IEnumerable<object> => JsonSerializer.Serialize(propertyValue),
-                    DateTime time => time.ToString("yyyy-MM-dd'T'HH:mm:ss.ffffff", DateTimeFormatInfo.InvariantInfo),
+                    DateTime time => time.ToString("yyyy-MM-dd'T'HH:mm:ss.fffffff", DateTimeFormatInfo.InvariantInfo),
                     _ => propertyValue.ToString()
                 };
                 var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
