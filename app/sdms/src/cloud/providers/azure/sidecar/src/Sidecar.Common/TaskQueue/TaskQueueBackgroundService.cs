@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 
 /// <summary>
-/// Background service that forever works on the given task queue.
+/// Background service that works on the given task queue until cancellation.
 /// </summary>
 public class TaskQueueBackgroundService<TW> : BackgroundService
     where TW: ITaskQueueWorker
