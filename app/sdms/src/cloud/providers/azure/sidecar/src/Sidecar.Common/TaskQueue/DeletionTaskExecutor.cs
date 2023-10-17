@@ -30,11 +30,11 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
         _lockManager = lockManager;
     }
 
-    public async Task Process(IDeletionOperationMessage op, CancellationToken cancellationToken)
+    public async Task Process(IDeletionOperationMessage op, CancellationToken ct)
     {
         //---start the deletion process
         _logger.LogInformation("Starting deletion operation {op}...", op.OperationId);
-        var status = await _deletionTaskStatusStorage.CreateDeletionOperationStatusAsync(op);
+        var status = await _deletionTaskStatusStorage.CreateDeletionOperationStatusAsync(op, ct);
 
         var deletionErrors = true;
         var lockErrors = true;
@@ -43,7 +43,7 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
         bool unlockErrors;
         try
         {
-            var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Path, cancellationToken);
+            var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Path, ct);
 
             _logger.LogInformation("Found {c} items to delete",
                 itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));
@@ -51,10 +51,11 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
             await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(
                 op.OperationId,
                 Constants.DeleteOperationStatus.DATASETS_CNT,
-                itemsToDelete.Count.ToString());
+                itemsToDelete.Count.ToString(),
+                ct);
 
-            lockErrors = await LockDatasetsAsync(status, itemsToDelete, successfullyLocked);
-            deletionErrors = await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, cancellationToken);
+            lockErrors = await LockDatasetsAsync(status, itemsToDelete, successfullyLocked, ct);
+            deletionErrors = await _bulkDeletionWorker.RunBulkDeletionAsync(op.Tenant, op.OperationId, successfullyLocked, ct);
         }
         catch (Exception ex)
         {
@@ -67,20 +68,22 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
 
         if (lockErrors || deletionErrors || unlockErrors)
         {
-            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.CompletedWithErrors);
+            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.CompletedWithErrors, ct);
             _logger.LogError("Finished deletion operation {op} with errors", op.OperationId);
         }
         else
         {
-            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.Completed);
+            await UpdateStatusAndDeleteOperationAsync(op.OperationId, Status.Completed, ct);
             _logger.LogInformation("Finished deletion operation {op} successfully", op.OperationId);
         }
     }
 
-    private async Task UpdateStatusAndDeleteOperationAsync(string operationId, Status status)
+    private async Task UpdateStatusAndDeleteOperationAsync(string operationId, Status status, CancellationToken ct)
     {
-        await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, status.ToString());
-        await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, status.Description());
+        await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(
+            operationId, Constants.DeleteOperationStatus.STATUS, status.ToString(), ct);
+        await _deletionTaskStatusStorage.UpdateFieldStatusOperationAsync(
+            operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, status.Description(), ct);
     }
 
     private async Task<bool> UnlockDatasetsAsync(IDeleteOperationStatus op, List<DeleteItem> itemsToUnlock)
@@ -114,8 +117,11 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
         return unlockErrors;
     }
 
-
-    private async Task<bool> LockDatasetsAsync(IDeleteOperationStatus op, List<DeleteItem> itemsToDelete, List<DeleteItem> successfullyLocked)
+    private async Task<bool> LockDatasetsAsync(
+        IDeletionOperationMessage op, 
+        List<DeleteItem> itemsToDelete, 
+        List<DeleteItem> successfullyLocked, 
+        CancellationToken ct)
     {
         var foundLockErrors = false;
 
@@ -145,7 +151,8 @@ public class DeletionTaskExecutor: ITaskExecutor<IDeletionOperationMessage>
             }
             else
             {
-                await _deletionTaskStatusStorage.IncrementCountAsync(op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT);
+                await _deletionTaskStatusStorage.IncrementCountAsync(
+                    op.OperationId, Constants.DeleteOperationStatus.FAILED_CNT, ct);
                 foundLockErrors = true;
             }
         }

@@ -52,8 +52,8 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         _foundErrors = false;
 
         _logger.LogInformation("Started blob deletion, it will delete {Count} items", itemsToDelete.Count);
-        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString());
-        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description());
+        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), ct);
+        await _deletionTasks.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), ct);
 
         await Parallel.ForEachAsync(itemsToDelete,
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
@@ -69,7 +69,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         {
             _logger.LogError("Gcsurl is null for item {ItemId}", item.Id);
             _foundErrors = true;
-            await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT);
+            await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT, ct);
             return;
         }
 
@@ -84,7 +84,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         {
             _logger.LogError("Could not parse gcsurl {ItemGcsurl}: {EMessage}", item.Gcsurl, e.Message);
             _foundErrors = true;
-            await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT);
+            await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT, ct);
             return;
         }
 
@@ -131,10 +131,10 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             }
         }
 
-        await RemoveMetadataAsync(dataPartitionId, operationId, item.Id, errors);
+        await RemoveMetadataAsync(dataPartitionId, operationId, item.Id, errors, ct);
     }
 
-    private async Task RemoveMetadataAsync(string dataPartitionId, string operationId, string datasetId, List<string> errors)
+    private async Task RemoveMetadataAsync(string dataPartitionId, string operationId, string datasetId, List<string> errors, CancellationToken ct)
     {
         if (errors.Count == 0)
         {
@@ -143,12 +143,12 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             try
             {
                 await _metadataDeletionWorker.DeleteMetadataAsync(dataPartitionId, datasetId);
-                await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.COMPLETED_CNT);
+                await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.COMPLETED_CNT, ct);
             }
             catch (Exception e)
             {
                 _logger.LogError("Could not delete metadata for {DatasetId}: {EMessage}", datasetId, e.Message);
-                await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT);
+                await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT, ct);
                 _foundErrors = true;
             }
         }
@@ -157,7 +157,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             _foundErrors = true;
             var allErrors = string.Join(" ", errors);
             _logger.LogInformation("Will not delete metadata for {DatasetId} due to {AllErrors}", datasetId, allErrors);
-            await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT);
+            await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT, ct);
         }
     }
 

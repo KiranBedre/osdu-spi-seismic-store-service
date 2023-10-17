@@ -36,7 +36,7 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
         _queue = redisConnectionFactory.GetRedisForQueue();
     }
 
-    public async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg)
+    public async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg, CancellationToken ct = default)
     {
         var db = _queue.GetDatabase();
         var status = new DeleteOperationStatus
@@ -65,14 +65,14 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
         return status;
     }
 
-    public async Task IncrementCountAsync(string operationId, string field)
+    public async Task IncrementCountAsync(string operationId, string field, CancellationToken ct = default)
     {
         var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
         _ = await _queue.HashIncrementAsync(statusKey, field);
         _ = await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LAST_UPDATED_AT, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
-    public async Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue)
+    public async Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue, CancellationToken ct = default)
     {
         var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
         _ = await _queue.HashSetAsync(statusKey, keyName, keyValue);

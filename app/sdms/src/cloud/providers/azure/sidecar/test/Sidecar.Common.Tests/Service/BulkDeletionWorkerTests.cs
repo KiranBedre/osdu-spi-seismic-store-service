@@ -62,13 +62,13 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTaskStatusStorage>();
+        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClientFactory>();
 
         var deletionWorker = new BulkDeletionWorker(
             loggerMock.Object,
-            queueMock.Object,
+            statusStorageMock.Object,
             metadataDeletionWorkerMock.Object,
             blobClientMock.Object
         );
@@ -89,9 +89,12 @@ public class BulkDeletionWorkerTests
         Assert.True(foundErrors);
 
         // Assert
-        queueMock.Verify(q => q.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
+        statusStorageMock.Verify(x => x.IncrementCountAsync(
+            operationId, Constants.DeleteOperationStatus.FAILED_CNT, It.IsAny<CancellationToken>()), Times.Once);
+        statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
+            operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
+            operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -99,13 +102,13 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTaskStatusStorage>();
+        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClientFactory>();
 
         var bulkDeletionWorker = new BulkDeletionWorker(
             loggerMock.Object,
-            queueMock.Object,
+            statusStorageMock.Object,
             metadataDeletionWorkerMock.Object,
             blobClientMock.Object
         );
@@ -121,8 +124,8 @@ public class BulkDeletionWorkerTests
         // Assert
         Assert.False(foundErrors);
 
-        queueMock.Verify(
-            queue => queue.IncrementCountAsync(operationId, It.IsAny<string>()),
+        statusStorageMock.Verify(
+            x => x.IncrementCountAsync(operationId, It.IsAny<string>(), It.IsAny<CancellationToken>()),
            Times.Never);
     }
 
@@ -131,7 +134,7 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTaskStatusStorage>();
+        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClient>();
         var blobClientFactoryMock = new Mock<IBlobClientFactory>();
@@ -144,7 +147,7 @@ public class BulkDeletionWorkerTests
 
         var bulkDeletionWorker = new BulkDeletionWorker(
             loggerMock.Object,
-            queueMock.Object,
+            statusStorageMock.Object,
             metadataDeletionWorkerMock.Object,
             blobClientFactoryMock.Object
         );
@@ -202,12 +205,16 @@ public class BulkDeletionWorkerTests
 
         // Assert
         Assert.False(foundErrors);
-        queueMock.Verify(
-            queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.COMPLETED_CNT),
+        statusStorageMock.Verify(x => x.IncrementCountAsync(
+                operationId, Constants.DeleteOperationStatus.COMPLETED_CNT, It.IsAny<CancellationToken>()),
             Times.Exactly(itemsToDelete.Count));
 
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
+        statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
+                operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), 
+            Times.Once);
+        statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
+                operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), 
+            Times.Once);
     }
 
     [Fact]
@@ -215,7 +222,7 @@ public class BulkDeletionWorkerTests
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var queueMock = new Mock<IDeletionTaskStatusStorage>();
+        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
         var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
         var blobClientMock = new Mock<IBlobClient>();
         var blobClientFactoryMock = new Mock<IBlobClientFactory>();
@@ -228,7 +235,7 @@ public class BulkDeletionWorkerTests
 
         var bulkDeletionWorker = new BulkDeletionWorker(
             loggerMock.Object,
-            queueMock.Object,
+            statusStorageMock.Object,
             metadataDeletionWorkerMock.Object,
             blobClientFactoryMock.Object
         );
@@ -282,10 +289,12 @@ public class BulkDeletionWorkerTests
 
         //Assert
         Assert.True(foundErrors);
-        queueMock.Verify(
-            queue => queue.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once);
+        statusStorageMock.Verify(x => x.IncrementCountAsync(
+            operationId, Constants.DeleteOperationStatus.FAILED_CNT, It.IsAny<CancellationToken>()), Times.Once);
 
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString()), Times.Once);
-        queueMock.Verify(q => q.UpdateFieldStatusOperationAsync(operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description()), Times.Once);
+        statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
+            operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
+            operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
