@@ -1,0 +1,4 @@
+{{- template "common.scaledobject" (list . "os-seismic-ddms-v4.scaledobject") -}}
+{{- define "os-seismic-ddms-v4.scaledobject" -}}
+## Define overrides for the service's scaled object resource here
+{{- end -}}

@@ -26,6 +26,10 @@ env:
   
   parameter-store:
     SONAR_URL: /osdu/devops/sonar_url
+  variables:
+    SONAR_PATH: "src/cloud/providers/aws"
+    SONAR_TEST_PATH: "tests/utest/cloud/aws"
+
 
 phases:
   install:
@@ -54,7 +58,7 @@ phases:
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
-      - $(aws ecr get-login --no-include-email --region $AWS_REGION) # authenticate with ECR via the AWS CLI
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}
   build:
     commands:
       - export OUTPUT_DIR="dist"
@@ -75,8 +79,7 @@ phases:
 
       - node_modules/.bin/tslint -c tslint.json 'src/cloud/providers/aws/**/*.ts'
       - echo "Building seismic-store-service"
-      - npm run build
-
+      - npm run test-lcov-automation-aws
       # copy to tests folder for generating token for integration tests
       - cp ../../devops/scripts/aws_jwt_client.py tests/aws-test/build-aws/aws_jwt_client.py
       - cp devops/aws/requirements.txt tests/aws-test/build-aws/requirements.txt
@@ -92,7 +95,7 @@ phases:
       # using jar instead of executable since exe requires 32 bit image and doesn't work on codebuild 4.0
       - |
         java -jar sonar-scanner-4.6.2.2472/lib/sonar-scanner-cli-4.6.2.2472.jar -Dsonar.projectKey=seismic-store-service -Dsonar.host.url=${SONAR_URL} \
-          -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME}
+          -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME} -Dsonar.sources=${SONAR_PATH} -Dsonar.tests=${SONAR_TEST_PATH} -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - echo "Logging into Docker Hub..."
       - docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}

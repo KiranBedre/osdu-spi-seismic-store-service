@@ -32,6 +32,12 @@ import { TestGCSOSDUCore } from './gc/gcs';
 import { TestAzureKeyVault } from './azure/keyvault';
 import { TestAzureStorage } from './azure/cloudstorage';
 import { TestDataEcoSystem } from './google/dataecosystem';
+import { TestAWSCredentials } from './aws/credentials';
+import { TestAWSSSMHelper } from './aws/ssmhelper';
+import { TestAWSDataEcosystem } from './aws/dataecosystem';
+import { TestStorage } from './aws/storage';
+import { TestLogger } from './aws/logger';
+import { TestAWSDynamoDB, TestAWSDynamoDbTransactionDAO, TestAWSDynamoDbQuery } from './aws/dynamodb';
 
 
 export class TestCloud {
@@ -39,6 +45,14 @@ export class TestCloud {
     public static run() {
 
         describe(Tx.title('utest seismic store - cloud core'), () => {
+            TestLogger.run();
+            TestStorage.run();
+            TestAWSCredentials.run();
+            TestAWSDynamoDbQuery.run();
+            TestAWSDynamoDB.run();
+            TestAWSDynamoDbTransactionDAO.run();
+            TestAWSSSMHelper.run();
+            TestAWSDataEcosystem.run();
             TestGoogleCredentials.run();
             TestGCSCore.run();
             TestGCDatastoreDAO.run();

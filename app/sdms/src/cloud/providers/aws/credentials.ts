@@ -55,7 +55,7 @@ export class AWSCredentials extends AbstractCredentials {
         return undefined;
     }
 
-    async getBucketFolder(folder: string, tenantId: string): Promise<string> {
+    async getBucketFolder(folder: string, tenantId: string, db: DynamoDB = new DynamoDB({})): Promise<string> {
         const tableName = AWSConfig.AWS_TENANT_GROUP_NAME+'-'+tenantId+'-SeismicStore.'+AWSConfig.SUBPROJECTS_KIND;
         const params = {
             TableName: tableName,
@@ -63,7 +63,6 @@ export class AWSCredentials extends AbstractCredentials {
                 'id': {S: folder}
             }
         };
-        const db = new DynamoDB({});
         const data = await db.getItem(params).promise();
         const ret = aws.DynamoDB.Converter.unmarshall(data.Item);
         if (Object.keys(ret).length === 0){
@@ -78,8 +77,8 @@ export class AWSCredentials extends AbstractCredentials {
     }
 
     public async getStorageCredentials(
-        tenant: string, subproject: string,
-        bucket: string, readonly: boolean, _partition: string): Promise<IAccessTokenModel> {
+            tenant: string, subproject: string,
+            bucket: string, readonly: boolean, _partition: string): Promise<IAccessTokenModel> {
             const dataPartition = tenant;
             const tenantId = await AWSDataEcosystemServices.getTenantIdFromPartitionID(dataPartition);
 
@@ -101,17 +100,15 @@ export class AWSCredentials extends AbstractCredentials {
             } else   // readOnly False
             {
                 roleArn = await AWSCredentials.awsSSMHelper.getSSMParameter(osduTenantGroupSsmPrefix + '/seismic-ddms/iam/upload-role-arn')
-                flagUpload = true;
             }
 
             credentials = await this.awsSTSHelper.getCredentials(s3bucket, keyPath,roleArn,flagUpload,expDuration);
 
-            const result = {
+            return {
                 access_token: credentials,
                 expires_in: +expDuration,
                 token_type: 'Bearer',
             };
-            return result;
     }
 
     // this will return serviceprincipal access token
@@ -136,7 +133,6 @@ export class AWSCredentials extends AbstractCredentials {
         const auth = clientId+':'+clientSecret;
 
         const encoded= (str: string):string => Buffer.from(str, 'binary').toString('base64');
-        const decoded = (str: string):string => Buffer.from(str, 'base64').toString('binary');
         const encodedAuth = encoded(auth);
 
         const data = qs.stringify({

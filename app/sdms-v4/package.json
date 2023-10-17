@@ -7,6 +7,11 @@
     },
     "description": "Seismic Domain Data Management APIs to store and manage strongly typed seismic datasets.",
     "scripts": {
+
+        "clean": "rm -rf dist coverage test-results.xml .nyc_output",
+        "unit-test": "env UTEST=true mocha -r ts-node/register tests/utest/test.ts",
+        "test-lcov-automation": "npm run clean && npm ci && npm run build && npm run test-lcov-coverage",
+        "test-lcov-coverage": "env UTEST=true nyc --reporter=lcovonly mocha -r ts-node/register tests/utest/test.ts",
         "build": "tsc",
         "generate-docs": "node --trace-warnings ./dist/docs/docstart.js",
         "lint": "eslint --ignore-path .eslintignore --ext .js,.ts .",
@@ -18,7 +23,34 @@
         "start-service": "node --trace-warnings --trace-uncaught ./dist/server/server-start.js",
         "test": "mocha -r ts-node/register tests/e2e/test.ts --timeout 150000 --bail --reporter mocha-multi-reporters --reporter-options configFile=./tests/e2e/config.json"
     },
+    "nyc": {
+        "check-coverage": true,
+        "branches": 0,
+        "functions": 0,
+        "lines": 0,
+        "statements": 0,
+        "include": [
+            "src/**/*.ts"
+        ],
+        "exclude": [
+            "src/tests/**/*.ts"
+        ],
+        "extension": [
+            ".ts"
+        ],
+        "reporter": [
+            "lcovonly"
+        ],
+        "sourceMap": true,
+        "instrument": true
+    },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.410.0",
+        "@aws-sdk/client-secrets-manager": "^3.421.0",
+        "@aws-sdk/client-ssm": "^3.421.0",
+        "@aws-sdk/client-sts": "^3.421.0",
+        "log4js": "^6.9.1",
+        "package": "^1.0.1",
         "@azure/core-auth": "^1.4.0",
         "@azure/core-rest-pipeline": "^1.10.1",
         "@azure/identity": "^3.2.4",
@@ -39,8 +71,13 @@
         "swagger-ui-express": "^4.6.0",
         "typescript": "^4.9.4",
         "xss-filters": "^1.2.7"
+
     },
     "devDependencies": {
+        "@types/sinon": "^10.0.18",
+        "eslint-plugin-prettier": "^4.2.1",
+        "nyc": "^15.1.0",
+        "sinon": "^16.0.0",
         "@commitlint/config-conventional": "^17.7.0",
         "@types/chai": "^4.3.5",
         "@types/cors": "^2.8.13",
@@ -65,6 +102,7 @@
         "mocha-multi-reporters": "^1.5.1",
         "prettier": "^2.8.1",
         "ts-node": "^10.9.1"
+
     },
     "overrides": {
         "@azure/identity": {
