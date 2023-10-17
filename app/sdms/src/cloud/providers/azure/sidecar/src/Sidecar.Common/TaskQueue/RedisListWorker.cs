@@ -55,16 +55,18 @@ public class RedisListWorker<T, TD, TE>: ITaskQueueWorker
 
         if (operationData.Length == 0)
         {
-            // consider the operation poison message, do not return it back to the queue
             _logger.LogError(
                 "Failed to get operation data from queue for operation id {OperationDataKey}",
                 operationDataKey);
-            throw new RedisException("Failed to get operation data from queue");
+            throw new("Failed to get operation data from queue");
         }
+
+        // If deserialization fails, consider the operation poison message,
+        // and do not return it back to the queue
+        var task = _deserializer.Deserialize(operationData);
 
         try
         {
-            var task = _deserializer.Deserialize(operationData);
             await _executor.Process(task, ct);
         }
         catch (Exception e) when (e is not OperationCanceledException)
