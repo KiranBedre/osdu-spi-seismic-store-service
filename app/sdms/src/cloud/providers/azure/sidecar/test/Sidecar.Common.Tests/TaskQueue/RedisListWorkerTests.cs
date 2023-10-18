@@ -52,8 +52,8 @@ public class RedisListWorkerTests
         var opts = new Options { QueueName = QUEUE_NAME };
 
         var realDeserializer = new DeletionTaskHashEntriesDeserializer();
-        _deserializer.Setup(x => x.Deserialize(It.IsAny<HashEntry[]>())).Returns(realDeserializer.Deserialize);
-        
+        _ = _deserializer.Setup(x => x.Deserialize(It.IsAny<HashEntry[]>())).Returns(realDeserializer.Deserialize);
+
         _worker = new(_loggerMock.Object, _deserializer.Object, _executorMock.Object, redisConnectionFactory.Object, opts);
     }
 
@@ -72,7 +72,7 @@ public class RedisListWorkerTests
         if (createHashEntries)
         {
             _spyDb.Object.HashSet(new(key), hashEntries);
-            
+
         }
         return expectedMsg;
     }
@@ -88,7 +88,7 @@ public class RedisListWorkerTests
 
         // Assert
         _executorMock.Verify(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
-        
+
         _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Never);
     }
 
@@ -110,8 +110,8 @@ public class RedisListWorkerTests
     {
         // Arrange
         _ = await PushDeleteOperationMessage();
-        _deserializer.Setup(x => x.Deserialize(It.IsAny<HashEntry[]>())).Throws<Exception>();
-        
+        _ = _deserializer.Setup(x => x.Deserialize(It.IsAny<HashEntry[]>())).Throws<Exception>();
+
         // Act
         _ = await Assert.ThrowsAsync<Exception>(() => _worker.HandleNextTaskAsync(CancellationToken.None));
 
@@ -141,7 +141,7 @@ public class RedisListWorkerTests
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         _ = queueItems.Length.Should().Be(extraMessageCount);
-        
+
         _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Once);
     }
 
@@ -169,7 +169,7 @@ public class RedisListWorkerTests
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         _ = queueItems.Length.Should().Be(extraMessageCount + 1);
-        
+
         _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Never);
     }
 

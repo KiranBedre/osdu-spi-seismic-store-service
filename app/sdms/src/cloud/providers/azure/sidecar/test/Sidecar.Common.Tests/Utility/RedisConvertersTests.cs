@@ -28,7 +28,7 @@ public class RedisConvertersTests
         Subproject = "subproj007",
         Path = "tenant001/proj001/subproj007/"
     };
-    
+
     private static DeleteOperationStatus GetDelOpStatus() => new()
     {
         OperationId = Guid.NewGuid().ToString(),
@@ -115,7 +115,7 @@ public class RedisConvertersTests
         // Assert
         _ = msg.Should().BeEquivalentTo(expectedMsg);
     }
-    
+
     [Fact]
     public void Convert_ToHashEntryAndBack_ResultsIn_EquivalentValue()
     {

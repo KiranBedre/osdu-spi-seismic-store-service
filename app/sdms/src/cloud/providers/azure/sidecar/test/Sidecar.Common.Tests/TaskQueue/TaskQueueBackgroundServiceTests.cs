@@ -19,7 +19,7 @@ public class TaskQueueBackgroundServiceTests
     {
         // ARRANGE
         var cts = new CancellationTokenSource();
-        _workerMock.SetupSequence(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()))
+        _ = _workerMock.SetupSequence(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()))
             .Returns(() => Task.CompletedTask)
             .Throws<ArithmeticException>(() => new("this exception should be logged and swallowed"))
             .Throws<JsonException>(() => new("this exception should be logged and swallowed"))
@@ -31,7 +31,7 @@ public class TaskQueueBackgroundServiceTests
             });
 
         // ACT
-        await Assert.ThrowsAsync<OperationCanceledException>(
+        _ = await Assert.ThrowsAsync<OperationCanceledException>(
             () => _service.StartAsync(cts.Token));
 
         // ASSERT
