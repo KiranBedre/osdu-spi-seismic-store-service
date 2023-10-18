@@ -28,6 +28,20 @@ public class RedisConvertersTests
         Subproject = "subproj007",
         Path = "tenant001/proj001/subproj007/"
     };
+    
+    private static DeleteOperationStatus GetDelOpStatus() => new()
+    {
+        OperationId = Guid.NewGuid().ToString(),
+        Tenant = "tenant001",
+        Subproject = "subproj007",
+        Path = "tenant001/proj001/subproj007/",
+        CompletedCnt = 123213,
+        CreatedAt = DateTime.Today,
+        CreatedBy = "",
+        DatasetsCnt = 0,
+        FailedCnt = -1,
+        LastUpdatedAt = DateTime.UtcNow,
+    };
 
     private static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
@@ -101,5 +115,17 @@ public class RedisConvertersTests
         // Assert
         _ = msg.Should().BeEquivalentTo(expectedMsg);
     }
+    
+    [Fact]
+    public void Convert_ToHashEntryAndBack_ResultsIn_EquivalentValue()
+    {
+        // Arrange
+        var status = GetDelOpStatus();
 
+        // Act
+        var convertedStatus = status.ToHashEntries().FromHashEntries<DeleteOperationStatus>();
+
+        // Assert
+        _ = convertedStatus.Should().BeEquivalentTo(status);
+    }
 }

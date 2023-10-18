@@ -37,7 +37,7 @@ public static class RedisConverters
                 {
                     IEnumerable<object> => JsonSerializer.Serialize(propertyValue),
                     DateTime time => time.ToString("yyyy-MM-dd'T'HH:mm:ss.fffffff", DateTimeFormatInfo.InvariantInfo),
-                    _ => propertyValue.ToString()
+                    _ => propertyValue.ToString(),
                 };
                 var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
                 var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
