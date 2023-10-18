@@ -20,8 +20,7 @@ import { SubprojectAuth, SubProjectModel } from '.';
 import { Auth, AuthGroups, AuthRoles, UserRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
-import { DESUtils } from '../../dataecosystem';
-import { UserAssociationServiceFactory } from '../../dataecosystem';
+import { DESUtils, UserAssociationServiceFactory} from '../../dataecosystem';
 import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { DatasetDAO, PaginationModel } from '../dataset';
 import { TenantAuth, TenantModel, TenantGroups } from '../tenant';
@@ -45,36 +44,40 @@ export class SubProjectHandler {
 
             const tenant = await TenantDAO.get(req.params.tenantid);
 
-            if (op === SubProjectOP.Create) {
-
-                const subproject = await this.create(req, tenant);
-                delete (subproject as any).service_account; // we don't want to return it
-                Response.writeOK(res, subproject);
-
-            } else if (op === SubProjectOP.Get) {
-
-                const subproject = await this.get(req, tenant);
-                delete (subproject as any).service_account; // we don't want to return it
-                Response.writeOK(res, subproject);
-
-            } else if (op === SubProjectOP.Delete) {
-
-                await this.delete(req, tenant);
-                Response.writeOK(res);
-
-            } else if (op === SubProjectOP.Patch) {
-
-                const subproject = await this.patch(req, tenant);
-                delete (subproject as any).service_account; // we don't want to return it
-                Response.writeOK(res, subproject);
-
-            } else if (op === SubProjectOP.List) {
-
-                const subprojects = await this.list(req, tenant);
-                for (const item of subprojects) { delete (item as any).service_account; } // we don't want to return it
-                Response.writeOK(res, subprojects);
-
-            } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
+            switch (op) {
+                case SubProjectOP.Create: {
+                    const subproject = await this.create(req, tenant);
+                    delete (subproject as any).service_account; // we don't want to return it
+                    Response.writeOK(res, subproject);
+                    break;
+                }
+                case SubProjectOP.Get: {
+                    const subproject = await this.get(req, tenant);
+                    delete (subproject as any).service_account; // we don't want to return it
+                    Response.writeOK(res, subproject);
+                    break;
+                }
+                case SubProjectOP.Delete: {
+                    await this.delete(req, tenant);
+                    Response.writeOK(res);
+                    break;
+                }
+                case SubProjectOP.Patch: {
+                    const subproject = await this.patch(req, tenant);
+                    delete (subproject as any).service_account; // we don't want to return it
+                    Response.writeOK(res, subproject);
+                    break;
+                }
+                case SubProjectOP.List: {
+                    const subprojects = await this.list(req, tenant);
+                    for (const item of subprojects) {
+                        delete (item as any).service_account; } // we don't want to return it
+                    Response.writeOK(res, subprojects);
+                    break;
+                }
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+            }
 
         } catch (error) { Response.writeError(res, error); }
 
