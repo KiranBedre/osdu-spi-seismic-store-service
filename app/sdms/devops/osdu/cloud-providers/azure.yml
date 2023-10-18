@@ -33,6 +33,7 @@ sdms_azure_dotnet_ci:
         path: ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
   script:
     - cd app/${SDMS_SERVICE}/src/cloud/providers/azure/sidecar
+    - dotnet format --version
     - dotnet format --severity warn --verify-no-changes
     - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=${CI_PROJECT_DIR}/junit/{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
     # generate coverage summary and print to stdout:
