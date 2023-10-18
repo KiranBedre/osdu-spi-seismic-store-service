@@ -14,18 +14,14 @@
 // limitations under the License.
 // ============================================================================
 
-#pragma warning disable IDE0022
-#pragma warning disable IDE0200
-
-namespace Sidecar.Common.Tests.Service;
+namespace Sidecar.Common.Tests.TaskQueue;
 
 using FluentAssertions.ArgumentMatchers.Moq;
 using Sidecar.Common.TaskQueue;
-
 // type alias for readability
-using WorkerType = TaskQueue.RedisListWorker<
+using WorkerType = Sidecar.Common.TaskQueue.RedisListWorker<
     IDeletionOperationMessage,
-    TaskQueue.DeletionTaskHashEntriesDeserializer,
+    Sidecar.Common.TaskQueue.DeletionTaskHashEntriesDeserializer,
     ITaskExecutor<IDeletionOperationMessage>
 >;
 

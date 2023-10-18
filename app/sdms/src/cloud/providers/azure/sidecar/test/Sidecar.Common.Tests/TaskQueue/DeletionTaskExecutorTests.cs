@@ -15,7 +15,7 @@
 // ============================================================================
 
 
-namespace Sidecar.Common.Tests.Service;
+namespace Sidecar.Common.Tests.TaskQueue;
 
 using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;

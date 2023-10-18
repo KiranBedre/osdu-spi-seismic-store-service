@@ -12,9 +12,10 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
 {
     private readonly ILogger<TaskQueueBackgroundService<TW>> _logger;
     private readonly TW _worker;
-    private readonly TimeSpan _pauseBetweenTasks = TimeSpan.FromSeconds(5);
 
-    public TaskQueueBackgroundService(ILogger<TaskQueueBackgroundService<TW>> logger, TW worker)
+    public TaskQueueBackgroundService(
+        ILogger<TaskQueueBackgroundService<TW>> logger,
+        TW worker)
     {
         _logger = logger;
         _worker = worker;
@@ -22,8 +23,9 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (true)
         {
+            stoppingToken.ThrowIfCancellationRequested();
             try
             {
                 await _worker.HandleNextTaskAsync(stoppingToken);
@@ -32,7 +34,6 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
             {
                 _logger.LogError(e, "Error when handling a task. Continue...");
             }
-            await Task.Delay(_pauseBetweenTasks, stoppingToken);
         }
     }
 }

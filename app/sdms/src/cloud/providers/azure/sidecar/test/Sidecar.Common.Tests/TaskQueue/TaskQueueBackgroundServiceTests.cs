@@ -1,0 +1,48 @@
+namespace Sidecar.Common.Tests.TaskQueue;
+
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
+using Sidecar.Common.TaskQueue;
+
+public class TaskQueueBackgroundServiceTests
+{
+    private readonly Mock<ILogger<TaskQueueBackgroundService<ITaskQueueWorker>>> _loggerMock = new();
+    private readonly Mock<ITaskQueueWorker> _workerMock = new(MockBehavior.Strict);
+    private readonly TaskQueueBackgroundService<ITaskQueueWorker> _service;
+
+    public TaskQueueBackgroundServiceTests()
+    {
+        _service = new(_loggerMock.Object, _workerMock.Object);
+    }
+
+    [Fact]
+    public async Task BackgroundServiceShouldStopOnlyIfCancelled()
+    {
+        // ARRANGE
+        var cts = new CancellationTokenSource();
+        _workerMock.SetupSequence(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()))
+            .Returns(() => Task.CompletedTask)
+            .Throws<ArithmeticException>(() => new("this exception should be logged and swallowed"))
+            .Throws<JsonException>(() => new("this exception should be logged and swallowed"))
+            .Returns(() => Task.CompletedTask)
+            .Returns(() =>
+            {
+                cts.Cancel();
+                return Task.CompletedTask;
+            });
+
+        // ACT
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _service.StartAsync(cts.Token));
+
+        // ASSERT
+        _workerMock.Verify(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()), Times.Exactly(5));
+        _loggerMock.Verify(m => m.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+        ), Times.Exactly(2));
+    }
+}
