@@ -15,7 +15,7 @@ public class TaskQueueBackgroundServiceTests
     }
 
     [Fact]
-    public async Task BackgroundServiceShouldStopOnlyIfCancelled()
+    public async Task ShouldSwallowExceptionsAndStopOnlyIfCancelled()
     {
         // ARRANGE
         var cts = new CancellationTokenSource();
