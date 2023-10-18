@@ -77,7 +77,7 @@ public class RedisListWorker<T, TD, TE> : ITaskQueueWorker
 
         try
         {
-            await _executor.Process(task, ct);
+            await _executor.ProcessAsync(task, ct);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {

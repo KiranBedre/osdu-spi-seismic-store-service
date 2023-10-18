@@ -30,7 +30,7 @@ public class DeletionTaskExecutor : ITaskExecutor<IDeletionOperationMessage>
         _lockManager = lockManager;
     }
 
-    public async Task Process(IDeletionOperationMessage op, CancellationToken ct)
+    public async Task ProcessAsync(IDeletionOperationMessage op, CancellationToken ct)
     {
         //---start the deletion process
         _logger.LogInformation("Starting deletion operation {op}...", op.OperationId);

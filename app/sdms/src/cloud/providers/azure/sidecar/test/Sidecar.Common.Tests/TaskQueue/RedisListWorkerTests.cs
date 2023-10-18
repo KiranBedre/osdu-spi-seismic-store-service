@@ -87,7 +87,7 @@ public class RedisListWorkerTests
         await _worker.HandleNextTaskAsync(CancellationToken.None);
 
         // Assert
-        _executorMock.Verify(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        _executorMock.Verify(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
 
         _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Never);
     }
@@ -102,7 +102,7 @@ public class RedisListWorkerTests
         _ = await Assert.ThrowsAsync<Exception>(() => _worker.HandleNextTaskAsync(CancellationToken.None));
 
         // Assert
-        _executorMock.Verify(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        _executorMock.Verify(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class RedisListWorkerTests
         _ = await Assert.ThrowsAsync<Exception>(() => _worker.HandleNextTaskAsync(CancellationToken.None));
 
         // Assert
-        _executorMock.Verify(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        _executorMock.Verify(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
         _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Once);
     }
 
@@ -137,7 +137,7 @@ public class RedisListWorkerTests
         await _worker.HandleNextTaskAsync(CancellationToken.None);
 
         // Assert
-        _executorMock.Verify(e => e.Process(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
+        _executorMock.Verify(e => e.ProcessAsync(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         _ = queueItems.Length.Should().Be(extraMessageCount);
@@ -158,14 +158,14 @@ public class RedisListWorkerTests
         }
         var expectedMsg = await PushDeleteOperationMessage();
 
-        _ = _executorMock.Setup(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>())).Throws<TestException>();
+        _ = _executorMock.Setup(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>())).Throws<TestException>();
 
         // Act
         var action = async () => await _worker.HandleNextTaskAsync(CancellationToken.None);
         _ = await action.Should().ThrowAsync<TestException>();
 
         // Assert
-        _executorMock.Verify(e => e.Process(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
+        _executorMock.Verify(e => e.ProcessAsync(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         _ = queueItems.Length.Should().Be(extraMessageCount + 1);

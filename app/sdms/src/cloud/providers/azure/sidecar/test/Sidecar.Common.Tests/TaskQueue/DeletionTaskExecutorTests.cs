@@ -74,7 +74,7 @@ public class DeletionTaskExecutorTests
                .ReturnsAsync(true);
 
         // Act
-        await service.Process(deletionOperation, cancellationSource.Token);
+        await service.ProcessAsync(deletionOperation, cancellationSource.Token);
 
         // Assert
         itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
@@ -145,7 +145,7 @@ public class DeletionTaskExecutorTests
 
 
         // Act
-        await service.Process(deletionOperation, cancellationSource.Token);
+        await service.ProcessAsync(deletionOperation, cancellationSource.Token);
 
         // Assert
         taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()), Times.Once);
@@ -208,7 +208,7 @@ public class DeletionTaskExecutorTests
                        .ReturnsAsync(true);
 
         // Act
-        await service.Process(deletionOperation, cancellationSource.Token);
+        await service.ProcessAsync(deletionOperation, cancellationSource.Token);
 
         // Assert
         taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()), Times.Once);
