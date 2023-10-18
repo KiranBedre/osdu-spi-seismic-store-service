@@ -4,6 +4,7 @@
         "dist",
         "node_modules",
         "src/cloud/providers/aws/build-aws",
+        "/devops/osdu/cloud-providers/aws.yml",
         "devops/aws/chart"
     ],
     "dictionaryDefinitions": [],
