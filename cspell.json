@@ -6,6 +6,7 @@
     "language": "en, en-US",
     // words - list of words to be always considered correct
     "words": [
+        "accessibilities",
         "addgroup",
         "adduser",
         "appgroup",
