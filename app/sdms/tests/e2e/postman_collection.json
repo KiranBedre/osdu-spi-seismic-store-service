@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "4b4d5806-77d4-4d7d-b475-be12a58fa5ec",
-		"name": "SDMS-E2E ver.M22 - Release 0.25",
+		"name": "SDMS-E2E ver.M20 - Release 0.23 Copy 2",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -22871,7 +22871,7 @@
 					"response": []
 				},
 				{
-					"name": "CLEANUP STATUS UNSET: Cleanup test environment Copy",
+					"name": "CLEANUP STATUS UNSET: Cleanup test environment",
 					"event": [
 						{
 							"listen": "test",
