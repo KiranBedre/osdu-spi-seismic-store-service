@@ -18,7 +18,6 @@ import * as crypto from 'crypto';
 import * as JsYaml from 'js-yaml';
 import * as JsonRefs from 'json-refs';
 import { Config, CredentialsFactory } from '../cloud';
-import { DESEntitlement } from '../dataecosystem';
 
 export class Utils {
 
@@ -40,7 +39,6 @@ export class Utils {
 
     public static getPropertyFromTokenPayload(base64JwtPayload: string, property: string): string {
         if (Config.USER_ID_FROM_PROVIDER_API) {
-            // TODO: Fix it later.
             return undefined;
         }
         const payload = this.getPayloadFromStringToken(base64JwtPayload);
