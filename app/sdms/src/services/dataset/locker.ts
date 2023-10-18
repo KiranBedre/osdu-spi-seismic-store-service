@@ -117,6 +117,7 @@ export class Locker {
                 });
             }
 
+            // tslint:disable-next-line:no-floating-promises
             this.redisClient.config('SET', 'notify-keyspace-events', 'Ex');
 
             // This will automatically remove the wid entries from the main read lock
@@ -287,7 +288,7 @@ export class Locker {
             throw (Error.make(Error.Status.LOCKED,
                 lockKey + ' is locked for ' + (this.isWriteLock(lockValue) ?
                     'write ' + Error.get423WriteLockReason() :
-                    'read ' + + Error.get423ReadLockReason())));
+                    'read ' + Error.get423ReadLockReason())));
         }
 
         // write locked and different wid
