@@ -81,6 +81,8 @@ public class RedisListWorkerTests
 
         // Assert
         _executorMock.Verify(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        
+        _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Never);
     }
 
     [Theory]
@@ -104,6 +106,8 @@ public class RedisListWorkerTests
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         _ = queueItems.Length.Should().Be(extraMessageCount);
+        
+        _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Once);
     }
 
     [Theory]
@@ -130,6 +134,8 @@ public class RedisListWorkerTests
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
         _ = queueItems.Length.Should().Be(extraMessageCount + 1);
+        
+        _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Never);
     }
 
     private class TestException : Exception { }
