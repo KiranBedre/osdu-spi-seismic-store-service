@@ -1,6 +1,5 @@
 namespace Sidecar.Common.Tests.TaskQueue;
 
-using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Sidecar.Common.TaskQueue;
 
