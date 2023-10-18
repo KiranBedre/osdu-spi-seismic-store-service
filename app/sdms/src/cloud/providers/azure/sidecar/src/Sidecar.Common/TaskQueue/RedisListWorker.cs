@@ -55,15 +55,25 @@ public class RedisListWorker<T, TD, TE> : ITaskQueueWorker
 
         if (operationData.Length == 0)
         {
+            // poison message, do not return it back to the queue
             _logger.LogError(
                 "Failed to get operation data from queue for operation id {OperationDataKey}",
                 operationDataKey);
-            throw new("Failed to get operation data from queue");
+            throw new("Failed to get operation data from the queue");
         }
 
-        // If deserialization fails, consider the operation poison message,
-        // and do not return it back to the queue
-        var task = _deserializer.Deserialize(operationData);
+        T task;
+        try
+        {
+            task = _deserializer.Deserialize(operationData);
+        }
+        catch (Exception e)
+        {
+            // poison message, do not return it back to the queue
+            _logger.LogError(e, "Failed to deserialize {OperationId}. Removing it from Redis", operationId);
+            _ = await db.KeyDeleteAsync(operationDataKey);
+            throw;
+        }
 
         try
         {
@@ -79,8 +89,7 @@ public class RedisListWorker<T, TD, TE> : ITaskQueueWorker
             throw;
         }
 
-        // successfully processed task.
-        // deleting the operation data from the queue.
+        // successfully processed task. delete its data.
         _ = await db.KeyDeleteAsync(operationDataKey);
     }
 }
