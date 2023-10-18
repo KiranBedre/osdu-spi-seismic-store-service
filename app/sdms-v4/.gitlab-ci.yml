@@ -38,3 +38,6 @@ include:
   # deploy
   # azure
   - local: "app/sdms-v4/devops/osdu/cloud-providers/azure.yml"
+  # deploy
+  # aws
+  - local: "app/sdms-v4/devops/osdu/cloud-providers/aws.yml"
