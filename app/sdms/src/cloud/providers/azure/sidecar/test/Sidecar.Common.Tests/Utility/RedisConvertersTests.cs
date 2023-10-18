@@ -36,7 +36,7 @@ public class RedisConvertersTests
         Subproject = "subproj007",
         Path = "tenant001/proj001/subproj007/",
         CompletedCnt = 123213,
-        CreatedAt = DateTime.Today,
+        CreatedAt = DateTime.UtcNow,
         CreatedBy = "",
         DatasetsCnt = 0,
         FailedCnt = -1,

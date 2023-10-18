@@ -60,7 +60,12 @@ public static class RedisConverters
                 continue;
             }
 
-            p.SetValue(obj, Convert.ChangeType(entry.Value.ToString(), p.PropertyType));
+            var parsedValue = Convert.ChangeType(entry.Value.ToString(), p.PropertyType, CultureInfo.InvariantCulture);
+            if (parsedValue is DateTime dt)
+            {
+                parsedValue = dt.ToUniversalTime();
+            }
+            p.SetValue(obj, parsedValue);
         }
         return (T)obj!;
     }
