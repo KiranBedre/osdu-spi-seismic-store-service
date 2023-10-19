@@ -1,7 +1,6 @@
 namespace Sidecar.Common.Tests.TaskQueue;
 
 using Newtonsoft.Json;
-using Sidecar.Common.Config;
 using Sidecar.Common.TaskQueue;
 
 public class TaskQueueBackgroundServiceTests
@@ -12,7 +11,7 @@ public class TaskQueueBackgroundServiceTests
 
     public TaskQueueBackgroundServiceTests()
     {
-        _service = new(_loggerMock.Object, _workerMock.Object, new() {WaitTimeIfTaskNotFound = TimeSpan.Zero});
+        _service = new(_loggerMock.Object, _workerMock.Object, new() { WaitTimeIfTaskNotFound = TimeSpan.Zero });
     }
 
     [Fact]
