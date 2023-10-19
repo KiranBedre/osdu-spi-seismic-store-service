@@ -40,7 +40,7 @@ export class TestAzureCosmosDbDAO {
         describe(Tx.testInit('azure cosmos db dao test'), () => {
             Config.CLOUDPROVIDER = 'azure';
             this.sandbox = sinon.createSandbox();
-            // axiosInstance needs to have any kind or "post" method to make it stubbable in the tests
+            // axiosInstance needs to have any kind or "post" method to make it stubble in the tests
             this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
             this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' }, this.axiosInstance);
             this.query = new AzureCosmosDbQuery('name-a', 'kind-a');
@@ -49,7 +49,7 @@ export class TestAzureCosmosDbDAO {
                 name: 'name',
                 tenant: 'tenant',
                 subproject: 'subproject',
-                path: 'sd://tenant/subproject/path/mydata.txt',
+                path: 'sd://tenant/subproject/path/data.txt',
                 created_date: '',
                 last_modified_date: '',
                 created_by: '',
@@ -106,7 +106,7 @@ export class TestAzureCosmosDbDAO {
             this.queryFilter();
             this.queryStart();
             this.queryLimit();
-            this.querygroupBy();
+            this.queryGroupBy();
             this.listDatasets();
             this.listFolders();
         });
@@ -145,7 +145,7 @@ export class TestAzureCosmosDbDAO {
         };
 
         Tx.test(async () => {
-            key.partitionKey = 'dstestKey';
+            key.partitionKey = 'dsTestKey';
             this.sandbox.stub(axios, 'get').resolves();
             const mockResult = {
                 resource: {
@@ -239,7 +239,7 @@ export class TestAzureCosmosDbDAO {
             },
             filters: [],
             projectedFieldNames: ['fieldName1'],
-            groupByFieldNames: ['groupfieldName1'],
+            groupByFieldNames: ['groupFieldName1'],
             namespace: 'namespace',
             pagingStart: '"[pagingStart]"',
             pagingLimit: 1,
@@ -365,7 +365,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
-            AzureConfig.ENABLE_OPTIMISED_QUERY = true;
+            AzureConfig.ENABLE_OPTIMIZED_QUERY = true;
 
             const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: { records: [
@@ -383,7 +383,7 @@ export class TestAzureCosmosDbDAO {
             ]
 
             this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
-                {endpoint: 'myendpoint', key: 'mykey'});
+                {endpoint: 'myEndpoint', key: 'myKey'});
 
             const res = await this.cosmos.listFolders(datasetModel);
 
@@ -393,7 +393,7 @@ export class TestAzureCosmosDbDAO {
                 axiosInstancePostStub,
                 AzureConfig.SIDECAR_URL + '/query',
                 {
-                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
                     sql: distinctPathsQuery
                 },
             );
@@ -405,7 +405,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = true;
-            AzureConfig.ENABLE_OPTIMISED_QUERY = false;
+            AzureConfig.ENABLE_OPTIMIZED_QUERY = false;
 
             const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: {
@@ -422,7 +422,7 @@ export class TestAzureCosmosDbDAO {
             ]
 
             this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
-                {endpoint: 'myendpoint', key: 'mykey'});
+                {endpoint: 'myEndpoint', key: 'myKey'});
 
             const res = await this.cosmos.listFolders(datasetModel);
 
@@ -432,7 +432,7 @@ export class TestAzureCosmosDbDAO {
                 axiosInstancePostStub,
                 AzureConfig.SIDECAR_URL + '/query',
                 {
-                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
                     sql: subfoldersQuery
                 },
             );
@@ -444,7 +444,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
-            AzureConfig.ENABLE_OPTIMISED_QUERY = true;
+            AzureConfig.ENABLE_OPTIMIZED_QUERY = true;
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
@@ -454,7 +454,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
-            AzureConfig.ENABLE_OPTIMISED_QUERY = false;
+            AzureConfig.ENABLE_OPTIMIZED_QUERY = false;
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
@@ -571,7 +571,7 @@ export class TestAzureCosmosDbDAO {
             ]
 
             this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
-                {endpoint: 'myendpoint', key: 'mykey'});
+                {endpoint: 'myEndpoint', key: 'myKey'});
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -585,7 +585,7 @@ export class TestAzureCosmosDbDAO {
                 this.axiosInstance.post,
                 AzureConfig.SIDECAR_URL + '/query',
                 {
-                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
                     sql: query
                 },
             );
@@ -619,7 +619,7 @@ export class TestAzureCosmosDbDAO {
             ]
 
             this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
-                {endpoint: 'myendpoint', key: 'mykey'});
+                {endpoint: 'myEndpoint', key: 'myKey'});
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -633,7 +633,7 @@ export class TestAzureCosmosDbDAO {
                 this.axiosInstance.post,
                 AzureConfig.SIDECAR_URL + '/query',
                 {
-                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
                     sql: query,
                     ctoken: pagination.cursor,
                     limit: pagination.limit
@@ -664,7 +664,7 @@ export class TestAzureCosmosDbDAO {
             });
 
             this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
-                {endpoint: 'myendpoint', key: 'mykey'});
+                {endpoint: 'myEndpoint', key: 'myKey'});
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -685,7 +685,7 @@ export class TestAzureCosmosDbDAO {
                 this.axiosInstance.post,
                 AzureConfig.SIDECAR_URL + '/query',
                 {
-                    cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
+                    cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
                     sql: expectedQuery,
                     ctoken: pagination.cursor,
                     limit: pagination.limit
@@ -956,7 +956,7 @@ export class TestAzureCosmosDbDAO {
         });
     }
 
-    private static querygroupBy() {
+    private static queryGroupBy() {
         Tx.sectionInit('groupBy');
 
         Tx.test( () => {

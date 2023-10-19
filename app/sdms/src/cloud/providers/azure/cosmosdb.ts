@@ -237,7 +237,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async listFolders(dataset: DatasetModel): Promise<any[]> {
-        if (AzureConfig.ENABLE_OPTIMISED_QUERY) {
+        if (AzureConfig.ENABLE_OPTIMIZED_QUERY) {
             return this.getSubfoldersUsingDistinctPathsQuery(
                 this.distinctPathsQuery(dataset.tenant, dataset.subproject, dataset.path), dataset);
         }
@@ -293,7 +293,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
             .filter('subproject', dataset.subproject)
 
-        if (dataset.path && dataset.path !== '/') {
+        if (dataset.path) {
             query = query.filter('path', dataset.path)
         }
 
