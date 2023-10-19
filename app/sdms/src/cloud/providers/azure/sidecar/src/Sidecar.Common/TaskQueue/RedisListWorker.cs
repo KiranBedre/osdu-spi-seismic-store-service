@@ -2,6 +2,7 @@ namespace Sidecar.Common.TaskQueue;
 
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
+using Sidecar.Common.Model;
 using StackExchange.Redis;
 
 /// <summary>
@@ -36,7 +37,7 @@ public class RedisListWorker<T, TD, TE> : ITaskQueueWorker
         _deserializer = deserializer;
     }
 
-    public async Task HandleNextTaskAsync(CancellationToken ct)
+    public async Task<ExecutionStatus> HandleNextTaskAsync(CancellationToken ct)
     {
         var db = _queue.GetDatabase();
 
@@ -47,7 +48,7 @@ public class RedisListWorker<T, TD, TE> : ITaskQueueWorker
         if (!operationId.HasValue)
         {
             _logger.LogInformation("No tasks found in the queue {Queue}", queueName);
-            return;
+            return ExecutionStatus.TaskNotFound;
         }
 
         var operationDataKey = $"{queueName}:{operationId}";
@@ -91,5 +92,7 @@ public class RedisListWorker<T, TD, TE> : ITaskQueueWorker
 
         // successfully processed task. delete its data.
         _ = await db.KeyDeleteAsync(operationDataKey);
+
+        return ExecutionStatus.TaskCompleted;
     }
 }

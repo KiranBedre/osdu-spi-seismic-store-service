@@ -26,6 +26,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
+using Sidecar.Common.Config;
 using Sidecar.Common.HealthChecks;
 using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
@@ -172,6 +173,10 @@ public class Program
             .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
+            {
+                WaitTimeIfTaskNotFound = TimeSpan.FromSeconds(5),
+            })
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
             .AddSingleton<IRedisConnectionFactory, RedisConnectionFactory>()
             .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()

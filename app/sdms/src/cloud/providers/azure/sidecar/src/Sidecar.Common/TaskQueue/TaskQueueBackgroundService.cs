@@ -2,7 +2,9 @@ namespace Sidecar.Common.TaskQueue;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sidecar.Common.Config;
 using Sidecar.Common.Interface;
+using Sidecar.Common.Model;
 
 /// <summary>
 /// Background service that works on the given task queue until cancellation.
@@ -12,13 +14,16 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
 {
     private readonly ILogger<TaskQueueBackgroundService<TW>> _logger;
     private readonly TW _worker;
+    private readonly TaskQueueBackgroundServiceOptions _opts;
 
     public TaskQueueBackgroundService(
         ILogger<TaskQueueBackgroundService<TW>> logger,
-        TW worker)
+        TW worker,
+        TaskQueueBackgroundServiceOptions opts)
     {
         _logger = logger;
         _worker = worker;
+        _opts = opts;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -28,7 +33,13 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
             stoppingToken.ThrowIfCancellationRequested();
             try
             {
-                await _worker.HandleNextTaskAsync(stoppingToken);
+                var status = await _worker.HandleNextTaskAsync(stoppingToken);
+                if (status is ExecutionStatus.TaskNotFound)
+                {
+                    _logger.LogInformation(
+                        "There are no tasks. Will retry after {Timeout}", _opts.WaitTimeIfTaskNotFound);
+                    await Task.Delay(_opts.WaitTimeIfTaskNotFound, stoppingToken);
+                }
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {

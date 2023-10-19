@@ -1,6 +1,7 @@
 namespace Sidecar.Common.Tests.TaskQueue;
 
 using Newtonsoft.Json;
+using Sidecar.Common.Config;
 using Sidecar.Common.TaskQueue;
 
 public class TaskQueueBackgroundServiceTests
@@ -11,7 +12,7 @@ public class TaskQueueBackgroundServiceTests
 
     public TaskQueueBackgroundServiceTests()
     {
-        _service = new(_loggerMock.Object, _workerMock.Object);
+        _service = new(_loggerMock.Object, _workerMock.Object, new() {WaitTimeIfTaskNotFound = TimeSpan.Zero});
     }
 
     [Fact]
@@ -20,14 +21,14 @@ public class TaskQueueBackgroundServiceTests
         // ARRANGE
         var cts = new CancellationTokenSource();
         _ = _workerMock.SetupSequence(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()))
-            .Returns(() => Task.CompletedTask)
+            .ReturnsAsync(() => ExecutionStatus.TaskNotFound)
             .Throws<ArithmeticException>(() => new("this exception should be logged and swallowed"))
             .Throws<JsonException>(() => new("this exception should be logged and swallowed"))
-            .Returns(() => Task.CompletedTask)
-            .Returns(() =>
+            .ReturnsAsync(() => ExecutionStatus.TaskCompleted)
+            .ReturnsAsync(() =>
             {
                 cts.Cancel();
-                return Task.CompletedTask;
+                return ExecutionStatus.TaskCompleted;
             });
 
         // ACT
