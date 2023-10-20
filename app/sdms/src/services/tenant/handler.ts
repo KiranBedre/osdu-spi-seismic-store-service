@@ -38,23 +38,22 @@ export class TenantHandler {
                     ' with an impersonation token as Auth credentials.'));
             }
 
-            if (op === TenantOP.CREATE) {
-
-                Response.writeOK(res, await this.create(req));
-
-            } else if (op === TenantOP.GET) {
-
-                Response.writeOK(res, await this.get(req));
-
-            } else if (op === TenantOP.DELETE) {
-
-                Response.writeOK(res, await this.delete(req));
-
-            } else if (op === TenantOP.GETSDPATH) {
-
-                Response.writeOK(res, await this.getTenantSDPath(req));
-
-            } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
+            switch (op) {
+                case TenantOP.CREATE:
+                    Response.writeOK(res, await this.create(req));
+                    break;
+                case TenantOP.GET:
+                    Response.writeOK(res, await this.get(req));
+                    break;
+                case TenantOP.DELETE:
+                    Response.writeOK(res, await this.delete(req));
+                    break;
+                case TenantOP.GETSDPATH:
+                    Response.writeOK(res, await this.getTenantSDPath(req));
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+            }
 
         } catch (error) { Response.writeError(res, error); }
 

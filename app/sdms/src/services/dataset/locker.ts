@@ -28,16 +28,16 @@ export interface IWriteLockSession { idempotent: boolean, wid: string, mutex: an
 export class Locker {
 
     private static TTL = 6000; // max lock time in ms
-    private static EXP_WRITELOCK = 86400; // after 24h writelock entry will be removed
-    private static EXP_READLOCK = 3600; // after 1h  readlock entry will be removed
+    private static EXP_WRITE_LOCK = 86400; // after 24h the write lock entry will be removed
+    private static EXP_READ_LOCK = 3600; // after 1h  the read lock entry will be removed
     private static TIME_5MIN = 300; // exp time margin to use in the main read locks
 
     private static redisClient: Redis;
     private static redisSubscriptionClient: Redis;
     private static redlock: Redlock;
 
-    public static getWriteLockTTL(): number { return this.EXP_WRITELOCK; };
-    public static getReadLockTTL(): number { return this.EXP_READLOCK; };
+    public static getWriteLockTTL(): number { return this.EXP_WRITE_LOCK; };
+    public static getReadLockTTL(): number { return this.EXP_READ_LOCK; };
     public static getMutexTTL(): number { return this.TTL; };
 
     // Exponential Retry strategy in event of an error
@@ -139,8 +139,7 @@ export class Locker {
 
         // initialize the locker
         this.redlock = new Redlock([this.redisClient], {
-            // the expected clock drift; for more details
-            // see http://redis.io/topics/distlock
+            // the expected clock drift
             driftFactor: 0.01, // time in ms
             // the max number of times Redlock will attempt
             // to lock a resource before erroring
@@ -149,7 +148,6 @@ export class Locker {
             retryDelay: 200, // time in ms
             // the max time in ms randomly added to retries
             // to improve performance under high contention
-            // see https://www.awsarchitectureblog.com/2015/03/backoff.html
             retryJitter: 200, // time in ms
         });
     }
@@ -220,19 +218,22 @@ export class Locker {
         // create the [KEY,VALUE] = [datasetPath, wid(sbit)] pair in the redis cache
         if (!lockValue) {
             const lockValueNew = idempotentWriteLock || this.generateWriteLockID();
-            await this.set(lockKey, lockValueNew, this.EXP_WRITELOCK);
+            await this.set(lockKey, lockValueNew, this.EXP_WRITE_LOCK);
             return { idempotent: false, wid: lockValueNew, mutex: cacheLock, key: lockKey };
         }
 
-        // check if writelock already exist and match the input one (idempotent call)
+        // check if the write lock already exist and match the input one (idempotent call)
         if (idempotentWriteLock && lockValue === idempotentWriteLock) {
             return { idempotent: true, wid: idempotentWriteLock, mutex: cacheLock, key: lockKey };
         }
 
-        throw (Error.make(Error.Status.LOCKED,
-            lockKey + ' is ' + (this.isWriteLock(lockValue) ?
-                ('write locked ') + Error.get423WriteLockReason() :
-                ('read locked ' + + Error.get423ReadLockReason()))));
+        let mex: string;
+        if(this.isWriteLock(lockValue)) {
+            mex = lockKey + ' is write locked ' + Error.get423WriteLockReason();
+        } else {
+            mex = lockKey + ' is read locked ' + Error.get423ReadLockReason();
+        }
+        throw (Error.make(Error.Status.LOCKED, mex));
     }
 
     // remove both lock and mutex
@@ -278,7 +279,7 @@ export class Locker {
 
             // create a new write lock and save in cache
             const lockID = idempotentWriteLock || this.generateWriteLockID();
-            await Locker.set(lockKey, lockID, this.EXP_WRITELOCK);
+            await Locker.set(lockKey, lockID, this.EXP_WRITE_LOCK);
             await this.releaseMutex(cacheLock);
             return { id: lockID, cnt: 1 };
         }
@@ -362,8 +363,8 @@ export class Locker {
 
             // create a new read lock session and a new main read lock
             const lockID = idempotentReadLock || this.generateReadLockID();
-            await Locker.setLock(lockKey + '/' + lockID, lockID, this.EXP_READLOCK);
-            await Locker.setLock(lockKey, [lockID], this.EXP_READLOCK + this.TIME_5MIN);
+            await Locker.setLock(lockKey + '/' + lockID, lockID, this.EXP_READ_LOCK);
+            await Locker.setLock(lockKey, [lockID], this.EXP_READ_LOCK + this.TIME_5MIN);
             // when the session key expired i have to remove the wid/lockid from the main read lock
             this.redisSubscriptionClient.subscribe('__keyevent@0__:expired', lockKey + '/' + lockID)
                 .catch((error) => LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error)));
@@ -380,8 +381,8 @@ export class Locker {
         if (!wid) {
             const lockID = idempotentReadLock || this.generateReadLockID();
             (lockValue as string[]).push(lockID);
-            await Locker.setLock(lockKey + '/' + lockID, lockID, this.EXP_READLOCK);
-            await Locker.setLock(lockKey, lockValue, this.EXP_READLOCK + this.TIME_5MIN);
+            await Locker.setLock(lockKey + '/' + lockID, lockID, this.EXP_READ_LOCK);
+            await Locker.setLock(lockKey, lockValue, this.EXP_READ_LOCK + this.TIME_5MIN);
             await this.releaseMutex(cacheLock);
             // when the session key expired i have to remove the wid/lockid from the main read lock
             this.redisSubscriptionClient.subscribe('__keyevent@0__:expired', lockKey + '/' + lockID)

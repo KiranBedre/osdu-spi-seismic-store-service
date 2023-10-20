@@ -38,15 +38,22 @@ export class AppHandler {
                     ' with an impersonation token as Auth credentials.'));
             }
 
-            if (op === AppOp.Register) {
-                Response.writeOK(res, await this.registerApp(req));
-            } else if (op === AppOp.RegisterTrusted) {
-                Response.writeOK(res, await this.registerAppTrusted(req));
-            } else if (op === AppOp.List) {
-                Response.writeOK(res, await this.listApps(req));
-            } else if (op === AppOp.ListTrusted) {
-                Response.writeOK(res, await this.listAppsTrusted(req));
-            } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
+            switch (op) {
+                case AppOp.Register:
+                    Response.writeOK(res, await this.registerApp(req));
+                    break;
+                case AppOp.RegisterTrusted:
+                    Response.writeOK(res, await this.registerAppTrusted(req));
+                    break;
+                case AppOp.List:
+                    Response.writeOK(res, await this.listApps(req));
+                    break;
+                case AppOp.ListTrusted:
+                    Response.writeOK(res, await this.listAppsTrusted(req));
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+            }
 
         } catch (error) { Response.writeError(res, error); }
 

@@ -15,7 +15,6 @@ data:
   redisSdmsHost: ""
   redisSdmsPort: "6379"
   redisSdmsTlsDisabled: true
-  apiBasePath: "/api/seismic-store/v3"
   serviceEnv: "dev"
   # Deployment
   requestsCpu: "5m"
@@ -35,6 +34,7 @@ conf:
   keycloak: "seismic-store-keycloak-secret"
   minio: "seismic-store-minio-secret"
   sdmsRedisSecretName: "seismic-store-redis-secret" # pragma: allowlist secret
+  replicas: 1
 
 istio:
   proxyCPU: "6m"

@@ -20,5 +20,10 @@ dist/
 node_modules/
 dev/
 
-# OSX added
+# OSX
 **/.DS_Store
+
+# test   
+.nyc_output
+coverage  
+test-results.xml
