@@ -175,7 +175,7 @@ public class Program
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
             {
-                WaitTimeIfTaskNotFound = TimeSpan.FromSeconds(5),
+                DelayWhenTaskNotFound = TimeSpan.FromSeconds(5),
             })
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
             .AddSingleton<IRedisConnectionFactory, RedisConnectionFactory>()

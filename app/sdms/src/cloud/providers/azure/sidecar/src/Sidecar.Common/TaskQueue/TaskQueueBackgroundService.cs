@@ -37,8 +37,8 @@ public class TaskQueueBackgroundService<TW> : BackgroundService
                 if (status is ExecutionStatus.TaskNotFound)
                 {
                     _logger.LogInformation(
-                        "There are no tasks. Will retry after {Timeout}", _opts.WaitTimeIfTaskNotFound);
-                    await Task.Delay(_opts.WaitTimeIfTaskNotFound, stoppingToken);
+                        "There are no tasks. Will retry after {Timeout}", _opts.DelayWhenTaskNotFound);
+                    await Task.Delay(_opts.DelayWhenTaskNotFound, stoppingToken);
                 }
             }
             catch (Exception e) when (e is not OperationCanceledException)

@@ -11,7 +11,7 @@ public class TaskQueueBackgroundServiceTests
 
     public TaskQueueBackgroundServiceTests()
     {
-        _service = new(_loggerMock.Object, _workerMock.Object, new() { WaitTimeIfTaskNotFound = TimeSpan.Zero });
+        _service = new(_loggerMock.Object, _workerMock.Object, new() { DelayWhenTaskNotFound = TimeSpan.Zero });
     }
 
     [Fact]
