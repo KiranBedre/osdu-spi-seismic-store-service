@@ -29,6 +29,7 @@ import { SubProjectDAO } from './dao';
 import { SubprojectGroups } from './groups';
 import { SubProjectOP } from './optype';
 import { SubProjectParser } from './parser';
+
 export class SubProjectHandler {
 
     // handler for the [ /subproject ] endpoints

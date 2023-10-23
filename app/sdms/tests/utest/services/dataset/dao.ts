@@ -129,6 +129,9 @@ export class DatasetDAOTest {
                 deleteMulti(keys: string[]): Promise<void> {
                     return Promise.resolve();
                 },
+                pathExists(subproject: string, path: string): Promise<boolean> {
+                    return Promise.resolve(true);
+                },
                 KEY: undefined
             };
 

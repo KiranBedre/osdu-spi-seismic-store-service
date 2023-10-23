@@ -294,9 +294,7 @@ export class TestSubProjectSVC {
 
             await SubProjectHandler.handler(expReq, expRes, SubProjectOP.Delete);
             Tx.check200(expRes.statusCode);
-
         });
-
     }
 
 }

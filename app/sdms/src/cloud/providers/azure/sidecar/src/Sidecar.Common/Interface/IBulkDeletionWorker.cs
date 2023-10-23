@@ -1,6 +1,5 @@
-﻿
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Services
+namespace Sidecar.Common.Interface;
+using Sidecar.Common.Model;
+
+public interface IBulkDeletionWorker
 {
-    public interface IDataAccess
-    {
-        Task<string> Query(string cs, string sql, string? ctoken, int? limit);
-    }
+    Task<bool> RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> items, CancellationToken ct = default);
 }

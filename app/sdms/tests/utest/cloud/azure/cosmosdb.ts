@@ -34,6 +34,7 @@ export class TestAzureCosmosDbDAO {
     private static query: AzureCosmosDbQuery;
     private static axiosInstance: AxiosInstance;
     private static buffer: Buffer;
+    private static tmpAxios: AxiosInstance;
 
     public static run() {
 
@@ -42,7 +43,7 @@ export class TestAzureCosmosDbDAO {
             this.sandbox = sinon.createSandbox();
             // axiosInstance needs to have any kind or "post" method to make it stubble in the tests
             this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
-            this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' }, this.axiosInstance);
+            this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' });
             this.query = new AzureCosmosDbQuery('name-a', 'kind-a');
 
             const datasetModel: DatasetModel = {
@@ -85,12 +86,20 @@ export class TestAzureCosmosDbDAO {
                     return iJournalQueryModel;
                 }
             };
+
             beforeEach(() => {
                 this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
                     new Container(undefined, 'id', undefined));
+
+                // replace axiosInstance to our stub. Unfortunately, we can't do this with sandbox methods.
+                this.tmpAxios = AzureCosmosDbDAO.axiosInstance;
+                AzureCosmosDbDAO.axiosInstance = this.axiosInstance;
+
+                this.sandbox.replace(AzureCosmosDbDAO, 'axiosInstance', this.axiosInstance);
             })
 
             afterEach(() => {
+                AzureCosmosDbDAO.axiosInstance = this.tmpAxios;  // restore Axios instance
                 this.sandbox.restore();
             });
 
@@ -109,6 +118,7 @@ export class TestAzureCosmosDbDAO {
             this.queryGroupBy();
             this.listDatasets();
             this.listFolders();
+            this.pathExists();
         });
     }
 
@@ -439,7 +449,6 @@ export class TestAzureCosmosDbDAO {
 
             expect(actualPaths).to.have.same.members(expectedPaths);
 
-
         });
 
         Tx.test(async () => {
@@ -474,10 +483,13 @@ export class TestAzureCosmosDbDAO {
             limit: 1,
             cursor: "cursor"
         }
+
         Tx.sectionInit('listDatasets');
+
         let query =  'SELECT * FROM c WHERE c.data.subproject = "' + subproject +
             '" AND c.data.path = "' + path + '"'
         let queryIterator: QueryIterator<any> = this.getQueryIterator() as any;
+
         Tx.test(async () => {
             AzureConfig.SIDECAR_ENABLE_QUERY = false;
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
@@ -1033,6 +1045,39 @@ export class TestAzureCosmosDbDAO {
             _init: undefined,
             handleSplitError: undefined
         };
+    }
+
+
+    private static pathExists() {
+        const datasetModel1: DatasetModel = this.getDatasetModel('dataset1.txt');
+        const datasetModel2: DatasetModel = this.getDatasetModel('dataset2.txt');
+        let tenant = 'tenant'
+        let subproject = 'subproject'
+        let path = 'path'
+
+        Tx.sectionInit('pathExists');
+
+        let query =  'select top 1 * from c where c.data.subproject = @subproject ' +
+            'and c.data.path = @path'
+        let queryIterator: QueryIterator<any> = this.getQueryIterator() as any;
+
+        Tx.test(async () => {
+            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
+            sinonStub.returns(queryIterator);
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+
+            let res = await this.cosmos.pathExists(subproject, path);
+            sinon.assert.calledWith(sinonStub, {
+                query: query,
+                parameters: [
+                    { name: '@subproject', value: subproject },
+                    { name: '@path', value: path }
+                ]
+            });
+        });
     }
 
 }

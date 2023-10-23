@@ -15,7 +15,6 @@
 // ============================================================================
 
 import { Request as expRequest, Response as expResponse } from 'express';
-import url from 'url';
 import { DatasetModel, DatasetUtils } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, IJournal, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';

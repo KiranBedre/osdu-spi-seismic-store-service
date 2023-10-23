@@ -13,15 +13,17 @@ USER appuser
 FROM mcr.microsoft.com/dotnet/sdk:6.0-focal AS build
 ARG PASS
 WORKDIR /src
-COPY ["Sidecar.csproj", "./"]
-RUN dotnet restore "Sidecar.csproj"
+COPY "Sidecar.Common/Sidecar.Common.csproj" "Sidecar.Common/Sidecar.Common.csproj"
+COPY "Sidecar.QueryRunner/Sidecar.QueryRunner.csproj" "Sidecar.QueryRunner/Sidecar.QueryRunner.csproj"
+RUN dotnet restore "Sidecar.Common/Sidecar.Common.csproj"
+RUN dotnet restore "Sidecar.QueryRunner/Sidecar.QueryRunner.csproj"
 COPY . .
-RUN dotnet build "Sidecar.csproj" -c Release -o /app/build
+RUN dotnet build "Sidecar.QueryRunner/Sidecar.QueryRunner.csproj" -c Release -o /app/build
 RUN dotnet dev-certs https -ep ~/.aspnet/https/aspnetapp.pfx -p ${PASS}
 RUN dotnet dev-certs https --trust
 
 FROM build AS publish
-RUN dotnet publish "Sidecar.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Sidecar.QueryRunner/Sidecar.QueryRunner.csproj" -c Release -o /app/publish /p:UseAppHost=false
 RUN cp ~/.aspnet/https/aspnetapp.pfx /app/publish/.
 RUN chmod 755 /app/publish/aspnetapp.pfx
 
@@ -30,4 +32,4 @@ ARG PASS
 ENV ASPNETCORE_Kestrel__Certificates__Default__Password=${PASS}
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Sidecar.dll"]
+ENTRYPOINT ["dotnet", "Sidecar.QueryRunner.dll"]

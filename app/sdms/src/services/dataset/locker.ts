@@ -164,6 +164,15 @@ export class Locker {
         return typeof (lock) === 'string';
     }
 
+    private static getLockMessage(lockKey: string, lockValue: string[] | string): string {
+        if (this.isWriteLock(lockValue)) {
+            const operationType = typeof (lockValue) === 'string' && lockValue.startsWith('WDELETE') ? 'deletion' : 'write';
+            return lockKey + ' is locked for ' + operationType + ' with different id ' + Error.get423WriteLockReason();
+        } else {
+            return lockKey + ' is locked for read with different id ' + Error.get423ReadLockReason();
+        }
+    };
+
     public static async getLock(key: string): Promise<string[] | string> {
         const entity = await this.get(key);
         return entity ? entity.startsWith('rms') ? entity.substr(4).split(':') : entity : undefined;
@@ -259,8 +268,7 @@ export class Locker {
 
         if (lockValue && wid && wid !== lockValue && this.isWriteLock(lockValue)) {
             await this.releaseMutex(cacheLock);
-            throw (Error.make(Error.Status.LOCKED,
-                lockKey + ' is locked for write with different id ' + Error.get423WriteLockReason()));
+            throw (Error.make(Error.Status.LOCKED, this.getLockMessage(lockKey, lockValue)));
         }
 
         // ------------------------------------------------
@@ -283,23 +291,18 @@ export class Locker {
         // wid not specified - impossible lock
         if (!wid) {
             await this.releaseMutex(cacheLock);
-            throw (Error.make(Error.Status.LOCKED,
-                lockKey + ' is locked for ' + (this.isWriteLock(lockValue) ?
-                    'write ' + Error.get423WriteLockReason() :
-                    'read ' + Error.get423ReadLockReason())));
+            throw (Error.make(Error.Status.LOCKED, this.getLockMessage(lockKey, lockValue)));
         }
 
         // write locked and different wid
         if (this.isWriteLock(lockValue) && wid !== lockValue) {
             await this.releaseMutex(cacheLock);
-            throw (Error.make(Error.Status.LOCKED,
-                lockKey + ' is locked for write with different id ' + Error.get423WriteLockReason()));
+            throw (Error.make(Error.Status.LOCKED, this.getLockMessage(lockKey, lockValue)));
         }
 
         if (!this.isWriteLock(lockValue) && lockValue.indexOf(wid) === -1) {
             await this.releaseMutex(cacheLock);
-            throw (Error.make(Error.Status.LOCKED,
-                lockKey + ' is locked for read with different ids ' + + Error.get423ReadLockReason()));
+            throw (Error.make(Error.Status.LOCKED, this.getLockMessage(lockKey, lockValue)));
         }
 
         // Trusted Open
@@ -332,15 +335,13 @@ export class Locker {
             // wid not specified -> error locked for write
             if (!wid) {
                 await this.releaseMutex(cacheLock);
-                throw (Error.make(Error.Status.LOCKED,
-                    lockKey + ' is locked for write ' + Error.get423WriteLockReason()));
+                throw (Error.make(Error.Status.LOCKED, this.getLockMessage(lockKey, lockValue)));
             }
 
             // wid different -> error different wid
             if (wid !== lockValue) {
                 await this.releaseMutex(cacheLock);
-                throw (Error.make(Error.Status.LOCKED,
-                    lockKey + ' is locked for write with different wid ' + Error.get423WriteLockReason()));
+                throw (Error.make(Error.Status.LOCKED, this.getLockMessage(lockKey, lockValue)));
             }
 
             // wid match -> TRUSTED OPEN
