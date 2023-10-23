@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "4b4d5806-77d4-4d7d-b475-be12a58fa5ec",
-		"name": "SDMS-E2E ver.M20 - Release 0.23 Copy 2",
+		"_postman_id": "4a2dccc3-b5a7-499e-98d0-4ae50bfaf19f",
+		"name": "SDMS-E2E ver.M22 - Release 0.25",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -7748,7 +7748,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"limit\": \"3\"\r\n}",
+							"raw": "{\r\n    \"limit\": \"50\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
