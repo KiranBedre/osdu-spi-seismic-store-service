@@ -3,12 +3,9 @@ variables:
   AWS_BUILD_SUBDIR: src/cloud/providers/aws/build-aws
   AWS_TEST_SUBDIR: tests
   AWS_CHART_SUBDIR: app/sdms/devops/aws/chart
-  AWS_SERVICE: seismic-store
-  AWS_SERVICE_NAMESPACE_SUFFIX: seismic-store
   AWS_SERVICE_GATEWAY: osdu-services/osdu-gateway
   AWS_ENVIRONMENT: dev
   AWS_DEPLOY_TARGET: TF
-  AWS_EKS_DEPLOYMENT_NAME: os-seismic-store
   AWS_BUILDER_DOCKERFILE_PATH: src/cloud/providers/aws/build-aws/builder.Dockerfile
   AWS_RUNTIME_DOCKERFILE_PATH: src/cloud/providers/aws/build-aws/runtime.Dockerfile
   # skipping tests here. Using a local file to run tests
@@ -17,7 +14,15 @@ variables:
 
 sdms_aws-containerize:
   extends:
-    - .aws-containerize
+    - .aws
+    - .aws_variables
+    - .aws_common_variables
+  stage: containerize
+  variables:
+    SHA_IMAGE: ${SDMS_V4_SERVICE_NAME}:${CI_COMMIT_SHA}
+    LATEST_IMAGE: ${SDMS_V4_SERVICE_NAME}:latest
+    AWS_EKS_DEPLOYMENT_NAME: os-seismic-store
+    AWS_IMAGE_TAG_BASE: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_ECR_REGION}.amazonaws.com/os-seismic-store
   needs: ['sdms_compile-and-unit-test']
   script:
     - |
@@ -77,12 +82,19 @@ sdms_aws-containerize:
       - merge_requests
 
 sdms_aws-update-tf:
-  allow_failure: false
   extends:
-    - .aws-update-tf
+    - .aws
+    - .aws_variables
+    - .aws_common_variables
+  allow_failure: false
+  stage: deploy
+  variables:
+    AWS_EKS_DEPLOYMENT_NAME: os-seismic-store
+    AWS_SERVICE_NAMESPACE_SUFFIX: seismic-store
+    AWS_IMAGE_TAG_BASE: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_ECR_REGION}.amazonaws.com/os-seismic-store
   needs: ['sdms_aws-containerize']
   script:
-    - echo $AWS_REGION $EKS_CLUSTER_NAME $EKS_CLUSTER_MGMT_ROLE $AWS_SERVICE_NAMESPACE $AWS_EKS_DEPLOYMENT_NAME $AWS_IMAGE_TAG_BASE
+    - echo $AWS_REGION $EKS_CLUSTER_NAME $EKS_CLUSTER_MGMT_ROLE $AWS_SERVICE_NAMESPACE $AWS_SERVICE_NAMESPACE_SUFFIX $AWS_EKS_DEPLOYMENT_NAME $AWS_IMAGE_TAG_BASE
     - export KUBECONFIG=/tmp/kubeconfig-${RANDOM}.yaml
     - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME --role-arn $EKS_CLUSTER_MGMT_ROLE
 
@@ -168,7 +180,9 @@ sdms_aws-test-newman:
     - .aws_variables
   stage: integration
   image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-node/aws-node:v1.0-node14
-  needs: [{ job: 'sdms_aws-update-helm', optional: true }]
+  needs: ['sdms_aws-update-tf']
+  variables:
+    AWS_SDMS_PREFIX: /api/seismic-store/v3
   script:
     - cd app/$SDMS_SERVICE
     - pip3 install -r devops/aws/requirements.txt

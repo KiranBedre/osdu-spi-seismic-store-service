@@ -25,6 +25,7 @@ import { SvcAppRouter } from './svcapp/service';
 import { TenantRouter } from './tenant/service';
 import { UserRouter } from './user/service';
 import { UtilityRouter } from './utility/service';
+import { OperationRouter } from './operation/service';
 
 const router = Router();
 
@@ -55,5 +56,8 @@ router.use(Config.API_BASE_PATH + '/user', UserRouter);
 
 // utility
 router.use(Config.API_BASE_PATH + '/utility', UtilityRouter);
+
+// operation
+router.use(Config.API_BASE_PATH + '/operation', OperationRouter);
 
 export { router as ServiceRouter };

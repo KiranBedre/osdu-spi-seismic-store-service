@@ -15,19 +15,26 @@
 // ============================================================================
 
 import Redis, { RedisOptions } from 'ioredis';
+import { Config } from '../cloud';
 
-export class Cache {
+export class CacheCore {
 
-    private redisClient: Redis;
+    protected redisClient: Redis;
 
     public async init(
         host: string, port: number, password: string,
         disableTls: boolean, connectionName = 'sdms-cache'): Promise<void> {
+
+        if (Config.UTEST) {
+            const redis = require('ioredis-mock');
+            this.redisClient = new redis();
+            return;
+        }
+
         if (host && port && !this.redisClient) {
             const redisOptions = {
                 host,
                 port,
-                password,
                 retryStrategy: (times: number) => {
                     return Math.pow(2, times) + Math.random() * 100;
                 },
@@ -35,15 +42,23 @@ export class Cache {
                 commandTimeout: 5000,
                 connectionName
             } as RedisOptions;
-            if (!disableTls) {
-                redisOptions.tls = { servername: host };
+            if (password) {
+                redisOptions.password = password;
+                if (!disableTls) {
+                    redisOptions.tls = { servername: host };
+                }
             }
+
             this.redisClient = new Redis(redisOptions);
             while (this.redisClient.status === 'connecting') {
                 await new Promise((resolve) => setTimeout(resolve, 500));
             }
         }
     }
+
+}
+
+export class Cache extends CacheCore {
 
     public async get(key: string): Promise<any> {
         if (this.redisClient) {
@@ -65,7 +80,7 @@ export class Cache {
             return await this.redisClient.ttl(key);
         }
     }
-
 }
 
-export let cacheShared: Cache = new Cache();
+export const cacheShared = new Cache();
+

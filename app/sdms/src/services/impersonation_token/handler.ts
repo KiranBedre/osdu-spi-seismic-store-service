@@ -18,7 +18,7 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { Auth, AuthProviderFactory, AuthRoles } from '../../auth';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
-import { Error, Feature, FeatureFlags, Response, Utils, getInMemoryCacheInstance, cacheShared } from '../../shared';
+import { cacheShared, Error, Feature, FeatureFlags, Response, Utils, getInMemoryCacheInstance } from '../../shared';
 import { SubprojectAuth, SubProjectDAO } from '../subproject';
 import { TenantDAO } from '../tenant';
 import { ImpersonationTokenContextModel, ImpersonationTokenModel } from './model';
@@ -41,11 +41,16 @@ export class ImpersonationTokenHandler {
                     ' with an impersonation token as Auth credentials.'));
             }
 
-            if (op === ImpersonationTokenOps.Generate) {
-                Response.writeOK(res, await this.generate(req));
-            } else if (op === ImpersonationTokenOps.Refresh) {
-                Response.writeOK(res, await this.refresh(req));
-            } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
+            switch (op) {
+                case ImpersonationTokenOps.Generate:
+                    Response.writeOK(res, await this.generate(req));
+                    break;
+                case ImpersonationTokenOps.Refresh:
+                    Response.writeOK(res, await this.refresh(req));
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+            }
         } catch (error) { Response.writeError(res, error); }
 
     }

@@ -18,10 +18,10 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { Auth, AuthGroups, AuthRoles, UserRoles } from '../../auth';
 import { Config } from '../../cloud';
 import { JournalFactoryTenantClient } from '../../cloud/journal';
-import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
+import { Error, Response, Utils } from '../../shared';
 import { ISDPathModel } from '../../shared/sdpath';
 import { DatasetDAO, DatasetModel } from '../dataset';
-import { SubProjectDAO, SubprojectGroups, SubProjectModel, SubprojectAuth } from '../subproject';
+import { SubProjectDAO, SubprojectGroups, SubprojectAuth } from '../subproject';
 import { ISubProjectModel } from '../subproject/model';
 import { TenantDAO, TenantGroups, TenantModel } from '../tenant';
 import { ITenantModel } from '../tenant/model';
@@ -42,16 +42,22 @@ export class UserHandler {
                     'user endpoints not available with an impersonation token as Auth credentials.'));
             }
 
-            if (op === UserOP.Add) {
-                Response.writeOK(res, await this.addUser(req));
-            } else if (op === UserOP.Remove) {
-                Response.writeOK(res, await this.removeUser(req));
-            } else if (op === UserOP.List) {
-                Response.writeOK(res, await this.listUsers(req));
-            } else if (op === UserOP.Roles) {
-                Response.writeOK(res, await this.rolesUser(req));
-            } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
-
+            switch (op) {
+                case UserOP.Add:
+                    Response.writeOK(res, await this.addUser(req));
+                    break;
+                case UserOP.Remove:
+                    Response.writeOK(res, await this.removeUser(req));
+                    break;
+                case UserOP.List:
+                    Response.writeOK(res, await this.listUsers(req));
+                    break;
+                case UserOP.Roles:
+                    Response.writeOK(res, await this.rolesUser(req));
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+            }
         } catch (error) { Response.writeError(res, error); }
 
     }
@@ -262,18 +268,7 @@ export class UserHandler {
 
         } else if (sdPath.subproject) {
 
-            const serviceGroupRegex = SubprojectGroups.serviceGroupNameRegExp(tenant.name, subproject.name);
-            const subprojectAdminServiceGroups = subproject.acls.admins
-                .filter((group) => group.match(serviceGroupRegex));
-            const subprojectViewerServiceGroups = subproject.acls.viewers
-                .filter((group) => group.match(serviceGroupRegex));
-
-            const dataGroupRegex = SubprojectGroups.dataGroupNameRegExp(tenant.name, subproject.name);
-            const adminSubprojectDataGroups = subproject.acls.admins.filter((group) => group.match(dataGroupRegex));
-            const viewerSubprojectDataGroups = subproject.acls.viewers.filter(group => group.match(dataGroupRegex));
-
-            const adminGroups = subprojectAdminServiceGroups.concat(adminSubprojectDataGroups);
-            const viewerGroups = subprojectViewerServiceGroups.concat(viewerSubprojectDataGroups);
+            const { adminGroups, viewerGroups } = UserHandler.getAclGroups(tenant, subproject);
 
             let userGroups = [];
 
@@ -301,6 +296,22 @@ export class UserHandler {
                 'Please use Delfi portal to remove users from ' + tenant.name + ' tenant'));
         }
 
+    }
+
+    private static getAclGroups(tenant: TenantModel, subproject: ISubProjectModel) {
+        const serviceGroupRegex = SubprojectGroups.serviceGroupNameRegExp(tenant.name, subproject.name);
+        const subprojectAdminServiceGroups = subproject.acls.admins
+            .filter((group) => group.match(serviceGroupRegex));
+        const subprojectViewerServiceGroups = subproject.acls.viewers
+            .filter((group) => group.match(serviceGroupRegex));
+
+        const dataGroupRegex = SubprojectGroups.dataGroupNameRegExp(tenant.name, subproject.name);
+        const adminSubprojectDataGroups = subproject.acls.admins.filter((group) => group.match(dataGroupRegex));
+        const viewerSubprojectDataGroups = subproject.acls.viewers.filter(group => group.match(dataGroupRegex));
+
+        const adminGroups = subprojectAdminServiceGroups.concat(adminSubprojectDataGroups);
+        const viewerGroups = subprojectViewerServiceGroups.concat(viewerSubprojectDataGroups);
+        return { adminGroups, viewerGroups };
     }
 
     private static async findAndRemoveUserFromDataset(userListInAuthGroups: any[], userEmail: string,
@@ -347,7 +358,7 @@ export class UserHandler {
     }
 
     // list users and their roles in a subproject
-    private static async listUsers(req: expRequest): Promise<string[][]> {
+    private static async listUsers(req: expRequest) {
 
         // parse user request
         const sdPath = UserParser.listUsers(req);
@@ -388,7 +399,8 @@ export class UserHandler {
         return;
     }
 
-    private static async listUsersInAuthGroups(admins: string[], viewers: string[], req, tenant: ITenantModel,) {
+    private static async listUsersInAuthGroups(admins: string[], viewers: string[],
+        req, tenant: ITenantModel,):Promise<string[]> {
 
         let users = [];
 

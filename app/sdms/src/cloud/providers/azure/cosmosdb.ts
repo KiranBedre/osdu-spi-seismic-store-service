@@ -33,7 +33,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     public KEY = Symbol('id');
     private dataPartition: string;
     private static containerCache: { [key: string]: Container; } = {};
-    private static axiosInstance: AxiosInstance;
+    public static axiosInstance: AxiosInstance;
 
     public async getCosmoContainer(): Promise<Container> {
 
@@ -59,10 +59,10 @@ export class AzureCosmosDbDAO extends AbstractJournal {
 
     }
 
-    public constructor(tenant: TenantModel, axiosInstance?: AxiosInstance) {
+    public constructor(tenant: TenantModel) {
         super();
         this.dataPartition = tenant.esd.indexOf('.') !== -1 ? tenant.esd.split('.')[0] : tenant.esd;
-        AzureCosmosDbDAO.axiosInstance = axiosInstance ?? axios.create({
+        AzureCosmosDbDAO.axiosInstance = axios.create({
             httpsAgent: require('https').Agent({
                 rejectUnauthorized: false
             })
@@ -228,6 +228,16 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         })
     }
 
+    public async pathExists(subproject: string, path: string) : Promise<boolean> {
+        const query = 'select top 1 * from c where c.data.subproject = @subproject and c.data.path = @path';
+        const parameters = [
+            {name: '@subproject', value: subproject},
+            {name: '@path', value: path}
+        ]
+        const results = (await (await this.getCosmoContainer()).items.query({query, parameters}).fetchAll()).resources;
+        return (results?.length > 0);
+    }
+
     public async delete(key: any): Promise<void> {
         await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).delete();
     }
@@ -237,7 +247,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async listFolders(dataset: DatasetModel): Promise<any[]> {
-        if (AzureConfig.ENABLE_OPTIMISED_QUERY) {
+        if (AzureConfig.ENABLE_OPTIMIZED_QUERY) {
             return this.getSubfoldersUsingDistinctPathsQuery(
                 this.distinctPathsQuery(dataset.tenant, dataset.subproject, dataset.path), dataset);
         }
@@ -293,7 +303,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
             .filter('subproject', dataset.subproject)
 
-        if (dataset.path && dataset.path !== '/') {
+        if (dataset.path) {
             query = query.filter('path', dataset.path)
         }
 

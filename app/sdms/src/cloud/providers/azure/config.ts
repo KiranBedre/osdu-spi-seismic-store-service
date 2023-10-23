@@ -52,7 +52,7 @@ export class AzureConfig extends Config {
     public static SIDECAR_ENABLE_QUERY: boolean;
 
     // CosmosDB queries
-    public static ENABLE_OPTIMISED_QUERY: boolean;
+    public static ENABLE_OPTIMIZED_QUERY: boolean;
 
     public async init(): Promise<void> {
 
@@ -106,9 +106,13 @@ export class AzureConfig extends Config {
                 AzureConfig.REDIS_SHARED_INSTANCE_KEY;
             AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS = process.env.REDIS_SHARED_INSTANCE_ADDRESS ||
                 AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS;
-            AzureConfig.REDIS_SHARED_INSTANCE_PORT = +process.env.REDIS_SHARED_INSTANCE_PORT;
+            AzureConfig.REDIS_SHARED_INSTANCE_PORT = +process.env.REDIS_SHARED_INSTANCE_PORT || 6380;
             AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE =
                 process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE === 'true';  // enabled by default
+
+            // redis deletion queue
+            AzureConfig.REDIS_DELETION_QUEUE = process.env.REDIS_DELETION_QUEUE ||
+                AzureConfig.REDIS_DELETION_QUEUE || 'sdms-queue-bulkdelete';
 
             // set the auth provider
             AzureConfig.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;
@@ -126,7 +130,7 @@ export class AzureConfig extends Config {
             AzureConfig.SIDECAR_URL = process.env.SIDECAR_URL || 'https://localhost:7138';
             AzureConfig.SIDECAR_ENABLE_QUERY = process.env.SIDECAR_ENABLE_QUERY === 'true';
 
-            AzureConfig.ENABLE_OPTIMISED_QUERY = process.env.ENABLE_OPTIMISED_QUERY === 'true';
+            AzureConfig.ENABLE_OPTIMIZED_QUERY = process.env.ENABLE_OPTIMIZED_QUERY === 'true';
 
             // set the correlation id
             AzureConfig.CORRELATION_ID = process.env.CORRELATION_ID || AzureConfig.CORRELATION_ID;
@@ -147,6 +151,7 @@ export class AzureConfig extends Config {
                 REDIS_SHARED_INSTANCE_ADDRESS: AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS,
                 REDIS_SHARED_INSTANCE_PORT: AzureConfig.REDIS_SHARED_INSTANCE_PORT,
                 REDIS_SHARED_INSTANCE_TLS_DISABLE: AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE,
+                REDIS_DELETION_QUEUE: AzureConfig.REDIS_DELETION_QUEUE,
                 DES_SERVICE_HOST_COMPLIANCE: AzureConfig.DES_SERVICE_HOST_COMPLIANCE,
                 DES_SERVICE_HOST_ENTITLEMENT: AzureConfig.DES_SERVICE_HOST_ENTITLEMENT,
                 DES_SERVICE_HOST_STORAGE: AzureConfig.DES_SERVICE_HOST_STORAGE,

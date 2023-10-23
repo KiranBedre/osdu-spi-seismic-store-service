@@ -265,6 +265,43 @@ export class TestServicesUtilityHandler {
             op = UtilityOP.LS;
 
             req.query = {};
+            req.query.sdpath = "sd://tenant/subproject";
+            req.query.wmode = "all";
+            req.query.limit = "100";
+            req.query.cursor = "cursor";
+            
+            let iDESEntitlementGroupModel: IDESEntitlementGroupModel = {
+                name: 'name',
+                description: 'description',
+                email: 'test@123@email.com'
+            };
+
+            this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
+            this.sandbox.stub(TenantDAO, 'get').resolves(tenantModel);
+            this.sandbox.stub(SubProjectDAO, 'get').resolves(subProjectModel);
+            this.sandbox.stub(DESEntitlement, "getUserGroups").resolves([iDESEntitlementGroupModel]);
+
+            const dataset = {} as DatasetModel;
+            dataset.tenant = 'tenant';
+            dataset.subproject = 'subproject';
+            dataset.path = '/';
+
+            this.sandbox.stub(DatasetDAO, "paginatedListContent")
+            .withArgs(sinon.match.any)
+            .throws(new Error())
+            .withArgs(sinon.match.any, dataset, sinon.match.any, sinon.match.any )
+            .resolves({ datasets: [""], nextPageCursor: "" } );
+
+            await Handler.handler(req, res, op);
+            Tx.check200(res.statusCode)
+
+        } );
+
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
+
+            op = UtilityOP.LS;
+
+            req.query = {};
             req.query.sdpath = "sd://";
             req.query.wmode = "all";
             req.query.limit = "100";

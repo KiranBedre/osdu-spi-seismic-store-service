@@ -52,6 +52,7 @@ export interface IJournal {
         searchParam?: string,
         selectParam?: string[]): Promise<[any[], { endCursor?: string }]>;
     KEY: symbol;
+    pathExists(subproject: string, path: string): Promise<boolean>;
 }
 
 export interface IJournalTransaction {
@@ -133,6 +134,9 @@ export abstract class AbstractJournal implements IJournal {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
     public getSize(dataset: DatasetModel): Promise<{dataset_count: number, size_bytes: number}> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    }
+     public pathExists(subproject: string, path: string) : Promise<boolean> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
 }
