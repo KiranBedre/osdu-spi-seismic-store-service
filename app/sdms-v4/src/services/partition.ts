@@ -23,7 +23,11 @@ export class PartitionCoreService {
     public static async getPartitionConfiguration(dataPartition: string): Promise<any> {
         const serviceCredentials = await CredentialsFactory.build(Config.CLOUD_PROVIDER).getServiceCredentials();
         const url: string =
-            Config.CORE_SERVICE_HOST + Config.CORE_SERVICE_PARTITION_BASE_PATH + '/partitions/' + dataPartition;
+            Config.CORE_SERVICE_HOST_PARTITION +
+            Config.CORE_SERVICE_PARTITION_BASE_PATH +
+            '/partitions/' +
+            dataPartition;
+
         const options = {
             headers: {
                 Accept: 'application/json',
