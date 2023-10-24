@@ -35,7 +35,7 @@ export class SchemaCoreService {
                 return sharedRes;
             }
         }
-        const url = Config.CORE_SERVICE_HOST + Config.CORE_SERVICE_SCHEMA_BASE_PATH + '/schema/' + kind;
+        const url = Config.CORE_SERVICE_HOST_SCHEMA + Config.CORE_SERVICE_SCHEMA_BASE_PATH + '/schema/' + kind;
         const options: any = {
             headers: {
                 Accept: 'application/json',
