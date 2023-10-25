@@ -15,7 +15,7 @@ data:
   SDMS_PREFIX: "{{ .Values.configEnv.sdmsPrefix }}"
   SIDECAR_URL: "{{ .Values.configEnv.sidecarUrl}}"
   SIDECAR_ENABLE_QUERY: "{{ .Values.configEnv.sidecarEnableQuery}}"
-  ENABLE_OPTIMISED_QUERY: "{{ .Values.configEnv.enableOptimisedQuery}}"
+  ENABLE_OPTIMIZED_QUERY: "{{ .Values.configEnv.enableOptimizedQuery}}"
 ---
 apiVersion: v1
 kind: ConfigMap

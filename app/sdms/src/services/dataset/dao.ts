@@ -53,13 +53,13 @@ export class DatasetDAO {
 
     public static async exists(journalClient: IJournal, datasets: DatasetModel[]): Promise<boolean[]> {
         const keys = await this.getKeys(journalClient, datasets);
-        const bools = [] as boolean[];
+        const booleans = [] as boolean[];
         const results = await journalClient.getIdByKeys(keys);
 
         for(const key of keys) {
-            bools.push(results.includes(key.partitionKey));
+            booleans.push(results.includes(key.partitionKey));
         }
-        return bools;
+        return booleans;
     }
 
     public static async sizes(journalClient: IJournal, datasets: DatasetModel[]): Promise<number[]> {
@@ -253,16 +253,16 @@ export class DatasetDAO {
         entity.ctag = entity.ctag || '0000000000000000';
         entity.readonly = entity.readonly || false;
         const lockKey = entity.tenant + '/' + entity.subproject + entity.path + entity.name;
-        const lockres = await Locker.getLock(lockKey);
-        if (!lockres) { // unlocked
+        const lockResponse = await Locker.getLock(lockKey);
+        if (!lockResponse) { // unlocked
             entity.sbit = null;
             entity.sbit_count = 0;
-        } else if (Locker.isWriteLock(lockres)) { // write lock
-            entity.sbit = lockres as string;
+        } else if (Locker.isWriteLock(lockResponse)) { // write lock
+            entity.sbit = lockResponse as string;
             entity.sbit_count = 1;
         } else { // read lock
-            entity.sbit = (lockres as string[]).join(',');
-            entity.sbit_count = lockres.length;
+            entity.sbit = (lockResponse as string[]).join(',');
+            entity.sbit_count = lockResponse.length;
         }
         return entity;
     }

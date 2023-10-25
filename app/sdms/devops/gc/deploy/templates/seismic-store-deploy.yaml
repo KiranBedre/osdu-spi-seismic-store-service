@@ -9,7 +9,7 @@ spec:
   selector:
     matchLabels:
       app: {{ .Values.conf.appName  | quote }}
-  replicas: 1
+  replicas: {{ .Values.conf.replicas }}
   template:
     metadata:
       labels:

@@ -38,21 +38,29 @@ export class UtilityHandler {
     public static async handler(req: expRequest, res: expResponse, op: UtilityOP) {
 
         try {
-            if (op === UtilityOP.GCSTOKEN) {
-                Response.writeOK(res, await this.getGCSAccessToken(req));
-            } else if (op === UtilityOP.LS) {
-                Response.writeOK(res, await this.ls(req));
-            } else if (op === UtilityOP.CP) {
-                const response = await this.cp(req);
-                Response.writeOK(res, { 'status': response.status }, response.code);
-            } else if (op === UtilityOP.UPLOAD_CONNECTION_STRING) {
-                Response.writeOK(res, await this.getConnectionString(req, false));
-            } else if (op === UtilityOP.DOWNLOAD_CONNECTION_STRING) {
-                Response.writeOK(res, await this.getConnectionString(req, true));
-            } else if (op === UtilityOP.STORAGE_TIERS) {
-                Response.writeOK(res, await this.listStorageTiers(req));
-            } else {
-                throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+
+            switch (op) {
+                case UtilityOP.GCSTOKEN:
+                    Response.writeOK(res, await this.getGCSAccessToken(req));
+                    break;
+                case UtilityOP.LS:
+                    Response.writeOK(res, await this.ls(req));
+                    break;
+                case UtilityOP.CP:
+                    const response = await this.cp(req);
+                    Response.writeOK(res, { 'status': response.status }, response.code);
+                    break;
+                case UtilityOP.UPLOAD_CONNECTION_STRING:
+                    Response.writeOK(res, await this.getConnectionString(req, false));
+                    break;
+                case UtilityOP.DOWNLOAD_CONNECTION_STRING:
+                    Response.writeOK(res, await this.getConnectionString(req, true));
+                    break;
+                case UtilityOP.STORAGE_TIERS:
+                    Response.writeOK(res, await this.listStorageTiers(req));
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
             }
         } catch (error) { Response.writeError(res, error); }
 

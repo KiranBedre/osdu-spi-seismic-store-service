@@ -1,0 +1,4 @@
+{{- template "common.destinationrule" (list . "os-seismic-ddms-v4.destinationrule") -}}
+{{- define "os-seismic-ddms-v4.destinationrule" -}}
+## Define overrides for the service destination rule resource here
+{{- end -}}

@@ -34,7 +34,6 @@ export class AWSSSMhelper {
         };
         try {
             const data = await this.ssm.getParameter(options).promise();
-           // console.log(data.Parameter.Value);
             return data.Parameter.Value;
         } catch (err) {
             // tslint:disable-next-line:no-console

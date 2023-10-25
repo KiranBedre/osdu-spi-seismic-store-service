@@ -32,7 +32,6 @@ export class AwsLogger extends AbstractLogger {
         logger.error(data);
     }
 
-    // [TODO] this method should report a metrics using CSP SDK
     public metric(key: string, data: any): void {
         return;
     }
