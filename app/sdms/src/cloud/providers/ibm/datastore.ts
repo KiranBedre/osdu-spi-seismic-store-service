@@ -31,7 +31,7 @@ export class DatastoreDAO extends AbstractJournal {
     }
 
     public async initDb(dataPartition: string) {
-        logger.info('In datastore.initDb.');
+        logger.info('In datastore.initDb. ');
         const dbUrl = IbmConfig.DOC_DB_URL;
         const cloudantOb = CloudantV1.newInstance({ serviceUrl: dbUrl });
         logger.info('DB initialized. cloudantOb-');
