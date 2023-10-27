@@ -20,7 +20,6 @@ import { CloudantV1 } from '@ibm-cloud/cloudant';
 export class DatastoreDAO extends AbstractJournal {
     public KEY = Symbol('id');
     private dataPartition: string;
-    
     private docDb: CloudantV1;
     private docParams: CloudantV1.GetDocumentParams;
 
@@ -44,7 +43,6 @@ export class DatastoreDAO extends AbstractJournal {
             if(err.statusCode === 404)
             {
                 logger.debug('Database does not exist. Creating database.');
-               
                 await cloudantOb.putDatabase({ db: IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition } )
                 logger.debug('Database created.');
             }
@@ -97,7 +95,6 @@ export class DatastoreDAO extends AbstractJournal {
         logger.info('Fetching document.');
 
         try{
-            
             this.docParams.docId = entity.key.name;
             this.docParams.revsInfo = true;
             let existingDoc: CloudantV1.Document;
@@ -111,10 +108,8 @@ export class DatastoreDAO extends AbstractJournal {
             docTemp.ltag = entity.ltag;
             if (entity.data.trusted)
                 docTemp.trusted = entity.data.trusted;
-
             Object.assign(docTemp, entity.data);
             logger.debug(docTemp);
-           
             const postDocumentParams: CloudantV1.PostDocumentParams = {
                 db: this.docParams.db,
                 document: docTemp
@@ -135,7 +130,6 @@ export class DatastoreDAO extends AbstractJournal {
                                     customizedOb[element] = entity.data[element];
                 };
                 logger.debug(customizedOb);
-               
                 const postDocumentParams: CloudantV1.PutDocumentParams = {
                     db: this.docParams.db,
                     docId: this.docParams.docId,
@@ -187,17 +181,14 @@ export class DatastoreDAO extends AbstractJournal {
         // tableName datasets??
         const mangoQuery = queryObject.prepareStatement(Config.DATASETS_KIND, queryObject.namespace, queryObject.kind);
         logger.debug(mangoQuery);
-
         let docs;
         logger.info('Connecting to DB.');
         await this.initDb(this.dataPartition);
-   
         await this.docDb.postSearch(mangoQuery).then((doc) => {
             docs = doc.result?.rows;
             logger.debug(docs);
         });
         logger.info('Find query executed.');
-
         const results = docs.map(result => {
             if (!result) {
                 return result;
