@@ -18582,7 +18582,7 @@
 									"        pm.expect(jsonData.seismicmeta.data.binNodePositions[0].features[0].geometry.type).to.equal(\"AnyCrsMultiPoint\");",
 									"    });",
 									"",
-									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    // Reset environment variables if _.retryOnFailure function was used previously",
 									"    var key = request.name + '_counter';",
 									"    pm.environment.unset(key);",
 									"    postman.setEnvironmentVariable('execCounter', 1)",
