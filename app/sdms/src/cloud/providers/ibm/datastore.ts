@@ -12,8 +12,7 @@ import { Config } from '../../config';
 import { Utils } from '../../../shared/utils'
 import { IbmConfig } from './config';
 import { logger } from './logger';
-
-import cloudant from '@cloudant/cloudant';
+import { CloudantV1 } from '@ibm-cloud/cloudant';
 
 // [TODO] all logger.info looks more DEBUG message should not be executed in production code
 // [TODO] don't use any! use types
@@ -21,7 +20,8 @@ import cloudant from '@cloudant/cloudant';
 export class DatastoreDAO extends AbstractJournal {
     public KEY = Symbol('id');
     private dataPartition: string;
-    private docDb: any;
+    private docDb: CloudantV1;
+    private docParams: CloudantV1.GetDocumentParams;
 
     public constructor(tenant: TenantModel) {
         super();
@@ -30,20 +30,20 @@ export class DatastoreDAO extends AbstractJournal {
     }
 
     public async initDb(dataPartition: string) {
-        logger.info('In datastore.initDb.');
+        logger.info('In datastore.initDb. ');
         const dbUrl = IbmConfig.DOC_DB_URL;
-        const cloudantOb = cloudant(dbUrl);
+        const cloudantOb = CloudantV1.newInstance({ serviceUrl: dbUrl });
         logger.info('DB initialized. cloudantOb-');
 
         try {
             logger.debug('Before DB connection');
-            this.docDb = await cloudantOb.db.get(IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition);
+            await cloudantOb.getDatabaseInformation({ db: IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition });
             logger.debug('Got DB connection');
         } catch (err) {
             if(err.statusCode === 404)
             {
                 logger.debug('Database does not exist. Creating database.');
-                await cloudantOb.db.create(IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition)
+                await cloudantOb.putDatabase({ db: IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition } )
                 logger.debug('Database created.');
             }
             else
@@ -53,7 +53,11 @@ export class DatastoreDAO extends AbstractJournal {
             }
         }
 
-        this.docDb = cloudantOb.db.use(IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition);
+        this.docDb = cloudantOb;
+        this.docParams = {
+            db: IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition,
+            docId: '',
+        };
 
     }
 
@@ -63,7 +67,8 @@ export class DatastoreDAO extends AbstractJournal {
         let entityDocument: any;
         await this.initDb(this.dataPartition);
         // using the field 'name' to fetch the document. Note: the get() is expecting the field _id
-        entityDocument = await this.docDb.get(key.name).then(
+        this.docParams.docId = key.name;
+        entityDocument = await this.docDb.getDocument(this.docParams).then(
             (result: any) => {
                 result[this.KEY] = result[this.KEY.toString()];
                 delete result[this.KEY.toString()];
@@ -90,18 +95,26 @@ export class DatastoreDAO extends AbstractJournal {
         logger.info('Fetching document.');
 
         try{
-            const getResponse = await this.docDb.get(entity.key.name, { revs_info: true });
+            this.docParams.docId = entity.key.name;
+            this.docParams.revsInfo = true;
+            let existingDoc: CloudantV1.Document;
+            await this.docDb.getDocument(this.docParams)
+            .then((docResult) => {
+                existingDoc = docResult.result;
+            });
             logger.info('Document exists in db.');
-            const existingDoc = getResponse;
             const docTemp = JSON.parse(JSON.stringify(existingDoc));
             // have to add if condition. before that check the dataset object structure
             docTemp.ltag = entity.ltag;
             if (entity.data.trusted)
                 docTemp.trusted = entity.data.trusted;
-
             Object.assign(docTemp, entity.data);
             logger.debug(docTemp);
-            await this.docDb.insert(docTemp, entity.key.name);
+            const postDocumentParams: CloudantV1.PostDocumentParams = {
+                db: this.docParams.db,
+                document: docTemp
+            };
+            await this.docDb.postDocument(postDocumentParams);
             logger.info('Document updated.');
         } catch(err){
             if(err.statusCode === 404)
@@ -117,7 +130,12 @@ export class DatastoreDAO extends AbstractJournal {
                                     customizedOb[element] = entity.data[element];
                 };
                 logger.debug(customizedOb);
-                await this.docDb.insert(customizedOb, entity.key.name);
+                const postDocumentParams: CloudantV1.PutDocumentParams = {
+                    db: this.docParams.db,
+                    docId: this.docParams.docId,
+                    document: customizedOb
+                };
+                await this.docDb.putDocument(postDocumentParams);
                 logger.info('Document inserted.');
             }
         }
@@ -129,15 +147,23 @@ export class DatastoreDAO extends AbstractJournal {
         logger.info('In datastore.delete.');
         logger.info('Connecting to DB.');
         await this.initDb(this.dataPartition);
-        const doc = await this.docDb.get(key.name);
-        try {
-            this.docDb.destroy(doc._id, doc._rev);
-            logger.info('Document deleted.');
-        }
-        catch (err) {
+
+        this.docParams.docId = key.name;
+        this.docParams.revsInfo = true;
+        await this.docDb.getDocument(this.docParams)
+        .then(async(docResult) =>  {
+            const document: CloudantV1.Document = docResult.result;
+            await this.docDb.deleteDocument({
+                db: this.docParams.db,
+                docId: document._id,
+                rev: document._rev
+            }).then(() => {
+                logger.info('Document deleted.');
+            });
+        }).catch ((err) => {
             logger.error('Deletion failed. Error - ');
             logger.error(err);
-        }
+        });
         logger.info('Returning from datastore.delete.');
     }
 
@@ -155,23 +181,21 @@ export class DatastoreDAO extends AbstractJournal {
         // tableName datasets??
         const mangoQuery = queryObject.prepareStatement(Config.DATASETS_KIND, queryObject.namespace, queryObject.kind);
         logger.debug(mangoQuery);
-
         let docs;
         logger.info('Connecting to DB.');
         await this.initDb(this.dataPartition);
-        await this.docDb.find(mangoQuery).then((doc) => {
-            docs = doc.docs;
-            logger.debug(doc.docs);
+        await this.docDb.postSearch(mangoQuery).then((doc) => {
+            docs = doc.result?.rows;
+            logger.debug(docs);
         });
         logger.info('Find query executed.');
-
         const results = docs.map(result => {
             if (!result) {
                 return result;
             } else {
-                if (result[this.KEY.toString()]) {
-                    result[this.KEY] = result[this.KEY.toString()];
-                    delete result[this.KEY.toString()];
+                if (result?.doc[this.KEY.toString()]) {
+                    result.doc[this.KEY] = result.doc[this.KEY.toString()];
+                    delete result.doc[this.KEY.toString()];
                     return result;
                 } else {
                     return result;
