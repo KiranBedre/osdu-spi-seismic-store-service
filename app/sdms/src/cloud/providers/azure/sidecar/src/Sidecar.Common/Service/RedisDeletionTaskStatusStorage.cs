@@ -29,7 +29,8 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
     private readonly IOptionsQueueRedisQueueName _options;
     private readonly IRedisHandler _queue;
 
-    public RedisDeletionTaskStatusStorage(IOptionsQueueRedisQueueName options,
+    public RedisDeletionTaskStatusStorage(
+        IOptionsQueueRedisQueueName options,
         IRedisConnectionFactory redisConnectionFactory)
     {
         _options = options;
