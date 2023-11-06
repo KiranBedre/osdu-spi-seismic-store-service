@@ -27,6 +27,7 @@ const mockRedisKey = 'mockRedisKey';
 const mockRedisHost= 'mockRedisHost';
 const mockRedisQueueKey = 'mockRedisQueueKey';
 const mockRedisQueueHost= 'mockRedisQueueHost';
+
 // pragma: allowlist nextline secret
 const mockSpClientSecret = 'mockSpClientSecret';
 const mockSpAppSourceID = 'mockSpAppSourceID';
