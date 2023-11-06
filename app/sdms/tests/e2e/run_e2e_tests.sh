@@ -201,6 +201,8 @@ else
    exit 1
 fi
 
+export NODE_OPTIONS=--max_old_space_size=8192
+
 # install requied packages
 npm ci 
 
