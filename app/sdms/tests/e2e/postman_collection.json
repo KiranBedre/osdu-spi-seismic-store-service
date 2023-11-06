@@ -1683,7 +1683,7 @@
 									"    pm.test(\"Status code is 200 or 409\", function () {",
 									"        pm.expect(pm.response.code).to.be.oneOf([200,409]);",
 									"    });",
-									"",
+									" ",
 									"    if (pm.response.code === 200) {",
 									"        pm.test(\"SubprojectTest created\", function () {",
 									"            var jsonData = pm.response.json();",
@@ -2187,6 +2187,7 @@
 									"   return result;\r",
 									"}\r",
 									"\r",
+									"\r",
 									"postman.setEnvironmentVariable(\"randomDatasetName\", makeName_dataset(10));"
 								],
 								"type": "text/javascript"
@@ -2196,10 +2197,6 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "text/plain"
-							},
 							{
 								"key": "Authorization",
 								"value": "Bearer {{STOKEN}}"
@@ -2222,7 +2219,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"admin\": \"{{adminEmail}}\",\r\n    \"storage_class\": \"MULTI_REGIONAL\",\r\n    \"storage_location\": \"US\",\r\n    \"access_policy\": \"dataset\",\r\n    \"acls\": {\r\n        \"admins\": [\r\n            \"{{seismic_default_admins}}\"\r\n        ],\r\n        \"viewers\": [\r\n            \"{{seismic_default_viewers}}\"\r\n        ]\r\n    }\r\n}",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} ",
 							"options": {
 								"raw": {
 									"language": "json"
