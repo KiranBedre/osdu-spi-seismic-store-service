@@ -249,7 +249,8 @@ export class UtilityHandler {
 
             for (const registeredSubproject of registeredSubprojectsList) {
                 if (registeredSubproject.acls) {
-                    const aclGroups = registeredSubproject.acls.admins.concat(registeredSubproject.acls.viewers);
+                    const aclGroups = (
+                        registeredSubproject.acls.admins || []).concat(registeredSubproject.acls.viewers || []);
                     for (const aclGroup of aclGroups) {
                         if (userGroupEmailsList.indexOf(aclGroup) !== -1) {
                             subprojects.push(registeredSubproject);
