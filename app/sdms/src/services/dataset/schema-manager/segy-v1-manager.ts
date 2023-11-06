@@ -41,7 +41,6 @@ export class SegyManager extends AbstractSchemaManager {
       }
 
       return result.data;
-
    }
 
    public validate(data: any): SchemaValidationResult {
@@ -73,7 +72,7 @@ export class SegyManager extends AbstractSchemaManager {
          'data': input['data'],
          //  chain a next transform function using its identifier
          nextTransformFuncID: undefined
-         // 'nextTransformFuncID': 'osdu:wks:dataset--FileCollection.SEGY:1.1.0'
+         // 'nextTransformFuncID': 'osdu:wks:dataset--FileCollection.SEGY:1.2.0'
       };
    }
 
@@ -89,4 +88,14 @@ export class SegyManager extends AbstractSchemaManager {
       };
    }
 
+   @SchemaTransformFuncManager.register('osdu:wks:dataset--FileCollection.SEGY:1.2.0')
+   public transform_osdu_wks_dataset_FileCollection_SEGY_1_2_0(input: any): SchemaTransformModel {
+      input['data']['kind'] = 'osdu:wks:dataset--FileCollection.SEGY:1.2.0';
+      input['data']['data-transformation-performed'] = true;
+      return {
+         'transformFuncID': 'osdu:wks:dataset--FileCollection.SEGY:1.2.0',
+         'data': input['data'],
+         'nextTransformFuncID': undefined
+      };
+   }
 }
