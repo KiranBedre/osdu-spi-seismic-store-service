@@ -26,7 +26,7 @@ export class StorageCoreService {
         dataPartition: string,
         skipDupes = false
     ): Promise<string[]> {
-        let url = Config.CORE_SERVICE_HOST + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records';
+        let url = Config.CORE_SERVICE_HOST_STORAGE + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records';
         if (skipDupes === true) {
             url = url + '?skipdupes=true';
         }
@@ -55,7 +55,7 @@ export class StorageCoreService {
         dataPartition: string,
         recordVersion?: string
     ): Promise<any> {
-        let url = Config.CORE_SERVICE_HOST + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records/' + recordId;
+        let url = Config.CORE_SERVICE_HOST_STORAGE + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records/' + recordId;
 
         if (recordVersion) {
             url = url + '/' + recordVersion;
@@ -79,7 +79,7 @@ export class StorageCoreService {
     }
 
     public static async deleteRecord(userToken: string, recordId: string, dataPartition: string): Promise<void> {
-        const url = Config.CORE_SERVICE_HOST + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records/' + recordId;
+        const url = Config.CORE_SERVICE_HOST_STORAGE + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records/' + recordId;
         const options: any = {
             headers: {
                 Accept: 'application/json',
@@ -98,7 +98,8 @@ export class StorageCoreService {
     }
 
     public static async getAllVersions(userToken: string, recordId: string, dataPartition: string): Promise<any> {
-        const url = Config.CORE_SERVICE_HOST + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records/versions/' + recordId;
+        const url =
+            Config.CORE_SERVICE_HOST_STORAGE + Config.CORE_SERVICE_STORAGE_BASE_PATH + '/records/versions/' + recordId;
         const options: any = {
             headers: {
                 Accept: 'application/json',
