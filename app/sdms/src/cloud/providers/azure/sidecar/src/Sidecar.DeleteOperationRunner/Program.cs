@@ -26,6 +26,8 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
+using Sidecar.Common.Config;
+using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
 
 public class Program
@@ -170,15 +172,31 @@ public class Program
             .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
+            {
+                DelayWhenTaskNotFound = TimeSpan.FromSeconds(5),
+            })
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
             .AddSingleton<IRedisConnectionFactory, RedisConnectionFactory>()
             .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()
-            .AddSingleton<IDeletionTasksQueue, RedisDeletionTasksQueue>()
-            .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTasksQueue>()
-            .AddHostedService<DeletionOperationService>()
+            .AddSingleton<DeletionTaskHashEntriesDeserializer>()
+            .AddSingleton<DeletionTaskExecutor>()
+            .AddSingleton<RedisListWorker<
+                IDeletionOperationMessage,
+                DeletionTaskHashEntriesDeserializer,
+                DeletionTaskExecutor
+            >>()
+            .AddHostedService<TaskQueueBackgroundService<
+                RedisListWorker<
+                    IDeletionOperationMessage,
+                    DeletionTaskHashEntriesDeserializer,
+                    DeletionTaskExecutor
+                >
+            >>()
+            .AddSingleton<IDeletionTaskStatusStorage, RedisDeletionTaskStatusStorage>()
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IDataAccess, Cosmos>();
 

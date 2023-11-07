@@ -21,8 +21,6 @@ public interface IDeleteOperationStatus : IDeletionOperationMessage
 
     DateTime LastUpdatedAt { get; set; }
 
-    string CreatedBy { get; set; }
-
     string Status { get; set; }
 
     string StatusDescription { get; set; }

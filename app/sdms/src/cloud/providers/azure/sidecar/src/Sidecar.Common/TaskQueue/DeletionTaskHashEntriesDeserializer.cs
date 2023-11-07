@@ -14,14 +14,15 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
+namespace Sidecar.Common.TaskQueue;
 
+using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
-using System.Threading.Tasks;
+using Sidecar.Common.Utility;
+using StackExchange.Redis;
 
-public interface IDeletionTaskStatusStorage
+public class DeletionTaskHashEntriesDeserializer : ITaskDeserializer<HashEntry[], IDeletionOperationMessage>
 {
-    Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg, CancellationToken ct);
-    Task IncrementCountAsync(string operationId, string field, CancellationToken ct);
-    Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue, CancellationToken ct);
+    public IDeletionOperationMessage Deserialize(HashEntry[] task) =>
+        task.FromHashEntries<DeleteOperationMessage>(true);
 }

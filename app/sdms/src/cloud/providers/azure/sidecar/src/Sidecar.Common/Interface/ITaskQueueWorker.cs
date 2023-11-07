@@ -17,11 +17,11 @@
 namespace Sidecar.Common.Interface;
 
 using Sidecar.Common.Model;
-using System.Threading.Tasks;
 
-public interface IDeletionTaskStatusStorage
+/// <summary>
+/// Task queue worker that knows how to take and handle the task from the queue.
+/// </summary>
+public interface ITaskQueueWorker
 {
-    Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg, CancellationToken ct);
-    Task IncrementCountAsync(string operationId, string field, CancellationToken ct);
-    Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue, CancellationToken ct);
+    public Task<ExecutionStatus> HandleNextTaskAsync(CancellationToken ct);
 }

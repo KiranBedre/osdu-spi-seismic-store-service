@@ -18,6 +18,7 @@ namespace Sidecar.Common.Utility;
 
 using Sidecar.Common.Interface;
 using StackExchange.Redis;
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,7 +33,12 @@ public static class RedisConverters
             .Select(p =>
             {
                 var propertyValue = p.GetValue(obj)!;
-                var hashValue = propertyValue is IEnumerable<object> ? JsonSerializer.Serialize(propertyValue) : propertyValue.ToString();
+                var hashValue = propertyValue switch
+                {
+                    IEnumerable<object> => JsonSerializer.Serialize(propertyValue),
+                    DateTime time => time.ToString("O", DateTimeFormatInfo.InvariantInfo),  // ISO-8601
+                    _ => propertyValue.ToString(),
+                };
                 var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
                 var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
                 return new HashEntry(propName, hashValue);
@@ -45,7 +51,6 @@ public static class RedisConverters
         var obj = Activator.CreateInstance(typeof(T));
         foreach (var p in typeof(T).GetProperties())
         {
-
             var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
             var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
 
@@ -55,7 +60,12 @@ public static class RedisConverters
                 continue;
             }
 
-            p.SetValue(obj, Convert.ChangeType(entry.Value.ToString(), p.PropertyType));
+            var parsedValue = Convert.ChangeType(entry.Value.ToString(), p.PropertyType, CultureInfo.InvariantCulture);
+            if (parsedValue is DateTime dt)
+            {
+                parsedValue = dt.ToUniversalTime();
+            }
+            p.SetValue(obj, parsedValue);
         }
         return (T)obj!;
     }
