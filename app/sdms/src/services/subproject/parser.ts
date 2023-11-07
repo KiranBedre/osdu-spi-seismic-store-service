@@ -34,9 +34,8 @@ export class SubProjectParser {
         // If not specified, set the acl as empty array. A default acl group will be later created for these.
         subproject.acls = req.body?.acls || { 'admins': [], 'viewers': [] };
         if (req.body?.acls) {
-            const aclKeys = Object.keys(req.body.acls);
-            subproject.acls['admins'] = ('admins' in aclKeys) ? subproject.acls['admins'].sort() : [];
-            subproject.acls['viewers'] = ('viewers' in aclKeys) ? subproject.acls['viewers'].sort() : [];
+            subproject.acls['admins'] = 'admins' in req.body.acls ? subproject.acls['admins'].sort() : [];
+            subproject.acls['viewers'] = 'viewers' in req.body.acls ? subproject.acls['viewers'].sort() : [];
         }
 
         // set the dataset level access acl (uniform by default)
