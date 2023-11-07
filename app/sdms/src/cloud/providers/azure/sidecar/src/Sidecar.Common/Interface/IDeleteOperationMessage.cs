@@ -20,6 +20,8 @@ public interface IDeletionOperationMessage : IQueueMessage
 {
     string OperationId { get; set; }
 
+    string CreatedBy { get; set; }
+
     string Tenant { get; set; }
 
     string Subproject { get; set; }

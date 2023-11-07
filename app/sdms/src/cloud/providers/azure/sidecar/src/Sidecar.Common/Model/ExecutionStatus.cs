@@ -14,12 +14,10 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
+namespace Sidecar.Common.Model;
 
-using System.Threading.Tasks;
-
-public interface IDeletionTasksQueue
+public enum ExecutionStatus
 {
-    Task<IDeleteOperationStatus?> TryGetTaskAsync(CancellationToken ct);
-    Task MarkTaskCompleteAsync(string operationId, CancellationToken ct);
+    TaskCompleted,
+    TaskNotFound,
 }

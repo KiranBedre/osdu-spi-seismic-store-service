@@ -9,6 +9,9 @@ charset = utf-8
 # Possible options: error, warning, suggestion, silent, none, default
 #dotnet_diagnostic.IDE0060.severity = suggestion # Remove unused parameter
 
+# IDE0001: Simplify name
+dotnet_diagnostic.IDE0001.severity = suggestion
+
 # CA1848: LoggerMessage delegates
 dotnet_diagnostic.CA1848.severity = none
 
