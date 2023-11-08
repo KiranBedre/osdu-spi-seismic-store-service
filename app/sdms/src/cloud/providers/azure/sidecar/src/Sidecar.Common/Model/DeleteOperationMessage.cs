@@ -16,24 +16,24 @@
 
 namespace Sidecar.Common.Model;
 
-using System.Text.Json.Serialization;
 using Interface;
+using Newtonsoft.Json;
 
 public class DeleteOperationMessage : IDeletionOperationMessage
 {
-    [JsonPropertyName("operation_id")]
+    [JsonProperty("operation_id")]
     public string OperationId { get; set; } = "";
 
-    [JsonPropertyName("createdBy")]
+    [JsonProperty("createdBy")]
     public string CreatedBy { get; set; } = "";
 
-    [JsonPropertyName("tenant")]
+    [JsonProperty("tenant")]
     public string Tenant { get; set; } = "";
 
-    [JsonPropertyName("subproject")]
+    [JsonProperty("subproject")]
     public string Subproject { get; set; } = "";
 
-    [JsonPropertyName("path")]
+    [JsonProperty("path")]
     public string Path { get; set; } = "";
 
 }
