@@ -1,4 +1,4 @@
-Seismic Variables
+# Seismic Variables
 
 | **Variable** | **Example** |
 | --- | --- |

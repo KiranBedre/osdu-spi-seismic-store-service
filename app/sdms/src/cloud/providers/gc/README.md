@@ -1,3 +1,5 @@
+# Google
+
 ## Environment variables
 
 |Variable|Example|Comments|
@@ -23,7 +25,7 @@
 |-----|-----|------|
 |LOCKSMAP_REDIS_INSTANCE_KEY|||
 
-## Partition Service values 
+## Partition Service values
 
 GC implementation expects values in Partition service with the following names:
 

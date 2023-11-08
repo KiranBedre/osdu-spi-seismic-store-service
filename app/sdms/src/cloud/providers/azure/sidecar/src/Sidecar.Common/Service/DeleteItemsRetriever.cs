@@ -57,7 +57,7 @@ public class DeleteItemsRetriever : IItemsRetriever
             {
                 return null;
             }
-        }).Where(deserializedObject => deserializedObject != null) // Filter out failed deserializations
+        }).Where(deserializedObject => deserializedObject != null) // Filter out failed deserialization
         .ToList();
     }
 }

@@ -2,7 +2,7 @@
 
 ## Install service in AKS
 
-please follow mentioned instructions on the below link to install the Seismic in azure enviroment
+please follow mentioned instructions on the below link to install the Seismic in azure environment
 
 Use [standard-ddms](https://community.opengroup.org/osdu/platform/deployment-and-operations/helm-charts-azure/-/tree/master/osdu-ddms/standard-ddms) to install in your environment.
 

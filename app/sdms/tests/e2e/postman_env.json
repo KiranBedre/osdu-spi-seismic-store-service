@@ -1,6 +1,6 @@
 {
 	"id": "8f901ba8-9441-41ea-a086-e0a04a716b3e",
-	"name": "seistore-test-e2e-gitlab-dafaults",
+	"name": "seistore-test-e2e-gitlab-defaults",
 	"values": [
 		{
 			"key": "SVC_API_KEY",

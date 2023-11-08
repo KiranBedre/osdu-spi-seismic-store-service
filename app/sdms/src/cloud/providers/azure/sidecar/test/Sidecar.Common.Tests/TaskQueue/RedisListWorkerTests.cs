@@ -28,7 +28,7 @@ using WorkerType = Sidecar.Common.TaskQueue.RedisListWorker<
 
 public class RedisListWorkerTests
 {
-    private const string QUEUE_NAME = "somequeue";
+    private const string QUEUE_NAME = "some-queue";
     private readonly WorkerType _worker;
     private readonly Mock<ILogger<WorkerType>> _loggerMock = new();
     private readonly Mock<ITaskDeserializer<HashEntry[], IDeletionOperationMessage>> _deserializer = new();

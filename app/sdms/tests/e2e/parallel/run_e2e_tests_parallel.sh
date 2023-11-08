@@ -32,7 +32,7 @@ fi
 # check required parameters
 # argument [seistore-svc-url] seismic store service url - required
 # argument [seistore-svc-api-key] seismic store service api key - required
-# argument [user-idtoken] user credentail token - required
+# argument [user-idtoken] user credential token - required
 # argument [tenant] seismic store working tenant name - required
 # argument [subproject] seismic store working subproject name - required
 for i in "$@"; do
@@ -78,10 +78,10 @@ if [ -z "${working_subproject}" ]; then usage "subproject not defined" && exit 1
 printf "\n%s\n" "--------------------------------------------"
 printf "%s\n" "seismic store parallel regression tests"
 printf "%s\n" "--------------------------------------------"
-printf "%s\n" "seistore service apikey = ${seistore_svc_api_key}"
+printf "%s\n" "seistore service api-key = ${seistore_svc_api_key}"
 printf "%s\n" "seistore service url = ${seistore_svc_url}"
 printf "%s\n" "working tenant = ${working_tenant}"
-printf "%s\n" "working subroject = ${working_subproject}"
+printf "%s\n" "working subproject = ${working_subproject}"
 printf "%s\n" "user credential token = ${user_idtoken}"
 printf "%s\n" "--------------------------------------------"
 
@@ -93,14 +93,14 @@ sed -i "s/#{STOKEN}#/${user_idtoken}/g" ./tests/e2e/parallel/postman_env.json
 sed -i "s/#{TENANT}#/${working_tenant}/g" ./tests/e2e/parallel/postman_env.json
 sed -i "s/#{SUBPROJECT}#/${working_subproject}/g" ./tests/e2e/parallel/postman_env.json
 
-# install requied packages
+# install required packages
 npm ci
 
 # run parallel tests
 npm run test-e2e-parallel
 resTest=$?
 
-# restore configuraiton and remove installed dependencies
+# restore configuration and remove installed dependencies
 cp ./tests/e2e/parallel/postman_env_original.json ./tests/e2e/parallel/postman_env.json
 rm ./tests/e2e/parallel/postman_env_original.json
 

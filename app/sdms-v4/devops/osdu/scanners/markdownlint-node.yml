@@ -21,8 +21,10 @@ sdms_v4_markdownlint:
   needs: ['sdms_v4_push_runtime_image']
   script:
     - cd app/$SDMS_V4_SERVICE
-    - npm install
-    - npm run markdown-lint > ../../markdownlint_report.txt
+    - cp ../../.markdownlint.json .
+    - npm install -g typescript
+    - npm install -g markdownlint-cli2
+    - markdownlint-cli2 "**/*.md" "#**/node_modules" --config .markdownlint.json > ../../markdownlint_report.txt
   artifacts:
     paths:
       - markdownlint_report.txt

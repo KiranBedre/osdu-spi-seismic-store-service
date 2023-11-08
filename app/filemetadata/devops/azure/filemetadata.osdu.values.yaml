@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# Annotation to support the key rotation for redis password in keyvaul
+# Annotation to support the key rotation for redis password in keyvault
 deployment:
   replicaCount: 1
   deploymentAnnotations:
