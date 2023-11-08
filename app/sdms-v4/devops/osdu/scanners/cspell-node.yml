@@ -21,8 +21,9 @@ sdms_v4_cspell:
   needs: ['sdms_v4_push_runtime_image']
   script:
     - cd app/$SDMS_V4_SERVICE
-    - npm install
-    - npm run spell > ../../cspell_report.txt
+    - npm install -g typescript
+    - npm install -g cspell
+    - cspell "**" --quiet --gitignore --show-suggestions --config=../../cspell.json --reporter default  > ../../cspell_report.txt
   artifacts:
     paths:
       - cspell_report.txt

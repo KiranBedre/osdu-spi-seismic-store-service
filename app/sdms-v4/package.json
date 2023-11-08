@@ -7,7 +7,6 @@
     },
     "description": "Seismic Domain Data Management APIs to store and manage strongly typed seismic datasets.",
     "scripts": {
-
         "clean": "rm -rf dist coverage test-results.xml .nyc_output",
         "unit-test": "env UTEST=true mocha -r ts-node/register tests/utest/test.ts",
         "test-lcov-automation": "npm run clean && npm ci && npm run build && npm run test-lcov-coverage",
@@ -15,11 +14,8 @@
         "build": "tsc",
         "generate-docs": "node --trace-warnings ./dist/docs/docstart.js",
         "lint": "eslint --ignore-path .eslintignore --ext .js,.ts .",
-        "markdown-lint": "markdownlint-cli2 **/*.md #node_modules",
         "postbuild": "npm run generate-docs",
         "prettier": "prettier -c src/**/*.ts",
-        "prepare": "cd ../.. && husky install ./app/sdms-v4/.husky",
-        "spell": "cspell --no-progress .",
         "start-service": "node --trace-warnings --trace-uncaught ./dist/server/server-start.js",
         "test": "mocha -r ts-node/register tests/e2e/test.ts --timeout 150000 --bail --reporter mocha-multi-reporters --reporter-options configFile=./tests/e2e/config.json"
     },
@@ -71,14 +67,12 @@
         "swagger-ui-express": "^4.6.0",
         "typescript": "^4.9.4",
         "xss-filters": "^1.2.7"
-
     },
     "devDependencies": {
         "@types/sinon": "^10.0.18",
         "eslint-plugin-prettier": "^4.2.1",
         "nyc": "^15.1.0",
         "sinon": "^16.0.0",
-        "@commitlint/config-conventional": "^17.7.0",
         "@types/chai": "^4.3.5",
         "@types/cors": "^2.8.13",
         "@types/express": "^4.17.15",
@@ -91,18 +85,13 @@
         "@typescript-eslint/eslint-plugin": "^6.4.0",
         "@typescript-eslint/parser": "^6.4.0",
         "chai": "^4.3.7",
-        "commitlint": "^17.7.1",
-        "cspell": "^7.3.6",
         "eslint": "^8.31.0",
         "eslint-config-prettier": "^8.6.0",
-        "husky": "^7.0.4",
-        "markdownlint-cli2": "^0.9.2",
         "mocha": "^10.2.0",
         "mocha-junit-reporter": "^2.2.1",
         "mocha-multi-reporters": "^1.5.1",
         "prettier": "^2.8.1",
         "ts-node": "^10.9.1"
-
     },
     "overrides": {
         "@azure/identity": {

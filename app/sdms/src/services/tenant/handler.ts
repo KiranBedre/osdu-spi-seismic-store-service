@@ -79,7 +79,7 @@ export class TenantHandler {
         Config.enableStrongConsistencyEmulation();
 
         // register the tenant metadata
-        // leave this registration at the end as last operation (mapping to do only if all previuos operation succeed)
+        // leave this registration at the end as last operation (mapping to do only if all previous operation succeed)
         await TenantDAO.register(tenant);
 
         return tenant;

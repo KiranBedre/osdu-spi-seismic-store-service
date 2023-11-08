@@ -221,7 +221,7 @@ export class TestAuth {
         Tx.sectionInit('get group users');
 
         Tx.test(async () => {
-            this.sandbox.stub(DESUtils, 'getDataPartitionID').resolves('entitlment-tenant');
+            this.sandbox.stub(DESUtils, 'getDataPartitionID').resolves('entitlement-tenant');
             this.sandbox.stub(DESEntitlement, 'listUsersInGroup').resolves({
                 members: [
                     {

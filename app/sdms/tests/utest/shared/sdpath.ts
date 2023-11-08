@@ -28,7 +28,7 @@ export class TestSDPathSHD {
    }
 
    private static testGetFromString() {
-      Tx.sectionInit('sdpath getfromstring');
+      Tx.sectionInit('sdpath get from string');
 
       Tx.testExp(() => {
          const sdpath = SDPath.getFromString('sd://tnx01/spx01/a/b/c/ds01');

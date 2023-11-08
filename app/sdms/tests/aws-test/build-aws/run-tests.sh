@@ -15,7 +15,7 @@
 # This script executes the test and copies reports to the provided output directory
 # To call this script from the service working directory
 # ./dist/testing/integration/build-aws/run-tests.sh "./reports/"
-echo '****Running SeimsicStore Service integration tests*****************'
+echo '****Running SeismicStore Service integration tests*****************'
 
 SCRIPT_SOURCE_DIR=$(dirname "$0")
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -79,7 +79,7 @@ curl --location --request POST "$SEISMIC_DMS_URL"'/tenant/opendes' \
 }'
 
 chmod +x ./tests/e2e/run_e2e_tests.sh
-echo Running Seimic-Store Service Integration Tests...
+echo Running Seismic-Store Service Integration Tests...
 
 tenant='opendes'
 legaltag='opendes-sdmstestlegaltag'

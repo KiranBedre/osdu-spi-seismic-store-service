@@ -24,6 +24,8 @@ def get_invalid_token():
         "sub": "107316492921566999999"
     }
     """
+
+    # pragma: allowlist nextline secret
     fake_id_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ3cm9uZy5jb20iLCJhenAiOiJ3cm9uZ0B3cm9uZy5jb20iLCJlbWFpbCI6Indyb25nQHdyb25nLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZXhwIjo5OTk5OTk5OTk5LCJpYXQiOjk5OTk5OTk5OTksImlzcyI6Imh0dHBzOi8vd3JvbmcuY29tIiwic3ViIjoiMTA3MzE2NDkyOTIxNTY2OTk5OTk5In0.5C0Ppxv3ECsFaQkiyoH2jalICdaSKhbClyINonloPyo"
     print(fake_id_token)
     return fake_id_token

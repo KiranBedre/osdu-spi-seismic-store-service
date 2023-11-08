@@ -196,7 +196,7 @@ export class Cos extends AbstractStorage {
 
     // [TODO] Nothing is copied here! This method is not working
     // copy multiple objects (skip the dummy file)
-    // implemention aws sdk copyObject to copy dataset
+    // implementation aws sdk copyObject to copy dataset
     public async copy(bucketIn: string, prefixIn: string,
          bucketOut: string, prefixOut: string, ownerEmail: string): Promise<void> {
         logger.info('In Cos.copy.');

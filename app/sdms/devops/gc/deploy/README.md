@@ -78,7 +78,7 @@ First you need to set variables in **values.yaml** file using any code editor. S
 |------|-------------|------|---------|---------|
 **conf.database** | secret for database | string | "seismic-store-db-secret" | yes
 **conf.keycloak** | secret for keycloak | string | "seismic-store-keycloak-secret" | yes
-**conf.minio** | secret for minio, shoud contain SDMS_BUCKET variable | string | "seismic-store-minio-secret" | yes
+**conf.minio** | secret for minio, should contain SDMS_BUCKET variable | string | "seismic-store-minio-secret" | yes
 
 ### ISTIO variables
 

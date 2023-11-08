@@ -3,13 +3,11 @@ sdms_cspell:
   tags: ["osdu-small"]
   stage: scan
   needs: ['sdms_compile-and-unit-test']
-  allow_failure: true
   script:
     - cd app/$SDMS_SERVICE
-    - cp ../../cspell.json .
     - npm install -g typescript
     - npm install -g cspell
-    - cspell "**" --quiet --gitignore --show-suggestions --reporter default > ../../cspell_report.txt
+    - cspell "**" --quiet --gitignore --config=../../cspell.json --show-suggestions --reporter default > ../../cspell_report.txt
   artifacts:
     paths:
       - cspell_report.txt

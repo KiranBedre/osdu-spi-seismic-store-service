@@ -3,13 +3,12 @@ sdms_markdownlint:
   tags: ["osdu-small"]
   stage: scan
   needs: ['sdms_compile-and-unit-test']
-  allow_failure: true
   script:
     - cd app/$SDMS_SERVICE
     - cp ../../.markdownlint.json .
     - npm install -g typescript
-    - npm install -g markdownlint-cli
-    - markdownlint "**/*.md" > ../../markdownlint_report.txt
+    - npm install -g markdownlint-cli2
+    - markdownlint-cli2 "**/*.md" "#**/node_modules" --config .markdownlint.json > ../../markdownlint_report.txt
   artifacts:
     paths:
       - markdownlint_report.txt
