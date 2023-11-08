@@ -14,26 +14,26 @@
 // limitations under the License.
 // ============================================================================
 
-import { TaskQueueFactory, AbstractTaskQueue, ITaskQueue } from '../../taskQueue';
-import {QueueClient, QueueServiceClient} from '@azure/storage-queue';
-import {DefaultAzureCredential} from '@azure/identity';
-import {IOperation, IOperationQueueTask} from '../../../services/operation/model';
-import {operations} from '../../../services/operation/register';
-import {AzureConfig} from './config';
+import { TaskQueueFactory, AbstractTaskQueue } from '../../taskQueue';
+import { QueueClient, QueueServiceClient} from '@azure/storage-queue';
+import { DefaultAzureCredential} from '@azure/identity';
+import { IOperationQueueTask} from '../../../services/operation/model';
+import { operations} from '../../../services/operation/register';
+import { AzureConfig} from './config';
 
 @TaskQueueFactory.register('azure')
 export class AzureTaskQueue extends AbstractTaskQueue {
     private queueClientFactory: CachingQueueClientFactory = new CachingQueueClientFactory();
 
-    public async pushTask(operation: IOperationQueueTask): Promise<void> {
-        const queueName= operations[operation.type].getQueueName();
-        delete operation.type;
+    public async pushTask(task: IOperationQueueTask): Promise<void> {
+        const queueName= operations[task.type].getQueueName();
+        delete task.type;
         const queueClient = await this.queueClientFactory.getCachedQueueClient(queueName);
 
         // The message should be XML-safe, see:
         // https://learn.microsoft.com/en-us/rest/api/storageservices/put-message
         // The simple and recommended way to do it is to just base64-encode it.
-        const message = this.base64encode(JSON.stringify(operation));
+        const message = this.base64encode(JSON.stringify(task));
 
         await queueClient.sendMessage(message);
     }
