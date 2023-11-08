@@ -68,10 +68,10 @@ internal static partial class TestingHelpers
 
         db.Setup(d => d.KeyExpire(It.IsAny<RedisKey>(), It.IsAny<TimeSpan?>(), It.IsAny<ExpireWhen>(), It.IsAny<CommandFlags>()))
             .Returns(true).Verifiable();
-        
+
         db.Setup(d => d.KeyExpireAsync(It.IsAny<RedisKey>(), It.IsAny<TimeSpan?>(), It.IsAny<ExpireWhen>(), It.IsAny<CommandFlags>()))
             .ReturnsAsync(true).Verifiable();
-        
+
         db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, RedisValue, When, CommandFlags>((key, field, value, when, flags) =>
             {
@@ -171,7 +171,7 @@ internal static partial class TestingHelpers
             {
                 return cache.ListRange(key, start, stop);
             }).Verifiable();
-        
+
         db.Setup(d => d.ListLeftPopAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>(async (key, flags) =>
             {

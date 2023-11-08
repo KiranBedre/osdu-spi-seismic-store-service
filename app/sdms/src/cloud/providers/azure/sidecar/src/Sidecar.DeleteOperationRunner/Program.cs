@@ -26,7 +26,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
-using Sidecar.Common.HealthChecks;
+using Sidecar.Common.Config;
 using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
 
@@ -92,11 +92,11 @@ public class Program
         opts.AppResourceId ??= secrets[4];
         opts.AppInsightsInstrumentationKey ??= secrets[5];
     }
-    
+
     private static async Task RunAsync(Options opts)
     {
         var webApplicationBuilder = WebApplication.CreateBuilder();
-        
+
         ConfigureServices(webApplicationBuilder.Services, opts);
 
         _ = webApplicationBuilder.Logging
@@ -172,6 +172,10 @@ public class Program
             .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
+            {
+                DelayWhenTaskNotFound = TimeSpan.FromSeconds(5),
+            })
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
             .AddSingleton<IRedisConnectionFactory, RedisConnectionFactory>()
             .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
@@ -198,15 +202,12 @@ public class Program
 
         _ = services
             .AddHealthChecks()
-            .AddCheck<TaskQueueExistenceCheck>(
-                "task-queue-existence-check",
-                timeout: TimeSpan.FromMinutes(1))
             .AddRedis(
-                sp => sp.GetRequiredService<RedisConnectionFactory>().GetRedisForLocks().GetConnection(),
+                sp => sp.GetRequiredService<IRedisConnectionFactory>().GetRedisForLocks().GetConnection(),
                 name: "redis-locks-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1))
             .AddRedis(
-                sp => sp.GetRequiredService<RedisConnectionFactory>().GetRedisForQueue().GetConnection(),
+                sp => sp.GetRequiredService<IRedisConnectionFactory>().GetRedisForQueue().GetConnection(),
                 name: "redis-queue-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1));
 

@@ -19,6 +19,8 @@ import { Error, Response } from '../../shared';
 import { GeneralOP } from './optype';
 import { Config } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
+import { DatasetOP } from '../dataset/optype';
+import { Key } from '@google-cloud/datastore';
 
 export class GeneralHandler {
 
@@ -26,22 +28,24 @@ export class GeneralHandler {
     public static async handler(req: expRequest, res: expResponse, op: GeneralOP) {
 
         try {
-            if (op === GeneralOP.Status) {
-                Response.writeOK(res, 'service OK');
-            } else if (op === GeneralOP.Access) {
-                Response.writeOK(res, { status: 'running' });
-            } else if (op === GeneralOP.Readiness) {
-                if (await SeistoreFactory.build(Config.CLOUDPROVIDER).handleReadinessCheck()) {
-                    Response.writeOK(res, { ready: true });
-                } else {
-                    Response.writeError(res,
+            switch (op) {
+                case GeneralOP.Status:
+                    Response.writeOK(res, 'service OK');
+                    break;
+                case GeneralOP.Access:
+                    Response.writeOK(res, { status: 'running' });
+                    break;
+                case GeneralOP.Readiness:
+                    if (await SeistoreFactory.build(Config.CLOUDPROVIDER).handleReadinessCheck()) {
+                        Response.writeOK(res, { ready: true });
+                    } else {
+                        Response.writeError(res,
                         Error.make(Error.Status.NOT_AVAILABLE, String({ ready: false })));
-                }
-            } else {
-                throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+                    }
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
             }
         } catch (error) { Response.writeError(res, error); }
-
     }
-
 }

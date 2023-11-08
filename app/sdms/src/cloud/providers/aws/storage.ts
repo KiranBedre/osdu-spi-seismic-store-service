@@ -29,7 +29,6 @@ export class AWSStorage extends AbstractStorage {
         super();
         AWS.config.update({ region: AWSConfig.AWS_REGION });
         this.s3 = new S3({ apiVersion: '2006-03-01' });
-        // this.dataPartition = tenant.gcpid;
         this.dataPartition = tenant?.esd.indexOf('.') !== -1 ? tenant?.esd.split('.')[0] : tenant.esd;
         this.awsBucket = '';
 
@@ -68,8 +67,7 @@ export class AWSStorage extends AbstractStorage {
     // this function return the real folderName by remove bucketName$$ at the front of folderName
     public getFolder(folderName: string): string {
         const start = this.awsBucket.length + 2;
-        const str = folderName.substr(start);
-        return str;
+        return folderName.substr(start);
     }
 
     // Create a new bucket, for aws, create a folder with folderName

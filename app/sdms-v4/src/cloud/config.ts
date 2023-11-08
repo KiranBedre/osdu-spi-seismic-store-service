@@ -46,6 +46,10 @@ export abstract class Config implements IConfig {
     // Core Services
     public static DATA_PARTITION_ID: string;
     public static CORE_SERVICE_HOST: string;
+    public static CORE_SERVICE_HOST_STORAGE: string;
+    public static CORE_SERVICE_HOST_PARTITION: string;
+    public static CORE_SERVICE_HOST_SEARCH: string;
+    public static CORE_SERVICE_HOST_SCHEMA: string;
     public static CORE_SERVICE_PARTITION_BASE_PATH: string;
     public static CORE_SERVICE_STORAGE_BASE_PATH: string;
     public static CORE_SERVICE_SCHEMA_BASE_PATH: string;
@@ -93,6 +97,12 @@ export abstract class Config implements IConfig {
         Config.CORRELATION_ID = this.getEnvString('CORRELATION_ID', 'correlation-id');
         Config.DATA_PARTITION_ID = this.getEnvString('DATA_PARTITION_HEADER_KEY', 'data-partition-id');
         Config.CORE_SERVICE_HOST = this.getEnvString('CORE_SERVICE_HOST');
+
+        Config.CORE_SERVICE_HOST_STORAGE = this.getEnvString('CORE_SERVICE_HOST_STORAGE', Config.CORE_SERVICE_HOST);
+        Config.CORE_SERVICE_HOST_PARTITION = this.getEnvString('CORE_SERVICE_HOST_PARTITION', Config.CORE_SERVICE_HOST);
+        Config.CORE_SERVICE_HOST_SEARCH = this.getEnvString('CORE_SERVICE_HOST_SEARCH', Config.CORE_SERVICE_HOST);
+        Config.CORE_SERVICE_HOST_SCHEMA = this.getEnvString('CORE_SERVICE_HOST_SCHEMA', Config.CORE_SERVICE_HOST);
+
         Config.CORE_SERVICE_STORAGE_BASE_PATH = this.getEnvString('STORAGE_SERVICE_BASE_PATH', '/api/storage/v2');
         Config.CORE_SERVICE_PARTITION_BASE_PATH = this.getEnvString('PARTITION_SERVICE_BASE_PATH', '/api/partition/v1');
         Config.CORE_SERVICE_SCHEMA_BASE_PATH = this.getEnvString(

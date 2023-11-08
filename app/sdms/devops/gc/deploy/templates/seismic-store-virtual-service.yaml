@@ -17,11 +17,7 @@ spec:
   http:
     - match:
         - uri:
-            prefix: {{ .Values.data.apiBasePath | quote }}
-    {{- if not .Values.global.onPremEnabled }}
-      rewrite:
-        uri: /api/v3
-    {{- end }}
+            prefix: /api/seismic-store/v3
       route:
         - destination:
             port:

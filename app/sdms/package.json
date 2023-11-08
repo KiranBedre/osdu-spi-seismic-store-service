@@ -17,6 +17,8 @@
     "test-coverage": "env UTEST=true nyc mocha -r ts-node/register --reporter mocha-junit-reporter tests/utest/test.ts",
     "test-automation": "npm run clean && npm ci && npm run build && npm run test-coverage",
     "test-lcov-automation": "npm run clean && npm ci && npm run build && npm run test-lcov-coverage",
+    "test-lcov-automation-aws": "npm run clean && npm ci && npm run build && npm run test-lcov-coverage-aws",
+    "test-lcov-coverage-aws": "env UTEST=true nyc --reporter=lcovonly --check-coverage --lines 0 --functions 0 --branches 0 --statements 0 mocha -r ts-node/register tests/utest/test.ts",
     "test-lcov-coverage": "env UTEST=true nyc mocha -r ts-node/register -r source-map-support/register --recursive -R mocha-bamboo-reporter tests/utest/test.ts",
     "test-e2e-parallel": "node ./tests/e2e/parallel/run_e2e_tests_parallel.js",
     "copy-static-files": "copyfiles --error --up 1 ./docs/api/openapi.osdu.yaml ./dist/docs",
@@ -66,7 +68,7 @@
     "@azure/keyvault-secrets": "^4.3.0",
     "@azure/storage-blob": "^12.10.0",
     "@azure/storage-queue": "^12.15.0",
-    "@cloudant/cloudant": "^4.5.1",
+    "@ibm-cloud/cloudant": "^0.7.1",
     "@google-cloud/datastore": "^7.5.1",
     "@google-cloud/logging-winston": "^5.3.0",
     "@google-cloud/pubsub": "^3.7.2",
@@ -153,7 +155,7 @@
     "@babel/core": {
       "semver": "^6.3.1"
     },
-    "@cloudant/cloudant": {
+    "@ibm-cloud/cloudant": {
       "qs": "$qs"
     },
     "@commitlint/is-ignored": {

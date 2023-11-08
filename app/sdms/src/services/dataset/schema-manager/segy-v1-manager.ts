@@ -41,7 +41,6 @@ export class SegyManager extends AbstractSchemaManager {
       }
 
       return result.data;
-
    }
 
    public validate(data: any): SchemaValidationResult {
@@ -66,27 +65,37 @@ export class SegyManager extends AbstractSchemaManager {
 
 
    @SchemaTransformFuncManager.register('osdu:wks:dataset--FileCollection.SEGY:1.0.0')
-   public transform_osdu_wks_dataset_FileCollection_Slb_OpenZGY_1_0_0(input: any): SchemaTransformModel {
+   public transform_osdu_wks_dataset_FileCollection_SEGY_1_0_0(input: any): SchemaTransformModel {
       /* transform rules */
       return {
-         'transformFuncID': 'osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0',
+         'transformFuncID': 'osdu:wks:dataset--FileCollection.SEGY:1.0.0',
          'data': input['data'],
          //  chain a next transform function using its identifier
          nextTransformFuncID: undefined
-         // 'nextTransformFuncID': 'osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.1.0'
+         // 'nextTransformFuncID': 'osdu:wks:dataset--FileCollection.SEGY:1.2.0'
       };
    }
 
    // Chain the next data transformer
    @SchemaTransformFuncManager.register('osdu:wks:dataset--FileCollection.SEGY:1.1.0')
-   public transform_osdu_wks_dataset_FileCollection_Slb_OpenZGY_1_1_0(input: any): SchemaTransformModel {
-      input['data']['kind'] = 'osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.1.0';
+   public transform_osdu_wks_dataset_FileCollection_SEGY_1_1_0(input: any): SchemaTransformModel {
+      input['data']['kind'] = 'osdu:wks:dataset--FileCollection.SEGY:1.1.0';
       input['data']['data-transformation-performed'] = true;
       return {
-         'transformFuncID': 'osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.1.0',
+         'transformFuncID': 'osdu:wks:dataset--FileCollection.SEGY:1.1.0',
          'data': input['data'],
          'nextTransformFuncID': undefined
       };
    }
 
+   @SchemaTransformFuncManager.register('osdu:wks:dataset--FileCollection.SEGY:1.2.0')
+   public transform_osdu_wks_dataset_FileCollection_SEGY_1_2_0(input: any): SchemaTransformModel {
+      input['data']['kind'] = 'osdu:wks:dataset--FileCollection.SEGY:1.2.0';
+      input['data']['data-transformation-performed'] = true;
+      return {
+         'transformFuncID': 'osdu:wks:dataset--FileCollection.SEGY:1.2.0',
+         'data': input['data'],
+         'nextTransformFuncID': undefined
+      };
+   }
 }

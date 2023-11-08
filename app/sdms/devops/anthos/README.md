@@ -2,11 +2,7 @@ Seismic Variables
 
 | **Variable** | **Example** |
 | --- | --- |
-| **API\_BASE\_PATH** | /api/v3 |
 | **CLOUDPROVIDER** | anthos |
-| **DATA\_PARTITION\_REST\_HEADER\_KEY** | data-partition-id |
-| **DES\_REDIS\_INSTANCE\_ADDRESS** | {redis-host-without-https-schema} |
-| **DES\_REDIS\_INSTANCE\_PORT** | 6379 |
 | **DES\_SERVICE\_HOST\_COMPLIANCE** | <http://legal/> |
 | **DES\_SERVICE\_HOST\_ENTITLEMENT** | <http://entitlements/> |
 | **DES\_SERVICE\_HOST\_PARTITION** | <http://partition/> |
@@ -16,7 +12,6 @@ Seismic Variables
 | **LOG\_LEVEL** | DEBUG |
 | **PORT** | 5000 |
 | **SDMS\_BUCKET** | {seismic-store-bucket} |
-| **SDMS\_PREFIX** | /api/seismic-store/v3 |
 | **SERVICE\_ENV** | dev |
 
 Seismic Secrets

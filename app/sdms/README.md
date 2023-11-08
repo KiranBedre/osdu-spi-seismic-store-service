@@ -56,4 +56,3 @@ in `/docs/templates/.env-sample`.
 ### Google Cloud configuration (GC)
 
 [Environment configuration](src/cloud/providers/gc/README.md)
-

@@ -53,13 +53,19 @@ export class ImpTokenHandler {
                 }
             }
 
-            if (op === ImpTokenOP.Generate) {
-                Response.writeOK(res, await this.create(req));
-            } else if (op === ImpTokenOP.Refresh) {
-                Response.writeOK(res, await this.refresh(req));
-            } else if (op === ImpTokenOP.Patch) {
-                Response.writeOK(res, await this.patch(req));
-            } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
+            switch (op) {
+                case ImpTokenOP.Generate:
+                    Response.writeOK(res, await this.create(req));
+                    break;
+                case ImpTokenOP.Refresh:
+                    Response.writeOK(res, await this.refresh(req));
+                    break;
+                case ImpTokenOP.Patch:
+                    Response.writeOK(res, await this.patch(req));
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+            }
 
         } catch (error) { Response.writeError(res, error); }
 

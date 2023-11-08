@@ -41,11 +41,16 @@ export class ImpersonationTokenHandler {
                     ' with an impersonation token as Auth credentials.'));
             }
 
-            if (op === ImpersonationTokenOps.Generate) {
-                Response.writeOK(res, await this.generate(req));
-            } else if (op === ImpersonationTokenOps.Refresh) {
-                Response.writeOK(res, await this.refresh(req));
-            } else { throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error')); }
+            switch (op) {
+                case ImpersonationTokenOps.Generate:
+                    Response.writeOK(res, await this.generate(req));
+                    break;
+                case ImpersonationTokenOps.Refresh:
+                    Response.writeOK(res, await this.refresh(req));
+                    break;
+                default:
+                    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
+            }
         } catch (error) { Response.writeError(res, error); }
 
     }

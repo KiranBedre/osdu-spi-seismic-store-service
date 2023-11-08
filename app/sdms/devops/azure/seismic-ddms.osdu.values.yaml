@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# Annotation to support the key rotation for redis password in keyvaul
+# Annotation to support the key rotation for redis password in keyvault
 deployment:
   replicaCount: 2
   deploymentAnnotations:
@@ -35,7 +35,7 @@ configuration:
       tag: latest
       containerPort: 8080
     path: /seistore-svc/api/v3
-  # FIXME: Prometheus instrumentation needs to be implememented for Seismic DDMS and Seismic File Metadata
+  # FIXME: Prometheus instrumentation needs to be implemented for Seismic DDMS and Seismic File Metadata
   # podAnnotations:
     # prometheus.io/path: /seistore-svc/api/v3/metrics
     # prometheus.io/port: "80"
@@ -63,7 +63,7 @@ configuration:
       KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
       SIDECAR_URL: "https://localhost:7138"
       SIDECAR_ENABLE_QUERY: "true"
-      ENABLE_OPTIMISED_QUERY: "true"
+      ENABLE_OPTIMIZED_QUERY: "true"
     # Use only for secret rotation
     secrets:
       - name: AZ_REDIS_PASSWORD
@@ -91,3 +91,27 @@ configuration:
       limit:
         cpu: 1
         memory: 2Gi
+  #####################################
+  # Seismic metadata deletion Service #
+  #####################################
+  - service: seismic-ddms-deletion-service
+    container:
+      image: seismic-ddms-deletion-service
+      tag: latest
+      containerPort: 8001
+    probe:
+      liveness:
+        path: /healthz
+    config:
+      HOST_PORT: "8001"
+      DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+      SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+      SDMS_REDIS_QUEUE_NAME: "sdms-queue-bulkdelete"
+      SDMS_REDIS_QUEUE_PORT: "6380"
+      SDMS_REDIS_LOCKS_PORT: "6380"
+    request:
+      cpu: 0.1
+      memory: 1Gi
+    limit:
+      cpu: 1
+      memory: 4Gi

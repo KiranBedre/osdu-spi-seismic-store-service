@@ -22,10 +22,14 @@ usage() {
   printf "\n# Error: $1\n"
   printf "\n%s" \
     "# Usage: $(pwd)/run.sh" \
-    "           --osdu-url:       the osdu deployment URL (required)" \
-    "           --sdms-svc-path:  the sdms service endpoints base path (optional, default=/seistore-svc/api/v4/)" \
-    "           --access-token:   the user credentials (required)" \
-    "           --partition:      the data partition id (required)"
+    "" \
+    "           --osdu-url:       * required - the osdu deployment URL" \
+    "           --access-token:   * required - the user credentials" \
+    "           --partition:      * required - the data partition id" \
+    "           --sdms-svc-path:    optional - the sdms service endpoints base path (default=/seistore-svc/api/v4/)" \
+    "           --acl-owners:       optional - a group to set as owners" \
+    "           --acl-viewers:      optional - a group to set as viewers" \
+    "           --legal-tag:        optional - a compliance legal tag"
   printf '\n'
   exit 1
 }
@@ -137,6 +141,18 @@ case $i in
   sdms_svc_path="${i#*=}"
   shift
   ;;
+  --acl-owners=*)
+  acl_owners="${i#*=}"
+  shift
+  ;;
+  --acl-viewers=*)
+  acl_viewers="${i#*=}"
+  shift
+  ;;
+  --legal-tag=*)
+  legal_tag="${i#*=}"
+  shift
+  ;;
   *)
   usage "unknown option $i"
   ;;
@@ -148,14 +164,41 @@ if [ -z "${osdu_url}" ]; then usage "osdu-url not defined"; fi
 if [ -z "${access_token}" ]; then usage "access-token not defined"; fi
 if [ -z "${partition}" ]; then usage "partition not defined"; fi
 
-#optional parameters
+# optional parameters default value
 if [ -z "${sdms_svc_path}" ]; then sdms_svc_path="/seistore-svc/api/v4"; fi
 
 # compute osdu resources
-printf "\n" && legal_tag="sdms-e2e" && createLegalTag "$legal_tag" && legal_tag="$partition-"$legal_tag
-printf "\n" && acl_owners="data.sdms-e2e.owners" && createEntitlementGroup "$acl_owners"
-printf "\n" && acl_viewers="data.sdms-e2e.viewers" && createEntitlementGroup "$acl_viewers"
-printf "\n" && getEntitlementDomain && acl_owners=$acl_owners"@"$domain && acl_viewers=$acl_viewers"@"$domain
+if [ -z "${legal_tag}" ]; then
+  printf "\n"
+  legal_tag="sdms-e2e" 
+  createLegalTag "$legal_tag" 
+  legal_tag="$partition-"$legal_tag
+fi
+
+if [ -z "${acl_owners}" ]; then
+  printf "\n" 
+  acl_owners_domain=1
+  acl_owners="data.sdms-e2e.owners" 
+  createEntitlementGroup "$acl_owners"
+fi
+
+if [ -z "${acl_viewers}" ]; then
+  printf "\n" 
+  acl_viewers_domain=1
+  acl_viewers="data.sdms-e2e.viewers" 
+  createEntitlementGroup "$acl_viewers"
+fi
+
+if [ -n "${acl_owners_domain}" ] || [ -n "${acl_viewers_domain}" ]; then
+  printf "\n" 
+  getEntitlementDomain 
+  if [ -n "${acl_owners_domain}" ]; then
+    acl_owners=$acl_owners"@"$domain
+  fi
+  if [ -n "${acl_viewers_domain}" ]; then
+    acl_viewers=$acl_viewers"@"$domain
+  fi
+fi
 
 # print execution configurations
 printf "\n%s\n" "--------------------------------------------"
@@ -189,3 +232,4 @@ duration=$(expr $end - $start)
 printf "%s\n" "Tests completed in $duration seconds"
 printf "%s\n" "--------------------------------------------"
 if [ $resTest -ne 0 ]; then exit 1; fi
+

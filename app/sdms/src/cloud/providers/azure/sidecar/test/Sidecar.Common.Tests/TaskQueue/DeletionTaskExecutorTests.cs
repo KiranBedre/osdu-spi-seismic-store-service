@@ -15,7 +15,7 @@
 // ============================================================================
 
 
-namespace Sidecar.Common.Tests.Service;
+namespace Sidecar.Common.Tests.TaskQueue;
 
 using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
@@ -61,7 +61,7 @@ public class DeletionTaskExecutorTests
                 },
         };
 
-        _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation))
+        _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()))
             .ReturnsAsync(deletionOperation); // using the fact that in these tests deletionOperation is already DeleteOperationStatus
 
         _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
@@ -74,7 +74,7 @@ public class DeletionTaskExecutorTests
                .ReturnsAsync(true);
 
         // Act
-        await service.Process(deletionOperation, cancellationSource.Token);
+        await service.ProcessAsync(deletionOperation, cancellationSource.Token);
 
         // Assert
         itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
@@ -82,10 +82,10 @@ public class DeletionTaskExecutorTests
         bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletionAsync(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
         lockManagerMock.Verify(manager => manager.RemoveDeleteLockAsync(It.IsAny<string>()), Times.Exactly(itemsToDelete.Count));
         Assert.Equal(2, itemsToDelete.Count);
-        taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, itemsToDelete.Count.ToString()), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString()), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, itemsToDelete.Count.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS, Status.Completed.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.Completed.Description(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class DeletionTaskExecutorTests
 
         var itemsToDelete = new List<DeleteItem> { item2 };
 
-        _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation))
+        _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()))
             .ReturnsAsync(deletionOperation); // using the fact that in these tests deletionOperation is already DeleteOperationStatus
         _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
                           .ReturnsAsync(itemsToLockAndDelete);
@@ -145,16 +145,16 @@ public class DeletionTaskExecutorTests
 
 
         // Act
-        await service.Process(deletionOperation, cancellationSource.Token);
+        await service.ProcessAsync(deletionOperation, cancellationSource.Token);
 
         // Assert
-        taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, "2"), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, "2", It.IsAny<CancellationToken>()), Times.Once);
         itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
         lockManagerMock.Verify(manager => manager.AcquireDeleteLockAsync(It.IsAny<string>()), Times.Exactly(6));
         bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletionAsync(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public class DeletionTaskExecutorTests
                 }
         };
 
-        _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation))
+        _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()))
             .ReturnsAsync(deletionOperation); // using the fact that in these tests deletionOperation is already DeleteOperationStatus
 
         _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
@@ -208,13 +208,13 @@ public class DeletionTaskExecutorTests
                        .ReturnsAsync(true);
 
         // Act
-        await service.Process(deletionOperation, cancellationSource.Token);
+        await service.ProcessAsync(deletionOperation, cancellationSource.Token);
 
         // Assert
-        taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.IncrementCountAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.FAILED_CNT), Times.Once());
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString()), Times.Once);
-        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.IncrementCountAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.FAILED_CNT, It.IsAny<CancellationToken>()), Times.Once());
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+        taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.CompletedWithErrors.Description(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static DeleteOperationStatus InitializeStatus() => new()

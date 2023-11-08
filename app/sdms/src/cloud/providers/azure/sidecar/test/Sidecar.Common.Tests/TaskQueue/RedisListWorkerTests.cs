@@ -14,10 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-#pragma warning disable IDE0022
-#pragma warning disable IDE0200
-
-namespace Sidecar.Common.Tests.Service;
+namespace Sidecar.Common.Tests.TaskQueue;
 
 using FluentAssertions.ArgumentMatchers.Moq;
 using Sidecar.Common.TaskQueue;
@@ -25,7 +22,7 @@ using Sidecar.Common.TaskQueue;
 // type alias for readability
 using WorkerType = Sidecar.Common.TaskQueue.RedisListWorker<
     IDeletionOperationMessage,
-    TaskQueue.DeletionTaskHashEntriesDeserializer,
+    ITaskDeserializer<HashEntry[], IDeletionOperationMessage>,
     ITaskExecutor<IDeletionOperationMessage>
 >;
 
@@ -34,7 +31,7 @@ public class RedisListWorkerTests
     private const string QUEUE_NAME = "somequeue";
     private readonly WorkerType _worker;
     private readonly Mock<ILogger<WorkerType>> _loggerMock = new();
-    private readonly DeletionTaskHashEntriesDeserializer _deserializer = new();
+    private readonly Mock<ITaskDeserializer<HashEntry[], IDeletionOperationMessage>> _deserializer = new();
     private readonly Mock<ITaskExecutor<IDeletionOperationMessage>> _executorMock = new();
     private readonly Mock<IDatabase> _spyDb;
 
@@ -53,11 +50,14 @@ public class RedisListWorkerTests
                 ));
 
         var opts = new Options { QueueName = QUEUE_NAME };
-            
-        _worker = new(_loggerMock.Object, _deserializer, _executorMock.Object, redisConnectionFactory.Object, opts);
+
+        var realDeserializer = new DeletionTaskHashEntriesDeserializer();
+        _ = _deserializer.Setup(x => x.Deserialize(It.IsAny<HashEntry[]>())).Returns(realDeserializer.Deserialize);
+
+        _worker = new(_loggerMock.Object, _deserializer.Object, _executorMock.Object, redisConnectionFactory.Object, opts);
     }
 
-    private async Task<DeleteOperationMessage> PushDeleteOperationMessage()
+    private async Task<DeleteOperationMessage> PushDeleteOperationMessage(bool createHashEntries = true)
     {
         var expectedMsg = TestingHelpers.GetDelOpMsg();
         //-- The queue is a List, make sure it exists and push the operation id
@@ -69,11 +69,14 @@ public class RedisListWorkerTests
 
         //---add the del operations payload to the queue
         var key = QUEUE_NAME + ":" + expectedMsg.OperationId;
-        _spyDb.Object.HashSet(new(key), hashEntries);
+        if (createHashEntries)
+        {
+            _spyDb.Object.HashSet(new(key), hashEntries);
 
+        }
         return expectedMsg;
     }
-    
+
     [Fact]
     public async Task CheckForDeletionOperationAsync_QueueIsEmpty_DoesNotCallExecutor()
     {
@@ -81,10 +84,40 @@ public class RedisListWorkerTests
         // do nothing
 
         // Act
-        await _worker.HandleNextTask(CancellationToken.None);
+        _ = await _worker.HandleNextTaskAsync(CancellationToken.None);
 
         // Assert
-        _executorMock.Verify(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        _executorMock.Verify(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EmptyTask_DoesNotCallExecutor()
+    {
+        // Arrange
+        _ = await PushDeleteOperationMessage(createHashEntries: false);
+
+        // Act
+        _ = await Assert.ThrowsAsync<Exception>(() => _worker.HandleNextTaskAsync(CancellationToken.None));
+
+        // Assert
+        _executorMock.Verify(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MalformedTask_DoesNotCallExecutor_AndGetsDeleted()
+    {
+        // Arrange
+        _ = await PushDeleteOperationMessage();
+        _ = _deserializer.Setup(x => x.Deserialize(It.IsAny<HashEntry[]>())).Throws<Exception>();
+
+        // Act
+        _ = await Assert.ThrowsAsync<Exception>(() => _worker.HandleNextTaskAsync(CancellationToken.None));
+
+        // Assert
+        _executorMock.Verify(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>()), Times.Never);
+        _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Once);
     }
 
     [Theory]
@@ -94,24 +127,24 @@ public class RedisListWorkerTests
     private async Task ExecutorFinishingSuccessfully_DeletesMessageFromQueue(int extraMessageCount)
     {
         // Arrange
-        for (int i = 0; i < extraMessageCount; ++i)
+        for (var i = 0; i < extraMessageCount; ++i)
         {
-            await PushDeleteOperationMessage();
+            _ = await PushDeleteOperationMessage();
         }
         var expectedMsg = await PushDeleteOperationMessage();
 
-        var ct = new CancellationTokenSource().Token;
-
         // Act
-        await _worker.HandleNextTask(ct);
+        _ = await _worker.HandleNextTaskAsync(CancellationToken.None);
 
         // Assert
-        _executorMock.Verify(e => e.Process(Its.EquivalentTo(expectedMsg), ct), Times.Once);
+        _executorMock.Verify(e => e.ProcessAsync(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
-        queueItems.Length.Should().Be(extraMessageCount);
+        _ = queueItems.Length.Should().Be(extraMessageCount);
+
+        _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Once);
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -119,26 +152,26 @@ public class RedisListWorkerTests
     private async Task ExecutorRaisingError_ReturnsMessageToTheQueue(int extraMessageCount)
     {
         // Arrange
-        for (int i = 0; i < extraMessageCount; ++i)
+        for (var i = 0; i < extraMessageCount; ++i)
         {
-            await PushDeleteOperationMessage();
+            _ = await PushDeleteOperationMessage();
         }
         var expectedMsg = await PushDeleteOperationMessage();
 
-        var ct = new CancellationTokenSource().Token;
-
-        _executorMock.Setup(e => e.Process(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>())).Throws<TestException>();
+        _ = _executorMock.Setup(e => e.ProcessAsync(It.IsAny<IDeletionOperationMessage>(), It.IsAny<CancellationToken>())).Throws<TestException>();
 
         // Act
-        var action = async () => await _worker.HandleNextTask(ct);
-        await action.Should().ThrowAsync<TestException>();
+        var action = async () => await _worker.HandleNextTaskAsync(CancellationToken.None);
+        _ = await action.Should().ThrowAsync<TestException>();
 
         // Assert
-        _executorMock.Verify(e => e.Process(Its.EquivalentTo(expectedMsg), ct), Times.Once);
+        _executorMock.Verify(e => e.ProcessAsync(Its.EquivalentTo(expectedMsg), It.IsAny<CancellationToken>()), Times.Once);
 
         var queueItems = _spyDb.Object.ListRange(QUEUE_NAME);
-        queueItems.Length.Should().Be(extraMessageCount + 1);
+        _ = queueItems.Length.Should().Be(extraMessageCount + 1);
+
+        _spyDb.Verify(x => x.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()), Times.Never);
     }
-    
-    private class TestException : Exception {}
+
+    private class TestException : Exception { }
 }

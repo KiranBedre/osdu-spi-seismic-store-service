@@ -33,6 +33,7 @@ sdms_azure_dotnet_ci:
         path: ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
   script:
     - cd app/${SDMS_SERVICE}/src/cloud/providers/azure/sidecar
+    - dotnet format --version
     - dotnet format --severity warn --verify-no-changes
     - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=${CI_PROJECT_DIR}/junit/{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
     # generate coverage summary and print to stdout:
@@ -254,6 +255,8 @@ sdms_azure_deploy:
       --set configuration[0].container.tag=${CI_COMMIT_SHA}
       --set configuration[0].sidecar.container.image=${SDMS_SIDECAR_NAME}
       --set configuration[0].sidecar.container.tag=${CI_COMMIT_SHA}
+      --set configuration[1].container.image=${SDMS_DELETION_SERVICE_NAME}
+      --set configuration[1].container.tag=${CI_COMMIT_SHA}
       --create-namespace
       -n ${NAMESPACE} -f app/sdms/devops/azure/${SDMS_SERVICE_NAME}.osdu.values.yaml --wait --timeout 10m
     # Wait for service to be running to start

@@ -33,10 +33,9 @@ export class SubProjectParser {
 
         // If not specified, set the acl as empty array. A default acl group will be later created for these.
         subproject.acls = req.body?.acls || { 'admins': [], 'viewers': [] };
-        if (req.body?.acl) {
-            const aclKeys = Object.keys(req.body.acls);
-            subproject.acls['admins'] = ('admins' in aclKeys) ? subproject.acls['admins'].sort() : [];
-            subproject.acls['viewers'] = ('viewers' in aclKeys) ? subproject.acls['viewers'].sort() : [];
+        if (req.body?.acls) {
+            subproject.acls['admins'] = 'admins' in req.body.acls ? subproject.acls['admins'].sort() : [];
+            subproject.acls['viewers'] = 'viewers' in req.body.acls ? subproject.acls['viewers'].sort() : [];
         }
 
         // set the dataset level access acl (uniform by default)
@@ -67,7 +66,7 @@ export class SubProjectParser {
                 'does not match the required pattern [a-z][a-z\\d\\-]*[a-z\\d]'));
         }
 
-        // check policy corectness
+        // check policy correctness
         this.checkAccessPolicy(req.body);
 
         // check extra requirements
@@ -89,7 +88,7 @@ export class SubProjectParser {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The subproject access policy cannot be patched.'));
         } else {
-            // check policy corectness
+            // check policy correctness
             this.checkAccessPolicy(req.body);
         }
 

@@ -25,7 +25,7 @@ import { ConfigGoogle } from './config';
 
 @DataEcosystemCoreFactory.register('gc')
 export class GoogleDataEcosystemServices extends AbstractDataEcosystemCore {
-    public getDataPartitionIDRestHeaderName(): string { return ConfigGoogle.DATA_PARTITION_REST_HEADER_KEY; }
+    public getDataPartitionIDRestHeaderName(): string { return 'data-partition-id'; }
     public getEntitlementBaseUrlPath(): string { return ConfigGoogle.ENTITLEMENT_BASE_URL_PATH; };
     public getComplianceBaseUrlPath(): string { return '/api/legal/v1'; };
     public getStorageBaseUrlPath(): string { return '/api/storage/v2'; };

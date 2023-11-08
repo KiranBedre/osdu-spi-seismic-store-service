@@ -36,8 +36,8 @@ public static class RedisConverters
                 var hashValue = propertyValue switch
                 {
                     IEnumerable<object> => JsonSerializer.Serialize(propertyValue),
-                    DateTime time => time.ToString("yyyy-MM-dd'T'HH:mm:ss.ffffff", DateTimeFormatInfo.InvariantInfo),
-                    _ => propertyValue.ToString()
+                    DateTime time => time.ToString("O", DateTimeFormatInfo.InvariantInfo),  // ISO-8601
+                    _ => propertyValue.ToString(),
                 };
                 var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
                 var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
@@ -60,7 +60,12 @@ public static class RedisConverters
                 continue;
             }
 
-            p.SetValue(obj, Convert.ChangeType(entry.Value.ToString(), p.PropertyType));
+            var parsedValue = Convert.ChangeType(entry.Value.ToString(), p.PropertyType, CultureInfo.InvariantCulture);
+            if (parsedValue is DateTime dt)
+            {
+                parsedValue = dt.ToUniversalTime();
+            }
+            p.SetValue(obj, parsedValue);
         }
         return (T)obj!;
     }
