@@ -20,8 +20,8 @@ using Azure;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using FluentAssertions.ArgumentMatchers.Moq;
-using Newtonsoft.Json;
 using Sidecar.Common.TaskQueue;
+using System.Text.Json;
 
 // type alias for readability
 using WorkerType = Sidecar.Common.TaskQueue.StorageQueueWorker<
@@ -59,7 +59,7 @@ public class StorageQueueWorkerTests
     private async Task WhenNoGoodTasksInQueue_ShouldDeleteThemAndSucceed(int tasksWithToManyRetries, int retryLimit)
     {
         // ARRANGE
-        var messagePayload = JsonConvert.SerializeObject(TestingHelpers.GetDelOpMsg());
+        var messagePayload = JsonSerializer.Serialize(TestingHelpers.GetDelOpMsg());
 
         var sequence = _queueClientMock.SetupSequence(qc => qc.ReceiveMessageAsync(
             It.IsAny<TimeSpan>(),
@@ -104,7 +104,7 @@ public class StorageQueueWorkerTests
     {
         // ARRANGE
         var expectedMsg = TestingHelpers.GetDelOpMsg();
-        var messagePayload = JsonConvert.SerializeObject(expectedMsg);
+        var messagePayload = JsonSerializer.Serialize(expectedMsg);
 
         var queueMessage = FakeMessage(messagePayload, 4);
 
@@ -154,7 +154,7 @@ public class StorageQueueWorkerTests
     {
         // ARRANGE
         var expectedMsg = TestingHelpers.GetDelOpMsg();
-        var messagePayload = JsonConvert.SerializeObject(expectedMsg);
+        var messagePayload = JsonSerializer.Serialize(expectedMsg);
 
         var queueMessage = FakeMessage(messagePayload, 4);
 
@@ -236,7 +236,7 @@ public class StorageQueueWorkerTests
     {
         // ARRANGE
         var expectedMsg = TestingHelpers.GetDelOpMsg();
-        var messagePayload = JsonConvert.SerializeObject(expectedMsg);
+        var messagePayload = JsonSerializer.Serialize(expectedMsg);
 
         var queueMessage = FakeMessage(messagePayload, 4);
 
@@ -286,7 +286,7 @@ public class StorageQueueWorkerTests
     {
         // ARRANGE
         var expectedMsg = TestingHelpers.GetDelOpMsg();
-        var messagePayload = JsonConvert.SerializeObject(expectedMsg);
+        var messagePayload = JsonSerializer.Serialize(expectedMsg);
 
         var queueMessage = FakeMessage(messagePayload, 4);
 
