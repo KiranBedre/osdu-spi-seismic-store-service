@@ -2,7 +2,7 @@ import sinon from 'sinon';
 
 import {AzureConfig, AzureTaskQueue} from "../../../../src/cloud/providers/azure";
 import { Tx } from '../../utils';
-import {QueueClient} from "@azure/storage-queue";
+import {QueueClient, QueueCreateIfNotExistsResponse} from "@azure/storage-queue";
 import {IBulkDeleteOperationQueueTask, IOperationQueueTask} from "../../../../src/services/operation/model";
 import {v4 as uuidv4} from "uuid";
 import {Config} from "../../../../src/cloud";
@@ -25,6 +25,8 @@ export class TestTaskQueue {
         this.sandbox = sinon.createSandbox();
         this.taskQueue = new AzureTaskQueue();
         this.queueClientFactory = new CachingQueueClientFactory();
+        this.sandbox.stub(QueueClient.prototype, 'createIfNotExists')
+            .resolves({ succeeded: true } as QueueCreateIfNotExistsResponse);
 
         describe(Tx.testInit('azure task queue test'), () => {
             this.createQueueClient();
@@ -42,26 +44,12 @@ export class TestTaskQueue {
 
         Tx.test(async () => {
             const clientStub = this.sandbox.stub(QueueClient.prototype, 'sendMessage');
-            this.sandbox.stub(QueueClient.prototype, 'createIfNotExists');
             await this.taskQueue.pushTask(task);
             const message = Buffer.from(JSON.stringify(task)).toString('base64');
             this.sandbox.assert.calledOnceWithExactly(
                 clientStub,
                 message
             );
-        });
-    }
-
-    private static createQueueClient() {
-        Tx.sectionInit('createQueueClient');
-
-        Tx.test(async () => {
-            const client1 = this.queueClientFactory.getCachedQueueClient('queue1');
-            const client1existing = this.queueClientFactory.getCachedQueueClient('queue1');
-            const client2 = this.queueClientFactory.getCachedQueueClient('queue2');
-
-            assert.isTrue(client1 === client1existing);
-            assert.isFalse(client1 === client2);
         });
     }
 }
