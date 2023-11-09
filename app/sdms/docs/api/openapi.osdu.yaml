@@ -32,7 +32,7 @@ info:
 # ===========================================================================
 
 servers:
-  - url: "#{SDMS_PREFIX}#"
+  - url: "/seistore-svc/api/v3"
 
 paths:
   /svcstatus:

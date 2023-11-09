@@ -26,7 +26,7 @@ export const operations = { } as { [key in OperationType]: {
 
 operations.BULK_DELETE = {
     getQueueName(): string {
-        return Config.REDIS_DELETION_QUEUE;
+        return Config.SMDS_DELETION_QUEUE;
     },
 }
 
