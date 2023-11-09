@@ -29,7 +29,6 @@ export class TestTaskQueue {
             .resolves({ succeeded: true } as QueueCreateIfNotExistsResponse);
 
         describe(Tx.testInit('azure task queue test'), () => {
-            this.createQueueClient();
             this.pushTask();
         });
     }
