@@ -26,7 +26,7 @@ export class AzureTaskQueue extends AbstractTaskQueue {
     private queueClientFactory: CachingQueueClientFactory = new CachingQueueClientFactory();
 
     public async pushTask(task: IOperationQueueTask): Promise<void> {
-        const queueName= operations[task.type].getQueueName();
+        const queueName = operations[task.type].getQueueName();
         delete task.type;
         const queueClient = await this.queueClientFactory.getCachedQueueClient(queueName);
 

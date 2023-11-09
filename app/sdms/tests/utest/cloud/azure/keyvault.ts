@@ -15,7 +15,7 @@
 // ============================================================================
 
 import sinon from 'sinon';
-import assert from 'assert';
+import { assert } from 'chai';
 
 import { KeyVault } from '../../../../src/cloud/providers/azure/keyvault';
 import { AzureConfig } from '../../../../src/cloud/providers/azure/config';
@@ -27,6 +27,7 @@ const mockRedisKey = 'mockRedisKey';
 const mockRedisHost= 'mockRedisHost';
 const mockRedisQueueKey = 'mockRedisQueueKey';
 const mockRedisQueueHost= 'mockRedisQueueHost';
+const mockAzureQueueEndpoint = 'mockAzureQueueEndpoint';
 
 // pragma: allowlist nextline secret
 const mockSpClientSecret = 'mockSpClientSecret';
@@ -71,6 +72,11 @@ const mockSecretClient = {
                     value: mockSauthProvider,
                 } as any)
             }
+            if (secretName === KeyVault.STORAGE_QUEUE_ENDPOINT) {
+                resolve( {
+                    value: mockAzureQueueEndpoint,
+                } as any)
+            }
         })
     },
 } as any;
@@ -103,6 +109,7 @@ export class TestAzureKeyVault {
             assert.equal(AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS, mockRedisHost);
             assert.equal(AzureConfig.APP_RESOURCE_ID, mockSpAppSourceID);
             assert.equal(AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL, mockSauthProvider);
+            assert.equal(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, mockAzureQueueEndpoint);
         });
     }
 

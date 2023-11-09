@@ -16,7 +16,6 @@ export class TestTaskQueue {
 
     private static sandbox: sinon.SinonSandbox;
     private static taskQueue: AzureTaskQueue;
-    private static queueClientFactory: CachingQueueClientFactory;
 
     public static run() {
         Config.CLOUDPROVIDER = 'azure';
@@ -24,7 +23,6 @@ export class TestTaskQueue {
         Config.SMDS_DELETION_QUEUE = 'deletionqueue'
         this.sandbox = sinon.createSandbox();
         this.taskQueue = new AzureTaskQueue();
-        this.queueClientFactory = new CachingQueueClientFactory();
         this.sandbox.stub(QueueClient.prototype, 'createIfNotExists')
             .resolves({ succeeded: true } as QueueCreateIfNotExistsResponse);
 
