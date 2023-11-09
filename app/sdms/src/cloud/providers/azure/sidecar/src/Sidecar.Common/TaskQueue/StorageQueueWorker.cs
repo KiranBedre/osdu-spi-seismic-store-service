@@ -98,7 +98,7 @@ public class StorageQueueWorker<T, TD, TE> : ITaskQueueWorker
                     "Re-acquired the lock for message {MessageId}. New visibility timeout is {VisibilityTimeout}",
                     message.MessageId, message.NextVisibleOn);
             }
-            catch (Exception e)  // note: catch OperationCanceledException too
+            catch (Exception e)
             {
                 // If we failed to update message visibility, we very likely don't have the message's fresh popReceipt.
                 // Without the actual popReceipt, further attempts to update visibility or to delete the message
