@@ -56,13 +56,12 @@ export class TestTaskQueue {
         Tx.sectionInit('createQueueClient');
 
         Tx.test(async () => {
-            this.sandbox.stub(QueueClient.prototype, 'createIfNotExists');
             const client1 = this.queueClientFactory.getCachedQueueClient('queue1');
             const client1existing = this.queueClientFactory.getCachedQueueClient('queue1');
             const client2 = this.queueClientFactory.getCachedQueueClient('queue2');
 
-            assert.deepEqual(client1, client1existing);
-            assert.notEqual(client1, client2);
+            assert.isTrue(client1 === client1existing);
+            assert.isFalse(client1 === client2);
         });
     }
 }

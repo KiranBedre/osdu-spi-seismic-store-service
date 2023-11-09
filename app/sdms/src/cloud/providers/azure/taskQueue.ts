@@ -39,11 +39,11 @@ export class AzureTaskQueue extends AbstractTaskQueue {
     }
 
     private base64encode(content: string): string {
-        return Buffer.from(content).toString("base64");
+        return Buffer.from(content).toString('base64');
     }
 }
 
-class CachingQueueClientFactory {
+export class CachingQueueClientFactory {
     private queueServiceClient: QueueServiceClient = null;
     private static queueClientCache: { [key: string]: QueueClient; } = {};
 
