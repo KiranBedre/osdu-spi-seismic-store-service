@@ -1,5 +1,4 @@
 {
-  "default": true,
-  "no-hard-tabs": false,
-  "whitespace": false
+  "MD013": false,
+  "MD033": false
 }

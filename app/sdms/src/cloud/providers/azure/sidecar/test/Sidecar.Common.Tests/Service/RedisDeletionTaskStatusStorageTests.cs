@@ -22,7 +22,7 @@ using Sidecar.Common.Utility;
 public class RedisDeletionTaskStatusStorageTests : RedisHandlerTests
 {
     private readonly RedisDeletionTaskStatusStorage _statusStorage;
-    private const string QUEUE_NAME = "somequeue";
+    private const string QUEUE_NAME = "some-queue";
 
     public RedisDeletionTaskStatusStorageTests()
     {

@@ -62,19 +62,19 @@ internal static partial class TestingHelpers
                 return Array.Empty<RedisValue>();
             }
 
-            var vals = _queueCache[key!];
+            var values = _queueCache[key!];
 
             if (start < 0)
             {
-                start += vals.Count;
+                start += values.Count;
             }
 
             if (stop < 0)
             {
-                stop += vals.Count;
+                stop += values.Count;
             }
 
-            return vals.Skip((int)start).Take((int)(stop - start + 1)).ToArray();
+            return values.Skip((int)start).Take((int)(stop - start + 1)).ToArray();
         }
 
         public RedisValue ListLeftPop(RedisKey key)
@@ -84,13 +84,13 @@ internal static partial class TestingHelpers
                 return RedisValue.EmptyString;
             }
 
-            var vals = _queueCache[key!];
-            if (vals.Count <= 0)
+            var values = _queueCache[key!];
+            if (values.Count <= 0)
             {
                 return RedisValue.EmptyString;
             }
-            var res = vals[0];
-            vals.RemoveAt(0);
+            var res = values[0];
+            values.RemoveAt(0);
             return res;
         }
 
@@ -158,7 +158,7 @@ internal static partial class TestingHelpers
             return Task.FromResult(true);
         }
 
-        //---since the "cache" is a dictionary with a compound key for each hashentry, when reconstructing
+        //---since the "cache" is a dictionary with a compound key for each hash entry, when reconstructing
         //---the hash entry form the dictionary, the key prefix needs to be replaced
         //---note the pattern is "<key>:<property name>:" (see the GetHashKey method)
         public HashEntry[] HashGetAll(RedisKey key)

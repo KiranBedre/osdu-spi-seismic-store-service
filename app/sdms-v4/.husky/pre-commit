@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 #  ***************************************************************************
 #  Copyright 2017 - 2023, Schlumberger
 #
@@ -15,32 +15,9 @@
 #  limitations under the License.
 #  ***************************************************************************
 
-. "$(dirname -- "$0")/_/husky.sh"
 
-cd ./app/sdms-v4 
+. "$(dirname "$0")/_/husky.sh"
+rootPath=$(git rev-parse --show-toplevel)
+cd "$rootPath"
 
-if [ ! -d "node_modules" ]
-then
-    echo "error: required modules not found, please run \"npm\" install before commit"
-    exit 1
-fi
-
-printf "\n%s\n" "-------------------------------------------------------"
-echo "1 - spelling errors check"
-printf "%s\n" "-------------------------------------------------------"
-npm run spell
-
-printf "\n%s\n" "-------------------------------------------------------"
-echo "2 - markdown linting"
-printf "%s\n" "-------------------------------------------------------"
-npm run markdown-lint
-
-printf "\n%s\n" "-------------------------------------------------------"
-echo "3 - code linting"
-printf "%s\n" "-------------------------------------------------------"
-npm run lint
-
-printf "%s\n" "-------------------------------------------------------"
-echo "4 - code formatting"
-printf "%s\n" "-------------------------------------------------------"
-npm run prettier
+./quality.sh

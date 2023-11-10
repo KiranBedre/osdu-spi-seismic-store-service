@@ -50,7 +50,7 @@ interface PSQLQuery {
 }
 
 /*
-Datastore Operators to PSQL operaotrs mapper
+Datastore Operators to PSQL operators mapper
 */
 const datastorePSQLMapper: object = {
     '=': 'equals',

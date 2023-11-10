@@ -2,7 +2,6 @@
   "name": "seismic-store-service",
   "version": "2.0.0",
   "description": "seismic store service",
-  "author": "Diego Molteni <dmolteni3@slb.com>",
   "private": true,
   "scripts": {
     "clean": "rm -rf dist coverage test-results.xml .nyc_output",
@@ -24,8 +23,7 @@
     "copy-static-files": "copyfiles --error --up 1 ./docs/api/openapi.osdu.yaml ./dist/docs",
     "copy-schemas": "copyfiles --up 1 ./docs/schemas/**/*.json ./dist/docs",
     "copy-rego-policies": "copyfiles --up 1 ./docs/policies/*.rego ./dist/docs",
-    "postbuild": "npm run copy-static-files && npm run copy-schemas && npm run copy-rego-policies",
-    "prepare": "cd ../.. && husky install ./app/sdms/.husky"
+    "postbuild": "npm run copy-static-files && npm run copy-schemas && npm run copy-rego-policies"
   },
   "nyc": {
     "check-coverage": true,
@@ -109,8 +107,6 @@
     "xss-filters": "1.2.7"
   },
   "devDependencies": {
-    "@commitlint/cli": "^14.1.0",
-    "@commitlint/config-conventional": "^14.1.0",
     "@types/bull": "^3.15.5",
     "@types/chai": "^4.2.22",
     "@types/cors": "^2.8.12",
@@ -127,10 +123,8 @@
     "@types/xss-filters": "0.0.27",
     "async": "^3.2.2",
     "chai": "^4.3.4",
-    "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",
     "fs-jetpack": "^4.2.0",
-    "husky": "^7.0.4",
     "inline-css": "^4.0.2",
     "ioredis-mock": "^8.2.2",
     "istanbul": "0.4.5",
@@ -157,9 +151,6 @@
     },
     "@ibm-cloud/cloudant": {
       "qs": "$qs"
-    },
-    "@commitlint/is-ignored": {
-      "semver": "7.5.2"
     },
     "express": {
       "qs": "$qs"

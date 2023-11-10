@@ -28,7 +28,7 @@ public class DeleteItemsRetrieverTests
 
         var deleteItemsRetriever = new DeleteItemsRetriever(dataAccessMock.Object, cosmosFactoryMock.Object);
 
-        var tenant = "mytenant";
+        var tenant = "myTenant";
         var subproject = "subproj";
         var path = "path/";
         var records = new List<object>

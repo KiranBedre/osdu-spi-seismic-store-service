@@ -75,7 +75,7 @@ Local Helm values apply to specific services. Local Helm values will override gl
 | `autoscaling.targetCPUUtilizationPercentage` | `80` | CPU utilization target | int | no |
 | `autoscaling.targetMemoryUtilizationPercentage` | `80` | Memory utilization target | int | no |
 | `autoscaling.ServiceRequestCountThreshold` | `25` | The number of requests per second threshold averaged over a minute to trigger a scaling event. | int | no |
-| `autoscaling.ServiceRequestDurationAverage` | `300` | The response time measured in miliseconds averaged over 3 minutes to trigger a scaling event. | int | no |
+| `autoscaling.ServiceRequestDurationAverage` | `300` | The response time measured in milliseconds averaged over 3 minutes to trigger a scaling event. | int | no |
 | `autoscaling.coolDownPeriod` | `120` | The period to wait after the last trigger reported active before scaling the resource back to 0. Managed by Keda. | int | no |
 | `autoscaling.pollingInterval` | `1` | This is the interval to check each trigger on. | int | no |
 | `livenessProbe.failureThreshold` | `3` | [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes). | int | no |

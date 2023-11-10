@@ -34,7 +34,7 @@ usage() {
 # check required parameters
 # argument [seistore-svc-url] seismic store service url - required
 # argument [seistore-svc-api-key] seismic store service api key - required
-# argument [user-idtoken] user credentail token - required
+# argument [user-idtoken] user credential token - required
 # argument [tenant] seismic store working tenant name - required
 # argument [datapartition] data partition id - required
 # argument [legaltag01] test legal tag - required
@@ -43,7 +43,7 @@ usage() {
 # argument [newusergroup] user group email for a group to be added into subproject - required if [VCS-Provider] is not 'gitlab'
 # argument [VCS-Provider] valid value is 'gitlab'. Provided will skip USER and IMPTOKEN API endpoints tests - optional
 # argument [de-app-key] DELFI application key - optional
-# argument [admin-email] user credentail email - optional (deprecated)
+# argument [admin-email] user credential email - optional (deprecated)
 # argument [subproject] subproject name to use in e2e tests - optional
 
 for i in "$@"; do
@@ -154,7 +154,7 @@ fi
 printf "\n%s\n" "--------------------------------------------"
 printf "%s\n" "seismic store regression tests"
 printf "%s\n" "--------------------------------------------"
-printf "%s\n" "seistore service apikey = ${seistore_svc_api_key}"
+printf "%s\n" "seistore service api-key = ${seistore_svc_api_key}"
 printf "%s\n" "seistore service url = ${seistore_svc_url}"
 printf "%s\n" "working tenant = ${working_tenant}"
 printf "%s\n" "user test admin = ${admin_email}"
@@ -203,7 +203,7 @@ fi
 
 export NODE_OPTIONS=--max_old_space_size=8192
 
-# install requied packages
+# install required packages
 npm ci 
 
 # run tests
@@ -251,7 +251,7 @@ do
   ((i++))
 done
 
-# restore configuraiton and remove installed dependencies
+# restore configuration and remove installed dependencies
 cp -f ./tests/e2e/postman_env_original.json ./tests/e2e/postman_env.json
 rm -f ./tests/e2e/postman_env_original.json
 rm -f ./tests/e2e/postman_env_initiated.json

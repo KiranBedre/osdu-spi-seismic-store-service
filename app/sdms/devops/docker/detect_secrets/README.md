@@ -1,13 +1,13 @@
-[![Detect Secrets](https://travis-ci.com/Yelp/detect-secrets.svg?branch=master)](https://travis-ci.com/Yelp/detect-secrets)
+# Detect Secrets
 
-# detect-secrets
+[![Detect Secrets](https://travis-ci.com/Yelp/detect-secrets.svg?branch=master)](https://travis-ci.com/Yelp/detect-secrets)
 
 ## About
 
 `detect-secrets` is an aptly named module for **detecting secrets** within a
 code base.
 
-## Quickstart
+## QuickStart
 
 ### Local environment
 
@@ -36,7 +36,7 @@ detect-secrets scan > devops/docker/detect_secrets/.secrets.baseline
 
 ###### Adding New Secrets to Baseline
 
-This will rescan your codebase, and:
+This will re-scan your codebase, and:
 
 1. Update/upgrade your baseline to be compatible with the latest version,
 2. Add any new secrets it finds to your baseline,
@@ -75,7 +75,7 @@ docker run --rm -it -v $(pwd):/opt detectsecrets detect-secrets scan > /opt/devo
 
 ###### Adding New Secrets to Baseline with container
 
-This will rescan your codebase, and:
+This will re-scan your codebase, and:
 
 1. Update/upgrade your baseline to be compatible with the latest version,
 2. Add any new secrets it finds to your baseline,
@@ -86,7 +86,7 @@ This will also preserve any labelled secrets you have.
 Remember to run this from root path of your project.
 
 ```bash
-docker run --rm -it -v $(pwd):/opt detectsecres detect-secrets scan --baseline /opt/devops/docker/detect_secrets/.secrets.baseline
+docker run --rm -it -v $(pwd):/opt detectsecrets detect-secrets scan --baseline /opt/devops/docker/detect_secrets/.secrets.baseline
 ```
 
 ### CI
