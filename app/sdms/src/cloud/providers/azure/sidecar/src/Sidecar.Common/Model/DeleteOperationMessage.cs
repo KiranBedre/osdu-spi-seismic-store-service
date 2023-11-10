@@ -16,8 +16,8 @@
 
 namespace Sidecar.Common.Model;
 
-using System.Text.Json.Serialization;
 using Interface;
+using System.Text.Json.Serialization;
 
 public class DeleteOperationMessage : IDeletionOperationMessage
 {

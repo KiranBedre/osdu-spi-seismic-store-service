@@ -38,6 +38,7 @@ This project provides an [.env.example](.env.example) file that provides the bas
 | __SDMS_REDIS_QUEUE_HOSTNAME__       | Host of the Redis instance that holds the queue for deletion operations.<br /><br />  In the typical Azure deployment, this Redis instance starts with the prefix `cache`.<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.                                                                                                                                                                                                                                                                                                                 | cache-xxxxx.redis.cache.windows.net:6380,password=password_here,ssl=True,abortConnect=False   |
 | __SDMS_REDIS_QUEUE_PASSWORD__       | Password for the Redis instance that holds the queue for deletion operations.<br /><br />  This value is required if the __DES_SERVICE_HOST__ is not supplied.                                                                                                                                                                                                                                                                                                                                                                                                            | password  |
 | __SDMS_REDIS_QUEUE_NAME__           | The name of the queue in Redis; the queue is of type `List`.<br /><br />This value is always required.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | deletejobqueue   |
+| __STORAGE_QUEUE_NAME__              | The name of the storage queue to use for submitting deletion tasks.<br /><br /> If not specified, a default queue name will be used.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | deletejobqueue   |
 | __SDMS_COSMOS_ENDPOINT__            | The url for the Cosmos instance.<br /><br />This value can be found in the deployment in the Cosmos instance that stores the metadata for SDMS.<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.                                                                                                                                                                                                                                                                                                                                            |    |
 | __SDMS_COSMOS_KEY__                 | The key for the Cosmos instance.<br /><br />This value can be found in the deployment in the Cosmos instance that stores the metadata for SDMS.<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.                                                                                                                                                                                                                                                                                                                                            |  primary/secondary or Cosmos key |
 | __SDMS_STORAGE_CONNSTR__            | The connection string for the Azure Storage used to hold the datasets<br /><br />This value is required if the __DES_SERVICE_HOST__ is not supplied.                                                                                                                                                                                                                                                                                                                                                                                                                      |  DefaultEndpointsProtocol=https;AccountName=someaccount;AccountKey=some_account_key;EndpointSuffix=core.windows.net  |
@@ -55,7 +56,8 @@ Example:
 This is similar to the values in the typical Azure deployment. The `DES Service` provides the connection string for the Cosmos instance and the storage account.
 
 ```bash
-SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
+SDMS_REDIS_QUEUE_NAME='deletejobstatusqueuetest'
+STORAGE_QUEUE_NAME='deletejobqueuetest'
 SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
 DES_SERVICE_HOST='https://sdmstest.oep.ppe.azure-int.net'
 Logging__LogLevel__Debug=1
@@ -69,7 +71,8 @@ We can also overwrite the connection strings for the Cosmos instance, storage ac
 ```bash
 SDMS_REDIS_QUEUE_HOSTNAME='cache-xxx.redis.cache.windows.net'
 SDMS_REDIS_QUEUE_PASSWORD='<some password>'
-SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
+SDMS_REDIS_QUEUE_NAME='deletejobstatusqueuetest'
+STORAGE_QUEUE_NAME='deletejobqueuetest'
 SDMS_COSMOS_KEY='<primary/secondary Cosmos Key>'
 SDMS_COSMOS_ENDPOINT='https://db-xxx.documents.azure.com:443/'
 SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcswi;AccountKey=<some account key>;EndpointSuffix=core.windows.net'
@@ -87,7 +90,8 @@ If we want to avoid the calls to the `DES Service` while running locally, we can
 If we omit it, then we need to add the connection strings for the storage account and the cosmos instance.
 
 ```bash
-SDMS_REDIS_QUEUE_NAME='deletejobqueuetest'
+SDMS_REDIS_QUEUE_NAME='deletejobstatusqueuetest'
+STORAGE_QUEUE_NAME='deletejobqueuetest'
 SDMS_COSMOS_KEY='<primary/secondary Cosmos Key>'
 SDMS_COSMOS_ENDPOINT='https://db-xxx.documents.azure.com:443/'
 SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=sdms3q6m2bnvbcswi;AccountKey=<some account key>;EndpointSuffix=core.windows.net'
@@ -103,7 +107,7 @@ This value can be found using the following steps:
 - In the blade, under `Kubernetes resources`, select `Configuration`
 - In the next blade, apply the `Filter by namespace` of `ddms-seismic`
 - Select `seismic-ddms-config` from the results
-- Under `Data` retrive the value for `DES_SERVICE_HOST`
+- Under `Data` retrieve the value for `DES_SERVICE_HOST`
 
 ### VSCode Configuration Examples
 

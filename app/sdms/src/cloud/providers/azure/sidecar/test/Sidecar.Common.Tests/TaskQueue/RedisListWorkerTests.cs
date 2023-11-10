@@ -51,7 +51,7 @@ public class RedisListWorkerTests
 
         var opts = new Options { QueueName = QUEUE_NAME };
 
-        var realDeserializer = new DeletionTaskHashEntriesDeserializer();
+        var realDeserializer = new DeletionTaskRedisHashEntriesDeserializer();
         _ = _deserializer.Setup(x => x.Deserialize(It.IsAny<HashEntry[]>())).Returns(realDeserializer.Deserialize);
 
         _worker = new(_loggerMock.Object, _deserializer.Object, _executorMock.Object, redisConnectionFactory.Object, opts);
