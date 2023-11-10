@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
 // limitations under the License.
 // ============================================================================
 
-import { Config } from '../../cloud';
+import { CloudFactory } from './cloud';
+import {IOperationQueueTask} from '../services/operation/model';
 
-export enum OperationType {
-    BULK_DELETE = 'BULK_DELETE',
+export interface ITaskQueue {
+    pushTask(task: IOperationQueueTask): Promise<void>;
 }
 
-export const operations = { } as { [key in OperationType]: {
-    getQueueName(): string
-}};
-
-operations.BULK_DELETE = {
-    getQueueName(): string {
-        return Config.SMDS_DELETION_QUEUE;
-    },
+export abstract class AbstractTaskQueue implements ITaskQueue {
+    public abstract pushTask(task: IOperationQueueTask): Promise<void>;
 }
 
+export class TaskQueueFactory extends CloudFactory {
+    public static build(providerLabel: string): ITaskQueue {
+        return CloudFactory.build(providerLabel, AbstractTaskQueue) as ITaskQueue;
+    }
+}

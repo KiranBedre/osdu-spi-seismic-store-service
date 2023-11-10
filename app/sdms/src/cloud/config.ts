@@ -36,7 +36,7 @@ export interface ConfigModel {
     REDIS_SHARED_INSTANCE_PORT?: number;
     REDIS_SHARED_INSTANCE_KEY?: string;
     REDIS_SHARED_INSTANCE_TLS_DISABLE?: boolean;
-    REDIS_DELETION_QUEUE?: string;
+    SMDS_DELETION_QUEUE?: string;
     DES_SERVICE_HOST_ENTITLEMENT: string;
     DES_SERVICE_HOST_COMPLIANCE: string;
     DES_SERVICE_HOST_STORAGE: string;
@@ -129,7 +129,7 @@ export abstract class Config implements IConfig {
     public static REDIS_SHARED_INSTANCE_TLS_DISABLE: boolean;
 
     // Redis queue used for bulk-deletions
-    public static REDIS_DELETION_QUEUE: string;
+    public static SMDS_DELETION_QUEUE: string;
 
     // DataEcosystem Configuration
     public static DES_SERVICE_HOST_ENTITLEMENT: string;
@@ -284,8 +284,8 @@ export abstract class Config implements IConfig {
         Config.REDIS_SHARED_INSTANCE_TLS_DISABLE = model.REDIS_SHARED_INSTANCE_TLS_DISABLE ||
             process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE?.toLowerCase() === 'true';
 
-        Config.REDIS_DELETION_QUEUE = model.REDIS_DELETION_QUEUE ||
-            process.env.REDIS_DELETION_QUEUE;
+        Config.SMDS_DELETION_QUEUE = model.SMDS_DELETION_QUEUE ||
+            process.env.SMDS_DELETION_QUEUE;
 
         Config.FEATURE_FLAG_SEISMICMETA_STORAGE = model.FEATURE_FLAG_SEISMICMETA_STORAGE;
         Config.FEATURE_FLAG_IMPTOKEN = model.FEATURE_FLAG_IMPTOKEN;

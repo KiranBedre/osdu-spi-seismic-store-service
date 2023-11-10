@@ -25,7 +25,8 @@ import { Auth, AuthRoles } from '../../auth';
 import { SubProjectDAO, SubprojectAuth } from '../subproject';
 import { TenantDAO } from '../tenant';
 import { OperationType } from './register';
-import { queueOperations } from './queue';
+import { operationStatusStorage } from './status';
+import { TaskQueueFactory } from '../../cloud/taskQueue';
 
 export class Handler {
 
@@ -90,8 +91,11 @@ export class Handler {
             path: sdPath.path,
         } as IBulkDeleteOperationQueueTask;
 
-        return await queueOperations.pushOperation(operation);
+        // init journalClient client
+        const taskQueue = TaskQueueFactory.build(Config.CLOUDPROVIDER);
+        await taskQueue.pushTask(operation);
 
+        return {operation_id: operation.operation_id}
     }
 
     // get status of a bulk delete operation
@@ -108,7 +112,7 @@ export class Handler {
             args.dataPartitionId + '.esd',
             req[Config.DE_FORWARD_APPKEY]);
 
-        const operationStatus = await queueOperations.getOperationStatus({
+        const operationStatus = await operationStatusStorage.getOperationStatus({
             operation_id: args.operationId,
             type: OperationType.BULK_DELETE
         });

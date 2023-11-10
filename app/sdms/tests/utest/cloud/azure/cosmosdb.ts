@@ -45,30 +45,6 @@ export class TestAzureCosmosDbDAO {
             this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
             this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' });
             this.query = new AzureCosmosDbQuery('name-a', 'kind-a');
-
-            const datasetModel: DatasetModel = {
-                name: 'name',
-                tenant: 'tenant',
-                subproject: 'subproject',
-                path: 'sd://tenant/subproject/path/data.txt',
-                created_date: '',
-                last_modified_date: '',
-                created_by: '',
-                metadata: undefined,
-                filemetadata: undefined,
-                gcsurl: '',
-                type: '',
-                ltag: '',
-                ctag: '0000000000000000',
-                sbit: '',
-                sbit_count: 0,
-                gtags: ['gtag1'],
-                readonly: false,
-                seismicmeta_guid: '',
-                transfer_status: '',
-                acls: { admins: [], viewers: [] },
-                access_policy: ''
-            };
             const iJournalQueryModel: IJournalQueryModel = {
                 filter (property: string, value: {}): IJournalQueryModel {
                     return iJournalQueryModel;

@@ -14,36 +14,20 @@
 // Limitations under the License.
 // ============================================================================
 
-import { IOperation, IOperationQueueTask, IOperationStatus } from './model';
-import { CacheCore, Error } from '../../shared';
+import { IOperationQueueTask, IOperationStatus } from './model';
+import { CacheCore } from '../../shared';
 import { operations } from './register'
 
-const OPERATION_DEFAULT_KEY_EXPIRE_TIME = 60 * 60 * 24 * 90; // 90 days;
 const OPERATION_DEFAULT_STATUS = 'NotStarted';
 
-export class QueueOperations extends CacheCore {
 
+export class OperationStatusStorage extends CacheCore {
     private getOperationKey(queue: string, operationId: string): string {
         return queue + ':' + operationId;
     }
 
     private getOperationStatusKey(queue: string, operationId: string): string {
         return queue + ':status:' + operationId;
-    }
-
-    public async pushOperation(operation: IOperationQueueTask): Promise<IOperation> {
-        const queue = operations[operation.type].getQueueName();
-        delete operation.type;
-        const operationKey = this.getOperationKey(queue, operation.operation_id);
-        await this.redisClient
-            .multi()
-            .hset(operationKey, operation)
-            .expire(operationKey, OPERATION_DEFAULT_KEY_EXPIRE_TIME)
-            .lpush(queue, operation.operation_id)
-            .exec();
-        return {
-            operation_id: operation.operation_id
-        }
     }
 
     public async getOperationStatus(operation: IOperationQueueTask): Promise<IOperationStatus> {
@@ -69,7 +53,6 @@ export class QueueOperations extends CacheCore {
             failed_cnt: operationStatus.FailedCnt ? +operationStatus.FailedCnt : undefined
         } as IOperationStatus;
     }
-
 }
 
-export const queueOperations = new QueueOperations();
+export const operationStatusStorage = new OperationStatusStorage();
