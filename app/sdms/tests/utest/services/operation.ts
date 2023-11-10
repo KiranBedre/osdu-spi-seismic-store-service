@@ -27,9 +27,8 @@ import { Operation } from '../../../src/services/operation/optype'
 import { TenantDAO } from '../../../src/services/tenant';
 import { SubProjectDAO, SubprojectAuth } from '../../../src/services/subproject';
 import { IOperationStatus } from '../../../src/services/operation/model';
-import { promiseHooks } from 'v8';
-import {AzureTaskQueue} from '../../../src/cloud/providers/azure/taskQueue';
-import {ITaskQueue, TaskQueueFactory} from '../../../src/cloud/taskQueue';
+import { AzureTaskQueue } from '../../../src/cloud/providers/azure/taskQueue';
+import { ITaskQueue, TaskQueueFactory } from '../../../src/cloud/taskQueue';
 
 export class TestOperationHandler {
 
