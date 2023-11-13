@@ -113,7 +113,7 @@ export class AzureConfig extends Config {
             AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE =
                 process.env.REDIS_SHARED_INSTANCE_TLS_DISABLE === 'true';  // enabled by default
 
-            // deletion queue
+            // deletion operation status queue
             AzureConfig.SMDS_DELETION_QUEUE = process.env.SMDS_DELETION_QUEUE ||
                 AzureConfig.SMDS_DELETION_QUEUE || 'sdms-queue-bulkdelete';
 
