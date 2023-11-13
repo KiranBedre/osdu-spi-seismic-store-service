@@ -44,7 +44,7 @@ public class Options : IOptions
     [Option("storageAccountConnectionString", Required = false, HelpText = "Storage account connection string. If provided, overrides DES and StorageAccountName")]
     public string StorageAccountConnectionString { get; set; }
 
-    [Option("taskQueueName", Required = true, HelpText = "Key name of the list with the tasks in Redis")]
+    [Option("taskQueueName", Required = true, Default = "sdms-queue-bulkdelete", HelpText = "Key name of the list with the tasks in Redis")]
     public string QueueName { get; set; }
 
     [Option("redisQueueHostname", Required = false, HelpText = "Hostname of the Redis instance that contains the task queue ")]
