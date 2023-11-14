@@ -117,6 +117,10 @@ export class AzureConfig extends Config {
             AzureConfig.SMDS_DELETION_QUEUE = process.env.SMDS_DELETION_QUEUE ||
                 AzureConfig.SMDS_DELETION_QUEUE || 'sdms-queue-bulkdelete';
 
+            // storage queue endpoint
+            AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT || process.env.AZURE_STORAGE_QUEUE_ENDPOINT;
+            Config.checkRequiredConfig(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, 'AZURE_STORAGE_QUEUE_ENDPOINT');
+
             // set the auth provider
             AzureConfig.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;
             AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL = // If not set as secret try to load from envs

@@ -55,7 +55,14 @@ export class KeyVault {
         AzureConfig.AI_INSTRUMENTATION_KEY = (await client.getSecret(this.AI_INSTRUMENTATION_KEY)).value;
 
         // Storage Queue endpoint
-        AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = (await client.getSecret(this.STORAGE_QUEUE_ENDPOINT)).value;
+        try {
+            AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = (await client.getSecret(this.STORAGE_QUEUE_ENDPOINT)).value;
+        } catch (error) {
+            console.log(error);
+            if (!(error && error['statusCode'] === 404 && error['code'] === 'SecretNotFound')) {
+                throw error;
+            }
+        }
 
         // locksmap redis cache secret
         AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY = (await client.getSecret(this.REDIS_QUEUE_KEY)).value;
