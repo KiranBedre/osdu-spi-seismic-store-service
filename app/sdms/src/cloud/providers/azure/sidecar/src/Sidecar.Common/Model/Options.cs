@@ -74,6 +74,6 @@ public class Options : IOptions
     [Option("storageQueueEndpoint", Required = false, HelpText = "Queue endpoint to connect to the task queue on Azure Storage")]
     public string StorageQueueEndpoint { get; set; }
 
-    [Option("storageQueueTaskQueueName", Required = false, Default = "delete-tasks", HelpText = "Name of the task queue")]
+    [Option("storageQueueTaskQueueName", Required = false, Default = "sdms-queue-bulkdelete", HelpText = "Name of the task queue")]
     public string StorageQueueTaskQueueName { get; set; }
 }
