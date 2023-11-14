@@ -118,7 +118,8 @@ export class AzureConfig extends Config {
                 AzureConfig.SMDS_DELETION_QUEUE || 'sdms-queue-bulkdelete';
 
             // storage queue endpoint
-            AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT || process.env.AZURE_STORAGE_QUEUE_ENDPOINT;
+            AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT ||
+                process.env.AZURE_STORAGE_QUEUE_ENDPOINT;
             Config.checkRequiredConfig(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, 'AZURE_STORAGE_QUEUE_ENDPOINT');
 
             // set the auth provider

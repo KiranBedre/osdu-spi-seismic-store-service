@@ -58,7 +58,6 @@ export class KeyVault {
         try {
             AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = (await client.getSecret(this.STORAGE_QUEUE_ENDPOINT)).value;
         } catch (error) {
-            console.log(error);
             if (!(error && error['statusCode'] === 404 && error['code'] === 'SecretNotFound')) {
                 throw error;
             }
