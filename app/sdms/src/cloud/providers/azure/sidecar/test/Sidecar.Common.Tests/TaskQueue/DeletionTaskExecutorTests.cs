@@ -64,7 +64,7 @@ public class DeletionTaskExecutorTests
         _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()))
             .ReturnsAsync(deletionOperation); // using the fact that in these tests deletionOperation is already DeleteOperationStatus
 
-        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
+        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Query, cancellationSource.Token))
                           .ReturnsAsync(itemsToDelete);
 
         _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync(It.IsAny<string>()))
@@ -77,7 +77,7 @@ public class DeletionTaskExecutorTests
         await service.ProcessAsync(deletionOperation, cancellationSource.Token);
 
         // Assert
-        itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
+        itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Query, cancellationSource.Token), Times.Once);
         lockManagerMock.Verify(manager => manager.AcquireDeleteLockAsync(It.IsAny<string>()), Times.Exactly(itemsToDelete.Count));
         bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletionAsync(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
         lockManagerMock.Verify(manager => manager.RemoveDeleteLockAsync(It.IsAny<string>()), Times.Exactly(itemsToDelete.Count));
@@ -132,7 +132,7 @@ public class DeletionTaskExecutorTests
 
         _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()))
             .ReturnsAsync(deletionOperation); // using the fact that in these tests deletionOperation is already DeleteOperationStatus
-        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
+        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Query, cancellationSource.Token))
                           .ReturnsAsync(itemsToLockAndDelete);
         _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync($"{deletionOperation.Tenant}/{deletionOperation.Subproject}/some/path1/Example1"))
                .ReturnsAsync(false);
@@ -150,7 +150,7 @@ public class DeletionTaskExecutorTests
         // Assert
         taskStatusStorageMock.Verify(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()), Times.Once);
         taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.DATASETS_CNT, "2", It.IsAny<CancellationToken>()), Times.Once);
-        itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token), Times.Once);
+        itemsRetrieverMock.Verify(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Query, cancellationSource.Token), Times.Once);
         lockManagerMock.Verify(manager => manager.AcquireDeleteLockAsync(It.IsAny<string>()), Times.Exactly(6));
         bulkDeletionWorkerMock.Verify(worker => worker.RunBulkDeletionAsync(deletionOperation.Tenant, deletionOperation.OperationId, itemsToDelete, cancellationSource.Token), Times.Once);
         taskStatusStorageMock.Verify(tss => tss.UpdateFieldStatusOperationAsync(deletionOperation.OperationId, Constants.DeleteOperationStatus.STATUS, Status.CompletedWithErrors.ToString(), It.IsAny<CancellationToken>()), Times.Once);
@@ -198,7 +198,7 @@ public class DeletionTaskExecutorTests
         _ = taskStatusStorageMock.Setup(tss => tss.CreateDeletionOperationStatusAsync(deletionOperation, It.IsAny<CancellationToken>()))
             .ReturnsAsync(deletionOperation); // using the fact that in these tests deletionOperation is already DeleteOperationStatus
 
-        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Path, cancellationSource.Token))
+        _ = itemsRetrieverMock.Setup(retriever => retriever.GetItemsAsync(deletionOperation.Tenant, deletionOperation.Subproject, deletionOperation.Query, cancellationSource.Token))
                           .ReturnsAsync(itemsToDelete);
 
         _ = lockManagerMock.Setup(manager => manager.AcquireDeleteLockAsync(GetLockKeyPrefix(deletionOperation) + "/some/path1/Example1"))
@@ -222,7 +222,7 @@ public class DeletionTaskExecutorTests
         OperationId = "operation123",
         Tenant = "tenant",
         Subproject = "subproject",
-        Path = "/path/",
+        Query = "SELECT c.id FROM c",
         CreatedAt = DateTime.UtcNow,
         LastUpdatedAt = DateTime.UtcNow,
         CreatedBy = "Sidecar.QueueHandlerRedis",

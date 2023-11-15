@@ -26,7 +26,7 @@ public class RedisConvertersTests
         OperationId = Guid.NewGuid().ToString(),
         Tenant = "tenant001",
         Subproject = "subproj007",
-        Path = "tenant001/proj001/subproj007/"
+        Query = "SELECT c.id FROM c",
     };
 
     private static DeleteOperationStatus GetDelOpStatus() => new()
@@ -34,7 +34,7 @@ public class RedisConvertersTests
         OperationId = Guid.NewGuid().ToString(),
         Tenant = "tenant001",
         Subproject = "subproj007",
-        Path = "tenant001/proj001/subproj007/",
+        Query = "SELECT c.id FROM c",
         CompletedCnt = 123213,
         CreatedAt = DateTime.UtcNow,
         CreatedBy = "",
@@ -47,7 +47,7 @@ public class RedisConvertersTests
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
-            new HashEntry(useJsonAttrNames?"path":"Path",msg.Path)
+            new HashEntry(useJsonAttrNames?"query":"Query",msg.Query),
         };
 
     [Fact]
@@ -66,7 +66,7 @@ public class RedisConvertersTests
             .And.ContainSingle(h => h.Name == "CreatedBy" && h.Value == msg.CreatedBy.ToString())
             .And.ContainSingle(h => h.Name == "Tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "Subproject" && h.Value == msg.Subproject)
-            .And.ContainSingle(h => h.Name == "Path" && h.Value == msg.Path);
+            .And.ContainSingle(h => h.Name == "Query" && h.Value == msg.Query);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class RedisConvertersTests
             .And.ContainSingle(h => h.Name == "createdBy" && h.Value == msg.CreatedBy.ToString())
             .And.ContainSingle(h => h.Name == "tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "subproject" && h.Value == msg.Subproject)
-            .And.ContainSingle(h => h.Name == "path" && h.Value == msg.Path);
+            .And.ContainSingle(h => h.Name == "query" && h.Value == msg.Query);
     }
 
     [Fact]

@@ -9,7 +9,7 @@ This folder contain a [docker](https://www.docker.com/) create the final distrib
     ```bash
     # execute this script from the repository root directory
     docker build -f .\docker\builder.Dockerfile -t <runtime-image-name> --build-arg  docker_node_image_version=<node-image-version> .  
-    
+  
     # example of how to build using ACR private registry
     az acr login -n <acr_name>
     docker build -f .\docker\runtime.Dockerfile -t <acr_name>.azurecr.io/seistore-svc-v4 <runtime-image-name>:<runtime-image-version> <builder-image-name>:<builder-image-version> .

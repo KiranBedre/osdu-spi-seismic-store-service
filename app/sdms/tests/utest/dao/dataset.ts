@@ -23,7 +23,7 @@ import { google } from '../../../src/cloud/providers';
 import { DatasetModel } from '../../../src/services/dataset';
 import { DatasetDAO } from '../../../src/services/dataset/dao';
 import { Locker } from '../../../src/services/dataset/locker';
-import { IPaginationModel } from '../../../src/services/dataset/model';
+import { IPaginationModel, ListDatasetsParams } from '../../../src/services/dataset/model';
 import { Tx } from '../utils';
 
 
@@ -181,7 +181,7 @@ export class TestDataset {
 			this.journal.runQuery.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			const result = await DatasetDAO.list(this.journal, this.dataset, null, null, null);
+			const result = await DatasetDAO.list(this.journal, this.dataset, null, null, null, null);
 
 			Tx.checkTrue(
 				this.journal.runQuery.calledWith(query) && result[0] === expectedResult[0],
@@ -225,7 +225,7 @@ export class TestDataset {
 			this.journal.runQuery.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			const result = await DatasetDAO.list(this.journal, this.dataset, null, null, null);
+			const result = await DatasetDAO.list(this.journal, this.dataset, null, null, null, null);
 
 			Tx.checkTrue(
 				this.journal.runQuery.calledWith(query) && result[0] === expectedResult[0]
@@ -266,7 +266,7 @@ export class TestDataset {
 			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null, null);
 		});
 
 		Tx.test(async () => {
@@ -306,7 +306,7 @@ export class TestDataset {
 			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null, null);
 		});
 
 		Tx.test(async () => {
@@ -347,7 +347,7 @@ export class TestDataset {
 			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
 
-			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null, null);
 		});
 
 		Tx.test(async () => {
@@ -388,7 +388,7 @@ export class TestDataset {
 
 			this.journal.listDatasets.resolves([expectedResult, undefined]);
 			this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves(expectedResult[0]);
-			await DatasetDAO.list(this.journal, this.dataset, null, null, null);
+			await DatasetDAO.list(this.journal, this.dataset, null, null, null, null);
 		});
 	}
 
@@ -475,7 +475,11 @@ export class TestDataset {
 
 			await DatasetDAO.paginatedListContent(this.journal, this.dataset, Config.LS_MODE.ALL, pagination);
 
-			Tx.checkTrue(this.journal.listDatasets.calledWith(this.dataset, pagination));
+			const params: ListDatasetsParams = {
+				dataset: this.dataset,
+				pagination,
+			};
+			Tx.checkTrue(this.journal.listDatasets.calledWith(params));
 		});
 	}
 

@@ -45,7 +45,7 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
             OperationId = opMsg.OperationId,
             Tenant = opMsg.Tenant,
             Subproject = opMsg.Subproject,
-            Path = opMsg.Path,
+            Query = opMsg.Query,
             CreatedAt = DateTime.UtcNow,
             LastUpdatedAt = DateTime.UtcNow,
             CreatedBy = opMsg.CreatedBy,

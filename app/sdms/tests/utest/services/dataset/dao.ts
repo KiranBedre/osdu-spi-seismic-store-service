@@ -15,7 +15,7 @@
 // ============================================================================
 
 import sinon from 'sinon';
-import { DatasetModel, PaginationModel } from '../../../../src/services/dataset';
+import { DatasetModel, PaginationModel, ListDatasetsParams } from '../../../../src/services/dataset';
 import { Config, IJournal, IJournalTransaction } from '../../../../src/cloud';
 import { AzureConfig } from '../../../../src/cloud/providers/azure';
 import { Utils } from '../../../../src/shared';
@@ -117,11 +117,11 @@ export class DatasetDAOTest {
                 listFolders(dataset: DatasetModel): Promise<any[]> {
                     return Promise.resolve([]);
                 },
-                listDatasets(dataset: DatasetModel,
-                             pagination?: PaginationModel,
-                             searchParam?: string,
-                             selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
+                listDatasets(params: ListDatasetsParams): Promise<[any[], { endCursor?: string }]> {
                     return Promise.resolve([[datasetModel], {}]);
+                },
+                listDatasetsQuery(params: ListDatasetsParams): string {
+                    return "stubbed query";
                 },
                 getSize(dataset: DatasetModel): Promise<{dataset_count: number, size_bytes: number}> {
                     return Promise.resolve({ dataset_count: 0, size_bytes: 0});
@@ -225,7 +225,7 @@ export class DatasetDAOTest {
 
         Tx.test(async () => {
 
-            let pm = await DAO.list(journalClient, datasetModel, pagination, null, null);
+            let pm = await DAO.list(journalClient, datasetModel, pagination, null, null, null);
             Tx.checkTrue(!(pm === undefined));
 
         } );
@@ -233,7 +233,7 @@ export class DatasetDAOTest {
         Tx.test(async () => {
 
             datasetModel.gtags = [];
-            let pm = await DAO.list(journalClient, datasetModel, pagination, null, null);
+            let pm = await DAO.list(journalClient, datasetModel, pagination, null, null, null);
             datasetModel.gtags = ["gtags"];
             Tx.checkTrue(!(pm === undefined));
 

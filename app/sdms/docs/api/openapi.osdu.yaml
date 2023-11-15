@@ -888,96 +888,97 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DatasetAndDirectories"
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}:
-    get:
-      summary: Get the list of datasets in a subproject.
-      description: |
-        <ul>
-          <li>Return the list of datasets in a sub-project. The list can be filtered by gtags. Support pagination.</li>
-          <li>Required roles: subproject.admin, subproject.viewer</li>
-        </ul>
-      operationId: dataset-list
-      tags:
-        - Dataset
-      parameters:
-        - description: "Select multiple fields that belong to a dataset's metadata. (ex: select=[name,subproject...])"
-          in: query
-          name: select
-          required: false
-          schema: 
-            type: string
-            default: ""
-        - description: |
-            Select single SQL like search parameter example: search=name=file%
-            Supported fields: name, tenant, subproject, path, ltag, created_by, gcsurl
-          in: query
-          name: search
-          required: false
-          schema:
-            type: string
-            default: ""
-        - description: "The impersonation token context (required only with impersonation token credentials)"
-          in: header
-          name: impersonation-token-context
-          required: false
-          schema:
-            type: string
-            default: ""
-        - description: Name of the tenant.
-          in: path
-          name: tenantid
-          required: true
-          schema:
-            type: string
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - description: Gtags associated with dataset metadata.
-          in: query
-          name: gtag
-          explode: true
-          schema:
-            type: array
-            items:
-              type: string
-        - description: Limit the number of datasets in the response
-          in: query
-          name: limit
-          schema:
-            type: string
-        - description: Cursor for pagination on the datasets list
-          in: query
-          name: cursor
-          schema:
-            type: string
-        - description: translate the user-id to a more human readable user info
-          name: translate-user-info
-          in: query
-          schema:
-            type: boolean
-            enum:
-              - true
-              - false
-            default: true
-      responses:
-        "200":
-          description: "Paginated dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content and the response is a plain array of datasets [ {dataset1}, {dataset2}, ... ]"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PaginatedDatasets"
-        "400":
-          description: Bad request.
-        "401":
-          description: Unauthorized.
-        "403":
-          description: Forbidden.
-        "404":
-          description: Not found.
+    # This has been marked for later removal. Please utilize the 'post' version instead.
+    # get:
+    #   summary: Get the list of datasets in a subproject.
+    #   description: |
+    #     <ul>
+    #       <li>Return the list of datasets in a sub-project. The list can be filtered by gtags. Support pagination.</li>
+    #       <li>Required roles: subproject.admin, subproject.viewer</li>
+    #     </ul>
+    #   operationId: dataset-list
+    #   tags:
+    #     - Dataset
+    #   parameters:
+    #     - description: "Select multiple fields that belong to a dataset's metadata. (ex: select=[name,subproject...])"
+    #       in: query
+    #       name: select
+    #       required: false
+    #       schema: 
+    #         type: string
+    #         default: ""
+    #     - description: |
+    #         Select single SQL like search parameter example: search=name=file%
+    #         Supported fields: name, tenant, subproject, path, ltag, created_by, gcsurl
+    #       in: query
+    #       name: search
+    #       required: false
+    #       schema:
+    #         type: string
+    #         default: ""
+    #     - description: "The impersonation token context (required only with impersonation token credentials)"
+    #       in: header
+    #       name: impersonation-token-context
+    #       required: false
+    #       schema:
+    #         type: string
+    #         default: ""
+    #     - description: Name of the tenant.
+    #       in: path
+    #       name: tenantid
+    #       required: true
+    #       schema:
+    #         type: string
+    #     - description: Name of the subproject.
+    #       in: path
+    #       name: subprojectid
+    #       required: true
+    #       schema:
+    #         type: string
+    #     - description: Gtags associated with dataset metadata.
+    #       in: query
+    #       name: gtag
+    #       explode: true
+    #       schema:
+    #         type: array
+    #         items:
+    #           type: string
+    #     - description: Limit the number of datasets in the response
+    #       in: query
+    #       name: limit
+    #       schema:
+    #         type: string
+    #     - description: Cursor for pagination on the datasets list
+    #       in: query
+    #       name: cursor
+    #       schema:
+    #         type: string
+    #     - description: translate the user-id to a more human readable user info
+    #       name: translate-user-info
+    #       in: query
+    #       schema:
+    #         type: boolean
+    #         enum:
+    #           - true
+    #           - false
+    #         default: true
+    #   responses:
+    #     "200":
+    #       description: "Paginated dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content and the response is a plain array of datasets [ {dataset1}, {dataset2}, ... ]"
+    #       content:
+    #         application/json:
+    #           schema:
+    #             $ref: "#/components/schemas/PaginatedDatasets"
+    #     "400":
+    #       description: Bad request.
+    #     "401":
+    #       description: Unauthorized.
+    #     "403":
+    #       description: Forbidden.
+    #     "404":
+    #       description: Not found.
     post:
       summary: Get the list of datasets in a subproject.
       description:  |
@@ -2334,6 +2335,12 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetBulkDeleteBody"
+        required: false
       responses:
         "202":
           description: Delete operation initiated successfully.
@@ -2428,19 +2435,20 @@ components:
             type: string
           description: Array of global tags associated with the dataset metadata. Once
             assigned, they can be used to filter datasets.
+        search:
+          type: string
+        filter:
+          type: object
         limit:
           type: number
-          description: the max limit of datasets in the response
+          description: the maximum number of datasets in the response
         cursor:
           type: string
           description: the cursor value required to retrieve the next page of result
       example:
-        gtags:
-          - tagA
-          - tagB
         limit: "10"
-        search: "name=mib%"
         select: "[name, path, created_by]"
+        filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}
         cursor: next-page-token-931fvm19vm1-vm1v1
     DatasetLsBody:
       type: object
@@ -2776,6 +2784,14 @@ components:
         datasets:
           - a/b/c/dsx01
           - a/b/c/dsx02
+    DatasetBulkDeleteBody:
+      type: object
+      properties:
+        filter:
+          type: object
+          description: Optional structured query filter to restrict the datasets to be deleted.
+      example:
+        filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}
     AccessToken:
       required:
         - access_token
@@ -3088,7 +3104,7 @@ components:
         email:
           type: string
           description: Email address of the user. Note that this field is used as a
-            principal identifer for entitlements-svc and be configured using the
+            principal identifier for entitlements-svc and can be configured using the
             env variable USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC in the Seismic DMS
             runtime.
         path:
@@ -3113,7 +3129,7 @@ components:
         email:
           type: string
           description: Email address of the user. Note that this field is used as a
-            principal identifer for entitlements-svc and be configured using the
+            principal identifier for entitlements-svc and can be configured using the
             env variable USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC in the Seismic DMS
             runtime.
         path:
@@ -3205,7 +3221,7 @@ components:
           description: The size of the datasets in bytes.
         dataset_count:
           type: number
-          description: The number of datasets in the path (inlcluding nested folders).
+          description: The number of datasets in the path (including nested folders).
       example:
         size_bytes: 35461
         dataset_count: 2

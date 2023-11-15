@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { Request as expRequest, Response as expResponse } from 'express';
-import { DatasetModel, DatasetUtils } from '.';
+import { DatasetModel, DatasetUtils, QueryFilter } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, IJournal, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { SeistoreFactory } from '../../cloud/seistore';
@@ -480,6 +480,7 @@ export class DatasetHandler {
 
         const searchParam: string = userInput.search;
         const selectParam: string[] = userInput.select;
+        const filterParam: QueryFilter = userInput.filter;
         const dataset = userInput.dataset;
         const pagination = userInput.pagination;
         const userInfo = userInput.userInfo;
@@ -494,7 +495,14 @@ export class DatasetHandler {
             req.headers['impersonation-token-context'] as string);
 
         // Retrieve the list of datasets metadata
-        const output = await DatasetDAO.list(journalClient, dataset, pagination, searchParam, selectParam) as any;
+        const output = (await DatasetDAO.list(
+          journalClient,
+          dataset,
+          pagination,
+          searchParam,
+          selectParam,
+          filterParam
+        )) as any;
 
         // attach the gcpid for fast check, access_policy and exchange user-info (if requested)
         const userAssociationService = FeatureFlags.isEnabled(Feature.CCM_INTERACTION) && userInfo ?

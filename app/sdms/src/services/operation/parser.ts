@@ -16,14 +16,28 @@
 
 import { Request as expRequest } from 'express';
 import { Error, Params, SDPath } from '../../shared';
-import { SDPathModel } from '../../shared';
+import { IBulkDeleteRequest } from '../dataset/model';
+import { Config } from '../../cloud';
+import { DatasetFilterParser } from '../dataset/filter-parser';
 import { IBulkDeleteOperationStatusRequest } from './model';
 
 export class Parser {
 
-    public static bulkDelete(req: expRequest): SDPathModel {
+    public static bulkDelete(req: expRequest): IBulkDeleteRequest {
         Params.checkString(req.query.path, 'path');
-        return SDPath.getFromString(req.query.path as string, false);
+        const input = {
+            sdPath: SDPath.getFromString(req.query.path as string, false)
+        } as IBulkDeleteRequest;
+
+        if (req.body.filter) {
+            if(!Config.ENABLE_ADVANCED_QUERY_FILTERS) {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The \'filter\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
+            }
+            input.filter = DatasetFilterParser.parseFilter(req.body.filter);
+        }
+
+        return input;
     }
 
     public static bulkDeleteStatus(req: expRequest): IBulkDeleteOperationStatusRequest {

@@ -14,6 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
+import { Error } from '../../shared';
+import { ISDPathModel } from '../../shared/sdpath';
+
 export interface IDatasetModel {
     name: string;
     tenant: string;
@@ -40,7 +43,6 @@ export interface IDatasetModel {
     storageSchemaRecord?: any;
     computed_size?: number;
     computed_size_date?: string;
-
 }
 
 export interface IDatasetListRequest {
@@ -48,7 +50,13 @@ export interface IDatasetListRequest {
     pagination: IPaginationModel,
     userInfo: boolean,
     search: string,
-    select: string[];
+    select: string[],
+    filter: QueryFilter,
+}
+
+export interface IBulkDeleteRequest {
+    sdPath: ISDPathModel,
+    filter?: QueryFilter,
 }
 
 export interface IPaginationModel {
@@ -80,4 +88,89 @@ export interface ComputedSizeResponse {
 export interface GetSizeResponse {
     size_bytes: number;
     dataset_count: number;
+}
+
+export interface ListDatasetsParams {
+    dataset: IDatasetModel,
+    pagination?: IPaginationModel,
+    searchParam?: string,
+    selectParam?: string[],
+    filter?: QueryFilter,
+    // if true, datasets will be retrieved recursively,
+    // including in the subfolders of the specified path
+    recursive?: boolean
+}
+
+export interface QueryFilter {
+    accept(visitor: QueryFilterVisitor): void;
+}
+
+export abstract class QueryFilterVisitor {
+    visitAnd(element: AndQueryFilter): void {
+        QueryFilterVisitor.notImplemented()
+    }
+    visitMatch(element: MatchQueryFilter): void {
+        QueryFilterVisitor.notImplemented()
+    }
+    visitNot(element: NotQueryFilter): void {
+        QueryFilterVisitor.notImplemented()
+    }
+    visitOr(element: OrQueryFilter): void {
+        QueryFilterVisitor.notImplemented()
+    }
+    private static notImplemented(): void {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+            'The required query filter operation is not supported.'));
+    }
+}
+
+export class AndQueryFilter implements QueryFilter {
+    filters: QueryFilter[];
+
+    constructor(...filters:QueryFilter[]) {
+        this.filters = filters;
+    }
+
+    public accept(visitor: QueryFilterVisitor): void {
+        visitor.visitAnd(this);
+    }
+}
+
+export class OrQueryFilter implements QueryFilter {
+    filters: QueryFilter[];
+
+    constructor(...filters: QueryFilter[]) {
+        this.filters = filters;
+    }
+
+    public accept(visitor: QueryFilterVisitor): void {
+        visitor.visitOr(this);
+    }
+}
+
+export class NotQueryFilter implements QueryFilter {
+    filter: QueryFilter;
+
+    constructor(filter: QueryFilter) {
+        this.filter = filter;
+    }
+
+    public accept(visitor: QueryFilterVisitor): void {
+        visitor.visitNot(this);
+    }
+}
+
+export class MatchQueryFilter implements QueryFilter {
+    property: string; operator: string; value: {}; type: string;
+
+    constructor(property: string, operator: string, value: {}, type: string) {
+        this.property = property;
+        this.operator = operator;
+        this.value = value;
+        this.type = type;
+    }
+
+    public accept(visitor: QueryFilterVisitor): void {
+        visitor.visitMatch(this);
+    }
 }

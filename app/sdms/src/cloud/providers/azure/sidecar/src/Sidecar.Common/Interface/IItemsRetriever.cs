@@ -19,5 +19,5 @@ using Sidecar.Common.Model;
 
 public interface IItemsRetriever
 {
-    Task<List<DeleteItem>?> GetItemsAsync(string dataPartitionId, string subproject, string path, CancellationToken ct = default);
+    Task<List<DeleteItem>?> GetItemsAsync(string dataPartitionId, string subproject, string query, CancellationToken ct = default);
 }
