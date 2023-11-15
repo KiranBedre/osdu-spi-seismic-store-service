@@ -28,6 +28,8 @@ import { TestUtilitySVC } from './utility';
 import { TestImpersonationTokenHandler } from './impersonation_token/handler';
 import { TestParser } from './impersonation_token/parser';
 import { DatasetDAOTest } from './dataset/dao';
+import { ParserTest } from './dataset/parser';
+import { FilterParserTest } from './dataset/filter-parser';
 import { DataLockerTest } from './dataset/locker';
 import { OpenzgyTest } from './dataset/openzgy-v1-manager';
 import { TestSeismicmeta, TestSegyManager } from './seismicmeta';
@@ -53,6 +55,8 @@ export class TestServices {
 			TestImpersonationTokenHandler.run();
 			TestParser.run();
 			DatasetDAOTest.run();
+			ParserTest.run();
+			FilterParserTest.run();
 			DataLockerTest.run();
 			OpenzgyTest.run();
 			TestSeismicmeta.run();

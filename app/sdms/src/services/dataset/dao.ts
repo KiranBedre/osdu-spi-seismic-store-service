@@ -14,11 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-import { DatasetModel, PaginationModel } from '.';
+import { DatasetModel, PaginationModel, QueryFilter } from '.';
 import { Config, IJournal } from '../../cloud';
 import { Utils } from '../../shared';
 import { Locker } from './locker';
-import { PaginatedDatasetList } from './model';
+import { ListDatasetsParams, PaginatedDatasetList } from './model';
 
 export class DatasetDAO {
 
@@ -104,10 +104,15 @@ export class DatasetDAO {
 
     public static async list(
         journalClient: IJournal,
-        dataset: DatasetModel, pagination: PaginationModel, searchParam:string, selectParam:string[]):
+        dataset: DatasetModel,
+        pagination: PaginationModel,
+        searchParam:string,
+        selectParam:string[],
+        filter: QueryFilter):
         Promise<any> {
 
-        const [entities, info] = await journalClient.listDatasets(dataset, pagination, searchParam, selectParam);
+        const [entities, info] = await journalClient.listDatasets(
+            {dataset, pagination, searchParam, selectParam, filter});
 
         // Fix model for old entity
         if(!selectParam){
@@ -134,10 +139,14 @@ export class DatasetDAO {
 
         if(Config.CLOUDPROVIDER === 'azure') {
 
-            const [entities] = await journalClient.listDatasets({
-                tenant: tenantName,
-                subproject: subprojectName
-            } as DatasetModel, undefined, undefined, ['id']);
+            const listDatasetsParams: ListDatasetsParams = {
+                dataset: {
+                    tenant: tenantName,
+                    subproject: subprojectName
+                } as DatasetModel,
+                selectParam: ['id']
+            };
+            const [entities] = await journalClient.listDatasets(listDatasetsParams);
             await journalClient.deleteMulti(entities.map((item)=>{return item.id}))
 
         } else {
@@ -178,7 +187,7 @@ export class DatasetDAO {
 
         // list datasets
         if (workingMode !== Config.LS_MODE.DIRS) {
-            const [datasetEntities, info] = await journalClient.listDatasets(dataset, pagination);
+            const [datasetEntities, info] = await journalClient.listDatasets({dataset, pagination});
 
             if (datasetEntities.length !== 0 || info.endCursor) {
                 output.datasets = output.datasets.concat(datasetEntities.map((item) => item.name));
@@ -200,7 +209,7 @@ export class DatasetDAO {
         dataset.tenant = tenant;
         dataset.subproject = subproject;
         const [datasetEntities, info] = (
-            await journalClient.listDatasets(dataset)) as [DatasetModel[], { endCursor?: string; }];
+            await journalClient.listDatasets({dataset})) as [DatasetModel[], { endCursor?: string; }];
 
         const output: any = { datasets: [], nextPageCursor: undefined };
 
@@ -224,7 +233,7 @@ export class DatasetDAO {
 
         // list datasets
         if (workingMode !== Config.LS_MODE.DIRS) {
-            const [datasetEntities] = await journalClient.listDatasets(dataset);
+            const [datasetEntities] = await journalClient.listDatasets({dataset});
             if (datasetEntities.length !== 0) { results.datasets = datasetEntities.map((item) => item.name); }
         }
 

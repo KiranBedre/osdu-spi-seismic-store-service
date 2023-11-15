@@ -23,14 +23,14 @@ internal static partial class TestingHelpers
         OperationId = Guid.NewGuid().ToString(),
         Tenant = "tenant001",
         Subproject = "subproj007",
-        Path = "tenant001/proj001/subproj007/"
+        Query = "SELECT c.id FROM c",
     };
 
     internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
             new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
-            new HashEntry(useJsonAttrNames?"path":"Path",msg.Path)
+            new HashEntry(useJsonAttrNames?"query":"Query",msg.Query),
         };
 
     internal static Mock<ILogger<T>> GetLogger<T>()

@@ -43,7 +43,7 @@ public class DeletionTaskExecutor : ITaskExecutor<IDeletionOperationMessage>
         bool unlockErrors;
         try
         {
-            var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Path, ct);
+            var itemsToDelete = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Subproject, op.Query, ct);
 
             _logger.LogInformation("Found {c} items to delete",
                 itemsToDelete!.Count.ToString(CultureInfo.InvariantCulture));

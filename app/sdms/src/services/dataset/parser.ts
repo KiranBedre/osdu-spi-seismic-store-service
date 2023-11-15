@@ -15,7 +15,8 @@
 // ============================================================================
 
 import { Request as expRequest } from 'express';
-import { DatasetListRequest, DatasetModel } from '.';
+import { DatasetListRequest, DatasetModel, MatchQueryFilter } from '.';
+import { DatasetFilterParser } from './filter-parser';
 import { Auth } from '../../auth';
 import { Config } from '../../cloud';
 import { Error, Params, Utils } from '../../shared';
@@ -144,14 +145,21 @@ export class DatasetParser {
 
         Params.checkString(params.cursor, 'cursor', false);
 
-        if (params.gtag) {
-            if(isPost) { Params.checkArray(req.body.gtag, 'gtag', false); }
-            if (!(params.gtag instanceof Array)) {
-                input.dataset.gtags = [params.gtag as string]
-            } else {
-                input.dataset.gtags = params.gtag as string[]
+        function checkGtags(gtags?: string | string[]) {
+            if (gtags) {
+                if (isPost) { Params.checkArray(gtags, 'gtags', false); }
+                if (!(gtags instanceof Array)) {
+                    input.dataset.gtags = [gtags as string];
+                } else {
+                    input.dataset.gtags = gtags as string[];
+                }
             }
         }
+
+        checkGtags(params.gtags);
+
+        // check gtag for backward compatibility
+        checkGtags(params.gtag);
 
         if (params.limit || params.cursor) {
             if(isPost) {
@@ -188,6 +196,14 @@ export class DatasetParser {
                     'The \'select\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
             }
             input.select = params.select.slice(1,-1).split(',');
+        }
+
+        if (params.filter) {
+            if(!Config.ENABLE_ADVANCED_QUERY_FILTERS) {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The \'filter\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
+            }
+            input.filter = DatasetFilterParser.parseFilter(params.filter);
         }
 
         delete input.dataset.path;

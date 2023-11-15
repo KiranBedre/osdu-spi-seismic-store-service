@@ -45,5 +45,5 @@ export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
     createdBy: string;
     tenant: string;
     subproject: string;
-    path: string;
+    query: string;
 }

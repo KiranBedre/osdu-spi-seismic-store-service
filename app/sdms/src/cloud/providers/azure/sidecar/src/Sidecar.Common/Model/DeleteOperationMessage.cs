@@ -22,6 +22,7 @@ using Interface;
 public class DeleteOperationMessage : IDeletionOperationMessage
 {
     [JsonPropertyName("operation_id")]
+    [JsonRequired]
     public string OperationId { get; set; } = "";
 
     [JsonPropertyName("createdBy")]
@@ -33,7 +34,7 @@ public class DeleteOperationMessage : IDeletionOperationMessage
     [JsonPropertyName("subproject")]
     public string Subproject { get; set; } = "";
 
-    [JsonPropertyName("path")]
-    public string Path { get; set; } = "";
-
+    [JsonPropertyName("query")]
+    [JsonRequired]
+    public string Query { get; set; } = "";
 }

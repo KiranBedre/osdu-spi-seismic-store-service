@@ -34,6 +34,8 @@ import { TestServicesUserHandler } from './services/user/handler';
 import { TestImpersonationTokenHandler } from './services/impersonation_token/handler';
 import { TestServicesUtilityHandler } from './services/utility/handler';
 import { DatasetDAOTest } from './services/dataset/dao';
+import { ParserTest } from './services/dataset/parser';
+import { FilterParserTest } from './services/dataset/filter-parser';
 import { TestShared } from './shared/test';
 
 TestAuthorization.run();
@@ -43,6 +45,8 @@ TestImpersonationTokenHandler.run();
 TestServicesUtilityHandler.run();
 TestDao.run();
 DatasetDAOTest.run();
+ParserTest.run();
+FilterParserTest.run();
 TestCloud.run();
 TestDES.run();
 TestShared.run();

@@ -30,7 +30,8 @@ public class DeleteItemsRetrieverTests
 
         var tenant = "myTenant";
         var subproject = "subproj";
-        var path = "path/";
+        var query = "SELECT c.id, c.data.gcsurl, c.data.name from c WHERE subproject = \""
+            + subproject + "\" AND path = \"path\"";
         var records = new List<object>
         {
             /*lang=json,strict*/
@@ -44,7 +45,7 @@ public class DeleteItemsRetrieverTests
             .ReturnsAsync(paginatedRecords);
 
         // Act
-        var result = await deleteItemsRetriever.GetItemsAsync(tenant, subproject, path);
+        var result = await deleteItemsRetriever.GetItemsAsync(tenant, subproject, query);
 
         // Assert
         Assert.NotNull(result);

@@ -36,16 +36,11 @@ public class DeleteItemsRetriever : IItemsRetriever
         _cosmosClientFactory = cosmosClientFactory;
     }
 
-    public async Task<List<DeleteItem>?> GetItemsAsync(string dataPartitionId, string subproject, string path, CancellationToken ct = default)
+    public async Task<List<DeleteItem>?> GetItemsAsync(string dataPartitionId, string subproject, string query, CancellationToken ct = default)
     {
-        var sql = $"SELECT c.id, c.data.gcsurl, c.data.path, c.data.name " +
-            $"FROM c " +
-            $"WHERE c.data.subproject = \"{subproject}\" " +
-            $"AND startswith(c.data.path, \"{path}\", false) ";
-
         var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId, ct);
 
-        var paginatedRecords = await _dataAccess.GetRecordsAsync(cs, sql, null, null);
+        var paginatedRecords = await _dataAccess.GetRecordsAsync(cs, query, null, null);
 
         return paginatedRecords.records.Select(item =>
         {

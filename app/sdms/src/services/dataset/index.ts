@@ -21,6 +21,13 @@ export {
   IPaginationModel as PaginationModel,
   IDatasetListRequest as DatasetListRequest,
   SchemaTransformModel,
+  ListDatasetsParams,
+  QueryFilter,
+  QueryFilterVisitor,
+  AndQueryFilter,
+  MatchQueryFilter,
+  NotQueryFilter,
+  OrQueryFilter
 } from './model';
 export { DatasetUtils } from './utils'
 

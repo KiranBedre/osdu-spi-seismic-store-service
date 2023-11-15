@@ -246,6 +246,9 @@ export abstract class Config implements IConfig {
     // Enable the search and select in Dataset List
     public static ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST: boolean = false;
 
+    // Enable advanced query filters in Dataset List and Bulk Delete
+    public static ENABLE_ADVANCED_QUERY_FILTERS: boolean = false;
+
     public static setCloudProvider(cloudProvider: string) {
         Config.CLOUDPROVIDER = cloudProvider;
         if (Config.CLOUDPROVIDER === undefined) {
