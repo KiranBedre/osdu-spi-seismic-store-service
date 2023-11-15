@@ -74,8 +74,12 @@ export class Credentials extends AbstractCredentials {
         if (fullObjectPrefix) {
             accessBoundaryRule['availabilityCondition'] = {
                 'title': 'obj-prefixes',
-                'expression': 'resource.name.startsWith(\"projects/_/buckets/' +
-                    subprojectPath.bucket + '/objects/' + fullObjectPrefix + '\")'
+                'expression':
+                    'resource.name.startsWith(\"projects/_/buckets/' +
+                        subprojectPath.bucket + '/objects/' + fullObjectPrefix + '\")' +
+                    ' || ' +
+                    'api.getAttribute(\"storage.googleapis.com/objectListPrefix\", \"\").startsWith(\"' +
+                        fullObjectPrefix + '\")'
             };
         }
         const accessBoundary = {
