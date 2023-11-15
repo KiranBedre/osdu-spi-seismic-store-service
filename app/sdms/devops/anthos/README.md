@@ -22,6 +22,6 @@ Seismic Secrets
 | **KEYCLOAK\_CLIENT\_SECRET** | {keycloak secret} |
 | **KEYCLOAK\_URL** | {keycloak-token-url} |
 | **MINIO\_ACCESS\_KEY** | {minio-user-provisioned-for-seismic} |
-| **MINIO\_ENDPOINT** | https://{minio-host} |
+| **MINIO\_ENDPOINT** | {minio-host} |
 | **MINIO\_SECRET\_KEY** | {minio-secret-provisioned-for-seismic} |
 | **DATABASE\_URL** | postgresql://{user}:{passw} @{url}/{database} |
