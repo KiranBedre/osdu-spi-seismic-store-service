@@ -43,6 +43,10 @@ export class InMemoryCache {
         this.nodeCache.set(key, value, ttl);
     }
 
+    public getTtl(key: string): number {
+        return this.nodeCache.getTtl(key);
+    }
+
     public delete(key: string) {
         this.nodeCache.del(key);
     }

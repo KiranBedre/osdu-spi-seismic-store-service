@@ -9,7 +9,7 @@ import { ITenantModel } from '../../../../src/services/tenant/model';
 import { ImpersonationTokenModel, ImpersonationTokenRequestBodyModel } from '../../../../src/services/impersonation_token/model';
 import { ImpersonationTokenOps } from '../../../../src/services/impersonation_token/optype';
 import { ImpersonationTokenParser } from '../../../../src/services/impersonation_token/parser';
-import { ImpersonationTokenHandler as Handler } from '../../../../src/services/impersonation_token/handler';
+import { ImpersonationTokenHandler as Handler, ImpersonationTokenHandler } from '../../../../src/services/impersonation_token/handler';
 import { Tx } from '../../utils';
 
 export class TestImpersonationTokenHandler {
@@ -100,6 +100,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
+            this.sandbox.stub(ImpersonationTokenHandler, 'getImpersonationToken').resolves({} as ImpersonationTokenModel);
             await Handler.handler(req, res, op);
             Tx.check200(res.statusCode)
 
@@ -153,6 +154,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(SubProjectDAO, "get").resolves(subProjectModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
+            this.sandbox.stub(ImpersonationTokenHandler, 'getImpersonationToken').resolves({} as ImpersonationTokenModel);
             await Handler.handler(req, res, op);
             impersonationTokenRequestBodyModel.resources[0].readonly = false;
             Tx.check200(res.statusCode)
@@ -228,6 +230,7 @@ export class TestImpersonationTokenHandler {
             this.sandbox.stub(TenantDAO, "get").resolves(tenantModel);
             this.sandbox.stub(AuthProviderFactory, "build").returns(iAuthProvider);
             this.sandbox.stub(Utils, 'getExpTimeFromPayload').returns(3600);
+            this.sandbox.stub(ImpersonationTokenHandler, 'getImpersonationToken').resolves({} as ImpersonationTokenModel);
             this.sandbox.stub(Utils, "decrypt").returns('{"resources":[{"resource": "name/resource", "readonly": false}], "metadata":{}, "user": "user", "impersonated_by": "impersonation-token"}');
             await Handler.handler(req, res, op);
             Tx.check200(res.statusCode);
