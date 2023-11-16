@@ -21,11 +21,13 @@ import { Request, Response } from 'express';
 import { azure, Config, JournalFactoryTenantClient, IJournal } from '../../../src/cloud';
 import { Auth } from '../../../src/auth';
 import { Utils } from '../../../src/shared';
-import { QueueOperations } from '../../../src/services/operation/queue'
+import { OperationStatusStorage } from '../../../src/services/operation/status'
 import { Handler } from '../../../src/services/operation/handler'
 import { Operation } from '../../../src/services/operation/optype'
 import { TenantDAO } from '../../../src/services/tenant';
 import { SubProjectDAO, SubprojectAuth } from '../../../src/services/subproject';
+import { AzureTaskQueue } from '../../../src/cloud/providers/azure/taskQueue';
+import { ITaskQueue, TaskQueueFactory } from '../../../src/cloud/taskQueue';
 import { IOperation, IOperationQueueTask, IOperationStatus } from '../../../src/services/operation/model';
 import { AndQueryFilter } from '../../../src/services/dataset';
 
@@ -59,7 +61,12 @@ export class TestOperationHandler {
         Tx.sectionInit('bulkDelete');
 
         Tx.testExpAsync(async (req: Request, res: Response) => {
-            const [journalStub] = this.setUpStubsForBulkDeletePush(req);
+            const journalStub = this.setUpStubsForBulkDeletePush(req);
+            
+            let taskQueueStub = this.sandbox.createStubInstance<ITaskQueue>(AzureTaskQueue);
+            taskQueueStub.pushTask.resolves();
+            this.sandbox.stub(TaskQueueFactory, 'build').returns(taskQueueStub);
+
             await Handler.handle(req, res, Operation.BulkDeletePush);
             Tx.check202(res.statusCode);
             Tx.checkTrue(journalStub.listDatasetsQuery.getCall(0).args[0].filter === undefined);
@@ -81,25 +88,28 @@ export class TestOperationHandler {
                     }
                 ]
             }};
-            const [journalStub] = this.setUpStubsForBulkDeletePush(req);
+            const journalStub = this.setUpStubsForBulkDeletePush(req);
+
+            let taskQueueStub = this.sandbox.createStubInstance<ITaskQueue>(AzureTaskQueue);
+            taskQueueStub.pushTask.resolves();
+            this.sandbox.stub(TaskQueueFactory, 'build').returns(taskQueueStub);
+
             await Handler.handle(req, res, Operation.BulkDeletePush);
             Tx.check202(res.statusCode);
             Tx.checkTrue(journalStub.listDatasetsQuery.getCall(0).args[0].filter instanceof AndQueryFilter);
         });
 
         Tx.testExpAsync(async (req: Request, res: Response) => {
-            const [_, pushOperation] = this.setUpStubsForBulkDeletePush(req);
-
-            pushOperation.throws();
+            let taskQueueStub = this.sandbox.createStubInstance<ITaskQueue>(AzureTaskQueue);
+            taskQueueStub.pushTask.throws();
+            this.sandbox.stub(TaskQueueFactory, 'build').returns(taskQueueStub);
 
             await Handler.handle(req, res, Operation.BulkDeletePush);
             Tx.check500(res.statusCode);
         });
     }
 
-    private static setUpStubsForBulkDeletePush(req: Request):
-            [SinonStubbedInstance<IJournal>,
-            SinonStub<[operation: IOperationQueueTask], Promise<IOperation>>] {
+    private static setUpStubsForBulkDeletePush(req: Request): SinonStubbedInstance<IJournal> {
         req.query.path = 'sd://tenant/subproject/path';
         req.params.userId = 'userId';
         this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
@@ -107,12 +117,12 @@ export class TestOperationHandler {
         this.sandbox.stub(SubProjectDAO, 'get').resolves({name: 'subproject'} as any);
         this.sandbox.stub(SubprojectAuth, 'getAuthGroups').resolves();
         this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
-        const pushOperation = this.sandbox.stub(QueueOperations.prototype, 'pushOperation');
-        pushOperation.resolves();
+
         const journalStub = this.sandbox.createStubInstance<IJournal>(azure.AzureCosmosDbDAO);
         journalStub.pathExists.returns(Promise.resolve(true));
         this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(journalStub);
-        return [journalStub, pushOperation];
+
+        return journalStub;
     }
 
     private static bulkDeleteStatus() {
@@ -132,7 +142,7 @@ export class TestOperationHandler {
                 completed_cnt: 10,
                 failed_cnt: 1
             } as IOperationStatus
-            this.sandbox.stub(QueueOperations.prototype, 'getOperationStatus').resolves(operationStatus);
+            this.sandbox.stub(OperationStatusStorage.prototype, 'getOperationStatus').resolves(operationStatus);
             this.sandbox.stub(Auth, 'isUserRegistered').resolves();
             await Handler.handle(req, expRes, Operation.BulkDeleteStatus);
             Tx.check200(expRes.statusCode);
@@ -141,7 +151,7 @@ export class TestOperationHandler {
         Tx.testExpAsync(async (req: Request, res: Response) => {
             req.query.operationid = 'operationId';
             req.headers['data-partition-id'] = 'tenant';
-            this.sandbox.stub(QueueOperations.prototype, 'getOperationStatus').resolves(undefined);
+            this.sandbox.stub(OperationStatusStorage.prototype, 'getOperationStatus').resolves(undefined);
             this.sandbox.stub()
             this.sandbox.stub(Auth, 'isUserRegistered').resolves();
             await Handler.handle(req, res, Operation.BulkDeleteStatus);

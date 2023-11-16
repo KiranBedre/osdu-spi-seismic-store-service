@@ -39,6 +39,7 @@ import { TestAWSDataEcosystem } from './aws/dataecosystem';
 import { TestStorage } from './aws/storage';
 import { TestLogger } from './aws/logger';
 import { TestAWSDynamoDB, TestAWSDynamoDbTransactionDAO, TestAWSDynamoDbQuery } from './aws/dynamodb';
+import {TestTaskQueue} from "./azure/taskQueue";
 
 
 export class TestCloud {
@@ -66,6 +67,7 @@ export class TestCloud {
             TestAzureKeyVault.run();
             TestAzureStorage.run();
             TestDataEcoSystem.run();
+            TestTaskQueue.run();
         });
 
     }

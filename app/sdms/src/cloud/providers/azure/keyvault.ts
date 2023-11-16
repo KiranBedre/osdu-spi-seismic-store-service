@@ -24,6 +24,7 @@ export class KeyVault {
     public static REDIS_QUEUE_KEY = 'redis-queue-password';
     public static REDIS_HOST = 'redis-hostname';
     public static REDIS_KEY = 'redis-password';
+    public static STORAGE_QUEUE_ENDPOINT = 'queue-storage-endpoint';
 
     // pragma: allowlist nextline secret
     public static APP_RESOURCE_ID = 'aad-client-id';
@@ -52,6 +53,15 @@ export class KeyVault {
 
         // insight instrumentation key
         AzureConfig.AI_INSTRUMENTATION_KEY = (await client.getSecret(this.AI_INSTRUMENTATION_KEY)).value;
+
+        // Storage Queue endpoint
+        try {
+            AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = (await client.getSecret(this.STORAGE_QUEUE_ENDPOINT)).value;
+        } catch (error) {
+            if (!(error && error['statusCode'] === 404 && error['code'] === 'SecretNotFound')) {
+                throw error;
+            }
+        }
 
         // locksmap redis cache secret
         AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY = (await client.getSecret(this.REDIS_QUEUE_KEY)).value;

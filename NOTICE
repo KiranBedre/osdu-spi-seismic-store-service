@@ -511,6 +511,7 @@ The following software have components provided under the terms of this license:
 - @azure/msal-node (from https://www.npmjs.com/package/@azure/msal-node)
 - @azure/opentelemetry-instrumentation-azure-sdk (from https://www.npmjs.com/package/@azure/opentelemetry-instrumentation-azure-sdk)
 - @azure/storage-blob (from https://www.npmjs.com/package/@azure/storage-blob)
+- @azure/storage-queue (from https://www.npmjs.com/package/@azure/storage-queue)
 - @babel/code-frame (from https://www.npmjs.com/package/@babel/code-frame)
 - @babel/helper-validator-identifier (from https://www.npmjs.com/package/@babel/helper-validator-identifier)
 - @babel/highlight (from https://www.npmjs.com/package/@babel/highlight)

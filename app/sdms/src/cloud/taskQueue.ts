@@ -14,15 +14,19 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.TaskQueue;
+import { CloudFactory } from './cloud';
+import {IOperationQueueTask} from '../services/operation/model';
 
-using Sidecar.Common.Interface;
-using Sidecar.Common.Model;
-using Sidecar.Common.Utility;
-using StackExchange.Redis;
+export interface ITaskQueue {
+    pushTask(task: IOperationQueueTask): Promise<void>;
+}
 
-public class DeletionTaskHashEntriesDeserializer : ITaskDeserializer<HashEntry[], IDeletionOperationMessage>
-{
-    public IDeletionOperationMessage Deserialize(HashEntry[] task) =>
-        task.FromHashEntries<DeleteOperationMessage>(true);
+export abstract class AbstractTaskQueue implements ITaskQueue {
+    public abstract pushTask(task: IOperationQueueTask): Promise<void>;
+}
+
+export class TaskQueueFactory extends CloudFactory {
+    public static build(providerLabel: string): ITaskQueue {
+        return CloudFactory.build(providerLabel, AbstractTaskQueue) as ITaskQueue;
+    }
 }

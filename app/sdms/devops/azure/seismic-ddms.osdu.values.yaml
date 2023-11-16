@@ -107,6 +107,7 @@ configuration:
       DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
       SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
       SDMS_REDIS_QUEUE_NAME: "sdms-queue-bulkdelete"
+      STORAGE_QUEUE_NAME: "sdms-queue-bulkdelete"
       SDMS_REDIS_QUEUE_PORT: "6380"
       SDMS_REDIS_LOCKS_PORT: "6380"
     request:

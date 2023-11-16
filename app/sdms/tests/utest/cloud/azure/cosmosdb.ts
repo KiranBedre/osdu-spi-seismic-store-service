@@ -44,7 +44,7 @@ export class TestAzureCosmosDbDAO {
             this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
             this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' });
             this.query = new AzureCosmosDbQuery('name-a', 'kind-a');
-
+            
             const iJournalQueryModel: IJournalQueryModel = {
                 filter (property: string, value: {}): IJournalQueryModel {
                     return iJournalQueryModel;
