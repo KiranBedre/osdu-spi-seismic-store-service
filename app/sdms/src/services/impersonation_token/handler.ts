@@ -200,14 +200,16 @@ export class ImpersonationTokenHandler {
         return impersonationToken;
     }
 
-    private static async getImpersonationToken(): Promise<ImpersonationTokenModel>{
+    public static async getImpersonationToken(): Promise<ImpersonationTokenModel>{
         // check both local and shared cache for impersonation token
         let expireIn = 0;
         const inMemoryCache = getInMemoryCacheInstance();
         let impersonationToken = inMemoryCache.get<ImpersonationTokenModel>(this.cacheKey);
-        if (!impersonationToken) {
+        let cacheTTL = inMemoryCache.getTtl(this.cacheKey);
+        if (cacheTTL <= 0 || !cacheTTL) {
             impersonationToken = (await cacheShared.get(this.cacheKey)) as ImpersonationTokenModel;
-            if (!impersonationToken) {
+            cacheTTL = await cacheShared.getTTL(this.cacheKey);
+            if (cacheTTL <= 0 || !cacheTTL) {
                 // generate the impersonation token credential token (the auth credential)
                 const authProvider = AuthProviderFactory.build(Config.SERVICE_AUTH_PROVIDER);
                 const scopes = [authProvider.getClientID()];
@@ -218,8 +220,8 @@ export class ImpersonationTokenHandler {
                     await authProvider.generateScopedAuthCredential(scopes));
 
                 expireIn = this.getTokenExpireInSec(impersonationToken.impersonation_token);
-                const cacheTTL = expireIn - Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN;
-                if(cacheTTL < 0) {
+                cacheTTL = expireIn - Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN;
+                if(cacheTTL <= 0 || !cacheTTL) {
                     throw Error.make(Error.Status.UNKNOWN,
                         'An error occurred while generating the auth credential. ' +
                         'The credential expiration time is ' + expireIn + ' seconds. ' +
@@ -227,13 +229,12 @@ export class ImpersonationTokenHandler {
                         Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN + ' seconds.');
                 }
                 await cacheShared.set(this.cacheKey, impersonationToken, cacheTTL);
-                inMemoryCache.set<ImpersonationTokenModel>(
-                    this.cacheKey, impersonationToken, cacheTTL);
             }
-            else {
-                const ttlInShared = await cacheShared.getTTL(this.cacheKey);
-                inMemoryCache.set<ImpersonationTokenModel>(this.cacheKey, impersonationToken, ttlInShared);
-            }
+            // extend the expiration time to a random value between 30s and 120s.
+            // this is to prevent the in-memory cache token expiration time from matching
+            // other pods' cache in a scaled environment.
+            cacheTTL = cacheTTL + Math.floor(Math.random() * (120 - 30 + 1)) + 30;
+            inMemoryCache.set<ImpersonationTokenModel>(this.cacheKey, impersonationToken, cacheTTL);
         }
         // recompute the expiration time
         impersonationToken.expires_in = expireIn || this.getTokenExpireInSec(impersonationToken.impersonation_token);
