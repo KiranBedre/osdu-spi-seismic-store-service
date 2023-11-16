@@ -144,6 +144,7 @@ export class AzureConfig extends Config {
             AzureConfig.CORRELATION_ID = process.env.CORRELATION_ID || AzureConfig.CORRELATION_ID;
 
             Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST = true;
+            Config.ENABLE_ADVANCED_QUERY_FILTERS = true;
 
             // init generic configurations
             await Config.initServiceConfiguration({

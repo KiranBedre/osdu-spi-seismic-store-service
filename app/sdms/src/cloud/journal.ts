@@ -17,7 +17,7 @@
 import {Config} from './config';
 import {CloudFactory} from './cloud';
 import {TenantModel} from '../services/tenant';
-import {DatasetModel, PaginationModel} from '../services/dataset';
+import {DatasetModel, ListDatasetsParams, QueryFilter} from '../services/dataset';
 import {Error} from '../shared';
 
 export interface IJournalQueryModel {
@@ -30,6 +30,12 @@ export interface IJournalQueryModel {
     limit(n: number): IJournalQueryModel;
     groupBy(fieldNames: string | string[]): IJournalQueryModel;
     select(fieldNames: string | string[]): IJournalQueryModel;
+}
+
+// IJournalQueryModel cannot be extended at present, see Issue #65
+// This defines a derived interface with additional operations.
+export interface IJournalExtendedQueryModel extends IJournalQueryModel {
+    filterBy(filter: QueryFilter): void;
 }
 
 export interface IJournal {
@@ -46,11 +52,8 @@ export interface IJournal {
     getTransaction(): IJournalTransaction;
     getQueryFilterSymbolContains(): string;
     listFolders(dataset: DatasetModel): Promise<any[]>;
-    listDatasets(
-        dataset: DatasetModel,
-        pagination?: PaginationModel,
-        searchParam?: string,
-        selectParam?: string[]): Promise<[any[], { endCursor?: string }]>;
+    listDatasets(params: ListDatasetsParams): Promise<[any[], { endCursor?: string }]>;
+    listDatasetsQuery(params: ListDatasetsParams): string;
     KEY: symbol;
     pathExists(subproject: string, path: string): Promise<boolean>;
 }
@@ -86,18 +89,38 @@ export abstract class AbstractJournal implements IJournal {
         const [res] = [await this.runQuery(query)];
         return res;
     }
-    public async listDatasets(
-        dataset: DatasetModel,
-        pagination?: PaginationModel,
-        searchParam?: string,
-        selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
+    public getDatasetsQuery(params: ListDatasetsParams): IJournalQueryModel {
+        const dataset = params.dataset;
+        const pagination = params.pagination;
+        const searchParam = params.searchParam;
+        const filter = params.filter;
+        const selectParam = params.selectParam;
+        const recursive = params.recursive ?? false;
 
-        let query: any;
-        query = this.createQuery(
-            Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND);
+        const queryModel = this.createQuery(
+            Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
 
-        if (dataset.path) {
-            query = query.filter('path', dataset.path);
+        let query: any = this.customizeDatasetsQuery(queryModel, params)
+
+        if (dataset.path && dataset.path !== '/') {
+            if (recursive && recursive === true)
+            {
+                query = query.filter('path', 'STARTSWITH', dataset.path);
+            } else {
+                query = query.filter('path', dataset.path)
+            }
+        }
+
+        if (filter) {
+            // Filtering requires query to implement IJournalExtendedQueryModel
+            if ('filterBy' in query)
+            {
+                query.filterBy(filter);
+            }
+            else {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The required feature is not supported, advanced filters are not supported with this provider.'));
+            }
         }
 
         if (pagination && pagination.cursor) {
@@ -120,10 +143,28 @@ export abstract class AbstractJournal implements IJournal {
         }
 
         if (selectParam){ query = query.select(selectParam); }
-
-        return await this.runQuery(query);
+        return query;
     }
 
+    protected customizeDatasetsQuery(queryModel: IJournalQueryModel, params: ListDatasetsParams) : IJournalQueryModel {
+        return queryModel;
+    }
+
+    public async listDatasets(params: ListDatasetsParams): Promise<[any[], { endCursor?: string }]> {
+
+        const query = this.getDatasetsQuery(params);
+        return this.runQuery(query);
+    }
+
+    public listDatasetsQuery(params: ListDatasetsParams): string
+    {
+        const query = this.getDatasetsQuery(params);
+        return this.datasetsQueryString(query);
+    }
+
+    public datasetsQueryString(query: IJournalQueryModel): string {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    }
     public deleteMulti(keys: string[]): Promise<void> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }

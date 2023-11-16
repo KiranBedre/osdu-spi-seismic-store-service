@@ -15,7 +15,7 @@ Postman collection with API requests that check the basic functionality of the s
 | legaltag02 | another valid legal tag registered in Legal Service | Required |
 | newuser | valid user registered in data partition other then STOKEN issued for | Required if _VCS_Provider_ is not set |
 | newusergroup | valid user group registered in data partition | Required if _VCS_Provider_ is not set |
-| VCS_Provider | possible values are ```true``` for script or ```gitlab``` for Newman. It is needed to skip USER and IMPTOKEN API endpoints test | Required if _newuser_ and/or _newusergroup_ is not set |
+| VCS_Provider | possible values are `true` for script or `gitlab` for Newman. It is needed to skip USER and IMPTOKEN API endpoints test | Required if `newuser` and/or `newusergroup` is not set |
 | SVC_API_KEY | historical variables and could be any string | Optional |
 | DE_APP_KEY | historical variables and could be any string | Optional |
 ---

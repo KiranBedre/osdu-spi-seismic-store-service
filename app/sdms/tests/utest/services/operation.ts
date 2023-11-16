@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import sinon from 'sinon';
+import sinon, { SinonStub, SinonStubbedInstance } from 'sinon';
 import { v4 as uuidv4 } from 'uuid';
 import { Tx } from '../utils';
 import { Request, Response } from 'express';
@@ -26,9 +26,10 @@ import { Handler } from '../../../src/services/operation/handler'
 import { Operation } from '../../../src/services/operation/optype'
 import { TenantDAO } from '../../../src/services/tenant';
 import { SubProjectDAO, SubprojectAuth } from '../../../src/services/subproject';
-import { IOperationStatus } from '../../../src/services/operation/model';
 import { AzureTaskQueue } from '../../../src/cloud/providers/azure/taskQueue';
 import { ITaskQueue, TaskQueueFactory } from '../../../src/cloud/taskQueue';
+import { IOperation, IOperationQueueTask, IOperationStatus } from '../../../src/services/operation/model';
+import { AndQueryFilter } from '../../../src/services/dataset';
 
 export class TestOperationHandler {
 
@@ -38,14 +39,15 @@ export class TestOperationHandler {
 
         describe(Tx.testInit('operations'), () => {
 
-            let backup: string;
+            let backup: [string, boolean];
             beforeEach(() => {
-                backup = Config.CLOUDPROVIDER;
+                backup = [Config.CLOUDPROVIDER, Config.ENABLE_ADVANCED_QUERY_FILTERS];
                 Config.CLOUDPROVIDER = 'azure';
+                Config.ENABLE_ADVANCED_QUERY_FILTERS = true;
             });
 
             afterEach(()=>{
-                Config.CLOUDPROVIDER = backup;
+                [Config.CLOUDPROVIDER, Config.ENABLE_ADVANCED_QUERY_FILTERS] = backup;
                 this.sandbox.restore();
             })
 
@@ -59,61 +61,68 @@ export class TestOperationHandler {
         Tx.sectionInit('bulkDelete');
 
         Tx.testExpAsync(async (req: Request, res: Response) => {
-            req.query.path = 'sd://tenant/subproject/path';
-            req.params.userId = 'userId';
-            this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
-            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
-            this.sandbox.stub(SubProjectDAO, 'get').resolves({ name: 'subproject' } as any);
-            this.sandbox.stub(SubprojectAuth, 'getAuthGroups').resolves();
-            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
-            let journalStub = this.sandbox.createStubInstance<IJournal>(azure.AzureCosmosDbDAO);
-            journalStub.pathExists.returns(Promise.resolve(true));
-            this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(journalStub);
+            const journalStub = this.setUpStubsForBulkDeletePush(req);
+            
             let taskQueueStub = this.sandbox.createStubInstance<ITaskQueue>(AzureTaskQueue);
             taskQueueStub.pushTask.resolves();
             this.sandbox.stub(TaskQueueFactory, 'build').returns(taskQueueStub);
+
             await Handler.handle(req, res, Operation.BulkDeletePush);
             Tx.check202(res.statusCode);
+            Tx.checkTrue(journalStub.listDatasetsQuery.getCall(0).args[0].filter === undefined);
         });
 
         Tx.testExpAsync(async (req: Request, res: Response) => {
-            req.query.path = 'sd://tenant/subproject/';
-            req.params.userId = 'userId';
-            this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
-            this.sandbox.stub(Utils, "getUserId").resolves(req.params.userId);
-            this.sandbox.stub(SubProjectDAO, 'get').resolves({ name: 'subproject' } as any);
-            this.sandbox.stub(SubprojectAuth, 'getAuthGroups').resolves();
-            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
-            let journalStub = this.sandbox.createStubInstance<IJournal>(azure.AzureCosmosDbDAO);
+            req.body = {
+            'filter': {
+                'and': [
+                    {
+                        'property': 'name',
+                        'operator': 'LIKE',
+                        'value': 'test.%'
+                    },
+                    {
+                        'property': 'readonly',
+                        'operator': '=',
+                        'value': true
+                    }
+                ]
+            }};
+            const journalStub = this.setUpStubsForBulkDeletePush(req);
 
-            journalStub.pathExists
-            .withArgs(sinon.match.any)
-            .throws(new Error('Path not found'))
-            .withArgs(sinon.match.any, "/")
-            .returns(Promise.resolve(true));
-
-            this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(journalStub);
             let taskQueueStub = this.sandbox.createStubInstance<ITaskQueue>(AzureTaskQueue);
             taskQueueStub.pushTask.resolves();
             this.sandbox.stub(TaskQueueFactory, 'build').returns(taskQueueStub);
+
             await Handler.handle(req, res, Operation.BulkDeletePush);
             Tx.check202(res.statusCode);
+            Tx.checkTrue(journalStub.listDatasetsQuery.getCall(0).args[0].filter instanceof AndQueryFilter);
         });
 
-
         Tx.testExpAsync(async (req: Request, res: Response) => {
-            req.query.path = 'sd://tenant/subproject/path';
-            this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
-            this.sandbox.stub(JournalFactoryTenantClient, 'get').resolves();
-            this.sandbox.stub(SubProjectDAO, 'get').resolves({ name: 'subproject' } as any);
-            this.sandbox.stub(SubprojectAuth, 'getAuthGroups').resolves();
-            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
             let taskQueueStub = this.sandbox.createStubInstance<ITaskQueue>(AzureTaskQueue);
-            taskQueueStub.pushTask.resolves();
+            taskQueueStub.pushTask.throws();
             this.sandbox.stub(TaskQueueFactory, 'build').returns(taskQueueStub);
+
             await Handler.handle(req, res, Operation.BulkDeletePush);
             Tx.check500(res.statusCode);
         });
+    }
+
+    private static setUpStubsForBulkDeletePush(req: Request): SinonStubbedInstance<IJournal> {
+        req.query.path = 'sd://tenant/subproject/path';
+        req.params.userId = 'userId';
+        this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
+        this.sandbox.stub(Utils, 'getUserId').resolves(req.params.userId);
+        this.sandbox.stub(SubProjectDAO, 'get').resolves({name: 'subproject'} as any);
+        this.sandbox.stub(SubprojectAuth, 'getAuthGroups').resolves();
+        this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
+
+        const journalStub = this.sandbox.createStubInstance<IJournal>(azure.AzureCosmosDbDAO);
+        journalStub.pathExists.returns(Promise.resolve(true));
+        this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(journalStub);
+
+        return journalStub;
     }
 
     private static bulkDeleteStatus() {

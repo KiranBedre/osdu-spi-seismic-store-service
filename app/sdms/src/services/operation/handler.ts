@@ -22,6 +22,7 @@ import { IBulkDeleteOperationQueueTask, IOperation, IOperationStatus } from './m
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { Parser } from './parser';
 import { Auth, AuthRoles } from '../../auth';
+import { DatasetModel, ListDatasetsParams } from '../dataset';
 import { SubProjectDAO, SubprojectAuth } from '../subproject';
 import { TenantDAO } from '../tenant';
 import { OperationType } from './register';
@@ -58,10 +59,20 @@ export class Handler {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
 
-        const sdPath = Parser.bulkDelete(req);
+        const userInput = Parser.bulkDelete(req);
+        const sdPath = userInput.sdPath;
+
         const tenant = await TenantDAO.get(sdPath.tenant);
+
+        const dataset = {} as DatasetModel;
+        dataset.tenant = sdPath.tenant;
+        dataset.subproject = sdPath.subproject;
+        dataset.path = sdPath.path || '/';
+
+        const journalClient = JournalFactoryTenantClient.get(tenant);
+
         const subproject = await SubProjectDAO.get(
-            JournalFactoryTenantClient.get(tenant), sdPath.tenant, sdPath.subproject);
+            journalClient, sdPath.tenant, sdPath.subproject);
 
         // if the path is not defined, assume root
         sdPath.path = sdPath.path || '/';
@@ -73,7 +84,7 @@ export class Handler {
             req.headers['impersonation-token-context'] as string);
 
         // check if the path exists
-        if (!await JournalFactoryTenantClient.get(tenant).pathExists(subproject.name, sdPath.path)) {
+        if (!await journalClient.pathExists(subproject.name, dataset.path)) {
             throw (Error.make(Error.Status.NOT_FOUND, 'Path not found'));
         }
 
@@ -81,6 +92,15 @@ export class Handler {
         if (!user) {
             throw (Error.make(Error.Status.BAD_REQUEST, 'User not found'));
         }
+
+        const listParams: ListDatasetsParams = {
+            dataset,
+            selectParam: ['id', 'gcsurl', 'path', 'name'],
+            filter: userInput.filter,
+            recursive: true
+        };
+        const query = journalClient.listDatasetsQuery(listParams);
+
         // push the bulk delete operation
         const operation = {
             type: OperationType.BULK_DELETE,
@@ -88,7 +108,7 @@ export class Handler {
             createdBy: user,
             tenant: sdPath.tenant,
             subproject: sdPath.subproject,
-            path: sdPath.path,
+            query,
         } as IBulkDeleteOperationQueueTask;
 
         // init journalClient client

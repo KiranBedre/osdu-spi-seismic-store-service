@@ -17,7 +17,8 @@
 import crypto from 'crypto';
 
 import { CosmosClient, Container, FeedResponse, ItemResponse, OperationInput, BulkOperationType } from '@azure/cosmos';
-import { AbstractJournal, AbstractJournalTransaction, IJournalQueryModel, IJournalTransaction, JournalFactory } from '../../journal';
+import { AbstractJournal, AbstractJournalTransaction, IJournalExtendedQueryModel, IJournalQueryModel,
+    IJournalTransaction, JournalFactory } from '../../journal';
 import { TenantModel } from '../../../services/tenant';
 import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
@@ -25,7 +26,8 @@ import { Config } from '../..';
 import { Error, Utils } from '../../../shared';
 
 import axios, { AxiosInstance } from 'axios';
-import { DatasetModel, PaginationModel } from '../../../services/dataset';
+import { DatasetModel, ListDatasetsParams, QueryFilter, QueryFilterVisitor, AndQueryFilter, MatchQueryFilter,
+    NotQueryFilter, OrQueryFilter } from '../../../services/dataset';
 
 @JournalFactory.register('azure')
 export class AzureCosmosDbDAO extends AbstractJournal {
@@ -292,45 +294,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
     }
 
-    public async listDatasets(
-        dataset: DatasetModel,
-        pagination?: PaginationModel,
-        searchParam?: string,
-        selectParam?: string[]): Promise<[any[], { endCursor?: string }]> {
-
-        let query: any
-        query = this.createQuery(
-            Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
-            .filter('subproject', dataset.subproject)
-
-        if (dataset.path) {
-            query = query.filter('path', dataset.path)
-        }
-
-        if (pagination && pagination.cursor) {
-            query = query.start(pagination.cursor);
-        }
-        if (pagination && pagination.limit) {
-            query = query.limit(pagination.limit);
-        }
-        if (dataset.gtags !== undefined && dataset.gtags.length !== 0) {
-            // filter based on gtags if parsed dataset model has gtags
-            for (const gtag of dataset.gtags) {
-                query = query.filter('gtags', this.getQueryFilterSymbolContains(), gtag);
-            }
-        }
-
-        if (searchParam) {
-            const param = searchParam.split('=');
-            const variable = param[0];
-            const type = Utils.isBoolean(param[1].toLowerCase()) ? 'BOOLEAN' : 'STRING';
-            const operator =  (type === 'BOOLEAN') ? '=' : 'LIKE';
-            const value = (type === 'BOOLEAN') ? param[1].toLowerCase() : param[1];
-            query = query.filter(variable, operator, value, type);
-        }
-
-        if (selectParam){ query = query.select(selectParam); }
-        return this.runQuery(query);
+    override customizeDatasetsQuery(query: IJournalQueryModel, params: ListDatasetsParams) : IJournalQueryModel {
+        return query.filter('subproject', params.dataset.subproject);
     }
 
     private async getSubfoldersUsingDistinctPathsQuery(sqlQuery: string, dataset: DatasetModel) {
@@ -400,6 +365,46 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             '" AND STARTSWITH(c.data.path, "' + path + '", false)';
     }
 
+    public datasetsQueryString(query: IJournalQueryModel): string {
+        const cosmosQuery = (query as AzureCosmosDbQuery);
+        let sqlQuery: string;
+
+        // return selected fields
+        if (cosmosQuery.projectedFieldNames.length) {
+            let fieldList = '';
+            for (const field of cosmosQuery.projectedFieldNames) {
+                if (fieldList) {
+                    fieldList += ', ';
+                }
+                fieldList += ((field === 'id') ? 'c.' : 'c.data.') + field;
+            }
+            sqlQuery = 'SELECT ' + fieldList
+        } else {
+            sqlQuery = 'SELECT *';
+        }
+
+        sqlQuery += ' FROM c';
+
+        // add filters
+        if (cosmosQuery.queryFilter) {
+            sqlQuery += ' WHERE ' + QueryFilterEvaluator.convert(cosmosQuery.queryFilter)
+        }
+
+        // group results by field
+        if (cosmosQuery.groupByFieldNames.length) {
+            let groupByList = '';
+            for (const field of cosmosQuery.groupByFieldNames) {
+                if (groupByList) {
+                    groupByList += ', ';
+                }
+                groupByList += 'c.data.' + field;
+            }
+            sqlQuery += ' GROUP BY ' + groupByList;
+        }
+
+        return sqlQuery;
+    }
+
     public async runQuery(query: IJournalQueryModel): Promise<[any[], { endCursor?: string }]> {
         const cosmosQuery = (query as AzureCosmosDbQuery);
 
@@ -412,54 +417,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
 
         if (cosmosQuery.kind === Config.DATASETS_KIND) {
-            // return selected fields
-            if (cosmosQuery.projectedFieldNames.length) {
-                let fieldList = '';
-                for (const field of cosmosQuery.projectedFieldNames) {
-                    if (fieldList) {
-                        fieldList += ', ';
-                    }
-                    fieldList += ((field === 'id') ? 'c.' : 'c.data.') + field;
-                }
-                sqlQuery = 'SELECT ' + fieldList
-            } else {
-                sqlQuery = 'SELECT *';
-            }
+            sqlQuery = this.datasetsQueryString(query);
 
-            sqlQuery += ' FROM c';
-
-            // add filters
-            const filters = []
-            for (const filter of cosmosQuery.filters) {
-                if (filter.operator === 'CONTAINS') {
-                    filters.push('(ARRAY_CONTAINS(c.data.' + filter.property + ', ' + '\'' + filter.value + '\'' + ')' +
-                        ' OR c.data.' + filter.property + ' = ' + '\'' + filter.value + '\'' + ')')
-                } else if (filter.operator === 'RegexMatch') {
-                    filters.push('(RegexMatch(c.data.' + filter.property + ', \'' + filter.value + '\')' + ')')
-                } else {
-                    if (filter.type === 'BOOLEAN') {
-                        filters.push('c.data.' + filter.property + ' ' + filter.operator + ' ' + filter.value)
-                    }
-                    else {
-                        filters.push('c.data.' + filter.property + ' ' + filter.operator + ' "' + filter.value + '"')
-                    }
-                }
-            }
-            if (filters) {
-                sqlQuery += ' WHERE ' + filters.join(' AND ')
-            }
-
-            // group results by field
-            if (cosmosQuery.groupByFieldNames.length) {
-                let groupByList = '';
-                for (const field of cosmosQuery.groupByFieldNames) {
-                    if (groupByList) {
-                        groupByList += ', ';
-                    }
-                    groupByList += 'c.data.' + field;
-                }
-                sqlQuery += ' GROUP BY ' + groupByList;
-            }
             if (AzureConfig.SIDECAR_ENABLE_QUERY) {
                 const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
                 const url = AzureConfig.SIDECAR_URL + '/query';
@@ -582,10 +541,10 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 }
 
-declare type Operator = '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch' | 'LIKE';
-declare type Type = 'STRING' | 'BOOLEAN';
+declare type Operator = '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch' | 'LIKE' | 'STARTSWITH';
+declare type Type = 'STRING' | 'BOOLEAN' | 'NUMBER';
 
-export class AzureCosmosDbQuery implements IJournalQueryModel {
+export class AzureCosmosDbQuery implements IJournalExtendedQueryModel {
 
     public constructor(namespace: string, kind: string) {
         this.namespace = namespace;
@@ -608,10 +567,24 @@ export class AzureCosmosDbQuery implements IJournalQueryModel {
         }
 
         if (type === undefined) {
-            type = 'STRING';
+            if (typeof value === 'number') {
+                type = 'NUMBER';
+            }
+            else if (operator === 'LIKE'
+                && typeof value === 'string'
+                && Utils.isBoolean(value)) {
+                type = 'BOOLEAN';
+            }
+            else {
+                type = 'STRING';
+            }
         }
 
-        this.filters.push({ property, operator, value, type });
+        return this.filterBy(new MatchQueryFilter(property, operator, value, type));
+    }
+
+    filterBy(queryFilter: QueryFilter): this {
+        this.queryFilter = this.queryFilter ? new AndQueryFilter(this.queryFilter, queryFilter) : queryFilter;
 
         return this;
     }
@@ -647,7 +620,7 @@ export class AzureCosmosDbQuery implements IJournalQueryModel {
         return this;
     }
 
-    public filters: { property: string; operator: Operator; value: {}; type: Type; }[] = [];
+    public queryFilter?: QueryFilter;
     public projectedFieldNames: string[] = [];
     public groupByFieldNames: string[] = [];
     public pagingStart?: string;
@@ -742,4 +715,74 @@ export class AzureCosmosDbTransactionDAO extends AbstractJournalTransaction {
 
     private owner: AzureCosmosDbDAO;
     public queuedOperations: AzureCosmosDbTransactionOperation[] = [];
+}
+
+class QueryFilterEvaluator extends QueryFilterVisitor {
+    result: string;
+
+    visitAnd(element: AndQueryFilter): void {
+        this.result = QueryFilterEvaluator.convertAnd(element);
+    }
+
+    visitMatch(element: MatchQueryFilter): void {
+        this.result = QueryFilterEvaluator.convertMatch(element);
+    }
+
+    visitNot(element: NotQueryFilter): void {
+        this.result = QueryFilterEvaluator.convertNot(element);
+    }
+
+    visitOr(element: OrQueryFilter): void {
+        this.result = QueryFilterEvaluator.convertOr(element);
+    }
+
+    static convert(element: QueryFilter): string {
+        const visitor = new QueryFilterEvaluator()
+        element.accept(visitor);
+        return visitor.result;
+    }
+
+    private static convertAnd(element: AndQueryFilter): string {
+        return element.filters.map(queryFilter => {
+            return '('
+            + QueryFilterEvaluator.convert(queryFilter)
+            + ')'
+        }).join(' AND ');
+    }
+
+    private static convertOr(element: OrQueryFilter): string {
+        return element.filters.map(queryFilter => {
+            return '('
+            + QueryFilterEvaluator.convert(queryFilter)
+            + ')'
+        }).join(' OR ');
+    }
+
+    private static convertMatch(element: MatchQueryFilter): string {
+        if (element.operator === 'CONTAINS') {
+            // Using EXISTS (SELECT ... ) is preferable to ARRAY_CONTAINS, as it supports putting NOT in front of the
+            // query, which allows a simple implementation for the `not` operator.
+            // Using IS_STRING is necessary to support the `not` operator, otherwise datasets that are not strings
+            // are not returned when using the `not` operator.
+            return '(EXISTS (SELECT VALUE 1 FROM t IN c.data.' + element.property + ' WHERE t = ' + '\'' +
+                element.value + '\'' + ') OR (IS_STRING(c.data.' + element.property + ') AND STRINGEQUALS(c.data.' +
+                element.property + ', ' + '\'' + element.value + '\'' + ')))';
+        } else if (element.operator === 'RegexMatch') {
+            return '(RegexMatch(c.data.' + element.property + ', \'' + element.value + '\')' + ')';
+        } else if (element.operator === 'STARTSWITH') {
+            return '(STARTSWITH(c.data.' + element.property + ', \'' + element.value + '\', false)' + ')';
+        } else {
+            if (element.type === 'STRING') {
+                return 'c.data.' + element.property + ' ' + element.operator + ' "' + element.value + '"';
+            }
+            else {
+                return 'c.data.' + element.property + ' ' + element.operator + ' ' + element.value;
+            }
+        }
+    }
+
+    private static convertNot(element: NotQueryFilter): string {
+        return 'NOT ('
+                + QueryFilterEvaluator.convert(element.filter) + ')';
+    };
 }
