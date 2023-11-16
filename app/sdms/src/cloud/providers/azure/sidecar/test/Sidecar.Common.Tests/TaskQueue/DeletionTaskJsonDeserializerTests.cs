@@ -25,7 +25,7 @@ public class DeletionTaskJsonDeserializerTests
     public void Deserialize_ValidTask_ReturnsDeletionOperationMessage()
     {
         // Arrange
-        var task = /*lang=json,strict*/ "{\"operation_id\":\"123\",\"createdBy\":\"test\",\"tenant\":\"tenant1\",\"subproject\":\"subproject1\",\"path\":\"path1\"}";
+        var task = /*lang=json,strict*/ "{\"operation_id\":\"123\",\"createdBy\":\"test\",\"tenant\":\"tenant1\",\"subproject\":\"subproject1\",\"query\":\"query1\"}";
         var deserializer = new DeletionTaskJsonDeserializer();
 
         // Act
@@ -38,7 +38,7 @@ public class DeletionTaskJsonDeserializerTests
         Assert.Equal("test", result.CreatedBy);
         Assert.Equal("tenant1", result.Tenant);
         Assert.Equal("subproject1", result.Subproject);
-        Assert.Equal("path1", result.Path);
+        Assert.Equal("query1", result.Query);
     }
 
     [Fact]
