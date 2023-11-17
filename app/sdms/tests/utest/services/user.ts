@@ -128,7 +128,7 @@ export class TestUserSVC {
                 } as DatasetModel;
 
                 this.journal = this.spy.createStubInstance(google.DatastoreDAO);
-                Config.CLOUDPROVIDER = 'google';
+                this.spy.define(Config, 'CLOUDPROVIDER', 'google');
             });
             afterEach(() => { this.spy.restore(); });
 

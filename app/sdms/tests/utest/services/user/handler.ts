@@ -10,6 +10,7 @@ import { UserOP } from '../../../../src/services/user/optype';
 import { UserHandler as Handler } from '../../../../src/services/user/handler';
 import { Tx } from '../../utils';
 import { SubprojectAuth } from '../../../../src/services/subproject';
+import {Config} from '../../../../src/cloud';
 export class TestServicesUserHandler {
 
     private static sandbox: sinon.SinonSandbox;
@@ -77,6 +78,7 @@ export class TestServicesUserHandler {
                 }
             ];
             beforeEach(() => {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
 
                 subProjectModel.access_policy = "dataset";
                 subProjectModel.enforce_key = false;

@@ -51,10 +51,10 @@ export class TestImpTokenSVC {
             ltag: 'legalTag'
         } as SubProjectModel;
 
-        Config.IMP_SERVICE_ACCOUNT_SIGNER = 'signer@seistore.com';
+        this.IMP_SERVICE_ACCOUNT_SIGNER = 'signer@seistore.com';
 
         const payloadOK = {
-            iss: Config.IMP_SERVICE_ACCOUNT_SIGNER, obo: 'user',
+            iss: this.IMP_SERVICE_ACCOUNT_SIGNER, obo: 'user',
             rsrc: [{ resource: 'resource', readonly: true }],
             rurl: 'none',
         };
@@ -66,7 +66,7 @@ export class TestImpTokenSVC {
         };
 
         const payloadWrong = {
-            iss: Config.IMP_SERVICE_ACCOUNT_SIGNER,
+            iss: this.IMP_SERVICE_ACCOUNT_SIGNER,
             rsrc: [{ resource: 'resource', readonly: true }],
             rurl: 'none',
         };
@@ -85,12 +85,12 @@ export class TestImpTokenSVC {
         })).toString('base64') + '.signature';
 
         this.impToken = 'header.' + Buffer.from(JSON.stringify({
-            iss: Config.IMP_SERVICE_ACCOUNT_SIGNER, obo: 'obo', rsrc: 'rsrc',
+            iss: this.IMP_SERVICE_ACCOUNT_SIGNER, obo: 'obo', rsrc: 'rsrc',
             rurl: 'rurl',
         })).toString('base64') + '.signature';
 
         this.impTokenNoValid = 'header.' + Buffer.from(JSON.stringify({
-            iss: Config.IMP_SERVICE_ACCOUNT_SIGNER,
+            iss: this.IMP_SERVICE_ACCOUNT_SIGNER,
             obo: 'obo', rsrc: 'rsrc',
         })).toString('base64') + '.signature';
 
@@ -100,6 +100,8 @@ export class TestImpTokenSVC {
 
             beforeEach(() => {
                 this.spy = sinon.createSandbox();
+                this.spy.define(Config, 'IMP_SERVICE_ACCOUNT_SIGNER', this.IMP_SERVICE_ACCOUNT_SIGNER);
+                this.spy.define(Config, 'CLOUDPROVIDER', 'google');
                 this.spy.stub(Response, 'writeMetric').returns();
             });
             afterEach(() => { this.spy.restore(); });
@@ -114,6 +116,7 @@ export class TestImpTokenSVC {
     }
 
     private static spy: sinon.SinonSandbox;
+    private static IMP_SERVICE_ACCOUNT_SIGNER: string;
     private static tokenOK: string;
     private static tokenNoKid: string;
     private static tokenWrongIss: string;
@@ -167,8 +170,7 @@ export class TestImpTokenSVC {
         });
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
-            const temp = Config.CLOUDPROVIDER;
-            Config.CLOUDPROVIDER = 'azure'
+            // this.spy.define(Config, 'CLOUDPROVIDER', 'azure');
             expReq.body.token = this.userAuthExp;
             expReq.body.resources = [{ readonly: true, resource: 'sd://tnx/spx' }];
             expReq.body['refresh-url'] = 'https://httpstat.us/200';
@@ -179,12 +181,10 @@ export class TestImpTokenSVC {
             this.spy.stub(Auth, 'isWriteAuthorized').resolves(false);
             this.spy.stub(Response, 'writeError').returns(undefined);
             await ImpTokenHandler.handler(expReq, expRes, ImpTokenOP.Generate);
-            Config.CLOUDPROVIDER = temp;
         });
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
-            const temp = Config.CLOUDPROVIDER;
-            Config.CLOUDPROVIDER = 'aws'
+            // this.spy.define(Config, 'CLOUDPROVIDER', 'aws');
             expReq.body.token = this.userAuthExp;
             expReq.body.resources = [{ readonly: true, resource: 'sd://tnx/spx' }];
             expReq.body['refresh-url'] = 'https://httpstat.us/200';
@@ -195,7 +195,6 @@ export class TestImpTokenSVC {
             this.spy.stub(Auth, 'isWriteAuthorized').resolves(false);
             this.spy.stub(Response, 'writeError').returns(undefined);
             await ImpTokenHandler.handler(expReq, expRes, ImpTokenOP.Generate);
-            Config.CLOUDPROVIDER = temp;
         });
 
 

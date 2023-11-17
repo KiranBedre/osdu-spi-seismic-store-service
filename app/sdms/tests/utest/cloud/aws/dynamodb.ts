@@ -5,6 +5,7 @@ import { Tx } from "../../utils";
 import { AWSDataEcosystemServices } from "../../../../src/cloud/providers/aws/dataecosystem";
 import { AWSConfig } from "../../../../src/cloud/providers/aws";
 import { IJournalQueryModel } from "../../../../src/cloud/journal";
+import {Config} from '../../../../src/cloud';
 
 export class TestAWSDynamoDB {
     private static sandbox: sinon.SinonSandbox;
@@ -30,6 +31,10 @@ export class TestAWSDynamoDB {
 
             beforeEach(async () => {
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
+                this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
                 this.putItemStub = this.sandbox.stub().returns({
                     promise: sinon.stub().resolves({})
                 });
@@ -304,6 +309,10 @@ export class TestAWSDynamoDbTransactionDAO {
             beforeEach(async () => {
                 AWS.config.update({region: 'us-west-2'});
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
+                this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
                 this.awsDynamoDbDAO = new AWSDynamoDbDAO(this.testTenant);
                 this.awsDynamoDbTransaction = new AWSDynamoDbTransactionDAO(this.awsDynamoDbDAO);
             });
@@ -471,6 +480,10 @@ export class TestAWSDynamoDbQuery {
 
             beforeEach(async () => {
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
+                this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
                 this.awsDynamoDbQuery = new AWSDynamoDbQuery('testNamespace', 'testKind');
             });
 

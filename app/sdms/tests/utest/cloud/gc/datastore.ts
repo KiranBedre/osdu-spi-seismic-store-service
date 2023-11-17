@@ -32,7 +32,7 @@ export class TestGCDatastoreDAO {
          beforeEach(() => {
             this.sandbox = sinon.createSandbox();
             this.ds = new DatastoreDAO({ gcpid: 'gcpid', default_acls:'x', esd: 'gcpid@domain.com', name: 'gcpid'});
-            Config.CLOUDPROVIDER = 'google';
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
          });
 
          afterEach(() => {
@@ -135,8 +135,7 @@ export class TestGCDatastoreTransactionDAO {
             const transaction = this.datastore.transaction();
             this.query = transaction.createQuery('kind');
             this.tdao = new DatastoreTransactionDAO(transaction);
-            Config.CLOUDPROVIDER = 'google';
-
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
          });
 
          afterEach(() => {

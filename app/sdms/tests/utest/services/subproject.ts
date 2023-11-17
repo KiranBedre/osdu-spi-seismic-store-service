@@ -85,7 +85,7 @@ export class TestSubProjectSVC {
                 this.journal.KEY = Datastore.KEY;
                 this.sandbox.stub(Response, 'writeMetric').returns();
                 // set CLOUD PROVIDER so that GCS class is loaded
-                Config.CLOUDPROVIDER = 'google';
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
             });
             afterEach(() => { this.sandbox.restore(); });
 
@@ -264,7 +264,6 @@ export class TestSubProjectSVC {
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant-a', gcpid: 'gcp-id' } as TenantModel);
             this.sandbox.stub(SubProjectDAO, 'get').resolves(this.testSubProject);
-            Config.CLOUDPROVIDER = 'google';
             this.sandbox.stub(SubProjectDAO, 'delete').resolves();
             this.sandbox.stub(DatasetDAO, 'deleteAll').resolves();
             this.sandbox.stub(TenantAuth, 'getAuthGroups').returns([]);

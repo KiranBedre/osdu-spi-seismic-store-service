@@ -56,7 +56,7 @@ export class TestSvcApp {
 				);
 				this.journal.KEY = Datastore.KEY;
 
-				Config.CLOUDPROVIDER = 'google';
+				this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
 			});
 
 			afterEach(() => {

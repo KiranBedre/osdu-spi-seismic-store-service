@@ -58,15 +58,13 @@ export class TestGoogleCredentials {
       try {
         await this.credentials.getServiceAccountEmail();
       } catch (e) {
-        ConfigGoogle.SERVICE_IDENTITY_EMAIL = '';
         Tx.check500(e.error.code);
       }
     });
 
     Tx.test(async () => {
-      ConfigGoogle.SERVICE_IDENTITY_EMAIL = 'test@email.com';
+      this.sandbox.define(ConfigGoogle, 'SERVICE_IDENTITY_EMAIL', 'test@email.com');
       const result = await this.credentials.getServiceAccountEmail();
-      ConfigGoogle.SERVICE_IDENTITY_EMAIL = '';
       Tx.checkTrue(result === 'test@email.com');
     });
 

@@ -25,6 +25,7 @@ import { TenantAuth, TenantDAO } from '../../../src/services/tenant';
 import { AppsDAO } from '../../../src/services/svcapp/dao';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
+import { Config } from '../../../src/cloud';
 
 export class TestAppSVC {
 
@@ -32,8 +33,11 @@ export class TestAppSVC {
 
         describe(Tx.testInit('svcapp'), () => {
 
-            beforeEach(() => { this.spy = sinon.createSandbox();
-                               this.spy.stub(Response, 'writeMetric').returns() });
+            beforeEach(() => {
+                this.spy = sinon.createSandbox();
+                this.spy.define(Config, 'CLOUDPROVIDER', 'azure');
+                this.spy.stub(Response, 'writeMetric').returns() }
+            );
 
             afterEach(() => { this.spy.restore(); });
 

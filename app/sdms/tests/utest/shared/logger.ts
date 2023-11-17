@@ -18,6 +18,7 @@ import { TraceLog } from '../../../src/shared';
 import { Tx } from '../utils';
 
 import sinon from 'sinon';
+import {Config} from '../../../src/cloud';
 
 export class TestLoggerSHD {
    public static spy: sinon.SinonSandbox;
@@ -26,7 +27,10 @@ export class TestLoggerSHD {
 
       describe(Tx.testInit('seismic store shared logger test'), () => {
 
-         beforeEach(() => { this.spy = sinon.createSandbox(); });
+         beforeEach(() => {
+            this.spy = sinon.createSandbox();
+            this.spy.define(Config, 'CLOUDPROVIDER', 'google');
+         });
          afterEach(() => { this.spy.restore(); });
 
          this.testTraceLogger();

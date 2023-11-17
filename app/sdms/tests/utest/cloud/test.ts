@@ -14,13 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-import { Config } from '../../../src/cloud';
-
-Config.CLOUDPROVIDER = 'amazon'
-Config.FEATURE_FLAG_LOGGING = false;
-Config.FEATURE_FLAG_TRACE = false;
-Config.FEATURE_FLAG_STACKDRIVER_EXPORTER = false;
-
 import { Tx } from '../utils';
 import { TestGoogleCredentials } from './google/credentials';
 import { TestGoogleDatastoreDAO, TestGoogleDatastoreTransactionDAO } from './google/datastore';
@@ -29,7 +22,6 @@ import { TestAzureCosmosDbDAO } from './azure/cosmosdb';
 import { TestAzureCosmosDbTransactionDAO } from './azure/cosmosdb-transactions';
 import { TestAzureCosmosDbListDatasets} from './azure/cosmosdb-list-datasets';
 import { TestGCSCore } from './google/gcs';
-import { TestGCSOSDUCore } from './gc/gcs';
 import { TestAzureKeyVault } from './azure/keyvault';
 import { TestAzureStorage } from './azure/cloudstorage';
 import { TestDataEcoSystem } from './google/dataecosystem';

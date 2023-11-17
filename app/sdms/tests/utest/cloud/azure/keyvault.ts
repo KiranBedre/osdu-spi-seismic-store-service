@@ -91,6 +91,15 @@ export class TestAzureKeyVault {
 
             afterEach(() => {
                 this.sandbox.restore();
+
+                delete AzureConfig.AI_INSTRUMENTATION_KEY;
+                delete AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY;
+                delete AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS;
+                delete AzureConfig.REDIS_SHARED_INSTANCE_KEY;
+                delete AzureConfig.REDIS_SHARED_INSTANCE_ADDRESS;
+                delete AzureConfig.APP_RESOURCE_ID;
+                delete AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL;
+                delete AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT;
             });
 
             this.TestGetSecrets();

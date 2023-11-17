@@ -21,6 +21,7 @@ import { GeneralHandler } from '../../../src/services/general/handler';
 import { GeneralOP } from '../../../src/services/general/optype';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
+import { Config } from '../../../src/cloud';
 
 export class TestGeneralSVC {
 
@@ -30,9 +31,10 @@ export class TestGeneralSVC {
 
         describe(Tx.testInit('general', true), () => {
 
-            beforeEach(() => {  this.spy = sinon.createSandbox();
-                                this.spy.stub(Response, 'writeMetric').returns();
-                             });
+            beforeEach(() => {
+                this.spy = sinon.createSandbox();
+                this.spy.stub(Response, 'writeMetric').returns();
+            });
             afterEach(() => { this.spy.restore(); });
 
             this.status();
@@ -70,6 +72,7 @@ export class TestGeneralSVC {
         Tx.sectionInit('others');
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            this.spy.define(Config, 'CLOUDPROVIDER', 'azure');
             await GeneralHandler.handler(expReq, expRes, undefined);
             Tx.check500(expRes.statusCode);
         });

@@ -29,10 +29,10 @@ export class TestCompliance {
 
       describe(Tx.testInit('dataecosystem compliance'), () => {
 
-         ConfigGoogle.DATA_PARTITION_REST_HEADER_KEY = 'data-partition-id'
-
          beforeEach(() => {
             this.sandbox = sinon.createSandbox();
+            this.sandbox.define(ConfigGoogle, 'DATA_PARTITION_REST_HEADER_KEY', 'data-partition-id');
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
             this.sandbox.stub(google.Credentials.prototype, 'getServiceCredentials').resolves('usertoken');
 
          });

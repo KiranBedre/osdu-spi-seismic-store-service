@@ -21,12 +21,13 @@ import { ImpersonationTokenHandler } from '../../../src/services/impersonation_t
 import { ImpersonationTokenOps } from '../../../src/services/impersonation_token/optype';
 import { Response } from '../../../src/shared';
 import { Tx } from '../utils';
+import { Config } from '../../../src/cloud';
 
 
 export class TestImpersonationTokenSVC {
 
     private static sandbox: sinon.SinonSandbox;
-    
+
     public static userAuthExp: string;
     public static userAuthExp0: string;
     public static clientSecret: string;
@@ -35,11 +36,12 @@ export class TestImpersonationTokenSVC {
     public static resources: object;
 
     public static run() {
-        
+
         describe(Tx.testInit('impersonation_token'), () => {
 
             beforeEach(() => {
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
                 this.sandbox.stub(Response, 'writeMetric').returns();
             });
             afterEach(() => { this.sandbox.restore(); });

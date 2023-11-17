@@ -1,6 +1,7 @@
 import sinon from "sinon";
 import { AWSSSMhelper } from "../../../../src/cloud/providers/aws/ssmhelper";
 import { Tx } from "../../utils";
+import {Config} from '../../../../src/cloud';
 
 export class TestAWSSSMHelper {
     private static sandbox: sinon.SinonSandbox;
@@ -11,6 +12,10 @@ export class TestAWSSSMHelper {
 
             beforeEach(() => {
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
+                this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
                 this.ssmHelper = new AWSSSMhelper();
             });
 

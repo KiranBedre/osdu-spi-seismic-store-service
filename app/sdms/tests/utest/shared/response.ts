@@ -51,9 +51,11 @@ export class TestResponseSHD {
 
       describe(Tx.testInit('seismic store shared response test'), () => {
 
-         beforeEach(() => { Config.CLOUDPROVIDER = 'google';
-                           this.sandbox = sinon.createSandbox();
-                            this.sandbox.stub(Response, 'writeMetric').returns()});
+         beforeEach(() => {
+            this.sandbox = sinon.createSandbox();
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
+            this.sandbox.stub(Response, 'writeMetric').returns();
+         });
          afterEach(() => { this.sandbox.restore(); });
          this.testWriteOK();
          this.testWriteError();
@@ -70,7 +72,6 @@ export class TestResponseSHD {
       Tx.sectionInit('Response writeOK');
 
       Tx.testExp(() => {
-
          const spy = this.sandbox.spy(TestRESExpress.prototype, 'set');
          const expRes = (new TestRESExpress() as unknown) as expResponse;
          Response.writeOK(expRes, { data: 'data' });

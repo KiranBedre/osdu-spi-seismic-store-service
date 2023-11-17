@@ -56,7 +56,7 @@ export class TestDataset {
 					TestDataset.testDb.createQuery(namespace, kind)
 				);
 				this.journal.KEY = Datastore.KEY;
-				Config.CLOUDPROVIDER = 'google';
+				this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
 			});
 
 			afterEach(() => {
@@ -310,7 +310,7 @@ export class TestDataset {
 		});
 
 		Tx.test(async () => {
-			Config.CLOUDPROVIDER = 'azure';
+			// this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{
@@ -351,7 +351,7 @@ export class TestDataset {
 		});
 
 		Tx.test(async () => {
-			Config.CLOUDPROVIDER = 'azure';
+			// this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{

@@ -30,6 +30,7 @@ import { AzureTaskQueue } from '../../../src/cloud/providers/azure/taskQueue';
 import { ITaskQueue, TaskQueueFactory } from '../../../src/cloud/taskQueue';
 import { IOperation, IOperationQueueTask, IOperationStatus } from '../../../src/services/operation/model';
 import { AndQueryFilter } from '../../../src/services/dataset';
+import {AzureConfig} from '../../../src/cloud/providers/azure';
 
 export class TestOperationHandler {
 
@@ -39,15 +40,12 @@ export class TestOperationHandler {
 
         describe(Tx.testInit('operations'), () => {
 
-            let backup: [string, boolean];
             beforeEach(() => {
-                backup = [Config.CLOUDPROVIDER, Config.ENABLE_ADVANCED_QUERY_FILTERS];
-                Config.CLOUDPROVIDER = 'azure';
-                Config.ENABLE_ADVANCED_QUERY_FILTERS = true;
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
+                this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             });
 
             afterEach(()=>{
-                [Config.CLOUDPROVIDER, Config.ENABLE_ADVANCED_QUERY_FILTERS] = backup;
                 this.sandbox.restore();
             })
 

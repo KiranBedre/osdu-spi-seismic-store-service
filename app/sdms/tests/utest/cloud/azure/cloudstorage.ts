@@ -28,12 +28,13 @@ export class TestAzureStorage {
     public static run() {
 
         describe(Tx.testInit('azure cloud storage test'), () => {
-            Config.CLOUDPROVIDER = 'azure';
             this.sandbox = sinon.createSandbox();
+
             this.sandbox.stub(AzureCredentials, 'getCredential').resolves()
             this.storage = new AzureCloudStorage({ gcpid: 'gcpid', default_acls:'x', esd: 'gcpid@domain.com', name: 'gcpid'});
 
             beforeEach(()=> {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
                 this.sandbox.stub(AzureCloudStorage.prototype, 'getBlobServiceClient').resolves(
                     new BlobServiceClient(`https://` + undefined + `.blob.core.windows.net`));
             })

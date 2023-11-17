@@ -184,15 +184,9 @@ export class TestUtils {
       Tx.test(() => {
          // const methodToCall = {} as any;
          // const input1 = 'abc'
-         const temp = Config.CLOUDPROVIDER;
-         try{
-            Config.CLOUDPROVIDER = 'google';
-            const res = Utils.checkSauthV1EmailDomainName('slbservice.com@slb.com');
-            Tx.checkTrue(res === 'slbservice.com@delfiserviceaccount.com');
-         }
-         finally {
-            Config.CLOUDPROVIDER = temp;
-         }
+         this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
+         const res = Utils.checkSauthV1EmailDomainName('slbservice.com@slb.com');
+         Tx.checkTrue(res === 'slbservice.com@delfiserviceaccount.com');
       });
    }
 }

@@ -29,10 +29,10 @@ export class TestAuth {
 
     public static run() {
 
-        Config.IMP_SERVICE_ACCOUNT_SIGNER = 'signer@seistore.com';
+        this.IMP_SERVICE_ACCOUNT_SIGNER = 'signer@seistore.com';
 
         this.impToken = 'header.' + Buffer.from(JSON.stringify({
-            iss: Config.IMP_SERVICE_ACCOUNT_SIGNER, obo: 'obo',
+            iss: this.IMP_SERVICE_ACCOUNT_SIGNER, obo: 'obo',
             rsrc: 'rsrc', rurl: 'rurl',
         })).toString('base64') + '.signature';
 
@@ -44,7 +44,8 @@ export class TestAuth {
 
             beforeEach(() => {
                 this.sandbox = sinon.createSandbox();
-                Config.CLOUDPROVIDER = 'google';
+                this.sandbox.define(Config, 'IMP_SERVICE_ACCOUNT_SIGNER', this.IMP_SERVICE_ACCOUNT_SIGNER);
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
             });
             afterEach(() => { this.sandbox.restore(); });
 
@@ -62,6 +63,7 @@ export class TestAuth {
 
     private static sandbox: sinon.SinonSandbox;
 
+    private static IMP_SERVICE_ACCOUNT_SIGNER: string;
     private static impToken: string;
     private static userToken: string;
 

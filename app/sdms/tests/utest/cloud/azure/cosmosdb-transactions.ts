@@ -29,8 +29,11 @@ export class TestAzureCosmosDbTransactionDAO {
     public static run() {
 
         describe(Tx.testInit('azure cosmos db transaction dao tests'), () => {
-            Config.CLOUDPROVIDER = 'azure';
             this.sandbox = sinon.createSandbox();
+
+            beforeEach(() => {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
+            });
 
             afterEach(() => {
                 this.sandbox.restore();
