@@ -30,11 +30,11 @@ export class TestDESEntitlement {
 
       describe(Tx.testInit('dataecosystem entitlements'), () => {
 
-         ConfigGoogle.ENTITLEMENT_BASE_URL_PATH = '/entitlements'
-         ConfigGoogle.DATA_PARTITION_REST_HEADER_KEY = 'data-partition-id'
-
          beforeEach(() => {
             this.sandbox = sinon.createSandbox();
+            this.sandbox.define(ConfigGoogle, 'ENTITLEMENT_BASE_URL_PATH', '/entitlements');
+            this.sandbox.define(ConfigGoogle, 'DATA_PARTITION_REST_HEADER_KEY', 'data-partition-id');
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
             this.sandbox.stub(google.Credentials.prototype, 'getServiceCredentials').resolves('token');
 
          });
@@ -96,7 +96,7 @@ export class TestDESEntitlement {
          const requestStub = this.sandbox.stub(axios, 'post');
          requestStub.resolves();
 
-         Config.DES_SERVICE_HOST_ENTITLEMENT = 'testEntitlement';
+         this.sandbox.define(Config, 'DES_SERVICE_HOST_ENTITLEMENT', 'testEntitlement');
 
          await DESEntitlement.addUserToGroup('usertoken', 'group-a', 'tenant-a', 'user@email', 'role-a','appkey');
 

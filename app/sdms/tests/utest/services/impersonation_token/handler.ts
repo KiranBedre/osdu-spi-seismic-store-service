@@ -11,6 +11,7 @@ import { ImpersonationTokenOps } from '../../../../src/services/impersonation_to
 import { ImpersonationTokenParser } from '../../../../src/services/impersonation_token/parser';
 import { ImpersonationTokenHandler as Handler, ImpersonationTokenHandler } from '../../../../src/services/impersonation_token/handler';
 import { Tx } from '../../utils';
+import {Config} from '../../../../src/cloud';
 
 export class TestImpersonationTokenHandler {
 
@@ -66,7 +67,9 @@ export class TestImpersonationTokenHandler {
                     throw new Error();
                 }
             };
-            //beforeEach(() => {  });
+            beforeEach(() => {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
+            });
             afterEach(() => { this.sandbox.restore(); });
 
             this.generateImpersonationTokenTest(tenantModel, subProjectModel, impersonationTokenRequestBodyModel, iAuthProvider);

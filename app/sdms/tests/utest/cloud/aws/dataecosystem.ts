@@ -4,6 +4,7 @@ import {Tx} from "../../utils";
 import { AWSCredentials, AWSDataEcosystemServices } from "../../../../src/cloud/providers/aws";
 import { getInMemoryCacheInstance } from "../../../../src/shared";
 import { Error } from "../../../../src/shared/error";
+import {Config} from '../../../../src/cloud';
 
 export class TestAWSDataEcosystem {
     private static sandbox: sinon.SinonSandbox;
@@ -14,6 +15,10 @@ export class TestAWSDataEcosystem {
 
             beforeEach(() => {
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
+                this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
+                this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
                 this.awsDataEcosystemService = new AWSDataEcosystemServices();
             });
 

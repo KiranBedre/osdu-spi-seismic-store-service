@@ -34,29 +34,24 @@ export class TestAzureCosmosDbListDatasets {
     private static tmpAxios: AxiosInstance;
     private static cosmos: AzureCosmosDbDAO;
 
-
     public static run() {
 
         describe(Tx.testInit('azure cosmos db listDatasets test'), () => {
             this.sandbox = sinon.createSandbox();
             this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
             this.cosmos = new AzureCosmosDbDAO({ gcpid: 'gcpid', default_acls: 'x', esd: 'gcpid@domain.com', name: 'gcpid' });
-            let backup: string;
 
         beforeEach(() => {
-            backup = Config.CLOUDPROVIDER;
-            Config.CLOUDPROVIDER = 'azure';
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
             this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
                 new Container(undefined, 'id', undefined));
             // replace axiosInstance to our stub. Unfortunately, we can't do this with sandbox methods.
             this.tmpAxios = AzureCosmosDbDAO.axiosInstance;
             AzureCosmosDbDAO.axiosInstance = this.axiosInstance;
-            this.sandbox.replace(AzureCosmosDbDAO, 'axiosInstance', this.axiosInstance);
         })
 
         afterEach(() => {
             AzureCosmosDbDAO.axiosInstance = this.tmpAxios;  // restore Axios instance
-            Config.CLOUDPROVIDER = backup;
             this.sandbox.restore();
         });
 
@@ -82,7 +77,7 @@ export class TestAzureCosmosDbListDatasets {
         let queryIterator: QueryIterator<any> = CosmosDbTestHelper.getQueryIterator() as any;
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -96,7 +91,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -111,7 +106,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -129,7 +124,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -159,7 +154,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -225,7 +220,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -282,7 +277,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -354,7 +349,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
 
@@ -463,7 +458,7 @@ export class TestAzureCosmosDbListDatasets {
 
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: {
@@ -508,7 +503,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: {
@@ -556,7 +551,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = true;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
 
             this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: {

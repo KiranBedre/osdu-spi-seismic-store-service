@@ -32,7 +32,7 @@ export class TestAuthGroups {
 
          beforeEach(() => {
             this.spy = sinon.createSandbox();
-            Config.CLOUDPROVIDER = 'google';
+            this.spy.define(Config, 'CLOUDPROVIDER', 'google');
          });
          afterEach(() => { this.spy.restore(); });
 

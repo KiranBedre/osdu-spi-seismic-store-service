@@ -28,11 +28,12 @@ export class TestImpToken {
 
    public static run() {
 
-      Config.IMP_SERVICE_ACCOUNT_SIGNER = 'signer@seistore.com';
-
       describe(Tx.testInit('seismic store dao imptoken test'), () => {
 
-         beforeEach(() => { this.sandbox = sinon.createSandbox(); });
+         beforeEach(() => {
+            this.sandbox = sinon.createSandbox();
+            this.sandbox.define(Config, 'IMP_SERVICE_ACCOUNT_SIGNER', 'signer@seistore.com');
+         });
          afterEach(() => { this.sandbox.restore(); });
 
          this.testCreate();

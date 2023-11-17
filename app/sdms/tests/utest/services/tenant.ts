@@ -181,13 +181,11 @@ export class TestTenantSVC {
             this.sandbox.stub(TenantDAO, 'delete').resolves();
             this.sandbox.stub(SubProjectDAO, 'list').resolves([]);
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
-
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
 
             await TenantHandler.handler(expReq, expRes, TenantOP.DELETE);
             Tx.checkTrue(expRes.statusCode === 200);
         });
-
-
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.datapartition = 'datapartition';
@@ -221,7 +219,7 @@ export class TestTenantSVC {
             this.sandbox.stub(SubProjectDAO, 'list').resolves([]);
             this.sandbox.stub(AuthGroups, 'deleteGroup').resolves();
             this.sandbox.stub(Auth, 'isImpersonationToken').returns(false);
-
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
 
             await TenantHandler.handler(expReq, expRes, TenantOP.DELETE);
             Tx.checkTrue(expRes.statusCode === 200);
@@ -238,7 +236,7 @@ export class TestTenantSVC {
             expReq.body.esd = 'tenant-a.evt.group.com';
             expReq.body.gcpid = 'gcpid';
             expReq.body.default_acls = 'users.datalake.admin@tenant-a.evt.group.com';
-            Config.CLOUDPROVIDER = 'google';
+            this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
             TenantParser.create(expReq);
         });
     }

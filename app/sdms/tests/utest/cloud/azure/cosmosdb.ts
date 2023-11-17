@@ -38,7 +38,6 @@ export class TestAzureCosmosDbDAO {
     public static run() {
 
         describe(Tx.testInit('azure cosmos db dao test'), () => {
-            Config.CLOUDPROVIDER = 'azure';
             this.sandbox = sinon.createSandbox();
             // axiosInstance needs to have any kind or "post" method to make it stubble in the tests
             this.axiosInstance = {post () { return; }} as unknown as  AxiosInstance;
@@ -64,14 +63,14 @@ export class TestAzureCosmosDbDAO {
             };
 
             beforeEach(() => {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
+
                 this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
                     new Container(undefined, 'id', undefined));
 
                 // replace axiosInstance to our stub. Unfortunately, we can't do this with sandbox methods.
                 this.tmpAxios = AzureCosmosDbDAO.axiosInstance;
                 AzureCosmosDbDAO.axiosInstance = this.axiosInstance;
-
-                this.sandbox.replace(AzureCosmosDbDAO, 'axiosInstance', this.axiosInstance);
             })
 
             afterEach(() => {
@@ -253,7 +252,7 @@ export class TestAzureCosmosDbDAO {
         Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
             azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'}, 'STRING');
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
             Tx.checkTrue(res[1].endCursor === 'continuationToken');
@@ -262,7 +261,7 @@ export class TestAzureCosmosDbDAO {
         Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
             azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'}, 'STRING');
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             azureCosmosDbQuery.pagingStart = '';
             azureCosmosDbQuery.pagingLimit = 0;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
@@ -354,8 +353,8 @@ export class TestAzureCosmosDbDAO {
             + datasetModel.subproject + '" AND STARTSWITH(c.data.path, "' + datasetModel.path + '", false)';
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = true;
-            AzureConfig.ENABLE_OPTIMIZED_QUERY = true;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
+            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', true);
 
             const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: { records: [
@@ -394,8 +393,8 @@ export class TestAzureCosmosDbDAO {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = true;
-            AzureConfig.ENABLE_OPTIMIZED_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
+            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', false);
 
             const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: {
@@ -432,8 +431,8 @@ export class TestAzureCosmosDbDAO {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
-            AzureConfig.ENABLE_OPTIMIZED_QUERY = true;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
+            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', true);
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
@@ -442,8 +441,8 @@ export class TestAzureCosmosDbDAO {
         });
 
         Tx.test(async () => {
-            AzureConfig.SIDECAR_ENABLE_QUERY = false;
-            AzureConfig.ENABLE_OPTIMIZED_QUERY = false;
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
+            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', false);
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
@@ -516,7 +515,7 @@ export class TestAzureCosmosDbDAO {
               subproject: subproject,
               name: name,
           } as DatasetModel;
-          AzureConfig.SIDECAR_ENABLE_QUERY = false;
+          this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
 
           try {
               await this.cosmos.getSize(dataset);
@@ -542,7 +541,7 @@ export class TestAzureCosmosDbDAO {
         ) as any;
 
         Tx.test(async () => {
-          AzureConfig.SIDECAR_ENABLE_QUERY = false;
+          this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
           let sinonStub = this.sandbox.stub(Items.prototype, "query");
 
           sinonStub.returns(queryIterator);

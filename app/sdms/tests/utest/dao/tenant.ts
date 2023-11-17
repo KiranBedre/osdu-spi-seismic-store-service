@@ -101,7 +101,7 @@ export class TestTenant {
             entity,
          ]]);
 
-         Config.TENANT_JOURNAL_ON_DATA_PARTITION = false;
+         this.sandbox.replace(Config, 'TENANT_JOURNAL_ON_DATA_PARTITION', false);
 
          try {
             const results = await TenantDAO.getAll();
@@ -145,11 +145,9 @@ export class TestTenant {
       });
 
       Tx.test(async () => {
-         const originalValue = Config.TENANT_JOURNAL_ON_DATA_PARTITION;
-         Config.TENANT_JOURNAL_ON_DATA_PARTITION = true;
+         this.sandbox.replace(Config, 'TENANT_JOURNAL_ON_DATA_PARTITION', true);
          this.journal.delete.resolves();
          await TenantDAO.delete('tenant');
-         Config.TENANT_JOURNAL_ON_DATA_PARTITION = originalValue;
       });
 
    }

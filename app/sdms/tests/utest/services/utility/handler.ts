@@ -94,7 +94,8 @@ export class TestServicesUtilityHandler {
                     throw new Error();
                 } 
             };
-            beforeEach(() => { 
+            beforeEach(() => {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
                 subProjectModel.access_policy = "dataset";
                 subProjectModel.enforce_key = false;
                 datasetModel.transfer_status = '';

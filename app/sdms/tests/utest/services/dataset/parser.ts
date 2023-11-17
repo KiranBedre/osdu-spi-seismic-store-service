@@ -31,14 +31,10 @@ export class ParserTest {
 
         describe(Tx.testInit("Dataset/Parser"), () => {
 
-            let backup: boolean;
             beforeEach(() => {
-                backup = Config.ENABLE_ADVANCED_QUERY_FILTERS;
-                Config.ENABLE_ADVANCED_QUERY_FILTERS = true;
                 this.sandbox = sinon.createSandbox();
             });
             afterEach(() => {
-                Config.ENABLE_ADVANCED_QUERY_FILTERS = backup;
                 this.sandbox.restore();
             });
 
@@ -59,12 +55,14 @@ export class ParserTest {
         }
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'POST';
             let request = DatasetParser.list(expReq);
             Tx.checkTrue(request.filter === undefined);
         });
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'POST';
             let filter = new StubFilter();
             this.sandbox.stub(DatasetFilterParser, 'parseFilter').returns(filter);
@@ -74,7 +72,7 @@ export class ParserTest {
         });
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
-            Config.ENABLE_ADVANCED_QUERY_FILTERS = false;
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', false);
             expReq.method = 'POST';
             expReq.body.filter = new Object();
             expect(() => DatasetParser.list(expReq))
@@ -86,6 +84,7 @@ export class ParserTest {
 
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'POST';
             expReq.body.gtags = ['tag1'];
             let request = DatasetParser.list(expReq);
@@ -93,6 +92,7 @@ export class ParserTest {
         });
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'POST';
             // legacy reasons
             expReq.body.gtag = ['tag1'];
@@ -101,6 +101,7 @@ export class ParserTest {
         });
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'GET';
             expReq.query.gtags = ['tag1'];
             let request = DatasetParser.list(expReq);
@@ -108,6 +109,7 @@ export class ParserTest {
         });
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'GET';
             //legacy reasons
             expReq.query.gtag = ['tag1'];

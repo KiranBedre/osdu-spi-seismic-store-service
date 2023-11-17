@@ -3,13 +3,11 @@ import sinon from 'sinon';
 import {AzureConfig, AzureTaskQueue} from "../../../../src/cloud/providers/azure";
 import { Tx } from '../../utils';
 import {QueueClient, QueueCreateIfNotExistsResponse} from "@azure/storage-queue";
-import {IBulkDeleteOperationQueueTask, IOperationQueueTask} from "../../../../src/services/operation/model";
+import {IOperationQueueTask} from "../../../../src/services/operation/model";
 import {v4 as uuidv4} from "uuid";
 import {Config} from "../../../../src/cloud";
 import { OperationType } from '../../../../src/services/operation/register';
-import {CachingQueueClientFactory} from "../../../../src/cloud/providers/azure/taskQueue";
-import * as Assert from "assert";
-import {assert} from "chai";
+
 
 
 export class TestTaskQueue {
@@ -18,15 +16,23 @@ export class TestTaskQueue {
     private static taskQueue: AzureTaskQueue;
 
     public static run() {
-        Config.CLOUDPROVIDER = 'azure';
-        AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = 'storageQueueEndpoint'
-        Config.SMDS_DELETION_QUEUE = 'deletionqueue'
-        this.sandbox = sinon.createSandbox();
-        this.taskQueue = new AzureTaskQueue();
-        this.sandbox.stub(QueueClient.prototype, 'createIfNotExists')
-            .resolves({ succeeded: true } as QueueCreateIfNotExistsResponse);
-
         describe(Tx.testInit('azure task queue test'), () => {
+
+            beforeEach(() => {
+                this.sandbox = sinon.createSandbox();
+                this.taskQueue = new AzureTaskQueue();
+                this.sandbox.stub(QueueClient.prototype, 'createIfNotExists')
+                    .resolves({ succeeded: true } as QueueCreateIfNotExistsResponse);
+                const x = AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT;
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
+                this.sandbox.define(Config, 'SMDS_DELETION_QUEUE', 'deletionqueue');
+                this.sandbox.define(AzureConfig, 'AZURE_STORAGE_QUEUE_ENDPOINT', 'storageQueueEndpoint');
+            });
+
+            afterEach(() => {
+                this.sandbox.restore();
+            });
+
             this.pushTask();
         });
     }

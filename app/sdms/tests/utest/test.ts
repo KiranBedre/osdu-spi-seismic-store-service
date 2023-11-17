@@ -14,13 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-import { Config } from '../../src/cloud';
-
-Config.CLOUDPROVIDER = 'google'
-Config.FEATURE_FLAG_LOGGING = false;
-Config.FEATURE_FLAG_TRACE = false;
-Config.FEATURE_FLAG_STACKDRIVER_EXPORTER = false;
-
 import { Locker } from '../../src/services/dataset/locker'
 // tslint:disable-next-line: no-floating-promises no-console
 Locker.init().catch((error)=>{ console.log(error);});

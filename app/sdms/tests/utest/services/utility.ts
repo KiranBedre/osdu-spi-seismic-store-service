@@ -53,7 +53,7 @@ export class TestUtilitySVC {
                 this.journal.KEY = Datastore.KEY;
                 this.sandbox.stub(Response, 'writeMetric').returns();
                 this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(this.journal);
-                Config.CLOUDPROVIDER = 'google';
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
             });
             afterEach(() => { this.sandbox.restore(); });
 

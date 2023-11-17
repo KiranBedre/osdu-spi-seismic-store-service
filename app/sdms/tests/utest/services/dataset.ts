@@ -67,7 +67,6 @@ export class TestDatasetSVC {
     private static journal: any;
     private static transaction: any;
     private static testDb: Datastore;
-    private static cloudprovider: string;
 
     public static run() {
 
@@ -77,6 +76,8 @@ export class TestDatasetSVC {
             this.sandbox = sinon.createSandbox();
 
             beforeEach(() => {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
+
                 this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
                 this.sandbox.stub(SubProjectDAO, 'get').resolves(this.testSubProject as any);
 
@@ -91,12 +92,10 @@ export class TestDatasetSVC {
                 this.journal.getTransaction.returns(this.transaction);
                 this.journal.getQueryFilterSymbolContains.returns('-');
                 this.journal.KEY = Datastore.KEY;
-                this.cloudprovider = Config.CLOUDPROVIDER;
             });
 
-            afterEach(() => { 
+            afterEach(() => {
                 this.sandbox.restore();
-                Config.CLOUDPROVIDER = this.cloudprovider;
              });
 
             this.ctag();
@@ -312,7 +311,7 @@ export class TestDatasetSVC {
         Tx.sectionInit('list');
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
-            Config.USER_ASSOCIATION_SVC_PROVIDER = 'ccm-internal';
+            this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [{} as DatasetModel], nextPageCursor: null });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
@@ -323,7 +322,7 @@ export class TestDatasetSVC {
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.limit = '10';
-            Config.USER_ASSOCIATION_SVC_PROVIDER = 'ccm-internal';
+            this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [this.dataset as DatasetModel], nextPageCursor: 'cursor' });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
@@ -337,7 +336,7 @@ export class TestDatasetSVC {
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.query.limit = '10';
-            Config.USER_ASSOCIATION_SVC_PROVIDER = 'ccm-internal';
+            this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [this.dataset as DatasetModel], nextPageCursor: '' });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');

@@ -91,7 +91,9 @@ export class TestParser {
                     throw new Error();
                 }
             };
-            //beforeEach(() => {  });
+            beforeEach(() => {
+                this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
+            });
             afterEach(() => { this.sandbox.restore(); });
 
             this.generateTest(tenantModel, subProjectModel, isdPathModel);

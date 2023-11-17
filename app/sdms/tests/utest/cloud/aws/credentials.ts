@@ -4,6 +4,7 @@ import DynamoDB from 'aws-sdk/clients/dynamodb';
 import { Tx } from '../../utils'; // Adjust the import path to your Tx class
 import { AWSSSMhelper } from '../../../../src/cloud/providers/aws/ssmhelper';
 import axios from 'axios';
+import { Config } from '../../../../src/cloud';
 
 export class TestAWSCredentials {
 
@@ -11,12 +12,17 @@ export class TestAWSCredentials {
     private static awsCredentials: AWSCredentials;
     private static getItemStub;
     private static mockDynamoDB: Partial<DynamoDB>;
-  
+
     public static run() {
           describe(Tx.testInit('AWS Credentials'), () => {
-  
+
               beforeEach(() => {
                   this.sandbox = sinon.createSandbox();
+                  this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
+                  this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
+                  this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
+                  this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
+
                   this.getItemStub = this.sandbox.stub().returns({
                       promise: this.sandbox.stub().resolves({}),
                   });
@@ -25,9 +31,9 @@ export class TestAWSCredentials {
                 };
                   this.awsCredentials = new AWSCredentials();
               });
-  
+
               afterEach(() => { this.sandbox.restore(); });
-  
+
               this.testGets();
               this.testGetBucketFolder();
               this.testGetStorageCredentials();
