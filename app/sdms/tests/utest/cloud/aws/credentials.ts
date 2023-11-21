@@ -1,7 +1,8 @@
 import sinon from 'sinon';
-import {AWSCredentials, AWSDataEcosystemServices } from '../../../../src/cloud/providers/aws'; // Adjust the import path accordingly
+import {AWSCredentials, AWSDataEcosystemServices } from '../../../../src/cloud/providers/aws'; 
 import DynamoDB from 'aws-sdk/clients/dynamodb';
-import { Tx } from '../../utils'; // Adjust the import path to your Tx class
+import aws from 'aws-sdk';
+import { Tx } from '../../utils'; 
 import { AWSSSMhelper } from '../../../../src/cloud/providers/aws/ssmhelper';
 import axios from 'axios';
 import { Config } from '../../../../src/cloud';
@@ -12,7 +13,9 @@ export class TestAWSCredentials {
     private static awsCredentials: AWSCredentials;
     private static getItemStub;
     private static mockDynamoDB: Partial<DynamoDB>;
-
+    private static mockSecretsManager: Partial<aws.SecretsManager>;
+    private static getSecretValueStub;
+  
     public static run() {
           describe(Tx.testInit('AWS Credentials'), () => {
 
@@ -26,9 +29,15 @@ export class TestAWSCredentials {
                   this.getItemStub = this.sandbox.stub().returns({
                       promise: this.sandbox.stub().resolves({}),
                   });
+                  this.getSecretValueStub = this.sandbox.stub().returns({
+                      promise: this.sandbox.stub().resolves({}),
+                  });
                   this.mockDynamoDB = {
                     getItem: this.getItemStub,
-                };
+                  };
+                  this.mockSecretsManager = {
+                      getSecretValue: this.getSecretValueStub,
+                  };
                   this.awsCredentials = new AWSCredentials();
               });
 
@@ -38,6 +47,7 @@ export class TestAWSCredentials {
               this.testGetBucketFolder();
               this.testGetStorageCredentials();
               this.testGetServiceCredentials();
+              this.testGetSecrets();
           });
       }
 
@@ -109,7 +119,7 @@ export class TestAWSCredentials {
         getSSMParameterStub.onCall(1).resolves('123');
         getSSMParameterStub.onCall(2).resolves('testRoleArn');
         this.sandbox.stub(this.awsCredentials, 'getBucketFolder').resolves('testFolder');
-        const credentials = this.sandbox.stub((this.awsCredentials as any).awsSTSHelper, 'getCredentials').resolves('testCredentials');
+        this.sandbox.stub((this.awsCredentials as any).awsSTSHelper, 'getCredentials').resolves('testCredentials');
         const result = await this.awsCredentials.getStorageCredentials(tenant, subproject, bucket, readonly, partition);
 
         const expected = {
@@ -148,6 +158,47 @@ export class TestAWSCredentials {
         
         (AWSCredentials as any).servicePrincipalCredential = mockResponse;
         Tx.checkTrue(result === 'mockAccessToken');
+      });
+    }
+
+    private static testGetSecrets() {
+      Tx.sectionInit('getSecrets method');
+
+      const testName = 'testClientSecretName';
+      const testKey = 'testClientSecretDictKey';
+
+      Tx.test(async () => {
+        const mockVal = {
+          SecretString: `{"${testKey}": "your_secret_value"}`,
+          SecretBinary: 'base64_encoded_binary_secret_value'
+      };
+        
+        this.mockSecretsManager.getSecretValue = this.sandbox.stub().returns({ promise: this.sandbox.stub().resolves(mockVal) });
+        
+        const result = await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager as aws.SecretsManager);
+        Tx.checkTrue(result === 'your_secret_value');
+      });
+      Tx.test(async () => {
+        const mockVal = {
+          SecretString: null,
+          SecretBinary: 'base64_encoded_binary_secret_value'
+        };
+        
+        this.mockSecretsManager.getSecretValue = this.sandbox.stub().returns({ promise: this.sandbox.stub().resolves(mockVal) });
+        
+        const result = await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager as aws.SecretsManager);
+        const expectedBinary = Buffer.from('base64_encoded_binary_secret_value', 'base64').toString('ascii');
+        Tx.checkTrue(result === expectedBinary);
+      });
+      Tx.test(async () => {
+      this.mockSecretsManager.getSecretValue = this.sandbox.stub().returns({ promise: this.sandbox.stub().rejects(new Error('test error')) });
+      
+      try {
+        await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager as aws.SecretsManager)
+      } catch (err) {
+        Tx.checkTrue(err.message === 'test error');
+      }
+      
       });
     }
   }

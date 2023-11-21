@@ -26,14 +26,15 @@ import { TestAzureKeyVault } from './azure/keyvault';
 import { TestAzureStorage } from './azure/cloudstorage';
 import { TestDataEcoSystem } from './google/dataecosystem';
 import { TestAWSCredentials } from './aws/credentials';
+import {TestAWSSeistore} from './aws/seistore';
 import { TestAWSSSMHelper } from './aws/ssmhelper';
 import { TestAWSDataEcosystem } from './aws/dataecosystem';
 import { TestStorage } from './aws/storage';
 import { TestLogger } from './aws/logger';
 import { TestAWSDynamoDB, TestAWSDynamoDbTransactionDAO, TestAWSDynamoDbQuery } from './aws/dynamodb';
-import {TestTaskQueue} from "./azure/taskQueue";
-
-
+import { TestAWSStsHelper } from './aws/stshelper';
+import { TestAwsTrace } from './aws/trace';
+import { TestTaskQueue } from "./azure/taskQueue";
 export class TestCloud {
 
     public static run() {
@@ -47,6 +48,9 @@ export class TestCloud {
             TestAWSDynamoDbTransactionDAO.run();
             TestAWSSSMHelper.run();
             TestAWSDataEcosystem.run();
+            TestAwsTrace.run();
+            TestAWSSeistore.run();
+            TestAWSStsHelper.run();
             TestGoogleCredentials.run();
             TestGCSCore.run();
             TestGCDatastoreDAO.run();

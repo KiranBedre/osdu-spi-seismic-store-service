@@ -155,11 +155,11 @@ export class AWSCredentials extends AbstractCredentials {
         return (Promise.resolve(val.toString()));
     }
 
-    public static async getSecrets(clientSecretName: string, clientSecretDictKey: string): Promise<string> {
+    // tslint:disable-next-line: max-line-length
+    public static async getSecrets(clientSecretName: string, clientSecretDictKey: string, secretsManager:aws.SecretsManager = new aws.SecretsManager({region: AWSConfig.AWS_REGION})): Promise<string> {
         const params = {
             SecretId: clientSecretName
         };
-        const secretsManager = new aws.SecretsManager({ region: AWSConfig.AWS_REGION});
         try {
             const data = await secretsManager.getSecretValue(params).promise();
             if (data.SecretString) {

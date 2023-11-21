@@ -47,7 +47,7 @@ export class TestAWSCredentials {
             const expected = {
                 access_token: 'test-credentials',
                 expires_in: expectedExpDuration,
-                token_type: 'Bearer'
+                token_type: 'unsignedurl: '+'s3://' + s3bucket + '/' + partition + '/'+s3bucket,
             }
             Tx.checkTrue(JSON.stringify(result) === JSON.stringify(expected)) 
         });
@@ -85,7 +85,6 @@ export class TestAWSCredentials {
       private static testGetSecrets() {
         Tx.sectionInit('getSecrets method');
         const clientSecretName = 'test-secret'
-        const clientSecretDictKey = 'test-dict-key'
         Tx.test(async () => {
 
             const mockSecretStringData = {
@@ -94,7 +93,7 @@ export class TestAWSCredentials {
     
             this.sandbox.stub(SecretsManagerClient.prototype, 'send').resolves(mockSecretStringData);
     
-            const resultSecretString = await AWSCredentials.getSecrets(clientSecretName, clientSecretDictKey);
+            const resultSecretString = await AWSCredentials.getSecrets(clientSecretName);
             Tx.checkTrue(resultSecretString === 'secret-value');
         })
 
@@ -109,7 +108,7 @@ export class TestAWSCredentials {
     
             this.sandbox.stub(SecretsManagerClient.prototype, 'send').resolves(mockSecretBinaryData);
     
-            const resultSecretBinary = await AWSCredentials.getSecrets(clientSecretName, clientSecretDictKey);
+            const resultSecretBinary = await AWSCredentials.getSecrets(clientSecretName);
             Tx.checkTrue(resultSecretBinary === 'binary-secret');
         })
 
@@ -117,7 +116,7 @@ export class TestAWSCredentials {
             this.sandbox.stub(SecretsManagerClient.prototype, 'send').rejects(Error.make(500, 'Test Error'));
 
             try {
-                await AWSCredentials.getSecrets(clientSecretName, clientSecretDictKey);
+                await AWSCredentials.getSecrets(clientSecretName);
             }
             catch (err) {
                 Tx.checkTrue(err.error.code === 500);

@@ -1,65 +1,77 @@
-// Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+import sinon from "sinon";
+import { Tx } from "../../utils";
+import { AWSSTShelper } from "../../../../src/cloud/providers/aws/stshelper";
 
-import { AWSConfig } from './config';
-import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts';
+export class TestAwsStsHelper {
+    private static sandbox: sinon.SinonSandbox;
+    private static stsHelper: AWSSTShelper;
 
-export class AWSSTShelper {
-    private sts: STS;
+    public static run() {
+        describe(Tx.testInit('AWS STS Helper'), () => {
 
-    public constructor() {
-        this.sts = new STS({
-            region: AWSConfig.AWS_REGION,
-            apiVersion: '2011-11-06',
+            beforeEach(() => {
+                this.sandbox = sinon.createSandbox();
+                this.stsHelper = new AWSSTShelper();
+            });
+
+            afterEach(() => {
+                this.sandbox.restore();
+            });
+
+            this.testGetCredentials();
+            this.testPolicy();
         });
     }
 
-    public async getCredentials(
-        bucketName: string,
-        keyPath: string,
-        roleArn: string,
-        flagUpload: boolean,
-        exp: string
-    ): Promise<string> {
-        let policy: string;
+    private static testGetCredentials() {
+        Tx.sectionInit('Get Credentials');
+        const bucket = "TestBucket";
+        const keyPath = "TestKeyPath";
+        const roleArn = "TestRoleArn";
+        const exp = "1000";
+        const testCredentials = {
+            Credentials: {
+                AccessKeyId: "testAccessKeyId",
+                SecretAccessKey: "testSecretAccessKey",
+                SessionToken: "testSessionToken"
+            }
+        }
+    
+        Tx.test(async () => {
+            const flagUpload = true;
+            this.sandbox.stub(this.stsHelper, "createUploadPolicy").returns("testPolicy");
+            this.sandbox.stub((this.stsHelper as any).sts, 'send').resolves(testCredentials);
 
-        if (flagUpload === true) policy = this.createUploadPolicy(bucketName, keyPath);
-        else policy = this.createDownloadPolicy(bucketName, keyPath);
+            const result = await this.stsHelper.getCredentials(bucket, keyPath, roleArn, flagUpload, exp);
 
-        const expDuration: number = +exp;
-
-        const stsParams = {
-            ExternalId: 'OSDUAWS',
-            Policy: policy,
-            RoleArn: roleArn,
-            RoleSessionName: 'OSDUAWSAssumeRoleSession',
-            DurationSeconds: expDuration,
-        };
-        const command = new AssumeRoleCommand(stsParams);
-        const roleCredentials = await this.sts.send(command);
-
-        const tempCredentials =
-            'AccessKeyId='+roleCredentials.Credentials.AccessKeyId +
+            Tx.checkTrue(result === 'AccessKeyId='+testCredentials.Credentials.AccessKeyId +
             ';SecretAccessKey=' +
-            roleCredentials.Credentials.SecretAccessKey +
+            testCredentials.Credentials.SecretAccessKey +
             ';SessionToken=' +
-            roleCredentials.Credentials.SessionToken;
+            testCredentials.Credentials.SessionToken);
+        });
 
-        return tempCredentials;
+        Tx.test(async () => {
+            const flagUpload = false;
+            this.sandbox.stub(this.stsHelper, "createDownloadPolicy").returns("testPolicy");
+            this.sandbox.stub((this.stsHelper as any).sts, 'send').resolves(testCredentials);
+
+            const result = await this.stsHelper.getCredentials(bucket, keyPath, roleArn, flagUpload, exp);
+
+            Tx.checkTrue(result === 'AccessKeyId='+testCredentials.Credentials.AccessKeyId +
+            ';SecretAccessKey=' +
+            testCredentials.Credentials.SecretAccessKey +
+            ';SessionToken=' +
+            testCredentials.Credentials.SessionToken);
+        
+        });
     }
 
-    public createUploadPolicy(bucketName: string, keyPath: string): string {
+    private static testPolicy() {
+        Tx.sectionInit('Policy');
+        const bucketName = "TestBucket";
+        const keyPath = "TestKeyPath";
+
         const UploadPolicy = {
             Version: '2012-10-17',
             Statement: [
@@ -117,12 +129,6 @@ export class AWSSTShelper {
                 },
             ],
         };
-
-        const policy = JSON.stringify(UploadPolicy);
-        return policy;
-    }
-
-    public createDownloadPolicy(bucketName: string, keyPath: string): string {
         const downloadPolicy = {
             Version: '2012-10-17',
             Statement: [
@@ -163,7 +169,14 @@ export class AWSSTShelper {
             ],
         };
 
-        const policy = JSON.stringify(downloadPolicy);
-        return policy;
+        Tx.test(() => {
+            const result = this.stsHelper.createUploadPolicy(bucketName, keyPath);
+            Tx.checkTrue(result === JSON.stringify(UploadPolicy));
+        });
+
+        Tx.test(() => {
+            const result = this.stsHelper.createDownloadPolicy(bucketName, keyPath);
+            Tx.checkTrue(result === JSON.stringify(downloadPolicy));
+        });
     }
 }
