@@ -322,6 +322,22 @@ export class TestServicesUtilityHandler {
             req.query = {};
             req.query.sdpath = "sd://";
             req.query.wmode = "all";
+            req.query.limit = "-1";
+            req.query.cursor = "";
+
+            this.sandbox.stub(TenantDAO, 'getAll').resolves([tenantModel]);
+
+            await Handler.handler(req, res, op);
+            Tx.check200(res.statusCode)
+        } );
+
+        Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
+
+            op = UtilityOP.LS;
+
+            req.query = {};
+            req.query.sdpath = "sd://";
+            req.query.wmode = "all";
             req.query.limit = "-2";
             req.query.cursor = "";
 

@@ -64,6 +64,23 @@ export class ParserTest {
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
             this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'POST';
+            expReq.body.limit = '-1';
+            let request = DatasetParser.list(expReq);
+            Tx.checkTrue(request.pagination.limit === -1);
+        });
+
+        Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            expReq.method = 'POST';
+            expReq.body.limit = '-2';
+            expect(() => DatasetParser.list(expReq))
+                .to.throw()
+                .with.property('error')
+                .that.has.property('message')
+                .that.contains('The \'limit\' input param cannot be less than zero.');
+        });
+
+        Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            expReq.method = 'POST';
             let filter = new StubFilter();
             this.sandbox.stub(DatasetFilterParser, 'parseFilter').returns(filter);
             expReq.body.filter = new Object();

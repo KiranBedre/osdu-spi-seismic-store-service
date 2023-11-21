@@ -102,7 +102,7 @@ export abstract class AbstractJournal implements IJournal {
 
         let query: any = this.customizeDatasetsQuery(queryModel, params)
 
-        if (dataset.path && dataset.path !== '/') {
+        if (dataset.path) {
             if (recursive && recursive === true)
             {
                 query = query.filter('path', 'STARTSWITH', dataset.path);

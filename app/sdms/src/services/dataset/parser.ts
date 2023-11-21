@@ -173,7 +173,7 @@ export class DatasetParser {
                 };
             }
         }
-        if (input.pagination?.limit < 0) {
+        if (input.pagination?.limit < 0 && input.pagination?.limit !== -1) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The \'limit\' input param cannot be less than zero.'));
         }
