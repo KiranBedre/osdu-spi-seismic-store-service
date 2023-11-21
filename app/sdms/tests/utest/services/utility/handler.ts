@@ -329,6 +329,7 @@ export class TestServicesUtilityHandler {
 
             await Handler.handler(req, res, op);
             Tx.check200(res.statusCode)
+            
         } );
 
         Tx.testExpAsync(async (req: expRequest, res: expResponse, op: UtilityOP) => {
