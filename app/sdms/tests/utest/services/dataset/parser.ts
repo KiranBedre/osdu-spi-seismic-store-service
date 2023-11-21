@@ -70,6 +70,7 @@ export class ParserTest {
         });
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'POST';
             expReq.body.limit = '-2';
             expect(() => DatasetParser.list(expReq))
@@ -80,6 +81,7 @@ export class ParserTest {
         });
 
         Tx.testExp((expReq: expRequest, expRes: expResponse) => {
+            this.sandbox.replace(Config, 'ENABLE_ADVANCED_QUERY_FILTERS', true);
             expReq.method = 'POST';
             let filter = new StubFilter();
             this.sandbox.stub(DatasetFilterParser, 'parseFilter').returns(filter);
