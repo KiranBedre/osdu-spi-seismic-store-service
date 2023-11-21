@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f4fd69d4-0eac-44b4-9e73-e878d1e8cecc",
+		"_postman_id": "260bc1b0-cec2-427d-b137-da65eba4d58e",
 		"name": "SDMS-E2E ver.M22 - Release 0.25",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "10879044"
@@ -19686,6 +19686,19 @@
 									"\r",
 									"    pm.test(\"Atleast 1 dataset must be present\", function() {\r",
 									"        pm.expect(jsonData.length).gte(1);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Check `dsx01` is not returned as it's not in root path(/)\", function () {\r",
+									"        var test = false;\r",
+									"        if(jsonData.length >=1) {\r",
+									"            for(var i = 0; i < jsonData.length; i++) {\r",
+									"                if(jsonData[i] === pm.environment.get('dsx01')) {\r",
+									"                    test = true\r",
+									"                break;\r",
+									"                }\r",
+									"            }\r",
+									"        } \r",
+									"        pm.expect(test).to.eql(false);\r",
 									"    });\r",
 									"\r",
 									"    // Reset environment variables if _.retryOnFailure function was used before\r",

@@ -26,6 +26,9 @@ public class Cosmos : IDataAccess
 {
     private const string DATABASE_ID = "sdms-db";
     private const string CONTAINER_ID = "data";
+    private const int MAX_ITEM_COUNT = 1000;
+    private const int MAX_CONCURRENCY = 32;
+
     private static readonly Dictionary<string, CosmosClient> _cosmosClients = new();
 
     /// <param name="cs">Connection string for the target Cosmos instance</param>
@@ -46,19 +49,12 @@ public class Cosmos : IDataAccess
         var container = database.GetContainer(CONTAINER_ID);
         var records = new List<object>();
         var paginatedRecords = new PaginatedRecords();
-        var options = new QueryRequestOptions()
-        {
-            // MaxItemCount set to -1 lets CosmosDB decide on the optimal returned item count
-            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v2&pivots=programming-language-csharp#tune-the-page-size
-            MaxItemCount = limit ?? -1,
-            // number of parallel tasks is min(32, number of partitions that needs to be visited for answering a query)
-            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v3&pivots=programming-language-csharp#tune-the-degree-of-parallelism
-            MaxConcurrency = 32
-        };
+        var options = GetQueryRequestOptions(limit);
         var query = container.GetItemQueryIterator<object>(
             sql,
             continuationToken: ctoken,
             requestOptions: options);
+
         if (ctoken == null && limit == null) // fetch all
         {
             while (query.HasMoreResults)
@@ -71,15 +67,35 @@ public class Cosmos : IDataAccess
             }
             paginatedRecords.continuationToken = null;
         }
-        else // fetch next page
+        else // fetch exactly requested number of items, if available
         {
-            var results = await query.ReadNextAsync();
-            foreach (var record in results)
+            var remainingItems = GetItemLimit(limit);
+            while (remainingItems > 0 && query.HasMoreResults)
             {
-                records.Add(record);
-            }
-            paginatedRecords.continuationToken = results.ContinuationToken;
+                // fetch next page
+                var results = await query.ReadNextAsync();
+                foreach (var record in results)
+                {
+                    records.Add(record);
+                }
+                paginatedRecords.continuationToken = results.ContinuationToken;
+                if (paginatedRecords.continuationToken == null)
+                {
+                    break;
+                }
 
+                remainingItems -= results.Count;
+
+                // update the query iterator to return no more than the remaining number of items
+                if (remainingItems > 0 && results.Count > 0)
+                {
+                    options = GetQueryRequestOptions(remainingItems);
+                    query = container.GetItemQueryIterator<object>(
+                        sql,
+                        continuationToken: results.ContinuationToken,
+                        requestOptions: options);
+                }
+            }
         }
         paginatedRecords.records = records;
         return paginatedRecords;
@@ -93,6 +109,17 @@ public class Cosmos : IDataAccess
         var itemResponse = await container.DeleteItemAsync<object>(id, new PartitionKey(id));
         return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
     }
+
+    private QueryRequestOptions GetQueryRequestOptions(int? limit) =>
+        new()
+        {
+            MaxItemCount = GetItemLimit(limit),
+            // number of parallel tasks is min(MAX_CONCURRENCY, number of partitions that needs to be visited for answering a query)
+            // https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-query-sdk?tabs=v3&pivots=programming-language-csharp#tune-the-degree-of-parallelism
+            MaxConcurrency = MAX_CONCURRENCY
+        };
+
+    private int GetItemLimit(int? limit) => limit is null or < 0 ? MAX_ITEM_COUNT : limit.Value;
 
     private static void initCosmosClient(string cs)
     {
@@ -108,4 +135,5 @@ public class Cosmos : IDataAccess
             });
         }
     }
+
 }
