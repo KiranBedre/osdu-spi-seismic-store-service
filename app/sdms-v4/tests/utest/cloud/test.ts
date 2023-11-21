@@ -6,6 +6,8 @@ import { TestAWSCredentials } from './aws/credentials';
 import { TestAWSStorage } from './aws/storage';
 import { TestLogger } from './aws/logger';
 import { TestAwsSecrets } from './aws/secrets';
+import { TestAwsReadiness } from './aws/readiness';
+import { TestAwsStsHelper } from './aws/stshelper';
 
 
 export class TestCloud {
@@ -18,6 +20,8 @@ export class TestCloud {
             TestAWSStorage.run();
             TestLogger.run();
             TestAwsSecrets.run();
+            TestAwsReadiness.run();
+            TestAwsStsHelper.run();
         });
 
     }

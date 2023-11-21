@@ -32,7 +32,7 @@ export class AwsSecrets {
         return tenantInfo;
     }
 
-    public static async getBucketFromPartitionID(dataPartitionID: string): Promise<string> {
+    public static async getBucketFromPartitionID(dataPartitionID: string, awsSSMHelper: AWSSSMhelper = new AWSSSMhelper()): Promise<string> {
         const cache = getInMemoryCacheInstance();
         const cacheKey = 'aws-bucket' + dataPartitionID;
         const res = cache.get<string>(cacheKey);
@@ -41,7 +41,6 @@ export class AwsSecrets {
         };
 
         const tenantId = await AwsSecrets.getTenantIdFromPartitionID(dataPartitionID);
-        const awsSSMHelper = new AWSSSMhelper();
         const tenantSsmPrefix = '/osdu/tenant-groups/' + AWSConfig.AWS_TENANT_GROUP_NAME + '/tenants/' + tenantId;
         const awsBucket = await awsSSMHelper.getSSMParameter(
             tenantSsmPrefix + '/seismic-ddms-v4/SeismicDDMSBucket/name'

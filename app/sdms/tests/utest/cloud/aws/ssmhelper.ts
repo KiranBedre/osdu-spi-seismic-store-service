@@ -34,20 +34,26 @@ export class TestAWSSSMHelper {
             const param = "TestParam";
             const value = "TestValue";
 
-            this.sandbox.stub(this.ssmHelper, "getSSMParameter").returns(Promise.resolve(value));
+            this.sandbox.stub((this.ssmHelper['ssm'] as any), "getParameter").returns({
+                promise: this.sandbox.stub().resolves({
+                    Parameter: {
+                        Value: value
+                    }
+                })
+            })
 
             const result = await this.ssmHelper.getSSMParameter(param);
 
             Tx.checkTrue(result === value);
         })
         Tx.test(async () => {
-            this.sandbox.stub(this.ssmHelper, "getSSMParameter").returns(Promise.reject(new Error("Test Error")));
+            this.sandbox.stub((this.ssmHelper['ssm'] as any), "getParameter").returns({ promise: this.sandbox.stub().rejects(new Error('test error')) });
 
             try {
                 await this.ssmHelper.getSSMParameter("TestParam");
             }
             catch (err) {
-                Tx.checkTrue(err.message === "Test Error");
+                Tx.checkTrue(err.message === "test error");
             }
         })
     }

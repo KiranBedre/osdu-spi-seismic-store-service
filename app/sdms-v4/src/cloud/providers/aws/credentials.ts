@@ -64,12 +64,12 @@ export class AWSCredentials extends AbstractCredentials {
             flagUpload = true;
         }
 
-        credentials = await this.awsSTSHelper.getCredentials(s3bucket, partition,roleArn,flagUpload,AWSCredentials.expDuration);
+        credentials = await this.awsSTSHelper.getCredentials(s3bucket, partition+'/'+bucket,roleArn,flagUpload,AWSCredentials.expDuration);
 
         const result = {
             access_token: credentials,
             expires_in: +AWSCredentials.expDuration,
-            token_type: 'Bearer',
+            token_type: 'unsignedurl: '+'s3://' + s3bucket + '/' + partition + '/'+bucket,
         };
         return result;
     }
@@ -86,11 +86,9 @@ export class AWSCredentials extends AbstractCredentials {
         const oauthCustomScopeSsmPath='/osdu/cognito/'+ cognitoName+'/oauth/custom-scope';
         const clientIdSsmPath='/osdu/cognito/'+cognitoName+'/client/client-credentials/id';
         const clientSecretName='/osdu/cognito/'+cognitoName+'/client-credentials-secret';
-        // pragma: allowlist nextline secret
-        const clientSecretDictKey='client_credentials_client_secret'
 
         const clientId = await AWSCredentials.awsSSMHelper.getSSMParameter(clientIdSsmPath);
-        const clientSecret = await AWSCredentials.getSecrets(clientSecretName, clientSecretDictKey);
+        const clientSecret = await AWSCredentials.getSecrets(clientSecretName);
         const tokenUrl = await AWSCredentials.awsSSMHelper.getSSMParameter(tokenUrlSsmPath);
         const oauthCustomScope = await AWSCredentials.awsSSMHelper.getSSMParameter(oauthCustomScopeSsmPath);
         const auth = clientId+':'+clientSecret;
@@ -117,8 +115,8 @@ export class AWSCredentials extends AbstractCredentials {
         const val = response['access_token'];
         return (Promise.resolve(val.toString()));
     }
-    // eslint-disable-next-line
-    public static async getSecrets(clientSecretName: string, clientSecretDictKey: string): Promise<string> {
+
+    public static async getSecrets(clientSecretName: string): Promise<string> {
         const params = {
             SecretId: clientSecretName
         };

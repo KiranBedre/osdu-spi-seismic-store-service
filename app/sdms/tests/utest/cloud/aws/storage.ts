@@ -40,6 +40,7 @@ export class TestStorage {
             this.testDeleteObjects();
             this.testCopy();
             this.testBucketExists();
+            this.testGetStorageTiers();
         });
     }
 
@@ -286,6 +287,17 @@ export class TestStorage {
             });
             const result = await this.storage.bucketExists(bucketName);
             Tx.checkTrue(result);
+        });
+    }
+
+    private static testGetStorageTiers() {
+        Tx.sectionInit('Get Storage Tiers');
+        Tx.test(async () => {
+            try {
+                await this.storage.getStorageTiers();
+            } catch (err) {
+                Tx.checkTrue(err.message === "Method not implemented.");
+            }
         });
     }
 }
