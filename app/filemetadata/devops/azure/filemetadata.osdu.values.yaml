@@ -38,9 +38,12 @@ configuration:
         path: /seismic-file-metadata/api/v1/service-status
     auth:
       disable:
-        - "/seismic-file-metadata/api/v1/swagger-ui.html*"
-        - "/seismic-file-metadata/api/v1/service-status"
         - "/seismic-file-metadata/api/service-status"
+        - "/seismic-file-metadata/api/swagger-ui.html*"
+        - "/seismic-file-metadata/api/static/*"
+        - "/seismic-file-metadata/api/openapi.json"
+        - "/seismic-file-metadata/api/v1/service-status"
+        
     config:
       CLOUDPROVIDER: "azure"
       SDMS_SERVICE_HOST: "http://seismic-ddms-service/seistore-svc/api/v3"
