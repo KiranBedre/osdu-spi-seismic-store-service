@@ -21,7 +21,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: seismic-dms-file-metadata-service
+      app: {{ .Release.Name }}
   action: DENY
   rules:
     - from:
@@ -29,4 +29,11 @@ spec:
             notRequestPrincipals: [ "*" ]
       to:
         - operation:
-            notPaths: [ "/", "/seismic-file-metadata/api/*", "/seismic-file-metadata/api/v1/*", "/seismic-file-metadata/api/v2/*" ]
+            notPaths: [ 
+              "/",
+              "/seismic-file-metadata/api/service-status", 
+              "/seismic-file-metadata/api/swagger-ui.html*",
+              "/seismic-file-metadata/api/static/*",
+              "/seismic-file-metadata/api/openapi.json",
+              "/seismic-file-metadata/api/v1/service-status"
+            ]
