@@ -383,7 +383,8 @@ export class TestAzureCosmosDbDAO {
                 AzureConfig.SIDECAR_URL + '/query',
                 {
                     cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
-                    sql: distinctPathsQuery
+                    sql: distinctPathsQuery,
+                    corrid: undefined
                 },
             );
 
@@ -422,7 +423,8 @@ export class TestAzureCosmosDbDAO {
                 AzureConfig.SIDECAR_URL + '/query',
                 {
                     cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
-                    sql: subfoldersQuery
+                    sql: subfoldersQuery,
+                    corrid: undefined
                 },
             );
 

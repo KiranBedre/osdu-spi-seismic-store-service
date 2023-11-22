@@ -38,6 +38,12 @@ spec:
           ports:
             - protocol: TCP
               containerPort: 7138
+          env:
+          - name: KEYVAULT_URL
+            valueFrom:
+              configMapKeyRef:
+                name: osdu-svc-properties
+                key: ENV_KEYVAULT
           envFrom:
             - configMapRef:
                 name: seistore-svc-sidecar-properties

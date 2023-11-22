@@ -494,7 +494,8 @@ export class TestAzureCosmosDbListDatasets {
                 AzureConfig.SIDECAR_URL + '/query',
                 {
                     cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
-                    sql: query
+                    sql: query,
+                    corrid: undefined
                 },
             );
 
@@ -541,6 +542,7 @@ export class TestAzureCosmosDbListDatasets {
                 {
                     cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
                     sql: query,
+                    corrid: undefined,
                     ctoken: pagination.cursor,
                     limit: pagination.limit
                 },
@@ -596,6 +598,7 @@ export class TestAzureCosmosDbListDatasets {
                 {
                     cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
                     sql: expectedQuery,
+                    corrid: undefined,
                     ctoken: pagination.cursor,
                     limit: pagination.limit
                 },

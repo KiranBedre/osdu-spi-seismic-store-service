@@ -23,7 +23,7 @@ import { TenantModel } from '../../../services/tenant';
 import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
 import { Config } from '../..';
-import { Error, Utils } from '../../../shared';
+import { CallContext, Error, Utils } from '../../../shared';
 
 import axios, { AxiosInstance } from 'axios';
 import { DatasetModel, ListDatasetsParams, QueryFilter, QueryFilterVisitor, AndQueryFilter, MatchQueryFilter,
@@ -262,7 +262,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             const url = AzureConfig.SIDECAR_URL + '/query'
             const payload = {
                 'cs': 'AccountEndpoint=' + cParams.endpoint + ';' + 'AccountKey=' + cParams.key + ';',
-                'sql': sqlQuery
+                'sql': sqlQuery,
+                'corrid': CallContext.correlationId
             };
             try {
                 const result = await AzureCosmosDbDAO.axiosInstance.post(url, payload);
@@ -304,7 +305,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             const url = AzureConfig.SIDECAR_URL + '/query'
             const payload = {
                 'cs': 'AccountEndpoint=' + cParams.endpoint + ';' + 'AccountKey=' + cParams.key + ';',
-                'sql': sqlQuery
+                'sql': sqlQuery,
+                'corrid': CallContext.correlationId
             };
             try {
                 const result = await AzureCosmosDbDAO.axiosInstance.post(url, payload);
@@ -426,6 +428,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 payload['cs'] = 'AccountEndpoint=' + connectionParams.endpoint + ';' +
                     'AccountKey=' + connectionParams.key + ';'
                 payload['sql'] = sqlQuery;
+                payload['corrid'] = CallContext.correlationId;
                 if (cosmosQuery.pagingStart) {
                     cosmosQuery.pagingStart = cosmosQuery.pagingStart.replace(/\\/g, '');
                     if (cosmosQuery.pagingStart.startsWith('\"[')) {

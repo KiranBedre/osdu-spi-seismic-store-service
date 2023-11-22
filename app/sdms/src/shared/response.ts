@@ -19,6 +19,7 @@ import { Config, LoggerFactory } from '../cloud';
 import { Feature, FeatureFlags } from './featureflags';
 
 import xssfilters from 'xss-filters';
+import { CallContext } from './context';
 
 export class Response {
 
@@ -54,8 +55,8 @@ export class Response {
             'X-Frame-Options': 'DENY',
             'X-XSS-Protection': '1',
         };
-        if(res.locals[Config.CORRELATION_ID]) {
-            headers[Config.CORRELATION_ID] = res.locals[Config.CORRELATION_ID]
+        if(CallContext.correlationId) {
+            headers[Config.CORRELATION_ID] = CallContext.correlationId;
         }
         res.set(headers).status(code).send(JSON.parse(xssfilters.inHTMLData(JSON.stringify(data))));
         this.writeMetric('Response Size', res.get('content-length') ? +res.get('content-length') : 0);

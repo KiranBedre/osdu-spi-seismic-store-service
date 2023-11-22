@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 import * as appinsights from 'applicationinsights';
-import { Utils } from '../../../shared';
+import { CallContext, Utils } from '../../../shared';
 import { Config } from '../../config';
 import { AbstractLogger, LoggerFactory } from '../../logger';
 import { AzureConfig } from './config';
@@ -147,7 +147,7 @@ export class AzureInsightsLogger extends AbstractLogger {
             message: (((key && key.length > 5) ? ('[***' + key.substr(key.length - 5) + '] ') : '')
             + '[' + req.method + '] ' + req.url),
             properties: {
-                'correlation-id': req.headers[Config.CORRELATION_ID],
+                'correlation-id': CallContext.correlationId,
             },
         };
         return telemetry;

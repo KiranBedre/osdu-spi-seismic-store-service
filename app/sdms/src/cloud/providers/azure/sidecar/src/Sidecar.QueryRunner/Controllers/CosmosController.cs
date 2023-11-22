@@ -16,6 +16,8 @@
 
 namespace Sidecar.QueryRunner.Controllers;
 
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 
@@ -24,10 +26,12 @@ using Microsoft.Azure.Cosmos;
 public class CosmosController : ControllerBase
 {
     private readonly IDataAccess _dataAccess;
+    private readonly TelemetryClient _telemetryClient;
 
-    public CosmosController(IDataAccess dataAccess)
+    public CosmosController(IDataAccess dataAccess, TelemetryClient telemetryClient)
     {
         _dataAccess = dataAccess;
+        _telemetryClient = telemetryClient;
     }
 
     [HttpPost("/query")]
@@ -38,6 +42,15 @@ public class CosmosController : ControllerBase
         {
             if (body.cs != null && body.sql != null)
             {
+                var customProperties = new Dictionary<string, string>();
+                // log the correlation id
+                if (body.corrid != null)
+                {
+                    customProperties.Add("correlation-id", body.corrid);
+                }
+                _telemetryClient.TrackTrace("SDMS Sidecar Trace",
+                                            SeverityLevel.Information,
+                                            customProperties);
                 return Ok(await _dataAccess.QueryAsync(body.cs, body.sql, body.ctoken, body.limit));
             }
             else if (body.cs == null)
@@ -51,6 +64,7 @@ public class CosmosController : ControllerBase
         }
         catch (CosmosException ex)
         {
+            _telemetryClient.TrackException(ex);
             return Problem(((int)ex.StatusCode) + "-" + ex.ResponseBody);
         }
 

@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AuthProviderFactory } from '../auth';
 import { Config, LoggerFactory } from '../cloud';
 import { ServiceRouter } from '../services';
-import { Error, Feature, FeatureFlags, getInMemoryCacheInstance, Response, Utils } from '../shared';
+import { CallContext, Error, Feature, FeatureFlags, getInMemoryCacheInstance, Response, Utils } from '../shared';
 import { SwaggerManager } from './swagger-manager';
 // -------------------------------------------------------------------
 // Seismic Store Service
@@ -91,6 +91,9 @@ export class Server {
 
             try {
 
+                //  reset call execution context
+                CallContext.reset();
+
                 // disable silent error logs
                 res.locals['disabled_error_logs'] = req.query['silent'] ?
                     req.query['silent'] === 'silent_for_errors' : false;
@@ -151,7 +154,7 @@ export class Server {
                     if (!req.headers[Config.CORRELATION_ID]) {
                         req.headers[Config.CORRELATION_ID] = uuidv4();
                     }
-                    res.locals[Config.CORRELATION_ID] = req.headers[Config.CORRELATION_ID];
+                    CallContext.correlationId = req.headers[Config.CORRELATION_ID] as string;
                 }
 
                 if (FeatureFlags.isEnabled(Feature.LOGGING)) {

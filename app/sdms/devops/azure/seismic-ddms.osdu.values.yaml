@@ -85,6 +85,7 @@ configuration:
         ASPNETCORE_URLS: "https://+:7138;http://+:5160"
         ASPNETCORE_ENVIRONMENT: "Development"
         ASPNETCORE_Kestrel__Certificates__Default__Path: /app/aspnetapp.pfx
+        KEYVAULT_URL: "{{ .Values.azure.keyvault.name }}"
       request:
         cpu: 0.1
         memory: 1Gi
