@@ -17,6 +17,8 @@
 import * as crypto from 'crypto';
 import * as JsYaml from 'js-yaml';
 import * as JsonRefs from 'json-refs';
+import { Operator } from '../services/dataset/model';
+
 import { Config, CredentialsFactory } from '../cloud';
 
 export class Utils {
@@ -189,4 +191,32 @@ export class Utils {
         }
     }
 
+    public static sanitizeFieldName(userInput: string): string {
+        // remove spaces at the start and and the end of the string
+        const sanitizedInput = userInput.replace(/^\s+|\s+$/g, '');
+
+        if (!/^[a-zA-Z0-9_\s]+$/.test(sanitizedInput)) {
+            throw new Error('`' +userInput + '` contains invalid characters. Only letters, numbers, space and _ are allowed.');
+        }
+
+        return sanitizedInput;
+    }
+
+    static sanitizeOperator(operator: Operator): Operator {
+        switch (operator) {
+            case '=':
+            case '!=':
+            case '<':
+            case '>':
+            case '<=':
+            case '>=':
+            case 'CONTAINS':
+            case 'RegexMatch':
+            case 'LIKE':
+            case 'STARTSWITH':
+                return operator;
+            default:
+                throw new Error('Operator `' + operator + '` not supported');
+        }
+    }
 }

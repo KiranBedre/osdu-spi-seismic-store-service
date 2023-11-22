@@ -159,15 +159,15 @@ export class NotQueryFilter implements QueryFilter {
         visitor.visitNot(this);
     }
 }
+export type Operator = '!=' | '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch' | 'LIKE' | 'STARTSWITH';
 
 export class MatchQueryFilter implements QueryFilter {
-    property: string; operator: string; value: {}; type: string;
+    property: string; operator: Operator; value: {};
 
-    constructor(property: string, operator: string, value: {}, type: string) {
+    constructor(property: string, operator: Operator, value: {}) {
         this.property = property;
         this.operator = operator;
         this.value = value;
-        this.type = type;
     }
 
     public accept(visitor: QueryFilterVisitor): void {

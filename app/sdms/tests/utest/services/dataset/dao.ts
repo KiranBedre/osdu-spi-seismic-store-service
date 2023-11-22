@@ -26,6 +26,7 @@ import { DatasetDAO as DAO } from '../../../../src/services/dataset/';
 import { Tx } from '../../utils';
 import { IJournalQueryModel } from '../../../../src/cloud/journal';
 import { threadId } from 'worker_threads';
+import { SqlParameter } from '@azure/cosmos';
 
 export class DatasetDAOTest {
 
@@ -120,8 +121,8 @@ export class DatasetDAOTest {
                 listDatasets(params: ListDatasetsParams): Promise<[any[], { endCursor?: string }]> {
                     return Promise.resolve([[datasetModel], {}]);
                 },
-                listDatasetsQuery(params: ListDatasetsParams): string {
-                    return "stubbed query";
+                listDatasetsQuery(params: ListDatasetsParams): [string, SqlParameter[]] {
+                    return ["stubbed query", []];
                 },
                 getSize(dataset: DatasetModel): Promise<{dataset_count: number, size_bytes: number}> {
                     return Promise.resolve({ dataset_count: 0, size_bytes: 0});

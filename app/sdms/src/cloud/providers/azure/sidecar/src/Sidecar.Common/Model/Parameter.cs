@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
 // ============================================================================
 
 namespace Sidecar.Common.Model;
-using Interface;
-public class QueryPaginatedRequestBody : IQueryPaginatedRequestBody
+
+using Newtonsoft.Json;
+
+# pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
+
+public class Parameter
 {
-    public string? cs { get; set; }
-    public string? sql { get; set; }
-    public string? parameters { get; set; }
-    public string? ctoken { get; set; }
-    public string? corrid { get; set; }
-    public int? limit { get; set; }
+    [JsonProperty("name")]
+    public string Name { get; set; }
+
+    [JsonProperty("value")]
+    public object Value { get; set; }
 }

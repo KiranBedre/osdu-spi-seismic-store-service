@@ -32,6 +32,7 @@ public class DeleteItemsRetrieverTests
         var subproject = "subproj";
         var query = "SELECT c.id, c.data.gcsurl, c.data.name from c WHERE subproject = \""
             + subproject + "\" AND path = \"path\"";
+        var parameters = "[]";
         var records = new List<object>
         {
             /*lang=json,strict*/
@@ -41,11 +42,11 @@ public class DeleteItemsRetrieverTests
         };
         var paginatedRecords = new PaginatedRecords { records = records };
 
-        _ = dataAccessMock.Setup(d => d.GetRecordsAsync(It.IsAny<string>(), It.IsAny<string>(), null, null))
+        _ = dataAccessMock.Setup(d => d.GetRecordsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, null))
             .ReturnsAsync(paginatedRecords);
 
         // Act
-        var result = await deleteItemsRetriever.GetItemsAsync(tenant, subproject, query);
+        var result = await deleteItemsRetriever.GetItemsAsync(tenant, query, parameters);
 
         // Assert
         Assert.NotNull(result);

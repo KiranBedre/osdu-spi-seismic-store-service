@@ -27,4 +27,6 @@ public interface IDeletionOperationMessage : IQueueMessage
     string Subproject { get; set; }
 
     string Query { get; set; }
+
+    string Parameters { get; set; }
 }

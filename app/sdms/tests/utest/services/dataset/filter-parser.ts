@@ -47,7 +47,6 @@ export class FilterParserTest {
             Tx.checkTrue(matchFilter1.property === 'name');
             Tx.checkTrue(matchFilter1.operator === 'LIKE');
             Tx.checkTrue(matchFilter1.value === 'test.%');
-            Tx.checkTrue(matchFilter1.type === 'STRING');
         });
 
         Tx.test(() => {
@@ -62,7 +61,6 @@ export class FilterParserTest {
             Tx.checkTrue(matchFilter1.property === 'sbit_count');
             Tx.checkTrue(matchFilter1.operator === '=');
             Tx.checkTrue(matchFilter1.value === 0);
-            Tx.checkTrue(matchFilter1.type === 'NUMBER');
         });
 
         Tx.test(() => {
@@ -82,7 +80,6 @@ export class FilterParserTest {
             Tx.checkTrue(matchFilter.property === 'name');
             Tx.checkTrue(matchFilter.operator === 'LIKE');
             Tx.checkTrue(matchFilter.value === 'test.%');
-            Tx.checkTrue(matchFilter.type === 'STRING');
         });
 
 
@@ -103,12 +100,12 @@ export class FilterParserTest {
                     // operators might also not require a value
                     {
                         'property': 'arbitrary property',
-                        'operator': 'FOOBAR'
+                        'operator': '='
                     },
                     {
                         'not': {
                           'property': 'aProperty',
-                          'operator': 'anOperator',
+                          'operator': 'STARTSWITH',
                           'value': 'aValue'
                         }
                     }
@@ -124,29 +121,25 @@ export class FilterParserTest {
             Tx.checkTrue(matchFilter1.property === 'name');
             Tx.checkTrue(matchFilter1.operator === 'LIKE');
             Tx.checkTrue(matchFilter1.value === 'test.%');
-            Tx.checkTrue(matchFilter1.type === 'STRING');
             Tx.checkTrue(andFilter.filters[1] instanceof MatchQueryFilter);
 
             const matchFilter2 = andFilter.filters[1] as MatchQueryFilter;
             Tx.checkTrue(matchFilter2.property === 'readonly');
             Tx.checkTrue(matchFilter2.operator === '=');
             Tx.checkTrue(matchFilter2.value === true);
-            Tx.checkTrue(matchFilter2.type === 'BOOLEAN');
 
             const matchFilter3 = andFilter.filters[2] as MatchQueryFilter;
             Tx.checkTrue(matchFilter3.property === 'arbitrary property');
-            Tx.checkTrue(matchFilter3.operator === 'FOOBAR');
+            Tx.checkTrue(matchFilter3.operator === '=');
             Tx.checkTrue(matchFilter3.value === undefined);
-            Tx.checkTrue(matchFilter3.type === 'STRING');
 
             Tx.checkTrue(andFilter.filters[3] instanceof NotQueryFilter);
             const notFilter4 = andFilter.filters[3] as NotQueryFilter;
             Tx.checkTrue(notFilter4.filter instanceof MatchQueryFilter);
             const matchFilter4 = notFilter4.filter as MatchQueryFilter;
             Tx.checkTrue(matchFilter4.property === 'aProperty');
-            Tx.checkTrue(matchFilter4.operator === 'anOperator');
+            Tx.checkTrue(matchFilter4.operator === 'STARTSWITH');
             Tx.checkTrue(matchFilter4.value === 'aValue');
-            Tx.checkTrue(matchFilter4.type === 'STRING');
         });
 
         Tx.test(() => {

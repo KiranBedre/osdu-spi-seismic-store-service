@@ -454,7 +454,7 @@ export class TestDataset {
 				limit: 5,
 			};
 
-			this.journal.listDatasets.resolves([[{}], { endCursor: 'NO_MORE_RESULTS' }]);
+			this.journal.listDatasets.resolves([[], { endCursor: 'NO_MORE_RESULTS' }]);
 			this.journal.listFolders.resolves([[{path: '/a/b/c/'}], { endCursor: 'NO_MORE_RESULTS' }]);
 			await DatasetDAO.paginatedListContent(this.journal, this.dataset, Config.LS_MODE.ALL, pagination);
 		});

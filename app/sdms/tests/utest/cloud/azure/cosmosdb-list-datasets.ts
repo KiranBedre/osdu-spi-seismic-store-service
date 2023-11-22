@@ -56,7 +56,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         this.listDatasets();
-        this.listDatasetsQuery();
+            this.listDatasetsQuery();
         });
     }
 
@@ -72,8 +72,9 @@ export class TestAzureCosmosDbListDatasets {
         }
 
         Tx.sectionInit('listDatasets');
-        let query = 'SELECT * FROM c WHERE (c.data.subproject = "' + subproject +
-            '") AND (c.data.path = "' + path + '")'
+        const paramNamePattern = '@parameter[A-Za-z0-9]{4}';
+        const expectedQueryRegExp = new RegExp(`SELECT \\* FROM c WHERE \\(c.data.subproject = ${paramNamePattern}\\) AND \\(c.data.path = ${paramNamePattern}\\)`);
+
         let queryIterator: QueryIterator<any> = CosmosDbTestHelper.getQueryIterator() as any;
 
         Tx.test(async () => {
@@ -85,23 +86,14 @@ export class TestAzureCosmosDbListDatasets {
             dataset.tenant = tenant;
             dataset.subproject = subproject;
 
-            let res = await this.cosmos.listDatasets({ dataset });
-            let expectedQuery = 'SELECT * FROM c WHERE c.data.subproject = "' + dataset.subproject + '"';
-            sinon.assert.calledWith(sinonStub, expectedQuery);
-        });
-
-        Tx.test(async () => {
-            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
-            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
-            sinonStub.returns(queryIterator);
-
-            const dataset: DatasetModel = {} as DatasetModel;
-            dataset.tenant = tenant;
-            dataset.subproject = subproject;
-            dataset.path = path;
-
-            let res = await this.cosmos.listDatasets({ dataset });
-            sinon.assert.calledWith(sinonStub, query);
+            await this.cosmos.listDatasets({ dataset });
+            let expectedQueryRegExp = new RegExp(`SELECT \\* FROM c WHERE c.data.subproject = ${paramNamePattern}`);
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 1 &&
+                    querySpec.parameters[0].name.startsWith('@parameter') &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
 
         });
 
@@ -115,11 +107,39 @@ export class TestAzureCosmosDbListDatasets {
             dataset.subproject = subproject;
             dataset.path = path;
 
-            let res = await this.cosmos.listDatasets({ dataset, pagination });
-            sinon.assert.calledWith(sinonStub, query, {
-                continuationToken: pagination.cursor,
-                maxItemCount: pagination.limit
-            });
+            await this.cosmos.listDatasets({ dataset });
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 2 &&
+                    querySpec.parameters[0].name.startsWith('@parameter') &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    querySpec.parameters[1].name.startsWith('@parameter') &&
+                    querySpec.parameters[1].value === dataset.path &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
+
+        });
+
+        Tx.test(async () => {
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
+            let sinonStub = this.sandbox.stub(Items.prototype, 'query');
+            sinonStub.returns(queryIterator);
+
+            const dataset: DatasetModel = {} as DatasetModel;
+            dataset.tenant = tenant;
+            dataset.subproject = subproject;
+            dataset.path = path;
+
+            await this.cosmos.listDatasets({ dataset, pagination });
+
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 2 &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    querySpec.parameters[1].value === dataset.path &&
+                    querySpec.continuationToken === pagination.cursor &&
+                    querySpec.maxItemCount === pagination.limit &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
+
 
         });
 
@@ -135,10 +155,7 @@ export class TestAzureCosmosDbListDatasets {
             dataset.gtags = ['gtag1'];
             const searchParam = 'name=file';
             const selectParams = ['name', 'subproject'];
-            const expectedQuery = 'SELECT c.data.name, c.data.subproject FROM c WHERE (((c.data.subproject = "'
-                + subproject + '") AND (c.data.path = "' + path +
-                '")) AND ((EXISTS (SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = \'gtag1\') OR (IS_STRING(c.data.gtags) AND STRINGEQUALS(c.data.gtags, \'gtag1\'))))) AND (c.data.name LIKE "file")';
-
+            const expectedQueryRegExp = new RegExp(`SELECT c.data.name, c.data.subproject FROM c WHERE \\(\\(\\(c.data.subproject = ${paramNamePattern}\\) AND \\(c.data.path = ${paramNamePattern}\\)\\) AND \\(\\(EXISTS \\(SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = ${paramNamePattern}\\) OR \\(IS_STRING\\(c.data.gtags\\) AND STRINGEQUALS\\(c.data.gtags, ${paramNamePattern}\\)\\)\\)\\)\\) AND \\(c.data.name LIKE ${paramNamePattern}\\)`);
             const listParams: ListDatasetsParams = {
                 dataset,
                 pagination,
@@ -147,10 +164,16 @@ export class TestAzureCosmosDbListDatasets {
             };
             await this.cosmos.listDatasets(listParams);
 
-            sinon.assert.calledWith(sinonStub, expectedQuery, {
-                continuationToken: pagination.cursor,
-                maxItemCount: pagination.limit
-            });
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 4 &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    querySpec.parameters[1].value === dataset.path &&
+                    querySpec.parameters[2].value === dataset.gtags[0] &&
+                    querySpec.parameters[3].value === searchParam.split('=')[1] &&
+                    querySpec.continuationToken === pagination.cursor &&
+                    querySpec.maxItemCount === pagination.limit &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
         });
 
         Tx.test(async () => {
@@ -190,17 +213,14 @@ export class TestAzureCosmosDbListDatasets {
             let tag = 'tagB';
             let fileName = 'randomfile.txt';
             const filter = new AndQueryFilter(new NotQueryFilter(new AndQueryFilter(
-                new MatchQueryFilter('gtags', 'CONTAINS', tag, 'STRING'),
-                new MatchQueryFilter('name', 'CONTAINS', fileName, 'STRING')
+                new MatchQueryFilter('gtags', 'CONTAINS', tag),
+                new MatchQueryFilter('name', 'CONTAINS', fileName)
             )));
 
-
             const selectParams = ['name', 'path'];
-            const expectedQuery = 'SELECT c.data.name, c.data.path FROM c WHERE (c.data.subproject = "' +
-                subproject + '") AND ((NOT (((EXISTS (SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = \'' +
-                tag + '\') OR (IS_STRING(c.data.gtags) AND STRINGEQUALS(c.data.gtags, \'' + tag + '\')))) AND ' +
-                '((EXISTS (SELECT VALUE 1 FROM t IN c.data.name WHERE t = \'' + fileName + '\') ' +
-                'OR (IS_STRING(c.data.name) AND STRINGEQUALS(c.data.name, \'' + fileName + '\')))))))';
+            const expectedQueryRegExp = new RegExp(
+                `SELECT c.data.name, c.data.path FROM c WHERE \\(c.data.subproject = ${paramNamePattern}\\) AND \\(\\(NOT \\(\\(\\(EXISTS \\(SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = ${paramNamePattern}\\) OR \\(IS_STRING\\(c.data.gtags\\) AND STRINGEQUALS\\(c.data.gtags, ${paramNamePattern}\\)\\)\\)\\) AND \\(\\(EXISTS \\(SELECT VALUE 1 FROM t IN c.data.name WHERE t = ${paramNamePattern}\\) OR \\(IS_STRING\\(c.data.name\\) AND STRINGEQUALS\\(c.data.name, ${paramNamePattern}\\)\\)\\)\\)\\)\\)\\)`
+            );
 
             let searchParam;
 
@@ -213,10 +233,15 @@ export class TestAzureCosmosDbListDatasets {
             };
             await this.cosmos.listDatasets(listParams);
 
-            sinon.assert.calledWith(sinonStub, expectedQuery, {
-                continuationToken: pagination.cursor,
-                maxItemCount: pagination.limit
-            });
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 3 &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    querySpec.parameters[1].value === tag &&
+                    querySpec.parameters[2].value === fileName &&
+                    querySpec.continuationToken === pagination.cursor &&
+                    querySpec.maxItemCount === pagination.limit &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
         });
 
         Tx.test(async () => {
@@ -250,17 +275,12 @@ export class TestAzureCosmosDbListDatasets {
             let value1 = 'A%';
             let value2 = 0;
             const filter = new OrQueryFilter(
-                new MatchQueryFilter('name', 'LIKE', value1, 'STRING'),
-                new MatchQueryFilter('sbit_count', '=', value2, 'NUMBER')
+                new MatchQueryFilter('name', 'LIKE', value1),
+                new MatchQueryFilter('sbit_count', '=', value2)
             );
-
-
             const selectParams = ['name', 'path'];
-            const expectedQuery = 'SELECT c.data.name, c.data.path FROM c WHERE (c.data.subproject = "' + subproject +
-                '") AND ((c.data.name LIKE "' + value1 + '") OR (c.data.sbit_count = ' + value2 + '))';
-
+            const expectedQueryRegExp = new RegExp(`SELECT c.data.name, c.data.path FROM c WHERE \\(c.data.subproject = ${paramNamePattern}\\) AND \\(\\(c.data.name LIKE ${paramNamePattern}\\) OR \\(c.data.sbit_count = ${paramNamePattern}\\)\\)`);
             let searchParam;
-
             const listParams: ListDatasetsParams = {
                 dataset,
                 pagination,
@@ -270,10 +290,15 @@ export class TestAzureCosmosDbListDatasets {
             };
             await this.cosmos.listDatasets(listParams);
 
-            sinon.assert.calledWith(sinonStub, expectedQuery, {
-                continuationToken: pagination.cursor,
-                maxItemCount: pagination.limit
-            });
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 3 &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    querySpec.parameters[1].value === value1 &&
+                    querySpec.parameters[2].value === value2 &&
+                    querySpec.continuationToken === pagination.cursor &&
+                    querySpec.maxItemCount === pagination.limit &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
         });
 
         Tx.test(async () => {
@@ -317,20 +342,16 @@ export class TestAzureCosmosDbListDatasets {
             let value3 = 'WR%';
             const filter = new AndQueryFilter(
                 new OrQueryFilter(
-                    new MatchQueryFilter('name', 'LIKE', value1, 'STRING'),
-                    new MatchQueryFilter('name', 'LIKE', value2, 'STRING')
+                    new MatchQueryFilter('name', 'LIKE', value1),
+                    new MatchQueryFilter('name', 'LIKE', value2)
                 ),
                 new NotQueryFilter(
-                    new MatchQueryFilter('name', 'LIKE', value3, 'STRING')
+                    new MatchQueryFilter('name', 'LIKE', value3)
                 )
             );
 
             const selectParams = ['name', 'path'];
-
-            const expectedQuery = 'SELECT c.data.name, c.data.path FROM c WHERE (c.data.subproject = "' + subproject +
-                '") AND (((c.data.name LIKE "' + value1 + '") OR (c.data.name LIKE "' + value2 + '"))' +
-                ' AND (NOT (c.data.name LIKE "' + value3 + '")))';
-
+            const expectedQueryRegExp = new RegExp(`SELECT c.data.name, c.data.path FROM c WHERE \\(c.data.subproject = ${paramNamePattern}\\) AND \\(\\(\\(c.data.name LIKE ${paramNamePattern}\\) OR \\(c.data.name LIKE ${paramNamePattern}\\)\\) AND \\(NOT \\(c.data.name LIKE ${paramNamePattern}\\)\\)\\)`);
             let searchParam;
 
             const listParams: ListDatasetsParams = {
@@ -342,10 +363,16 @@ export class TestAzureCosmosDbListDatasets {
             };
             await this.cosmos.listDatasets(listParams);
 
-            sinon.assert.calledWith(sinonStub, expectedQuery, {
-                continuationToken: pagination.cursor,
-                maxItemCount: pagination.limit
-            });
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 4 &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    querySpec.parameters[1].value === value1 &&
+                    querySpec.parameters[2].value === value2 &&
+                    querySpec.parameters[3].value === value3 &&
+                    querySpec.continuationToken === pagination.cursor &&
+                    querySpec.maxItemCount === pagination.limit &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
         });
 
         Tx.test(async () => {
@@ -412,35 +439,27 @@ export class TestAzureCosmosDbListDatasets {
             let value3 = 'tagA';
             let value4 = 'R%';
             let value5 = 'A%';
-            let value6 = 'true';
+            let value6 = true;
             const filter = new OrQueryFilter(
                 new AndQueryFilter(
-                    new MatchQueryFilter('name', 'LIKE', value1, 'STRING'),
-                    new MatchQueryFilter('readonly', '=', value2, 'BOOLEAN'),
+                    new MatchQueryFilter('name', 'LIKE', value1),
+                    new MatchQueryFilter('readonly', '=', value2),
                     new NotQueryFilter(
-                        new MatchQueryFilter('gtags', 'CONTAINS', value3, 'STRING')
+                        new MatchQueryFilter('gtags', 'CONTAINS', value3)
                     )
                 ),
                 new AndQueryFilter(
                     new OrQueryFilter(
-                        new MatchQueryFilter('name', 'LIKE', value4, 'STRING'),
-                        new MatchQueryFilter('name', 'LIKE', value5, 'STRING')
+                        new MatchQueryFilter('name', 'LIKE', value4),
+                        new MatchQueryFilter('name', 'LIKE', value5)
                     ),
-                    new MatchQueryFilter('readonly', '=', value6, 'BOOLEAN')
+                    new MatchQueryFilter('readonly', '=', value6)
                 )
             );
             
             const selectParams = ['name', 'path'];
-            
-            const expectedQuery = 'SELECT c.data.name, c.data.path FROM c WHERE (c.data.subproject = "' + subproject +
-                '") AND (((c.data.name LIKE "' + value1 + '") AND (c.data.readonly = ' + value2 + ')' +
-                ' AND (NOT ((EXISTS (SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = \'' + value3 + '\')' +
-                ' OR (IS_STRING(c.data.gtags) AND STRINGEQUALS(c.data.gtags, \'' + value3 + '\'))))))' +
-                ' OR (((c.data.name LIKE "' + value4 + '") OR (c.data.name LIKE "' + value5 + '"))' +
-                ' AND (c.data.readonly = ' + value6 + ')))';
-
+            const expectedQueryRegExp = new RegExp(`SELECT c.data.name, c.data.path FROM c WHERE \\(c.data.subproject = ${paramNamePattern}\\) AND \\(\\(\\(c.data.name LIKE ${paramNamePattern}\\) AND \\(c.data.readonly = ${paramNamePattern}\\) AND \\(NOT \\(\\(EXISTS \\(SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = ${paramNamePattern}\\) OR \\(IS_STRING\\(c.data.gtags\\) AND STRINGEQUALS\\(c.data.gtags, ${paramNamePattern}\\)\\)\\)\\)\\)\\) OR \\(\\(\\(c.data.name LIKE ${paramNamePattern}\\) OR \\(c.data.name LIKE ${paramNamePattern}\\)\\) AND \\(c.data.readonly = ${paramNamePattern}\\)\\)\\)`);
             let searchParam;
-
             const listParams: ListDatasetsParams = {
                 dataset,
                 pagination,
@@ -450,10 +469,19 @@ export class TestAzureCosmosDbListDatasets {
             };
             await this.cosmos.listDatasets(listParams);
 
-            sinon.assert.calledWith(sinonStub, expectedQuery, {
-                continuationToken: pagination.cursor,
-                maxItemCount: pagination.limit
-            });
+            sinon.assert.calledWith(sinonStub, sinon.match((querySpec) => {
+                return querySpec.parameters.length === 7 &&
+                    querySpec.parameters[0].value === dataset.subproject &&
+                    querySpec.parameters[1].value === value1 &&
+                    querySpec.parameters[2].value === value2 &&
+                    querySpec.parameters[3].value === value3 &&
+                    querySpec.parameters[4].value === value4 &&
+                    querySpec.parameters[5].value === value5 &&
+                    querySpec.parameters[6].value === value6 &&
+                    querySpec.continuationToken === pagination.cursor &&
+                    querySpec.maxItemCount === pagination.limit &&
+                    expectedQueryRegExp.test(querySpec.query);
+            }));
         });
 
 
@@ -487,17 +515,17 @@ export class TestAzureCosmosDbListDatasets {
             dataset.path = path;
 
             const results = await this.cosmos.listDatasets({ dataset });
-
+            
             this.sandbox.assert.calledWith(
                 // @ts-ignore
                 this.axiosInstance.post,
-                AzureConfig.SIDECAR_URL + '/query',
+                sinon.match(AzureConfig.SIDECAR_URL + '/query'),
                 {
                     cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
-                    sql: query,
+                    sql: sinon.match(expectedQueryRegExp),
+                    parameters: sinon.match.any,
                     corrid: undefined
-                },
-            );
+                });
 
             expect(results[0]).to.have.same.members(expectedDatasets);
             expect(results[1].endCursor).to.be.undefined
@@ -538,15 +566,15 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.assert.calledWith(
                 // @ts-ignore
                 this.axiosInstance.post,
-                AzureConfig.SIDECAR_URL + '/query',
+                sinon.match(AzureConfig.SIDECAR_URL + '/query'),
                 {
                     cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
-                    sql: query,
+                    sql: sinon.match(expectedQueryRegExp),
+                    parameters: sinon.match.any,
                     corrid: undefined,
                     ctoken: pagination.cursor,
                     limit: pagination.limit
-                },
-            );
+                });
 
             expect(results[0]).to.have.same.members(expectedDatasets);
             expect(results[1].endCursor).to.not.be.undefined
@@ -579,9 +607,10 @@ export class TestAzureCosmosDbListDatasets {
             dataset.gtags = ['gtag1'];
             const searchParam = 'name=file';
             const selectParams = ['name', 'subproject'];
-            const expectedQuery = 'SELECT c.data.name, c.data.subproject FROM c WHERE (((c.data.subproject = "'
-                + subproject + '") AND (c.data.path = "' + path +
-                '")) AND ((EXISTS (SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = \'gtag1\') OR (IS_STRING(c.data.gtags) AND STRINGEQUALS(c.data.gtags, \'gtag1\'))))) AND (c.data.name LIKE "file")';
+            // const expectedQuery = 'SELECT c.data.name, c.data.subproject FROM c WHERE (((c.data.subproject = "'
+            //     + subproject + '") AND (c.data.path = "' + path +
+            //     '")) AND ((EXISTS (SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = \'gtag1\') OR (IS_STRING(c.data.gtags) AND STRINGEQUALS(c.data.gtags, \'gtag1\'))))) AND (c.data.name LIKE "file")';
+            const expectedQueryRegExp = new RegExp(`SELECT c.data.name, c.data.subproject FROM c WHERE \\(\\(\\(c.data.subproject = ${paramNamePattern}\\) AND \\(c.data.path = ${paramNamePattern}\\)\\) AND \\(\\(EXISTS \\(SELECT VALUE 1 FROM t IN c.data.gtags WHERE t = ${paramNamePattern}\\) OR \\(IS_STRING\\(c.data.gtags\\) AND STRINGEQUALS\\(c.data.gtags, ${paramNamePattern}\\)\\)\\)\\)\\) AND \\(c.data.name LIKE ${paramNamePattern}\\)`);
 
             const listParams: ListDatasetsParams = {
                 dataset,
@@ -594,66 +623,79 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.assert.calledWith(
                 // @ts-ignore
                 this.axiosInstance.post,
-                AzureConfig.SIDECAR_URL + '/query',
+                sinon.match(AzureConfig.SIDECAR_URL + '/query'),
                 {
                     cs: 'AccountEndpoint=myendpoint;AccountKey=mykey;',
-                    sql: expectedQuery,
+                    sql: sinon.match(expectedQueryRegExp),
+                    parameters: sinon.match.any,
                     corrid: undefined,
                     ctoken: pagination.cursor,
                     limit: pagination.limit
-                },
-            );
+                });
         });
     }
 
     private static listDatasetsQuery() {
 
         Tx.sectionInit('listDatasetsQuery');
+        const paramNamePattern = '@parameter[A-Za-z0-9]{4}';
 
         Tx.test(() => {
             let dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
             dataset.gtags = [];
             dataset.path = '';
 
-            let res = this.cosmos.listDatasetsQuery({ dataset });
-            let expectedQuery = `SELECT * FROM c WHERE c.data.subproject = "${dataset.subproject}"`;
-            assert(res === expectedQuery, 'listDatasetsQuery returned wrong query ' + res);
+            let [query, parameters] = this.cosmos.listDatasetsQuery({ dataset });
+            let expectedQueryRegExp = new RegExp(`SELECT \\* FROM c WHERE c.data.subproject = ${paramNamePattern}`);
+            assert(expectedQueryRegExp.test(query), 'listDatasetsQuery returned wrong query ' + query);
+            assert(parameters.length === 1, 'listDatasetsQuery returned wrong parameters ' + parameters);
+            assert(parameters[0].name.startsWith('@parameter'), 'listDatasetsQuery returned wrong parameter names ' + parameters[0].name);
+            assert(parameters[0].value === dataset.subproject, 'listDatasetsQuery returned wrong parameter values ' + parameters[0].value);
+
         });
 
         Tx.test(() => {
             let dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
             dataset.gtags = [];
 
-            let res = this.cosmos.listDatasetsQuery({ dataset });
-            let expectedQuery = `SELECT * FROM c WHERE (c.data.subproject = "${dataset.subproject}") AND (c.data.path = "${dataset.path}")`;
-            assert(res === expectedQuery, 'listDatasetsQuery returned wrong query ' + res);
+            let [query, parameters] = this.cosmos.listDatasetsQuery({ dataset });
+            let expectedQueryRegExp = new RegExp(`SELECT \\* FROM c WHERE \\(c.data.subproject = ${paramNamePattern}\\) AND \\(c.data.path = ${paramNamePattern}\\)`);
+            assert(expectedQueryRegExp.test(query), 'listDatasetsQuery returned wrong query ' + query);
+            assert(parameters.length === 2, 'listDatasetsQuery returned wrong parameters ' + parameters);
+            assert(parameters[0].name.startsWith('@parameter'), 'listDatasetsQuery returned wrong parameter names ' + parameters[0]);
+            assert(parameters[0].value === dataset.subproject, 'listDatasetsQuery returned wrong parameter values ' + parameters[0]);
+            assert(parameters[1].name.startsWith('@parameter'), 'listDatasetsQuery returned wrong parameter names ' + parameters[1]);
+            assert(parameters[1].value === dataset.path, 'listDatasetsQuery returned wrong parameter values ' + parameters[1]);
         });
 
         Tx.test(() => {
             const dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
             dataset.gtags = [];
 
-            let res = this.cosmos.listDatasetsQuery({ dataset, searchParam: 'field=value', selectParam: ['id', 'name'] });
-            let expectedQuery = `SELECT c.id, c.data.name FROM c WHERE ((c.data.subproject = "${dataset.subproject}") AND (c.data.path = "${dataset.path}")) AND (c.data.field LIKE "value")`;
-            assert(res === expectedQuery, 'listDatasetsQuery returned wrong query ' + res);
+            let [query, parameters] = this.cosmos.listDatasetsQuery({ dataset, searchParam: 'field=value', selectParam: ['id', 'name'] });
+            let expectedQueryRegExp = new RegExp(`SELECT c.id, c.data.name FROM c WHERE \\(\\(c.data.subproject = ${paramNamePattern}\\) AND \\(c.data.path = ${paramNamePattern}\\)\\) AND \\(c.data.field LIKE ${paramNamePattern}\\)`);
+            assert(expectedQueryRegExp.test(query), 'listDatasetsQuery returned wrong query ' + query);
+            assert(parameters.length === 3, 'listDatasetsQuery returned wrong parameters ' + parameters);
         });
 
         Tx.test(() => {
             const dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
             dataset.gtags = [];
 
-            let res = this.cosmos.listDatasetsQuery({ dataset, selectParam: ['id', 'gcsurl'], recursive: true });
-            let expectedQuery = `SELECT c.id, c.data.gcsurl FROM c WHERE (c.data.subproject = "${dataset.subproject}") AND ((STARTSWITH(c.data.path, \'${dataset.path}\', false)))`;
-            assert(res === expectedQuery, 'listDatasetsQuery returned wrong query ' + res);
+            let [query, parameters] = this.cosmos.listDatasetsQuery({ dataset, selectParam: ['id', 'gcsurl'], recursive: true });
+            let expectedQueryRegExp = new RegExp(`SELECT c.id, c.data.gcsurl FROM c WHERE \\(c.data.subproject = ${paramNamePattern}\\) AND \\(\\(STARTSWITH\\(c.data.path, ${paramNamePattern}, false\\)\\)\\)`);
+            assert(expectedQueryRegExp.test(query), 'listDatasetsQuery returned wrong query ' + query);
+            assert(parameters.length === 2, 'listDatasetsQuery returned wrong parameters ' + parameters);
         });
 
         Tx.test(() => {
             const dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
             dataset.gtags = [];
 
-            let res = this.cosmos.listDatasetsQuery({ dataset, filter: new MatchQueryFilter('property', 'RegexMatch', 'aRegex', 'STRING') });
-            let expectedQuery = `SELECT * FROM c WHERE ((c.data.subproject = "${dataset.subproject}") AND (c.data.path = "${dataset.path}")) AND ((RegexMatch(c.data.property, 'aRegex')))`;
-            assert(res === expectedQuery, 'listDatasetsQuery returned wrong query ' + res);
+            let [query, parameters] =  this.cosmos.listDatasetsQuery({ dataset, filter: new MatchQueryFilter('property', 'RegexMatch', 'aRegex') });
+            let expectedQueryRegExp = new RegExp(`SELECT \\* FROM c WHERE \\(\\(c.data.subproject = ${paramNamePattern}\\) AND \\(c.data.path = ${paramNamePattern}\\)\\) AND \\(\\(RegexMatch\\(c.data.property, ${paramNamePattern}\\)\\)\\)`);
+            assert(expectedQueryRegExp.test(query), 'listDatasetsQuery returned wrong query ' + query);
+            assert(parameters.length === 3, 'listDatasetsQuery returned wrong parameters ' + parameters);
         });
     }
 

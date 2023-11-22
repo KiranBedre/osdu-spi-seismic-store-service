@@ -100,7 +100,7 @@ export class Handler {
             filter: userInput.filter,
             recursive: true
         };
-        const query = journalClient.listDatasetsQuery(listParams);
+        const [sqlQuery, sqlParams] = journalClient.listDatasetsQuery(listParams);
 
         // push the bulk delete operation
         const operation = {
@@ -109,7 +109,8 @@ export class Handler {
             createdBy: user,
             tenant: sdPath.tenant,
             subproject: sdPath.subproject,
-            query,
+            query: sqlQuery,
+            parameters: JSON.stringify(sqlParams),
         } as IBulkDeleteOperationQueueTask;
 
         // init journalClient client

@@ -37,4 +37,8 @@ public class DeleteOperationMessage : IDeletionOperationMessage
     [JsonPropertyName("query")]
     [JsonRequired]
     public string Query { get; set; } = "";
+
+    [JsonPropertyName("parameters")]
+    [JsonRequired]
+    public string Parameters { get; set; } = "[]";
 }

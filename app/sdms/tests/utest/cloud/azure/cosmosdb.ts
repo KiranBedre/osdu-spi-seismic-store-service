@@ -26,6 +26,7 @@ import { Tx } from '../../utils';
 import { CosmosDbTestHelper } from './cosmosdb-test-helper';
 import { assert, expect } from 'chai';
 import axios, { AxiosInstance } from 'axios';
+import { JsonWebTokenError } from 'jsonwebtoken';
 
 export class TestAzureCosmosDbDAO {
     private static sandbox: sinon.SinonSandbox;
@@ -251,7 +252,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
-            azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'}, 'STRING');
+            azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'});
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
@@ -260,7 +261,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             azureCosmosDbQuery.kind = 'datasets';
-            azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'}, 'STRING');
+            azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'});
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             azureCosmosDbQuery.pagingStart = '';
             azureCosmosDbQuery.pagingLimit = 0;
@@ -297,7 +298,7 @@ export class TestAzureCosmosDbDAO {
             access_policy: ''
         };
         const feedResponse: FeedResponse<any> = {
-            resources: ['resources'],
+            resources: ['/path/to/the/folder/', '/path/to/the/folder/folder2/folder3'],
             headers: undefined,
             hasMoreResults: false,
             continuation: '',
@@ -341,16 +342,11 @@ export class TestAzureCosmosDbDAO {
             handleSplitError: undefined
         } as any;
 
-        const subfoldersQuery = 'SELECT SUBSTRING(c.data.path, LENGTH("' + datasetModel.path + '") - 1, ' +
-            'INDEX_OF(c.data.path, "/", LENGTH("' + datasetModel.path + '")) - LENGTH("' + datasetModel.path + '") + 2) as path ' +
-            'FROM c WHERE RegexMatch(c.id, "^(ds-' + datasetModel.tenant + '-' + datasetModel.subproject + '-)([a-z0-9]+)$") ' +
-            'AND STARTSWITH(c.data.path, "' + datasetModel.path + '") ' +
-            'AND c.data.path != "' + datasetModel.path + '" ' +
-            'GROUP BY SUBSTRING(c.data.path, LENGTH("' + datasetModel.path + '") - 1, ' +
-            'INDEX_OF(c.data.path, "/", LENGTH("' + datasetModel.path + '")) - LENGTH("' + datasetModel.path + '") + 2)';
+        const distinctPathsQuery = 'SELECT DISTINCT VALUE c.data.path FROM c WHERE c.data.subproject = @subproject'+
+                                    ' AND STARTSWITH(c.data.path, @path, false)';
 
-        const distinctPathsQuery = 'SELECT DISTINCT VALUE c.data.path FROM c WHERE c.data.subproject = "'
-            + datasetModel.subproject + '" AND STARTSWITH(c.data.path, "' + datasetModel.path + '", false)';
+        const distinctPathsParameters = [{'name': '@subproject','value': 'subproject'},
+                                        {'name': '@path','value': '/path/to/the/folder/'}];
 
         Tx.test(async () => {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
@@ -383,13 +379,13 @@ export class TestAzureCosmosDbDAO {
                 {
                     cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
                     sql: distinctPathsQuery,
+                    parameters: JSON.stringify(distinctPathsParameters),
                     corrid: undefined
                 },
             );
 
             expect(actualPaths).to.have.same.members(expectedPaths);
-
-
+        
         });
 
         Tx.test(async () => {
@@ -397,9 +393,25 @@ export class TestAzureCosmosDbDAO {
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
-            this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, distinctPathsQuery);
+            this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, {query: distinctPathsQuery, parameters: distinctPathsParameters});
 
         });
+
+        Tx.test(async () => {
+            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
+
+            const expectedPaths = [
+                datasetModel.path + 'folder2/',
+            ]
+
+            const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
+            itemsQueryStub.returns(queryIterator);
+            const res = await this.cosmos.listFolders(datasetModel);
+            const actualPaths = res[0].map(x => x['path']);
+            expect(actualPaths).to.have.same.members(expectedPaths);
+
+        });
+
     }
 
     private static getSize() {
