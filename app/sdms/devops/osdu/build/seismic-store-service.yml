@@ -4,6 +4,7 @@ sdms_compile-and-unit-test:
   stage: build
   coverage: '/Lines        : \d+.\d+%/'  # regular expression to parse coverage from the script's stdout
   artifacts:
+    when: always
     reports:
       junit: app/$SDMS_SERVICE/test-results.xml
       coverage_report:

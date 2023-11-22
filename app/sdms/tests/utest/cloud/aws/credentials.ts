@@ -170,6 +170,7 @@ export class TestAWSCredentials {
       Tx.test(async () => {
         const mockVal = {
           SecretString: `{"${testKey}": "your_secret_value"}`,
+          // pragma: allowlist nextline secret
           SecretBinary: 'base64_encoded_binary_secret_value'
       };
         
@@ -181,6 +182,7 @@ export class TestAWSCredentials {
       Tx.test(async () => {
         const mockVal = {
           SecretString: null,
+          // pragma: allowlist nextline secret
           SecretBinary: 'base64_encoded_binary_secret_value'
         };
         

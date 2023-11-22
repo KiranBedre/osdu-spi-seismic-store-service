@@ -32,6 +32,7 @@ export class TestAWSStsHelper {
         const testCredentials = {
             Credentials: {
                 AccessKeyId: "testAccessKeyId",
+                // pragma: allowlist nextline secret
                 SecretAccessKey: "testSecretAccessKey",
                 SessionToken: "testSessionToken"
             }
