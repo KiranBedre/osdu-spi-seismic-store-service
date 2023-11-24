@@ -4843,6 +4843,7 @@
 									"        pm.expect(jsonData).to.have.property('computed_size');",
 									"    });",
 									"",
+									"",
 									"    pm.test(\"Response has computed_size_date key\", function () {",
 									"        pm.expect(jsonData).to.have.property('computed_size_date');",
 									"    });",
