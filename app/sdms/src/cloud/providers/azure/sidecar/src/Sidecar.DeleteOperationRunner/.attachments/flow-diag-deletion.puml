@@ -1,0 +1,30 @@
+@startuml
+title Deletion Process Flow
+
+participant "Client" as client
+participant "SDMS API" as sdms
+database "Azure Storage Queue" as storageQueue
+participant "Deletion Operation Service" as service
+database "Cosmos DB" as cosmos
+database "Azure Storage" as blobs
+database "Redis Storage" as storage
+database "Redis Locks" as locks
+participant "Azure Log Analytics" as logs
+
+client -> sdms: Trigger delete operation
+sdms --> storageQueue: Create a new `Operation id`\nand push new message on the queue
+sdms -> client: Return Operation id
+storageQueue --> service: Get the new message from the queue\nand start a new deletion operation
+service -> cosmos: Retrieve items\nmatching tenant, subproject, and path
+service -> locks: Attempt to lock all datasets to be deleted with a `Delete` lock
+service -> logs: Log all dataset ids that cannot be locked with the exception details
+service -> storage: Store the operation id, creation time, the number of datasets to be deleted
+
+loop Every Batch for Datasets to be deleted
+  service  -> blobs: Retrieve blobs
+  service  -> blobs: Delete blobs
+  service  -> cosmos: Delete metadata for blobs that were successfuly deleted
+  service  -> storage: Update progress after each dataset
+  service -> logs: Log all blobs/dataset ids that cannot be deleted with the error details
+end loop
+@enduml
