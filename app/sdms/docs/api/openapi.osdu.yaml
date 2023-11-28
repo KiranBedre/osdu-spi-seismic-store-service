@@ -2092,7 +2092,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Retrieved sub-project users in admin, viewer, and editor groups
+          description: Retrieved sub-project users in admin and viewer groups
             successfully.
           content:
             application/json:
@@ -2109,7 +2109,7 @@ paths:
                   - - userA@email
                     - admin
                   - - userB@email
-                    - editor
+                    - viewer
         "400":
           description: Bad request.
         "401":
@@ -3115,12 +3115,11 @@ components:
           description: Role to be assigned to the user.
           enum:
             - viewer
-            - editor
             - admin
       example:
         email: test@slb.com
         path: sd://slb/test_project
-        group: editor
+        group: admin
     UserRemoveRequest:
       required:
         - email
