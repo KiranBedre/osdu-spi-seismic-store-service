@@ -235,7 +235,6 @@ variables:
       --history-max=3
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE
       --set global.domain=$GC_DOMAIN
-      --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
     - !reference [.gc_verify_deploy, script]
   rules:
@@ -272,7 +271,6 @@ variables:
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE
       --set global.domain=$GC_DOMAIN
       --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
-      --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
     - !reference [.gc_verify_deploy, script]
   rules:
@@ -308,7 +306,6 @@ variables:
       --set data.imagePullPolicy=Always
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE
       --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
-      --set data.googleAudiences=$GOOGLE_AUDIENCE
       --set data.serviceCloudProject=$GC_PROJECT
       --set global.domain=$GC_DOMAIN
     - !reference [.gc_verify_deploy, script]
