@@ -13,7 +13,6 @@ data:
   DATA_PARTITION_REST_HEADER_KEY: {{ .Values.data.dataPartitionRestHeaderKey  | quote }}
   DES_SERVICE_HOST_STORAGE: {{ .Values.data.storageHost  | quote }}
   DES_SERVICE_HOST_COMPLIANCE: {{ .Values.data.legalHost  | quote }}
-  SEISTORE_DES_TARGET_AUDIENCE: {{ .Values.data.googleAudiences  | quote }}
   SERVICE_CLOUD_PROJECT: {{ .Values.data.serviceCloudProject  | quote }}
   APP_ENVIRONMENT_IDENTIFIER: {{ .Values.data.appEnvironmentIdentifier  | quote }}
   IMP_SERVICE_ACCOUNT_SIGNER: {{ .Values.data.impServiceAccountSigner  | quote }}
