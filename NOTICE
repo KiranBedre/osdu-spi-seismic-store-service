@@ -961,6 +961,7 @@ The following software have components provided under the terms of this license:
 - uc.micro (from https://www.npmjs.com/package/uc.micro)
 - unbox-primitive (from https://www.npmjs.com/package/unbox-primitive)
 - underscore (from https://www.npmjs.com/package/underscore)
+- undici-types (from https://www.npmjs.com/package/undici-types)
 - universalify (from https://www.npmjs.com/package/universalify)
 - unpipe (from https://www.npmjs.com/package/unpipe)
 - untildify (from https://www.npmjs.com/package/untildify)
