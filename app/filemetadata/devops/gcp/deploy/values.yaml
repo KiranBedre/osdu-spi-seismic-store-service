@@ -7,7 +7,6 @@ data:
   dataPartitionRestHeaderKey: ""
   storageHost: "http://storage"
   legalHost: "http://legal"
-  googleAudiences: ""
   serviceCloudProject: ""
   appEnvironmentIdentifier: "osdu"
   impServiceAccountSigner: ""
