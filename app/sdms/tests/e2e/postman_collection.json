@@ -24,6 +24,7 @@
 									"    pm.environment.set('adminEmail', pm.environment.get('adminEmail').split('@')[0]);",
 									"};",
 									"",
+									"",
 									"pm.test(\"Body matches string\", function () {",
 									"    pm.expect(pm.response.text()).to.include(\"service OK\");",
 									"});"
