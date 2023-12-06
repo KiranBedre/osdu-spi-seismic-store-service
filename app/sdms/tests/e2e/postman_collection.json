@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "184bdbab-c115-42f8-8670-5c650b063615",
-		"name": "SDMS-E2E ver.M22 - Release 0.25",
+		"_postman_id": "73f7e09e-a5a6-4706-a324-a301fd95c5f5",
+		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -2238,7 +2238,7 @@
 									"            var jsonData = pm.response.json();",
 									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subprojectTest1\"));",
 									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
-									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
 									"            pm.expect(jsonData.gcs_bucket).to.exist;",
 									"            pm.expect(jsonData.acls.admins[0]).to.eql(\"data.sdms.\"+pm.environment.get(\"tenant\")+\".acl.test.admin@\"+pm.environment.get(\"domain\"));",
 									"            pm.expect(jsonData.acls.viewers[0]).to.exist;",
@@ -2410,7 +2410,7 @@
 									"            var jsonData = pm.response.json();",
 									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subprojectTest2\"));",
 									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
-									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
 									"            pm.expect(jsonData.gcs_bucket).to.exist;",
 									"             pm.expect(jsonData.acls.viewers[0]).to.eql(\"data.sdms.\"+pm.environment.get(\"tenant\")+\".acl.test.viewer@\"+pm.environment.get(\"domain\"));",
 									"            pm.expect(jsonData.acls.admins[0]).to.exist;",
@@ -2582,7 +2582,7 @@
 									"            var jsonData = pm.response.json();",
 									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subprojectTest3\"));",
 									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
-									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
 									"            pm.expect(jsonData.gcs_bucket).to.exist;",
 									"            pm.expect(jsonData.acls.admins[0]).to.exist;",
 									"            pm.expect(jsonData.acls.viewers[0]).to.exist;",
@@ -2754,7 +2754,7 @@
 									"            var jsonData = pm.response.json();",
 									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"subprojectTest4\"));",
 									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
-									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
 									"            pm.expect(jsonData.gcs_bucket).to.exist;",
 									"            pm.expect(jsonData.acls.admins[0]).to.eql(\"data.sdms.\"+pm.environment.get(\"tenant\")+\".acl.test.admin@\"+pm.environment.get(\"domain\"));",
 									"            pm.expect(jsonData.acls.viewers[0]).to.eql(\"data.sdms.\"+pm.environment.get(\"tenant\")+\".acl.test.viewer@\"+pm.environment.get(\"domain\"));",
