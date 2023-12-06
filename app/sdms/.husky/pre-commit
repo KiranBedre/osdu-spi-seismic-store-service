@@ -15,9 +15,10 @@
 #  limitations under the License.
 #  ***************************************************************************
 
-
-. "$(dirname "$0")/_/husky.sh"
 rootPath=$(git rev-parse --show-toplevel)
+
+"${rootPath}/app/sdms/.husky/_/husky.sh"
+
 cd "$rootPath"
 
-./quality.sh
+./quality.sh --git_diff

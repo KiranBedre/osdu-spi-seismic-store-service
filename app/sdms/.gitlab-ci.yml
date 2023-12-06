@@ -5,7 +5,7 @@ include:
   # build
   - local: "app/sdms/devops/osdu/build/seismic-store-service.yml"
 
-  # scan
+  # scanners
   # fossa
   - local: "app/sdms/devops/osdu/scanners/fossa.yml"
 
@@ -20,12 +20,6 @@ include:
 
   # scan for secrets
   - local: "app/sdms/devops/osdu/scanners/scan-for-secrets-node.yml"
-
-  # containerize
-  # osdu
-
-  # this job doesn't work for a long time
-  #  - local: "app/sdms/devops/osdu/containerize/osdu.yml"
 
   # deploy
   # azure

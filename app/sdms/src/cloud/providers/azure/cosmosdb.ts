@@ -249,50 +249,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async listFolders(dataset: DatasetModel): Promise<any[]> {
-        if (AzureConfig.ENABLE_OPTIMIZED_QUERY) {
-            return this.getSubfoldersUsingDistinctPathsQuery(
-                this.distinctPathsQuery(dataset.tenant, dataset.subproject, dataset.path), dataset);
-        }
-        return this.getSubfolders(this.subfoldersQuery(dataset.tenant, dataset.subproject, dataset.path), dataset);
-    }
-
-    private async getSubfolders(sqlQuery: string, dataset: DatasetModel) {
-        if (AzureConfig.SIDECAR_ENABLE_QUERY) {
-            const cParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
-            const url = AzureConfig.SIDECAR_URL + '/query'
-            const payload = {
-                'cs': 'AccountEndpoint=' + cParams.endpoint + ';' + 'AccountKey=' + cParams.key + ';',
-                'sql': sqlQuery,
-                'corrid': CallContext.correlationId
-            };
-            try {
-                const result = await AzureCosmosDbDAO.axiosInstance.post(url, payload);
-                if (!result.data.records) { return; }
-                const records = result.data.records;
-                const resultsList: {path: string}[] = []
-                for (const record of records) {
-                    resultsList.push({
-                        path: (dataset.path + record.path).replace('//', '/')
-                    });
-                }
-                return Promise.resolve([resultsList]);
-            } catch (error) {
-                this.checkAndParseCosmosError(error);
-            }
-        } else {
-            const response = await (await this.getCosmoContainer()).items.query(sqlQuery).fetchAll();
-            const results = response.resources.map(result => {
-                if (!result.data) {
-                    return result;
-                }
-                if (result.data[this.KEY.toString()]) {
-                    result.data[this.KEY] = result.data[this.KEY.toString()];
-                    delete result.data[this.KEY.toString()];
-                }
-                return result.data;
-            });
-            return Promise.resolve([results]);
-        }
+        return this.getSubfoldersUsingDistinctPathsQuery(
+            this.distinctPathsQuery(dataset.tenant, dataset.subproject, dataset.path), dataset);
     }
 
     override customizeDatasetsQuery(query: IJournalQueryModel, params: ListDatasetsParams) : IJournalQueryModel {
@@ -342,22 +300,6 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             }));
             return Promise.resolve([uniquePaths]);
         }
-    }
-
-    private subfoldersQuery(tenant: string, subproject: string, path: string): string {
-        let sqlQuery = 'SELECT SUBSTRING(c.data.path, LENGTH("' + path + '") - 1,';
-        sqlQuery += ' INDEX_OF(c.data.path, "/", LENGTH("' + path + '")) -';
-        sqlQuery += ' LENGTH("' + path + '") + 2) as path';
-        sqlQuery += ' FROM c';
-        // dataset exactly belongs to subproject provided
-        sqlQuery += ' WHERE RegexMatch(c.id, "^(ds-' + tenant + '-' + subproject + '-)([a-z0-9]+)$")';
-        // dataset that is inside of SDPATH provided
-        // subfolder of SDPATH provided
-        sqlQuery += ' AND STARTSWITH(c.data.path, "' + path + '") AND c.data.path != "' + path + '"';
-        // group by the same way we extract the SDPATH
-        sqlQuery += ' GROUP BY SUBSTRING(c.data.path, LENGTH("' + path + '") - 1,'
-        sqlQuery += ' INDEX_OF(c.data.path, "/", LENGTH("' + path + '")) - LENGTH("' + path + '") + 2)'
-        return sqlQuery;
     }
 
     private distinctPathsQuery(tenant: string, subproject: string, path: string): string {

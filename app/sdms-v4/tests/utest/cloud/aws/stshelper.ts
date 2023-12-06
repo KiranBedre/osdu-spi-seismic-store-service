@@ -32,7 +32,7 @@ export class TestAwsStsHelper {
         const testCredentials = {
             Credentials: {
                 AccessKeyId: "testAccessKeyId",
-                SecretAccessKey: "testSecretAccessKey",
+                SecretAccessKey: "testSecretAccessKey", // pragma: allowlist secret
                 SessionToken: "testSessionToken"
             }
         }
