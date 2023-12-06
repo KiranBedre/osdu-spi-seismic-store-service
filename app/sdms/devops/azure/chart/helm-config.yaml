@@ -20,7 +20,6 @@ configEnv:
   sdmsPrefix: #{SDMS_PREFIX}#
   sidecarUrl: #{SIDECAR_URL}#
   sidecarEnableQuery: #{SDMS_SIDECAR_ENABLE_QUERY}#
-  enableOptimizedQuery: #{SDMS_ENABLE_OPTIMIZED_QUERY}#
   sidecarEnvironment: #{SDMS_SIDECAR_ENV}#
   sidecarUrls: #{SIDECAR_URLS}#
 

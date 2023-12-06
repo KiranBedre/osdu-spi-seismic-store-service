@@ -54,9 +54,6 @@ export class AzureConfig extends Config {
     public static SIDECAR_URL: string;
     public static SIDECAR_ENABLE_QUERY: boolean;
 
-    // CosmosDB queries
-    public static ENABLE_OPTIMIZED_QUERY: boolean;
-
     public async init(): Promise<void> {
 
 
@@ -137,8 +134,6 @@ export class AzureConfig extends Config {
 
             AzureConfig.SIDECAR_URL = process.env.SIDECAR_URL || 'https://localhost:7138';
             AzureConfig.SIDECAR_ENABLE_QUERY = process.env.SIDECAR_ENABLE_QUERY === 'true';
-
-            AzureConfig.ENABLE_OPTIMIZED_QUERY = process.env.ENABLE_OPTIMIZED_QUERY === 'true';
 
             // set the correlation id
             AzureConfig.CORRELATION_ID = process.env.CORRELATION_ID || AzureConfig.CORRELATION_ID;

@@ -354,7 +354,6 @@ export class TestAzureCosmosDbDAO {
 
         Tx.test(async () => {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
-            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', true);
 
             const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
                 data: { records: [
@@ -394,64 +393,13 @@ export class TestAzureCosmosDbDAO {
         });
 
         Tx.test(async () => {
-            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', true);
-            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', false);
-
-            const axiosInstancePostStub = this.sandbox.stub(this.axiosInstance, 'post').resolves({
-                data: {
-                    records: [
-                        {'path': 'a/'},
-                        {'path': 'b/'},
-                    ]
-                }
-            });
-
-            const expectedPaths = [
-                datasetModel.path + 'a/',
-                datasetModel.path + 'b/',
-            ]
-
-            this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves(
-                {endpoint: 'myEndpoint', key: 'myKey'});
-
-            const res = await this.cosmos.listFolders(datasetModel);
-
-            const actualPaths = res[0].map(x => x['path']);
-
-            this.sandbox.assert.calledOnceWithExactly(
-                axiosInstancePostStub,
-                AzureConfig.SIDECAR_URL + '/query',
-                {
-                    cs: 'AccountEndpoint=myEndpoint;AccountKey=myKey;',
-                    sql: subfoldersQuery,
-                    corrid: undefined
-                },
-            );
-
-            expect(actualPaths).to.have.same.members(expectedPaths);
-
-        });
-
-        Tx.test(async () => {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
-            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', true);
             const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
             itemsQueryStub.returns(queryIterator);
             const res = await this.cosmos.listFolders(datasetModel);
             this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, distinctPathsQuery);
 
         });
-
-        Tx.test(async () => {
-            this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
-            this.sandbox.define(AzureConfig, 'ENABLE_OPTIMIZED_QUERY', false);
-            const itemsQueryStub = this.sandbox.stub(Items.prototype, 'query');
-            itemsQueryStub.returns(queryIterator);
-            const res = await this.cosmos.listFolders(datasetModel);
-            this.sandbox.assert.calledOnceWithExactly(itemsQueryStub, subfoldersQuery);
-
-        });
-
     }
 
     private static getSize() {
