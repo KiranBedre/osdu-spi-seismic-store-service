@@ -6,6 +6,10 @@ include:
   # containerize
   - local: "app/filemetadata/devops/osdu/containerize/osdu.yml"
 
+  # scanners
+  # scan for secrets
+  - local: "app/filemetadata/devops/osdu/scanners/scan-for-secrets-python.yml"
+
   # deploy
   # azure
   - local: "app/filemetadata/devops/osdu/cloud-providers/azure.yml"

@@ -84,7 +84,7 @@ export class TestAWSCredentials {
 
       private static testGetSecrets() {
         Tx.sectionInit('getSecrets method');
-        const clientSecretName = 'test-secret'
+        const clientSecretName = 'test-secret' // pragma: allowlist secret
         Tx.test(async () => {
 
             const mockSecretStringData = {
@@ -94,7 +94,7 @@ export class TestAWSCredentials {
             this.sandbox.stub(SecretsManagerClient.prototype, 'send').resolves(mockSecretStringData);
     
             const resultSecretString = await AWSCredentials.getSecrets(clientSecretName);
-            Tx.checkTrue(resultSecretString === 'secret-value');
+            Tx.checkTrue(resultSecretString === 'secret-value'); // pragma: allowlist secret
         })
 
         Tx.test(async () => {
@@ -109,7 +109,7 @@ export class TestAWSCredentials {
             this.sandbox.stub(SecretsManagerClient.prototype, 'send').resolves(mockSecretBinaryData);
     
             const resultSecretBinary = await AWSCredentials.getSecrets(clientSecretName);
-            Tx.checkTrue(resultSecretBinary === 'binary-secret');
+            Tx.checkTrue(resultSecretBinary === 'binary-secret'); // pragma: allowlist secret
         })
 
         Tx.test(async () => {
