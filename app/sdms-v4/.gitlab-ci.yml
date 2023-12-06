@@ -34,6 +34,9 @@ include:
   
   # prettier
   - local: "app/sdms-v4/devops/osdu/scanners/prettier-node.yml"
+  
+  # scan for secrets
+  - local: "app/sdms-v4/devops/osdu/scanners/scan-for-secrets-node.yml"
 
   # deploy
   # azure
