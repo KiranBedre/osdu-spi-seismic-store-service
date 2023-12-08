@@ -14,15 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
-public interface IOptions :
-    IOptionsCosmos,
-    IOptionsQueueRedis,
-    IOptionsLocksRedis,
-    IOptionsStorageAccount,
-    IOptionsQueueRedisQueueName,
-    IOptionsDataEcosystemService,
-    IOptionsStorageQueue
-{
+namespace Sidecar.ComputeSizeRunner;
 
+public class DateFormatter : IDateFormatter
+{
+    public string FormatDate(DateTime date) => date.ToUniversalTime().ToString("r");
 }

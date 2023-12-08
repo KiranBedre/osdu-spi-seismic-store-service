@@ -21,6 +21,7 @@ import { TestGCDatastoreDAO, TestGCDatastoreTransactionDAO } from './gc/datastor
 import { TestAzureCosmosDbDAO } from './azure/cosmosdb';
 import { TestAzureCosmosDbTransactionDAO } from './azure/cosmosdb-transactions';
 import { TestAzureCosmosDbListDatasets} from './azure/cosmosdb-list-datasets';
+import { TestAzureDatasetPostProcessor } from './azure/postprocessor';
 import { TestGCSCore } from './google/gcs';
 import { TestAzureKeyVault } from './azure/keyvault';
 import { TestAzureStorage } from './azure/cloudstorage';
@@ -60,6 +61,7 @@ export class TestCloud {
             TestAzureCosmosDbDAO.run();
             TestAzureCosmosDbListDatasets.run();
             TestAzureCosmosDbTransactionDAO.run();
+            TestAzureDatasetPostProcessor.run();
             TestAzureKeyVault.run();
             TestAzureStorage.run();
             TestDataEcoSystem.run();

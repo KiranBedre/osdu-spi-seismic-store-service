@@ -19,7 +19,7 @@ public class QueueClientFactory
     {
         var queueUri = new QueueUriBuilder(new(_opts.StorageQueueEndpoint))
         {
-            QueueName = _opts.StorageQueueTaskQueueName,
+            QueueName = _opts.TaskStorageQueueName,
         }.ToUri();
 
         var queueClientOptions = new QueueClientOptions

@@ -67,6 +67,8 @@ public static class Constants
 
     public const string DELETE_LOCK_PREFIX = "WDELETE";
 
+    public const string WRITE_LOCK_PREFIX = "W";
+
     public static class DeleteOperationStatus
     {
         public const string LAST_UPDATED_AT = "LastUpdatedAt";

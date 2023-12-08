@@ -34,7 +34,7 @@ public class BulkDeletionWorkerTests
         var gcsurl = "container/folder";
 
         // Act
-        var (containerName, virtualFolderName) = BulkDeletionWorker.ParseContainerAndFolderName(gcsurl);
+        var (containerName, virtualFolderName) = Utils.ParseContainerAndFolderName(gcsurl);
 
         // Assert
         Assert.Equal("container", containerName);
@@ -48,7 +48,7 @@ public class BulkDeletionWorkerTests
         var gcsurl = "container";
 
         // Act
-        var (containerName, virtualFolderName) = BulkDeletionWorker.ParseContainerAndFolderName(gcsurl);
+        var (containerName, virtualFolderName) = Utils.ParseContainerAndFolderName(gcsurl);
 
         // Assert
         Assert.Equal("container", containerName);

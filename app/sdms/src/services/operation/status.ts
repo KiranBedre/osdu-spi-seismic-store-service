@@ -14,9 +14,9 @@
 // Limitations under the License.
 // ============================================================================
 
-import { IOperationQueueTask, IOperationStatus } from './model';
+import { IOperationQueueTask, IOperationStatus } from '../../shared/model';
 import { CacheCore } from '../../shared';
-import { operations } from './register'
+import { operations } from '../../shared/register'
 
 const OPERATION_DEFAULT_STATUS = 'NotStarted';
 

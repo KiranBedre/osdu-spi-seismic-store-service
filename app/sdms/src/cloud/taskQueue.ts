@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { CloudFactory } from './cloud';
-import {IOperationQueueTask} from '../services/operation/model';
+import {IOperationQueueTask} from '../shared/model';
 
 export interface ITaskQueue {
     pushTask(task: IOperationQueueTask): Promise<void>;

@@ -18,6 +18,7 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { DatasetModel, DatasetUtils, QueryFilter } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, IJournal, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
+import { DatasetPostProcessorFactoryClient } from '../../cloud/postprocessor';
 import { SeistoreFactory } from '../../cloud/seistore';
 import { DESStorage, DESUtils, UserAssociationServiceFactory } from '../../dataecosystem';
 import { Error, ErrorModel, Feature, FeatureFlags, Response, Utils } from '../../shared';
@@ -764,8 +765,25 @@ export class DatasetHandler {
 
         delete datasetOUT.storageSchemaRecordType;
 
-        return datasetOUT;
+        if (wid) {
+            await this.postProcessOnDatasetClose(subproject, journalClient, datasetOUT);
+        }
 
+        return datasetOUT;
+    }
+
+    private static async postProcessOnDatasetClose(
+        subproject: SubProjectModel,
+        journalClient: IJournal,
+        dataset: DatasetModel) {
+
+        // prepare the dataset ID
+        let datasetEntityKey: object;
+        datasetEntityKey = DatasetHandler.prepareKeys(datasetEntityKey, journalClient, dataset, subproject);
+
+        // trigger compute size operation for the dataset
+        const datasetPostProcessor = DatasetPostProcessorFactoryClient.get();
+        await datasetPostProcessor.onDatasetClose(dataset, datasetEntityKey['partitionKey']);
     }
 
     private static async findDatasetKey(subproject: SubProjectModel,
@@ -828,6 +846,8 @@ export class DatasetHandler {
         dataset.ctag = dataset.ctag + tenant.gcpid + ';' + DESUtils.getDataPartitionID(tenant.esd);
         // attach access policy
         dataset.access_policy = subproject.access_policy || Config.UNIFORM_ACCESS_POLICY;
+
+        await this.postProcessOnDatasetClose(subproject, journalClient, dataset);
 
         return dataset;
     }

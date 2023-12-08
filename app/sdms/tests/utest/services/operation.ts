@@ -26,11 +26,10 @@ import { Handler } from '../../../src/services/operation/handler'
 import { Operation } from '../../../src/services/operation/optype'
 import { TenantDAO } from '../../../src/services/tenant';
 import { SubProjectDAO, SubprojectAuth } from '../../../src/services/subproject';
-import { AzureTaskQueue } from '../../../src/cloud/providers/azure/taskQueue';
+import { AzureTaskQueue } from '../../../src/cloud/providers/azure';
 import { ITaskQueue, TaskQueueFactory } from '../../../src/cloud/taskQueue';
-import { IOperation, IOperationQueueTask, IOperationStatus } from '../../../src/services/operation/model';
+import { IOperationStatus } from '../../../src/shared/model';
 import { AndQueryFilter } from '../../../src/services/dataset';
-import {AzureConfig} from '../../../src/cloud/providers/azure';
 
 export class TestOperationHandler {
 

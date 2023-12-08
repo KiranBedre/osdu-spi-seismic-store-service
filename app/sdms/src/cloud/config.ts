@@ -36,6 +36,7 @@ export interface ConfigModel {
     REDIS_SHARED_INSTANCE_PORT?: number;
     REDIS_SHARED_INSTANCE_KEY?: string;
     REDIS_SHARED_INSTANCE_TLS_DISABLE?: boolean;
+    SDMS_COMPUTE_SIZE_QUEUE?: string;
     SMDS_DELETION_QUEUE?: string;
     DES_SERVICE_HOST_ENTITLEMENT: string;
     DES_SERVICE_HOST_COMPLIANCE: string;
@@ -68,6 +69,7 @@ export interface ConfigModel {
     FEATURE_FLAG_STACKDRIVER_EXPORTER: boolean;
     FEATURE_FLAG_CCM_INTERACTION: boolean;
     FEATURE_FLAG_POLICY_SVC_INTERACTION: boolean;
+    FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE?: boolean;
     FULL_DATA_ACCESS_GROUP?: string;
     CCM_SERVICE_URL: string;
     CCM_TOKEN_SCOPE: string;
@@ -128,8 +130,11 @@ export abstract class Config implements IConfig {
     public static REDIS_SHARED_INSTANCE_KEY: string;
     public static REDIS_SHARED_INSTANCE_TLS_DISABLE: boolean;
 
-    // Redis queue used for bulk-deletions
+    // queue used for bulk-deletions
     public static SMDS_DELETION_QUEUE: string;
+
+    // Queue used for dataset metadata compute size jobs
+    public static SDMS_COMPUTE_SIZE_QUEUE: string;
 
     // DataEcosystem Configuration
     public static DES_SERVICE_HOST_ENTITLEMENT: string;
@@ -159,6 +164,7 @@ export abstract class Config implements IConfig {
     public static FEATURE_FLAG_STACKDRIVER_EXPORTER = true;
     public static FEATURE_FLAG_CCM_INTERACTION = false;
     public static FEATURE_FLAG_POLICY_SVC_INTERACTION = false;
+    public static FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE = false;
 
     // Full Data Permission Group
     public static FULL_DATA_ACCESS_GROUP: string;
@@ -290,6 +296,9 @@ export abstract class Config implements IConfig {
         Config.SMDS_DELETION_QUEUE = model.SMDS_DELETION_QUEUE ||
             process.env.SMDS_DELETION_QUEUE;
 
+        Config.SDMS_COMPUTE_SIZE_QUEUE = model.SDMS_COMPUTE_SIZE_QUEUE ||
+            process.env.SDMS_COMPUTE_SIZE_QUEUE;
+
         Config.FEATURE_FLAG_SEISMICMETA_STORAGE = model.FEATURE_FLAG_SEISMICMETA_STORAGE;
         Config.FEATURE_FLAG_IMPTOKEN = model.FEATURE_FLAG_IMPTOKEN;
         Config.FEATURE_FLAG_TRACE = model.FEATURE_FLAG_TRACE;
@@ -297,6 +306,7 @@ export abstract class Config implements IConfig {
         Config.FEATURE_FLAG_STACKDRIVER_EXPORTER = model.FEATURE_FLAG_STACKDRIVER_EXPORTER;
         Config.FEATURE_FLAG_CCM_INTERACTION = model.FEATURE_FLAG_CCM_INTERACTION;
         Config.FEATURE_FLAG_POLICY_SVC_INTERACTION = model.FEATURE_FLAG_POLICY_SVC_INTERACTION;
+        Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE = model.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE;
 
         Config.FULL_DATA_ACCESS_GROUP = process.env.FULL_DATA_ACCESS_GROUP || 'users.data.root';
 

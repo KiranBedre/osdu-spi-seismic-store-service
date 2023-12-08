@@ -22,6 +22,7 @@ export { LoggerFactory } from './logger';
 export { TraceFactory } from './trace';
 export { Config, ConfigFactory } from './config';
 export { DataEcosystemCoreFactory } from './dataecosystem';
+export { DatasetPostProcessorFactoryClient } from './postprocessor';
 
 // export required interfaces
 export { IJournal, IJournalTransaction } from './journal';

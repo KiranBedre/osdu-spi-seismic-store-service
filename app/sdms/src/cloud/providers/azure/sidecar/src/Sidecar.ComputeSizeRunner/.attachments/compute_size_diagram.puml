@@ -1,0 +1,22 @@
+@startuml
+title Compute Size Process Flow
+
+participant "Client" as client
+participant "SDMS API" as sdms
+database "Azure Storage Queue" as storageQueue
+participant "Compute Size Operation Service" as service
+database "Cosmos DB" as cosmos
+database "Azure Storage" as blobs
+database "Redis Locks" as locks
+
+client -> sdms: Close dataset
+sdms --> storageQueue: Trigger ComputeSize operation\nCreate a new `Operation id`\nand push new message on the queue
+storageQueue --> service: Get the new message from the queue\nand start a new ComputeSize operation
+service -> cosmos: Retrieve the dataset
+service -> blobs: Retrieve blobs metadata
+service -> service: Sum up blob sizes
+service -> locks: Lock the dataset for update
+service -> cosmos: Update the dataset metadata
+service -> locks: Release update lock
+
+@enduml

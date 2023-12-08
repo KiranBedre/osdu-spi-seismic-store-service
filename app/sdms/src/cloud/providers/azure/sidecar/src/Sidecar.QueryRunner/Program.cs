@@ -2,6 +2,7 @@ using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Sidecar.Common.Utility;
+using Sidecar.QueryRunner;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +16,9 @@ ConfigureApp(app);
 
 app.Run();
 
-Options ConfigureOptions()
+OptionsQueryRunner ConfigureOptions()
 {
-    var opts = new Options();
+    var opts = new OptionsQueryRunner();
     opts.KeyVaultUrl ??= Environment.GetEnvironmentVariable("KEYVAULT_URL")!;
     opts.AppInsightsInstrumentationKey ??= Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATION_KEY")!;
     if (string.IsNullOrEmpty(opts.AppInsightsInstrumentationKey))
@@ -30,7 +31,7 @@ Options ConfigureOptions()
     return opts;
 }
 
-void ConfigureServices(WebApplicationBuilder builder, Options opts)
+void ConfigureServices(WebApplicationBuilder builder, OptionsQueryRunner opts)
 {
     var aioptions = new ApplicationInsightsServiceOptions
     {

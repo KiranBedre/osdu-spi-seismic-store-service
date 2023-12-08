@@ -27,14 +27,14 @@ public class RedisDeletionTaskStatusStorageTests : RedisHandlerTests
     public RedisDeletionTaskStatusStorageTests()
     {
         _ = RedisConnectionFactory
-            .Setup(m => m.GetRedisForQueue())
+            .Setup(m => m.GetRedis())
             .Returns(
                 new RedisHandler(
                     TestingHelpers.GetLogger<RedisHandler>().Object,
                     ConnectionMultiplexer.Object
                 ));
 
-        var opts = new Options { QueueName = QUEUE_NAME };
+        var opts = new OptionsBulkDelete { StatusRedisQueueName = QUEUE_NAME };
 
         _statusStorage = new(opts, RedisConnectionFactory.Object);
     }

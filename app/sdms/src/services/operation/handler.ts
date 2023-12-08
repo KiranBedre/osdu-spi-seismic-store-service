@@ -18,14 +18,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './optype';
 import { Error, Response, Utils } from '../../shared';
-import { IBulkDeleteOperationQueueTask, IOperation, IOperationStatus } from './model';
+import { IBulkDeleteOperationQueueTask } from './model';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { Parser } from './parser';
 import { Auth, AuthRoles } from '../../auth';
 import { DatasetModel, ListDatasetsParams } from '../dataset';
 import { SubProjectDAO, SubprojectAuth } from '../subproject';
 import { TenantDAO } from '../tenant';
-import { OperationType } from './register';
+import { OperationType } from '../../shared/register';
+import { IOperation, IOperationStatus } from '../../shared/model';
 import { operationStatusStorage } from './status';
 import { TaskQueueFactory } from '../../cloud/taskQueue';
 

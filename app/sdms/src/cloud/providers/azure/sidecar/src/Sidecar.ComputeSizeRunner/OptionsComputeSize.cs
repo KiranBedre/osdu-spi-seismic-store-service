@@ -14,16 +14,15 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model;
+namespace Sidecar.ComputeSizeRunner;
 
 using CommandLine;
-using Interface;
 
 # pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
-public class Options : IOptions
+public class OptionsComputeSize : IOptionsComputeSize
 {
-    [Option("port", Required = false, Default = "6000", HelpText = "Port on which to expose the endpoints")]
+    [Option("port", Required = false, Default = "6001", HelpText = "Port on which to expose the endpoints")]
     public string WebHostPort { get; set; }
 
     [Option("keyVaultUrl", Required = true, HelpText = "KeyVault endpoint URL, e.g. https://mytestkv.vault.azure.net/")]
@@ -44,18 +43,6 @@ public class Options : IOptions
     [Option("storageAccountConnectionString", Required = false, HelpText = "Storage account connection string. If provided, overrides DES and StorageAccountName")]
     public string StorageAccountConnectionString { get; set; }
 
-    [Option("taskQueueName", Required = true, Default = "sdms-queue-bulkdelete", HelpText = "Key name of the list with the tasks in Redis")]
-    public string QueueName { get; set; }
-
-    [Option("redisQueueHostname", Required = false, HelpText = "Hostname of the Redis instance that contains the task queue ")]
-    public string RedisQueueHostname { get; set; }
-
-    [Option("redisQueuePassword", Required = false, HelpText = "Password of the Redis instance that contains the task queue ")]
-    public string RedisQueuePassword { get; set; }
-
-    [Option("redisQueuePort", Required = false, Default = "6380", HelpText = "Port of the Redis instance that contains the task queue ")]
-    public string RedisQueuePort { get; set; }
-
     [Option("redisLocksHostname", Required = false, HelpText = "Hostname of the Redis instance that contains the locks ")]
     public string RedisLocksHostname { get; set; }
 
@@ -74,6 +61,6 @@ public class Options : IOptions
     [Option("storageQueueEndpoint", Required = false, HelpText = "Queue endpoint to connect to the task queue on Azure Storage")]
     public string StorageQueueEndpoint { get; set; }
 
-    [Option("storageQueueTaskQueueName", Required = false, Default = "sdms-queue-bulkdelete", HelpText = "Name of the task queue")]
-    public string StorageQueueTaskQueueName { get; set; }
+    [Option("taskStorageQueueName", Required = false, Default = "sdms-queue-tasks", HelpText = "Name of the Azure Storage queue for operation tasks")]
+    public string TaskStorageQueueName { get; set; }
 }

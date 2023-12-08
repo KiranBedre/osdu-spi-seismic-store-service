@@ -17,8 +17,8 @@
 import { TaskQueueFactory, AbstractTaskQueue } from '../../taskQueue';
 import { QueueClient, QueueServiceClient} from '@azure/storage-queue';
 import { DefaultAzureCredential} from '@azure/identity';
-import { IOperationQueueTask} from '../../../services/operation/model';
-import { operations} from '../../../services/operation/register';
+import { IOperationQueueTask} from '../../../shared/model';
+import { operations} from '../../../shared/register';
 import { AzureConfig} from './config';
 
 @TaskQueueFactory.register('azure')

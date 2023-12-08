@@ -10,9 +10,9 @@ using Sidecar.Common.Model;
 /// </summary>
 public class DesClientFromEnv : IDesClient
 {
-    private readonly IOptions _opts;
+    private readonly IOptionsConfig _opts;
 
-    public DesClientFromEnv(IOptions opts)
+    public DesClientFromEnv(IOptionsConfig opts)
     {
         _opts = opts;
     }
