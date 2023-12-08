@@ -16,10 +16,12 @@
 
 namespace Sidecar.Common.Interface;
 
+using Sidecar.Common.Service;
+
 public interface ILockManager
 {
     /// <summary>
-    /// Attempts to acquire a delete lock which is only possible of no read or writ lock is present.
+    /// Attempts to acquire a delete lock which is only possible if no read or write lock is present.
     /// A delete lock can be acquired even though a delete lock is already present.
     /// A delete lock is similar to a write lock, the value starts with "WDELETE" instead of "W".
     /// </summary>
@@ -28,9 +30,23 @@ public interface ILockManager
     Task<bool> AcquireDeleteLockAsync(string key);
 
     /// <summary>
+    /// Attempts to acquire a write lock "W".
+    /// </summary>
+    /// <param name="key">The dataset to be locked</param>
+    /// <returns>`WriteLockSession` with Locked property set to `true` if the write lock could be acquired, `false` otherwise.</returns>
+    Task<WriteLockSession> AcquireWriteLockAsync(string key);
+
+    /// <summary>
     /// Attempts to remove a delete lock.
     /// </summary>
     /// <param name="key">The dataset to be unlocked</param>
     /// <returns>`true` if the delete lock could be removed, `false` otherwise.</returns>
     Task<bool> RemoveDeleteLockAsync(string key);
+
+    /// <summary>
+    /// Attempts to remove a write lock.
+    /// </summary>
+    /// <param name="session">Lock session to be removed.</param>
+    /// <returns>`true` if the write lock could be removed, `false` otherwise.</returns>
+    Task<bool> RemoveWriteLockAsync(WriteLockSession session);
 }

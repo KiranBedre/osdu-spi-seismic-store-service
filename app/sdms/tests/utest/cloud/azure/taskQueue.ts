@@ -3,11 +3,10 @@ import sinon from 'sinon';
 import {AzureConfig, AzureTaskQueue} from "../../../../src/cloud/providers/azure";
 import { Tx } from '../../utils';
 import {QueueClient, QueueCreateIfNotExistsResponse} from "@azure/storage-queue";
-import {IOperationQueueTask} from "../../../../src/services/operation/model";
+import {IOperationQueueTask} from "../../../../src/shared/model";
 import {v4 as uuidv4} from "uuid";
 import {Config} from "../../../../src/cloud";
-import { OperationType } from '../../../../src/services/operation/register';
-
+import { OperationType } from '../../../../src/shared/register';
 
 
 export class TestTaskQueue {

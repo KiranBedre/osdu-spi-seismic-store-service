@@ -20,7 +20,7 @@ public class RedisHandlerTests
 {
     protected readonly Mock<IDatabase> DbMock = TestingHelpers.GetDatabase();
     protected readonly Mock<IConnectionMultiplexer> ConnectionMultiplexer;
-    protected readonly Mock<IRedisConnectionFactory> RedisConnectionFactory = new();
+    protected readonly Mock<IRedisConnectionFactory<RedisQueueConnectionFactory>> RedisConnectionFactory = new();
 
     public RedisHandlerTests()
     {

@@ -21,9 +21,10 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { Auth, AuthProviderFactory } from '../../../src/auth';
 import { IAuthProvider } from '../../../src/auth/auth';
 import { Config, google, StorageFactory } from '../../../src/cloud';
+import { DatasetPostProcessorFactory, DefaultDatasetPostProcessor, IDatasetPostProcessor } from '../../../src/cloud/postprocessor';
 import { DESStorage, DESUtils } from '../../../src/dataecosystem';
 import { IStorage } from '../../../src/cloud/storage';
-import { DatasetDAO, DatasetModel } from '../../../src/services/dataset';
+import { DatasetAuth, DatasetDAO, DatasetModel } from '../../../src/services/dataset';
 import { DatasetHandler } from '../../../src/services/dataset/handler';
 import { Locker } from '../../../src/services/dataset/locker';
 import { IDatasetModel } from '../../../src/services/dataset/model';
@@ -614,6 +615,50 @@ export class TestDatasetSVC {
             Tx.check409(expRes.statusCode);
         });
 
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            // simple dataset close without an update
+            expReq.query.close = 'Wid';
+            
+            this.sandbox.stub(Locker, 'unlock').resolves({ id: 'id', cnt: 1 });
+            this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
+            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
+            this.sandbox.stub(DatasetAuth, 'getAuthGroups').returns([]);
+            this.sandbox.stub(DESUtils, 'getDataPartitionID');
+            this.sandbox.stub(Locker, 'acquireMutex').resolves();
+            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+
+            let postProcessorStub = this.sandbox.createStubInstance<IDatasetPostProcessor>(DefaultDatasetPostProcessor);
+            const onDatasetCloseStub = postProcessorStub.onDatasetClose.resolves();
+            this.sandbox.stub(DatasetPostProcessorFactory, 'build').returns(postProcessorStub);
+            
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
+            Tx.check200(expRes.statusCode);
+            Tx.checkTrue(onDatasetCloseStub.calledOnce);
+        });
+
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            // close combined with a dataset update
+            expReq.query.close = 'Wid';
+            expReq.body.gtags = ['tagA', 'tagB'];
+            
+            this.sandbox.stub(Locker, 'unlock').resolves({ id: 'id', cnt: 1 });
+            this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
+            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
+            this.sandbox.stub(DatasetAuth, 'getAuthGroups').returns([]);
+            this.sandbox.stub(DESUtils, 'getDataPartitionID');
+            this.sandbox.stub(Locker, 'acquireMutex').resolves();
+            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(DatasetDAO, 'update').resolves();
+            this.sandbox.stub(DESStorage, 'insertRecord').resolves();
+
+            let postProcessorStub = this.sandbox.createStubInstance<IDatasetPostProcessor>(DefaultDatasetPostProcessor);
+            const onDatasetCloseStub = postProcessorStub.onDatasetClose.resolves();
+            this.sandbox.stub(DatasetPostProcessorFactory, 'build').returns(postProcessorStub);
+            
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
+            Tx.check200(expRes.statusCode);
+            Tx.checkTrue(onDatasetCloseStub.calledOnce);
+        });
     }
 
     private static exist() {

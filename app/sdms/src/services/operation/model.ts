@@ -14,27 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import { OperationType } from './register';
-
-export interface IOperation extends Record<string, string | number | Record<string, string | number>> {
-    operation_id: string;
-}
-
-export interface IOperationQueueTask extends IOperation {
-    type: OperationType
-}
-
-export interface IOperationStatus extends IOperation {
-    status: string;
-    created_at?: string,
-    created_by?: string,
-    last_updated_at?: string,
-    dataset_cnt?: number,
-    completed_cnt?: number,
-    failed_cnt?: number
-}
-
-// Bulk Delete ------------------------------------------------------------
+import { IOperationQueueTask } from '../../shared/model';
 
 export interface IBulkDeleteOperationStatusRequest {
     dataPartitionId: string;

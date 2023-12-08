@@ -14,9 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
-
-public interface IOptionsQueueRedisQueueName
+namespace Sidecar.QueryRunner;
+public interface IOptionsQueryRunner
 {
-    string QueueName { get; set; }
+
 }

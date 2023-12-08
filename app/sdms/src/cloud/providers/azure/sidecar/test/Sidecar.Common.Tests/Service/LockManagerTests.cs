@@ -22,19 +22,17 @@ public class LockManagerTests
 {
     private readonly LockManager _lockManager;
     private readonly Mock<IConnectionMultiplexer> _connectionMultiplexer;
-    private readonly Mock<IDatabase> _dbMock;
     public LockManagerTests()
     {
-        _dbMock = TestingHelpers.GetDatabase();
-        _connectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: _dbMock.Object);
+        var dbMock = TestingHelpers.GetDatabase();
+        _connectionMultiplexer = TestingHelpers.GetConnectionMultiplexer(db: dbMock.Object);
 
-        var factoryMock = new Mock<IRedisConnectionFactory>();
-        _ = factoryMock.Setup(m => m.GetRedisForLocks()).Returns(
+        var factoryMock = new Mock<IRedisConnectionFactory<RedisLocksConnectionFactory>>();
+        _ = factoryMock.Setup(m => m.GetRedis()).Returns(
             new RedisHandler(
                 TestingHelpers.GetLogger<RedisHandler>().Object,
                 _connectionMultiplexer.Object));
 
-        var loggerFactory = new Mock<ILoggerFactory>();
         var loggerMock = new Mock<ILogger<LockManager>>();
         _lockManager = new(loggerMock.Object, factoryMock.Object);
     }
@@ -140,5 +138,168 @@ public class LockManagerTests
 
         // Assert
         Assert.True(result);
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_WithLockWrite_ReturnsTrue()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock
+            .Setup(client => client.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<bool>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()
+            ))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key);
+
+        // Assert
+        Assert.Equal(key, result.Key);
+        Assert.StartsWith(Constants.WRITE_LOCK_PREFIX, result.Wid);
+        Assert.True(result.Locked);
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_UnsuccessfulLocking_ReturnsLockedFalse()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock
+            .Setup(client => client.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<bool>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()
+            ))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key);
+
+        // Assert
+        Assert.Equal("", result.Key);
+        Assert.Equal("", result.Wid);
+        Assert.False(result.Locked);
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_AlreadyLocked_ReturnsLockedFalse()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock
+            .Setup(client => client.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<bool>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()
+            ))
+            .ReturnsAsync(true);
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("Some Lock");
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key);
+
+        // Assert
+        Assert.Equal("", result.Key);
+        Assert.Equal("", result.Wid);
+        Assert.False(result.Locked);
+    }
+
+    [Fact]
+    public async Task RemoveWriteLock_ReturnsTrue()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "/path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        var lockValue = "lockValue";
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync(lockValue);
+        _ = databaseMock.Setup(db => db.KeyDeleteAsync(key, CommandFlags.None)).ReturnsAsync(true);
+        var writeLockSession = new WriteLockSession()
+        {
+            Key = key,
+            Wid = lockValue,
+            Locked = true
+        };
+
+        // Act
+        var result = await _lockManager.RemoveWriteLockAsync(writeLockSession);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task RemoveWriteLock_AlreadyUnlocked_ReturnsFalse()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "/path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock.Setup(db => db.KeyDeleteAsync(key, CommandFlags.None)).ReturnsAsync(true);
+        var writeLockSession = new WriteLockSession()
+        {
+            Key = key,
+            Wid = "lockValue",
+            Locked = true
+        };
+
+        // Act
+        var result = await _lockManager.RemoveWriteLockAsync(writeLockSession);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task RemoveWriteLock_DifferentLockSession_ReturnsFalse()
+    {
+        // Arrange
+        var databaseMock = new Mock<IDatabase>();
+        _ = _connectionMultiplexer.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(databaseMock.Object);
+        var key = "/path/file.tst";
+        _ = databaseMock.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        _ = databaseMock.Setup(db => db.StringGetAsync(key, CommandFlags.None)).ReturnsAsync("some lock value");
+        _ = databaseMock.Setup(db => db.KeyDeleteAsync(key, CommandFlags.None)).ReturnsAsync(true);
+        var writeLockSession = new WriteLockSession()
+        {
+            Key = key,
+            Wid = "lockValue",
+            Locked = true
+        };
+
+        // Act
+        var result = await _lockManager.RemoveWriteLockAsync(writeLockSession);
+
+        // Assert
+        Assert.False(result);
     }
 }

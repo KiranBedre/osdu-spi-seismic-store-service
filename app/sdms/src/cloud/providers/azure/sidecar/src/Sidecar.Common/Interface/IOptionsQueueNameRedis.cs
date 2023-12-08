@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
-import { Config } from '../../cloud';
+namespace Sidecar.Common.Interface;
 
-export enum OperationType {
-    BULK_DELETE = 'BULK_DELETE',
+public interface IOptionsQueueNameRedis
+{
+    string StatusRedisQueueName { get; set; }
 }
-
-export const operations = { } as { [key in OperationType]: {
-    getQueueName(): string
-}};
-
-operations.BULK_DELETE = {
-    getQueueName(): string {
-        return Config.SMDS_DELETION_QUEUE;
-    },
-}
-

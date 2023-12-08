@@ -119,6 +119,10 @@ export class AzureConfig extends Config {
                 process.env.AZURE_STORAGE_QUEUE_ENDPOINT;
             Config.checkRequiredConfig(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, 'AZURE_STORAGE_QUEUE_ENDPOINT');
 
+            // dateset compute size queue
+            AzureConfig.SDMS_COMPUTE_SIZE_QUEUE = process.env.SDMS_COMPUTE_SIZE_QUEUE ||
+                AzureConfig.SDMS_COMPUTE_SIZE_QUEUE || 'sdms-queue-computesize';
+
             // set the auth provider
             AzureConfig.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;
             AzureConfig.SERVICE_AUTH_PROVIDER_CREDENTIAL = // If not set as secret try to load from envs
@@ -156,6 +160,7 @@ export class AzureConfig extends Config {
                 REDIS_SHARED_INSTANCE_PORT: AzureConfig.REDIS_SHARED_INSTANCE_PORT,
                 REDIS_SHARED_INSTANCE_TLS_DISABLE: AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE,
                 SMDS_DELETION_QUEUE: AzureConfig.SMDS_DELETION_QUEUE,
+                SDMS_COMPUTE_SIZE_QUEUE: AzureConfig.SDMS_COMPUTE_SIZE_QUEUE,
                 DES_SERVICE_HOST_COMPLIANCE: AzureConfig.DES_SERVICE_HOST_COMPLIANCE,
                 DES_SERVICE_HOST_ENTITLEMENT: AzureConfig.DES_SERVICE_HOST_ENTITLEMENT,
                 DES_SERVICE_HOST_STORAGE: AzureConfig.DES_SERVICE_HOST_STORAGE,
@@ -190,6 +195,8 @@ export class AzureConfig extends Config {
                 FEATURE_FLAG_CCM_INTERACTION: process.env.FEATURE_FLAG_CCM_INTERACTION ?
                     process.env.FEATURE_FLAG_CCM_INTERACTION === 'true' : false,
                 FEATURE_FLAG_POLICY_SVC_INTERACTION: process.env.FEATURE_FLAG_POLICY_SVC_INTERACTION === 'true',
+                FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE: process.env.POST_PROCESS_ON_DATASET_CLOSE === 'true' ??
+                    true,
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,
                 CCM_TOKEN_SCOPE: AzureConfig.CCM_TOKEN_SCOPE,
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?

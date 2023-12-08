@@ -1,7 +1,6 @@
 namespace Sidecar.Common.Interface;
 
-public interface IRedisConnectionFactory
+public interface IRedisConnectionFactory<T> where T : class
 {
-    IRedisHandler GetRedisForQueue();
-    IRedisHandler GetRedisForLocks();
+    IRedisHandler GetRedis();
 }

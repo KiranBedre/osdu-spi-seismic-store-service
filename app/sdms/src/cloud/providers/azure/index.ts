@@ -23,3 +23,4 @@ export { AzureTrace } from './trace';
 export { AzureDataEcosystemServices } from './dataecosystem';
 export { AzureSeistore } from './seistore';
 export { AzureTaskQueue } from './taskQueue';
+export { AzureDatasetPostProcessor } from './postprocessor';

@@ -27,6 +27,34 @@ public class Utils
             .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
 
+    public static string RandomMutex() => MakeId(10);
     public static string GenerateDeleteLockId() => Constants.DELETE_LOCK_PREFIX + MakeId(9);
 
+    public static string GenerateWriteLockId() => Constants.WRITE_LOCK_PREFIX + MakeId(15);
+
+    public static (string containerName, string? virtualFolderName) ParseContainerAndFolderPath(string gcsurl)
+    {
+        var parts = gcsurl.Split('/', 2);
+
+        return parts.Length switch
+        {
+            1 => (parts[0], null),
+            2 => (parts[0], parts[1]),
+            _ => throw new ArgumentException(
+                $"Invalid item: {gcsurl} Could not extract gcsurl in the format <container>/<folder name> ")
+        };
+    }
+
+    public static (string containerName, string? virtualFolderName) ParseContainerAndFolderName(string gcsurl)
+    {
+        var parts = gcsurl.Split('/');
+
+        return parts.Length switch
+        {
+            1 => (parts[0], null),
+            2 => (parts[0], parts[1]),
+            _ => throw new ArgumentException(
+                $"Invalid item: {gcsurl} Could not extract gcsurl in the format <container>/<folder name> ")
+        };
+    }
 }

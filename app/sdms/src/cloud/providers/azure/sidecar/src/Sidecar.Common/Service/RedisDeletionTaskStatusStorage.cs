@@ -26,15 +26,15 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
 {
     private readonly TimeSpan _deletionStatusExpirySeconds = TimeSpan.FromDays(90);
 
-    private readonly IOptionsQueueRedisQueueName _options;
+    private readonly IOptionsQueueNameRedis _options;
     private readonly IRedisHandler _queue;
 
     public RedisDeletionTaskStatusStorage(
-        IOptionsQueueRedisQueueName options,
-        IRedisConnectionFactory redisConnectionFactory)
+        IOptionsQueueNameRedis options,
+        IRedisConnectionFactory<RedisQueueConnectionFactory> redisConnectionFactory)
     {
         _options = options;
-        _queue = redisConnectionFactory.GetRedisForQueue();
+        _queue = redisConnectionFactory.GetRedis();
     }
 
     public async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg, CancellationToken ct = default)
@@ -58,7 +58,7 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
 
         var statusHash = status.ToHashEntries();
 
-        var statusKey = _options.QueueName + ":status:" + status.OperationId.ToLower();
+        var statusKey = _options.StatusRedisQueueName + ":status:" + status.OperationId.ToLower();
 
         await db.HashSetAsync(statusKey, statusHash);
         _ = await db.KeyExpireAsync(statusKey, _deletionStatusExpirySeconds);
@@ -68,14 +68,14 @@ public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
 
     public async Task IncrementCountAsync(string operationId, string field, CancellationToken ct = default)
     {
-        var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
+        var statusKey = $"{_options.StatusRedisQueueName}:status:{operationId.ToLower()}";
         _ = await _queue.HashIncrementAsync(statusKey, field);
         _ = await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LAST_UPDATED_AT, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }
 
     public async Task UpdateFieldStatusOperationAsync(string operationId, string keyName, string keyValue, CancellationToken ct = default)
     {
-        var statusKey = $"{_options.QueueName}:status:{operationId.ToLower()}";
+        var statusKey = $"{_options.StatusRedisQueueName}:status:{operationId.ToLower()}";
         _ = await _queue.HashSetAsync(statusKey, keyName, keyValue);
         _ = await _queue.HashSetAsync(statusKey, Constants.DeleteOperationStatus.LAST_UPDATED_AT, DateTime.UtcNow.ToString("M/d/yyyy h:mm:ss tt"));
     }

@@ -110,6 +110,24 @@ public class Cosmos : IDataAccess
         return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
     }
 
+    public async Task<bool> UpdateMetadataAsync(string cs, string id, Dictionary<string, object> updates)
+    {
+        initCosmosClient(cs);
+        var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);
+        var container = database.GetContainer(CONTAINER_ID);
+        var patchOperations = new List<PatchOperation>();
+        foreach (var pair in updates)
+        {
+            patchOperations.Add(PatchOperation.Set(pair.Key, pair.Value));
+        }
+        var itemResponse = await container.PatchItemAsync<object>(
+            id: id,
+            partitionKey: new PartitionKey(id),
+            patchOperations: patchOperations
+        );
+        return itemResponse.StatusCode == System.Net.HttpStatusCode.OK;
+    }
+
     private QueryRequestOptions GetQueryRequestOptions(int? limit) =>
         new()
         {

@@ -78,7 +78,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
 
         try
         {
-            (containerName, virtualFolderName) = ParseContainerAndFolderName(item.Gcsurl);
+            (containerName, virtualFolderName) = Utils.ParseContainerAndFolderName(item.Gcsurl);
         }
         catch (ArgumentException e)
         {
@@ -159,19 +159,6 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             _logger.LogInformation("Will not delete metadata for {DatasetId} due to {AllErrors}", datasetId, allErrors);
             await _deletionTasks.IncrementCountAsync(operationId, Constants.DeleteOperationStatus.FAILED_CNT, ct);
         }
-    }
-
-    public static (string containerName, string? virtualFolderName) ParseContainerAndFolderName(string gcsurl)
-    {
-        var parts = gcsurl.Split('/');
-
-        return parts.Length switch
-        {
-            1 => (parts[0], null),
-            2 => (parts[0], parts[1]),
-            _ => throw new ArgumentException(
-                $"Invalid item: {gcsurl} Could not extract gcsurl in the format <container>/<folder name> ")
-        };
     }
 
     private async Task DeleteBlobsInBulkAsync(IBlobClient blobClient, string containerName, string? virtualFolderName, BlobContainerClient containerClient, List<string> errors, CancellationToken ct)

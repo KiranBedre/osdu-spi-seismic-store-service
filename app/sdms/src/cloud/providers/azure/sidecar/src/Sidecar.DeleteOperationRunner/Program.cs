@@ -40,7 +40,8 @@ public class Program
         throw new ArgumentException(errorMessage);
     }
 
-    private static void AttemptOptionsFromEnv(Options opts)
+
+    private static void AttemptOptionsFromEnv(OptionsBulkDelete opts)
     {
         _logger?.LogWarning("Checking environment variables for options...");
 
@@ -52,8 +53,8 @@ public class Program
         opts.StorageAccountName ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_ACCOUNT_NAME")!;
         opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
 
-        opts.QueueName = Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")! ??
-                         opts.QueueName;
+        opts.StatusRedisQueueName = Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_NAME")! ??
+                         opts.StatusRedisQueueName;
 
         opts.RedisQueueHostname ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_HOSTNAME")!;
         opts.RedisQueuePassword ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_PASSWORD")!;
@@ -69,11 +70,10 @@ public class Program
 
         opts.AppInsightsInstrumentationKey ??= Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATION_KEY")!;
 
-        opts.StorageQueueTaskQueueName = Environment.GetEnvironmentVariable("STORAGE_QUEUE_NAME") ??
-                                         opts.StorageQueueTaskQueueName;
+        opts.TaskStorageQueueName = Environment.GetEnvironmentVariable("SMDS_DELETION_QUEUE") ??
+                                         opts.TaskStorageQueueName;
     }
-
-    private static async Task AttemptOptionsFromKeyVaultAsync(Options opts)
+    private static async Task AttemptOptionsFromKeyVaultAsync(OptionsBulkDelete opts)
     {
         var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), new DefaultAzureCredential());
 
@@ -101,7 +101,7 @@ public class Program
         opts.AppInsightsInstrumentationKey ??= secrets[5];
     }
 
-    private static async Task RunAsync(Options opts)
+    private static async Task RunAsync(OptionsBulkDelete opts)
     {
         var webApplicationBuilder = WebApplication.CreateBuilder();
 
@@ -134,7 +134,7 @@ public class Program
         await webapp.RunAsync();
     }
 
-    private static void ConfigureServices(IServiceCollection services, Options opts)
+    private static void ConfigureServices(IServiceCollection services, OptionsBulkDelete opts)
     {
         services.AddAzureClients(builder =>
         {
@@ -173,14 +173,15 @@ public class Program
                 sp => new CachingBlobClientFactory(sp.GetRequiredService<BlobClientFactory>()));
 
         _ = services
-            .AddSingleton<IOptions>(opts)
-            .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptions>())
-            .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptions>())
-            .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptions>())
-            .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptions>())
-            .AddSingleton<IOptionsQueueRedisQueueName>(sp => sp.GetRequiredService<IOptions>())
-            .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptions>())
-            .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptions>())
+            .AddSingleton<IOptionsBulkDelete>(opts)
+            .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsQueueNameRedis>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsConfig>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
             .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
             {
                 DelayWhenTaskNotFound = TimeSpan.FromSeconds(5),
@@ -194,7 +195,8 @@ public class Program
 
         _ = services
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
-            .AddSingleton<IRedisConnectionFactory, RedisConnectionFactory>()
+            .AddSingleton<IRedisConnectionFactory<RedisLocksConnectionFactory>, RedisLocksConnectionFactory>()
+            .AddSingleton<IRedisConnectionFactory<RedisQueueConnectionFactory>, RedisQueueConnectionFactory>()
             .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
@@ -222,11 +224,11 @@ public class Program
         _ = services
             .AddHealthChecks()
             .AddRedis(
-                sp => sp.GetRequiredService<IRedisConnectionFactory>().GetRedisForLocks().GetConnection(),
+                sp => sp.GetRequiredService<IRedisConnectionFactory<RedisLocksConnectionFactory>>().GetRedis().GetConnection(),
                 name: "redis-locks-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1))
             .AddRedis(
-                sp => sp.GetRequiredService<IRedisConnectionFactory>().GetRedisForQueue().GetConnection(),
+                sp => sp.GetRequiredService<IRedisConnectionFactory<RedisQueueConnectionFactory>>().GetRedis().GetConnection(),
                 name: "redis-queue-connectivity-check",
                 timeout: TimeSpan.FromMinutes(1));
 
@@ -255,12 +257,12 @@ public class Program
             settings.IgnoreUnknownArguments = true;
         });
 
-        var res = parser.ParseArguments<Options>(args);
+        var res = parser.ParseArguments<OptionsBulkDelete>(args);
 
         //---if parsing did not succeed, try to read from env for values instead
         if (res.Errors.Any())
         {
-            var opts = res.Value ?? new Options();
+            var opts = res.Value ?? new OptionsBulkDelete();
             AttemptOptionsFromEnv(opts);
             await AttemptOptionsFromKeyVaultAsync(opts);
 
@@ -276,7 +278,7 @@ public class Program
         });
 
         //---parse again in case anything is still missing, if not run the app
-        _ = await parser.ParseArguments<Options>(args)
+        _ = await parser.ParseArguments<OptionsBulkDelete>(args)
             .WithNotParsed(HandleOptionsParserError)
             .WithParsedAsync(RunAsync);
     }

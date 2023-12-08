@@ -26,10 +26,10 @@ public class LockManager : ILockManager
     private readonly IRedisHandler _locksRedis;
     private readonly ILogger<LockManager> _logger;
 
-    public LockManager(ILogger<LockManager> logger, IRedisConnectionFactory redisConnectionFactory)
+    public LockManager(ILogger<LockManager> logger, IRedisConnectionFactory<RedisLocksConnectionFactory> redisConnectionFactory)
     {
         _logger = logger;
-        _locksRedis = redisConnectionFactory.GetRedisForLocks();
+        _locksRedis = redisConnectionFactory.GetRedis();
     }
 
     private async Task<object?> GetLockAsync(string key)
@@ -38,21 +38,22 @@ public class LockManager : ILockManager
         return entity != null ? entity.StartsWith("rms") ? entity[4..].Split(':') : entity : null;
     }
 
-    private async Task AcquireMutexAsync(string key)
+    private async Task AcquireMutexAsync(string key, string? value = "")
     {
         var lockKey = "locks:" + key;
-
-        var acquired = await _locksRedis.GetDatabase().LockTakeAsync(lockKey, Environment.MachineName, _ttl);
+        var mutex = string.IsNullOrEmpty(value) ? Environment.MachineName : value;
+        var acquired = await _locksRedis.GetDatabase().LockTakeAsync(lockKey, mutex, _ttl);
         if (!acquired)
         {
             throw new($"Cannot lock key {key}. Please try again shortly.");
         }
     }
 
-    private async Task ReleaseMutexAsync(string key)
+    private async Task ReleaseMutexAsync(string key, string? value = "")
     {
         var lockKey = "locks:" + key;
-        _ = await _locksRedis.GetDatabase().LockReleaseAsync(lockKey, Environment.MachineName);
+        var mutex = string.IsNullOrEmpty(value) ? Environment.MachineName : value;
+        _ = await _locksRedis.GetDatabase().LockReleaseAsync(lockKey, mutex);
     }
 
     /// <inheritdoc cref="ILockManager.AcquireDeleteLockAsync"/>
@@ -78,6 +79,41 @@ public class LockManager : ILockManager
         var result = await _locksRedis.SetAsync(key, Utils.GenerateDeleteLockId());
         await ReleaseMutexAsync(key);
         return result;
+    }
+
+    /// <inheritdoc cref="ILockManager.AcquireWriteLockAsync"/>
+    public async Task<WriteLockSession> AcquireWriteLockAsync(string key)
+    {
+        var mutex = Utils.RandomMutex();
+        try
+        {
+            await AcquireMutexAsync(key, mutex);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Cannot acquire mutex {key}. ", key);
+        }
+
+        var lockValue = await GetLockAsync(key);
+
+        // unlocked dataset (no lock values)
+        if (lockValue is null)
+        {
+            var wid = Utils.GenerateWriteLockId();
+            var result = await _locksRedis.SetAsync(key, wid);
+            await ReleaseMutexAsync(key, mutex);
+            if (result)
+            {
+                return new WriteLockSession()
+                {
+                    Wid = wid,
+                    Key = key,
+                    Locked = true
+                };
+            }
+        }
+        await ReleaseMutexAsync(key, mutex);
+        return new WriteLockSession();
     }
 
     /// <inheritdoc cref="ILockManager.RemoveDeleteLockAsync"/>
@@ -110,6 +146,38 @@ public class LockManager : ILockManager
 
         _logger.LogError("Could not delete lock for {key}. Value is not a delete lock. ", key);
         await ReleaseMutexAsync(key);
+        return false;
+    }
+
+    public async Task<bool> RemoveWriteLockAsync(WriteLockSession session)
+    {
+        var mutex = Utils.RandomMutex();
+        try
+        {
+            await AcquireMutexAsync(session.Key, mutex);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Cannot acquire mutex {key}. ", session.Key);
+            return false;
+        }
+
+        var lockValue = await GetLockAsync(session.Key);
+        if (lockValue is string s)
+        {
+            if (s.Equals(session.Wid))
+            {
+                var deleteStatus = await _locksRedis.DeleteAsync(session.Key);
+                await ReleaseMutexAsync(session.Key, mutex);
+                _logger.LogInformation("Write Lock for {key} removed.", session.Key);
+                return deleteStatus;
+            }
+            _logger.LogError("Could not delete lock for {key}. {value} is not a current lock value.", session.Key, lockValue);
+            return false;
+
+        }
+        _logger.LogDebug("Write Lock for {key} not found. Lock not removed.", session.Key);
+        await ReleaseMutexAsync(session.Key, mutex);
         return false;
     }
 }
