@@ -3,7 +3,6 @@ include:
   # aws-global
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/aws-global.yml"
-    
+    ref: release/0.25
+
   - local: "devops/osdu/cloud-providers/aws-common-pipeline.yml"
-  
-  
