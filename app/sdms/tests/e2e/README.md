@@ -61,6 +61,45 @@ To run tests using bash script:
         --VCS_Provider="${isGitlab}"
     ```
 
+### Newman collection runner usage
+
+Alternatively, you can run the tests locally using the `postman_collection.json` directly, with [`newman`](https://www.npmjs.com/package/newman), a command-line collection runner for Postman.
+
+In your terminal, run the following command from the `app/sdms` folder:
+
+```bash
+./node_modules/.bin/newman run ./tests/e2e/postman_collection.json \
+    --bail \
+    --environment ./tests/e2e/postman_env.json \
+    --env-var SVC_URL=http://$DNS_HOST/$serviceUrlSuffix \
+    --env-var HOSTNAME=$e2eHostName
+    --env-var STOKEN=$e2eIdToken \
+    --env-var tenant=$e2eTenant \
+    --env-var datapartition=$e2eDataPartition \
+    --env-var subproject=$e2eSubproject \
+    --env-var adminEmail=$e2eAdminEmail \
+    --env-var legaltag01=$e2eLegaltag01 \
+    --env-var legaltag02=$e2eLegaltag02
+```
+
+To set a cloud provider for E2E tests execution, add the following option to the command:
+
+```bash
+--env-var serviceCloudProvider='provider'
+```
+
+This variable is automatically set when E2E tests in the `general` section are executed, so it's only required to pass it if only selected folders are executed.
+
+To execute only a selected E2E tests suite, add the following options:
+
+```bash
+--folder general \
+--folder datasets \
+--folder 'folder name'
+```
+
+Keep the folder `general` as it contains global functions, e.g. "retryOnFailure". Adapt the subsequent `--folder` parameters for the tests you are targeting, e.g. setting it to 'utility' will only target tests from the 'utility' test suite.
+
 ### Postman Runner usage
 
 To run tests using [Postman](https://www.postman.com/downloads/) Runner tool:
