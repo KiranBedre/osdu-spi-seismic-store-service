@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "288f33e4-afda-43a0-aea3-0ccea77a2ba2",
+		"_postman_id": "c003a366-5ba4-4503-b140-caa97443c431",
 		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -21919,6 +21919,12 @@
 									"    var key = request.name + '_counter';",
 									"    pm.environment.unset(key);",
 									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"    //skip tests for other cloud providers than azure as it is failing for other CSP's",
+									"    const provider = pm.environment.get('serviceCloudProvider');",
+									"    if (provider !== 'azure') {",
+									"        postman.setNextRequest('UTILITY STATUS UNSET: Cleanup test environment');",
+									"    }",
 									"}"
 								],
 								"type": "text/javascript"
@@ -21971,6 +21977,379 @@
 					"response": []
 				},
 				{
+					"name": "UTILITY SUBPROJECT REGISTER: Create a subproject utilitySubproject",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_Subproject(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"utilitySubproject\", makeID_Subproject(16));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (responseCode.code != 200) && (responseCode.code != 409)) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200 or 409\", function () {",
+									"        pm.expect(pm.response.code).to.be.oneOf([200,409]);",
+									"    });",
+									" ",
+									"    if (pm.response.code === 200) {",
+									"        pm.test(\"SubprojectTest created\", function () {",
+									"            var jsonData = pm.response.json();",
+									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"utilitySubproject\"));",
+									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.gcs_bucket).to.exist;",
+									"        });",
+									"    };",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "ltag",
+								"value": "{{legaltag01}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"storage_class\": \"REGIONAL\",\n  \"storage_location\": \"US-CENTRAL1\"\n} \n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{utilitySubproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{utilitySubproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET REGISTER 2: Register the dataset utilityDataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"    pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('utilityDataset'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"utilitySubproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"utilityTestPath\"));",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"utilityDataset\", makeID_dataset(16));\r",
+									"var path01 = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"utilityTestPath\", path01);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{utilitySubproject}}/dataset/{{utilityDataset}}?path={{utilityTestPath}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{utilitySubproject}}",
+								"dataset",
+								"{{utilityDataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{utilityTestPath}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY LS 2: Retrieve list of datasets and Directories",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Verify directory\", function () {",
+									"        var inputString = pm.environment.get(\"utilityTestPath\");",
+									"        ",
+									"        // Find the start and end positions for the slice",
+									"        var startIndex = inputString.indexOf(\"/\") + 1;",
+									"        var endIndex = inputString.indexOf(\"/\", startIndex);",
+									"",
+									"        // Use slice to extract the desired substring, including the ending slash",
+									"        var result = inputString.slice(startIndex, endIndex + 1);",
+									"",
+									"        pm.expect(jsonData[0]).to.eql(result);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/ls?sdpath=sd://{{tenant}}/{{utilitySubproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"ls"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{utilitySubproject}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY SUBPROJECT DELETE: Delete the subproject utilitySubproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{utilitySubproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{utilitySubproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "UTILITY STATUS UNSET: Cleanup test environment",
 					"event": [
 						{
@@ -21991,6 +22370,9 @@
 									"pm.environment.unset('sbit');",
 									"pm.environment.unset('acsSasUrl');",
 									"pm.environment.unset('UploadStorageCredential');",
+									"pm.environment.unset('utilitySubproject');",
+									"pm.environment.unset('utilityDataset');",
+									"pm.environment.unset('utilityTestPath');",
 									"postman.setEnvironmentVariable('execCounter', 1);",
 									"",
 									"console.log('Dataset variables were removed for utility folder');"
