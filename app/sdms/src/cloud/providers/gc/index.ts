@@ -25,7 +25,7 @@ export { GoogleTrace } from './trace';
 export { GoogleDataEcosystemServices } from './dataecosystem';
 export { GoogleSeistore } from './seistore';
 import { Auth } from '../../../auth/index'
-
+import { DatasetUtils } from '../../../services/dataset/utils'
 
 if ( process.env.CLOUDPROVIDER === 'gc' ) {
  /* FIXME: This is a dirty workaround to pass access tokens
@@ -33,4 +33,13 @@ if ( process.env.CLOUDPROVIDER === 'gc' ) {
             the original method fails.
 */
     Auth.isImpersonationToken = (userToken) => {return false };
+
+    /* FIXME: This is a dirty workaround of getting a subprojects folder
+    from the gcs url for GC impl.
+        Usual path: <subproject-bucket>/<dataset-folder>
+        GC Path: <tenant-bucket>/<subproject-folder>/<dataset-folder>
+    */
+    DatasetUtils.getVirtualFolderFromDatasetResourceUri = (resourceURI: string) => {
+        return resourceURI.split('/').slice(1, 3).join('/')
+    };
 }
