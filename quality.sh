@@ -26,18 +26,26 @@ install_package() {
 }
 
 install_pip_package() {
+
+    # check if pip is installed
     which pip > /dev/null 2>&1
     if [ $? == 1 ]; then
         echo "Please install pip"
         exit 1
+    fi
+
+    # check if package already exist
+    pip show $1 > /dev/null 2>&1
+    if [ $? == 1 ]; then
+      echo "$1: software not found, installing..."
+      pip install $1
+      which $? > /dev/null 2>&1
+      if [ $? == 1 ]; then
+        echo "$1: there was an error installing, please run: pip install $1, once installed confirm command $1 is working fine."
+        exit 1
+      fi
     else
-        echo "$1: installing..."
-        pip install $1
-        which $? > /dev/null 2>&1
-        if [ $? == 1 ]; then
-          echo "$1: there was an error installing, please run: pip install $1, once installed confirm command $1 is working fine."
-          exit 1
-        fi
+      echo "$1: ok"
     fi
 }
 
@@ -74,19 +82,9 @@ install_pip_package detect-secrets
 printf "\n%s\n" "-------------------------------------------------------"
 echo "markdown linting"
 printf "%s\n" "-------------------------------------------------------"
-if [[ $automated == true ]]; then
-  for f in $(git diff --cached --name-only --diff-filter=ACM); do
-    if [ -f $f ]; then
-      if [[ "$f" == "*.md" ]]; then
-        npx markdownlint-cli2 $f --config .markdownlint.json
-        check_exit $?
-      fi
-    fi
-  done
-else
-  npx markdownlint-cli2 "**/*.md" "#**/node_modules" --config .markdownlint.json
-  check_exit $?
-fi
+npx markdownlint-cli2 "**/*.md" "#**/node_modules" --config .markdownlint.json
+check_exit $?
+
 # printf "\n%s\n" "-------------------------------------------------------"
 # echo "code linting"
 # printf "%s\n" "-------------------------------------------------------"
@@ -101,17 +99,8 @@ fi
 printf "\n%s\n" "-------------------------------------------------------"
 echo "spelling check"
 printf "%s\n" "-------------------------------------------------------"
-if [[ $automated == true ]]; then
-  for f in $(git diff --cached --name-only --diff-filter=ACM); do
-    if [ -f $f ]; then
-      npx cspell --no-progress --show-suggestions $f
-      check_exit $?
-    fi
-  done
-else
-  npx cspell --no-progress --show-suggestions .
-  check_exit $?
-fi
+npx cspell --no-progress --show-suggestions .
+check_exit $?
 
 # scan for secrets
 printf "\n%s\n" "-------------------------------------------------------"
@@ -120,12 +109,16 @@ printf "%s\n" "-------------------------------------------------------"
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.Common/bin
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.DeleteOperationRunner/bin
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.QueryRunner/bin
+rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.ComputeSizeRunner/bin
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests/bin
+rm -rf app/sdms/src/cloud/providers/azure/sidecar/test/Sidecar.ComputeSizeOperationRunner.Tests/bin
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/test/Sidecar.DeleteOperationRunner.Tests/bin
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.Common/obj
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.DeleteOperationRunner/obj
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.QueryRunner/obj
+rm -rf app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.ComputeSizeRunner/obj
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/test/Sidecar.Common.Tests/obj
+rm -rf app/sdms/src/cloud/providers/azure/sidecar/test/Sidecar.ComputeSizeOperationRunner.Tests/obj
 rm -rf app/sdms/src/cloud/providers/azure/sidecar/test/Sidecar.DeleteOperationRunner.Tests/obj
 if [[ $automated == true ]]; then
   for f in $(git diff --cached --name-only --diff-filter=ACM); do
@@ -141,22 +134,30 @@ if [[ $automated == true ]]; then
     fi
   done
 else
+
   echo "SDMS V3"
   npx scan-for-secrets app/sdms/src
   check_exit $?
   cd app/sdms
-  detect-secrets-hook --baseline devops/config/detect_secrets/.secrets.baseline $(git ls-files)
+  detect-secrets-hook --baseline devops/config/detect_secrets/.secrets.baseline $(git ls-files) --exclude-files npm-shrinkwrap.json
   check_exit $?
   cd ../..
   echo ""
+
   echo "SDMS V4"
   npx scan-for-secrets app/sdms-v4/src
   check_exit $?
   cd app/sdms-v4
-  detect-secrets-hook --baseline devops/config/detect_secrets/.secrets.baseline $(git ls-files)
+  detect-secrets-hook --baseline devops/config/detect_secrets/.secrets.baseline $(git ls-files) \
+    --exclude-files npm-shrinkwrap.json \
+    --exclude-files tests/e2e/models/FileCollection.Bluware.OpenVDS.1.0.0.json \
+    --exclude-files tests/e2e/models/FileCollection.Generic.1.0.0.json \
+    --exclude-files tests/e2e/models/FileCollection.SEGY.1.0.0.json \
+    --exclude-files tests/e2e/models/FileCollection.Slb.OpenZGY.1.0.0.json
   check_exit $?
   cd ../..
   echo ""
+
   echo "FileMetadata"
   npx scan-for-secrets app/filemetadata/app
   check_exit $?
@@ -170,16 +171,25 @@ fi
 printf "\n%s\n" "-------------------------------------------------------"
 echo "lint .NET"
 printf "%s\n" "-------------------------------------------------------"
-if [ -x "$(command -v dotnet)" ]; then
-    currentPath=$(pwd)
-    cd app/sdms/src/cloud/providers/azure/sidecar/
-    echo "check sdms sidecar code format"
-    dotnet format --verify-no-changes
-    check_exit $?
-    # echo "run sdms sidecar unit test"
-    # dotnet test
-    # check_exit $?
-    cd "$currentPath"
+runDotNetLint=true
+if [[ $automated == true ]]; then
+  if ! git diff --cached --name-only --diff-filter=ACM | grep -q ".cs"; then
+    runDotNetLint=false
+  fi
+fi
+
+if [ -x "$(command -v dotnet)" && $runDotNetLint == true ]; then
+  currentPath=$(pwd)
+  cd app/sdms/src/cloud/providers/azure/sidecar/
+  echo "check sdms sidecar code format"
+  dotnet format --verify-no-changes
+  check_exit $?
+  # echo "run sdms sidecar unit test"
+  # dotnet test
+  # check_exit $?
+  cd "$currentPath"
 else
+  if [ $runDotNetLint == true ]; then
     echo "dotnet not found, code format check skipped"
+  fi
 fi
