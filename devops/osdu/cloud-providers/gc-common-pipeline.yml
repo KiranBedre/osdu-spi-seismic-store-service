@@ -162,8 +162,6 @@ variables:
     - helm package $SEISMIC_GC_HELM_DEPLOYMENT_DIR -u --version $VERSION --app-version $VERSION
     - helm push gc-$SEISMIC_GC_SERVICE-deploy-$VERSION.tgz oci://$GC_GCR_REGISTRY/helm
   rules:
-    - if: '$GC == "1" && $CI_COMMIT_BRANCH =~ /^release/'
-      when: on_success
     - if: '$GC == "1" && $CI_COMMIT_TAG'
       when: on_success
 
