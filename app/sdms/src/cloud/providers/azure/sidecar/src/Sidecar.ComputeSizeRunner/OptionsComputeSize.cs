@@ -61,6 +61,6 @@ public class OptionsComputeSize : IOptionsComputeSize
     [Option("storageQueueEndpoint", Required = false, HelpText = "Queue endpoint to connect to the task queue on Azure Storage")]
     public string StorageQueueEndpoint { get; set; }
 
-    [Option("taskStorageQueueName", Required = false, Default = "sdms-queue-tasks", HelpText = "Name of the Azure Storage queue for operation tasks")]
+    [Option("taskStorageQueueName", Required = false, Default = "sdms-queue-computesize", HelpText = "Name of the Azure Storage queue for operation tasks")]
     public string TaskStorageQueueName { get; set; }
 }
