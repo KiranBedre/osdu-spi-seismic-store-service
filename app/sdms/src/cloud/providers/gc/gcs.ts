@@ -152,11 +152,11 @@ export class GCS extends AbstractStorage {
     /**
      * Delete a dataset's subfolder from the bucket;
      *
-     * @param subprojectURI: "<bucketName>$$<subprojectFolderName>"
-     * @param datasetFolder: The dataset's subfolder
+     * @param bucketName: "<bucketName>"
+     * @param datasetFolder: The dataset's subfolder <subproject_folder>/<dataset_folder>
      */
-    public async deleteObjects(subprojectURI: string, datasetFolder: string): Promise<void> {
-        const subprojectPath = await this.getSubprojectPath(subprojectURI);
+    public async deleteObjects(bucketName: string, datasetFolder: string): Promise<void> {
+        const subprojectPath = await this.getSubprojectPath(bucketName);
         const bucket = this.getStorageClient().bucket(subprojectPath.bucketname);
         const datasetObjectsPath = path_join(subprojectPath.subprojectFolder, datasetFolder, '/');
         const deleteQuery = { prefix: datasetObjectsPath, force: true };

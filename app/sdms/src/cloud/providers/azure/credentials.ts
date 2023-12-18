@@ -64,6 +64,8 @@ export class AzureCredentials extends AbstractCredentials {
         return new RetriableAzureCredential();
     }
 
+    // the sas token does not contain the virtual folder name for performance reasons.
+    // if the virtual folder name is needed, it should be added to the sas token separately.
     public async getStorageCredentials(
         tenant: string, subproject: string,
         bucket: string,readonly: boolean,partition: string): Promise<IAccessTokenModel> {

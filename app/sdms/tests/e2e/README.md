@@ -36,7 +36,7 @@ To run tests using bash script:
 1. Move into the folder with script
 
     ```bash
-    cd app/sdms/tests/e2e/run_e2e_tests.sh
+    cd app/sdms/tests/e2e
     ```
 
 1. Make it executable (for Unix/Linux)
