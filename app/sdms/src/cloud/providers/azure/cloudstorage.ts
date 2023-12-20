@@ -126,12 +126,21 @@ export class AzureCloudStorage extends AbstractStorage {
     // delete multiple objects from a container
     public async deleteObjects(bucketName: string, prefix: string): Promise<void> {
         if (prefix) { // datasets managed as subfolder path into the container
-            const blobUrls = await this.generateBlobUrls(bucketName, prefix);
-            if (blobUrls.length) {
+            const blobUrlsAsOne = await this.generateBlobUrls(bucketName, prefix);
+            const batchSize = 256; // MAX size set by Azure SDK is 256 changes per request
+            const blobUrlsSplit = [];
+            while (blobUrlsAsOne.length) {
+                blobUrlsSplit.push(
+                    blobUrlsAsOne.splice(0, batchSize)
+                )
+            }
+            if (blobUrlsSplit.length) {
                 const batchClient = await this.getBlobBatchClient();
-                batchClient.deleteBlobs(blobUrls, this.defaultAzureCredential).catch((error) => {
-                    console.error(error)
-                });
+                for (const chunk of blobUrlsSplit) {
+                    batchClient.deleteBlobs(chunk, this.defaultAzureCredential).catch((error) => {
+                        console.error(error)
+                    })
+                };
             }
         } else {  // datasets managed as separate containers
             await this.deleteBucket(bucketName);
