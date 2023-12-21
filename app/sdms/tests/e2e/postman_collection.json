@@ -6847,120 +6847,120 @@
 						{
 							"listen": "test",
 							"script": {
-                              "exec": [
-                                "if (responseCode.code != 200) {",
-                                "    console.log(pm.response.text())",
-                                "    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-                                "",
-                                "} else {",
-                                "    var jsonData = pm.response.json();",
-                                "",
-                                "    pm.test(\"Status code is 200\", function () {",
-                                "        pm.response.to.have.status(200);",
-                                "    });",
-                                "",
-                                "    pm.test(\"Check content type\", function () {",
-                                "        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
-                                "    });",
-                                "",
-                                "    //set next page cursor",
-                                "    pm.environment.set(\"nextPageCursor\",jsonData.nextPageCursor);",
-                                "    ",
-                                "    let tenantArray = [];",
-                                "    let subprojectArray = [];",
-                                "    let datasetNameArray = [];",
-                                "    let pathArray = [];",
-                                "    let ltagArray = [];",
-                                "    let created_byArray = [];",
-                                "    let gtagsArray = [];",
-                                "    let gcsurlArray = [];",
-                                "    let ctagArray = [];",
-                                "    ",
-                                "    if ((pm.environment.get(\"tenantArray\"))) {",
-                                "        tenantArray = pm.environment.get(\"tenantArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"subprojectArray\"))) {",
-                                "        subprojectArray = pm.environment.get(\"subprojectArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"datasetNameArray\"))) {",
-                                "        datasetNameArray =pm.environment.get(\"datasetNameArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"pathArray\"))) {",
-                                "        pathArray = pm.environment.get(\"pathArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"ltagArray\"))) {",
-                                "        ltagArray =pm.environment.get(\"ltagArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"created_byArray\"))) {",
-                                "        created_byArray =pm.environment.get(\"created_byArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"gtagsArray\"))) {",
-                                "        gtagsArray =pm.environment.get(\"gtagsArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"gcsurlArray\"))) {",
-                                "        gcsurlArray =pm.environment.get(\"gcsurlArray\");",
-                                "    }",
-                                "    if ((pm.environment.get(\"ctagArray\"))) {",
-                                "        ctagArray =pm.environment.get(\"ctagArray\");",
-                                "    }",
-                                "    for (var i=0;i<jsonData.datasets.length;i++) {",
-                                "        tenantArray.push(jsonData.datasets[i].tenant);",
-                                "        subprojectArray.push(jsonData.datasets[i].subproject);",
-                                "        datasetNameArray.push(jsonData.datasets[i].name);",
-                                "        pathArray.push(jsonData.datasets[i].path);",
-                                "        ltagArray.push(jsonData.datasets[i].ltag);",
-                                "        created_byArray.push(jsonData.datasets[i].created_by);",
-                                "        gtagsArray.push(jsonData.datasets[i].gtags);",
-                                "        gcsurlArray.push(jsonData.datasets[i].gcsurl);",
-                                "        ctagArray.push(jsonData.datasets[i].ctag);        ",
-                                "",
-                                "    }",
-                                "    tenantArray.sort();",
-                                "    pm.environment.set(\"tenantArray\",tenantArray);",
-                                "    pm.environment.set(\"tenantArrayCount\",tenantArray.length);",
-                                "  ",
-                                "    subprojectArray.sort();",
-                                "    pm.environment.set(\"subprojectArray\",subprojectArray);",
-                                "    pm.environment.set(\"subprojectArrayCount\",subprojectArray.length);",
-                                "    ",
-                                "    datasetNameArray.sort();",
-                                "    pm.environment.set(\"datasetNameArray\",datasetNameArray);",
-                                "    pm.environment.set(\"datasetNameArrayCount\",datasetNameArray.length);",
-                                "",
-                                "    pathArray.sort();",
-                                "    pm.environment.set(\"pathArray\",pathArray);",
-                                "    pm.environment.set(\"pathArrayCount\",pathArray.length);",
-                                "",
-                                "    ltagArray.sort();",
-                                "    pm.environment.set(\"ltagArray\",ltagArray);",
-                                "    pm.environment.set(\"ltagArrayCount\",ltagArray.length);",
-                                "  ",
-                                "    created_byArray.sort();",
-                                "    pm.environment.set(\"created_byArray\",created_byArray);",
-                                "    pm.environment.set(\"created_byArrayCount\",created_byArray.length);",
-                                "",
-                                "    gtagsArray.sort();",
-                                "    pm.environment.set(\"gtagsArray\",gtagsArray);",
-                                "",
-                                "    gcsurlArray.sort();",
-                                "    pm.environment.set(\"gcsurlArray\",gcsurlArray);",
-                                "    pm.environment.set(\"gcsurlArrayCount\",gcsurlArray.length);",
-                                "",
-                                "    ctagArray.sort();",
-                                "    pm.environment.set(\"ctagArray\",ctagArray);",
-                                "    pm.environment.set(\"ctagArrayCount\",ctagArray.length);",
-                                "    ",
-                                "    // if there is a next page token re-execute this call for retrieve the new page otherwise check the results and move to the next call",
-                                "    if (jsonData.nextPageCursor != \"\") {",
-                                "        postman.setNextRequest('DATASET SELECT LIST: Get list of datasets in a subproject');",
-                                "    }",
-                                "    ",
-                                "    // Reset environment variables if _.retryOnFailure function was used before",
-                                "    var key = request.name + '_counter';",
-                                "    pm.environment.unset(key);",
-                                "    postman.setEnvironmentVariable('execCounter', 1)",
-                                "}"
-                              ],
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    //set next page cursor",
+									"    pm.environment.set(\"nextPageCursor\",jsonData.nextPageCursor);",
+									"    ",
+									"    let tenantArray = [];",
+									"    let subprojectArray = [];",
+									"    let datasetNameArray = [];",
+									"    let pathArray = [];",
+									"    let ltagArray = [];",
+									"    let created_byArray = [];",
+									"    let gtagsArray = [];",
+									"    let gcsurlArray = [];",
+									"    let ctagArray = [];",
+									"    ",
+									"    if ((pm.environment.get(\"tenantArray\"))) {",
+									"        tenantArray = pm.environment.get(\"tenantArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"subprojectArray\"))) {",
+									"        subprojectArray = pm.environment.get(\"subprojectArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"datasetNameArray\"))) {",
+									"        datasetNameArray =pm.environment.get(\"datasetNameArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"pathArray\"))) {",
+									"        pathArray = pm.environment.get(\"pathArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"ltagArray\"))) {",
+									"        ltagArray =pm.environment.get(\"ltagArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"created_byArray\"))) {",
+									"        created_byArray =pm.environment.get(\"created_byArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"gtagsArray\"))) {",
+									"        gtagsArray =pm.environment.get(\"gtagsArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"gcsurlArray\"))) {",
+									"        gcsurlArray =pm.environment.get(\"gcsurlArray\");",
+									"    }",
+									"    if ((pm.environment.get(\"ctagArray\"))) {",
+									"        ctagArray =pm.environment.get(\"ctagArray\");",
+									"    }",
+									"    for (var i=0;i<jsonData.datasets.length;i++) {",
+									"        tenantArray.push(jsonData.datasets[i].tenant);",
+									"        subprojectArray.push(jsonData.datasets[i].subproject);",
+									"        datasetNameArray.push(jsonData.datasets[i].name);",
+									"        pathArray.push(jsonData.datasets[i].path);",
+									"        ltagArray.push(jsonData.datasets[i].ltag);",
+									"        created_byArray.push(jsonData.datasets[i].created_by);",
+									"        gtagsArray.push(jsonData.datasets[i].gtags);",
+									"        gcsurlArray.push(jsonData.datasets[i].gcsurl);",
+									"        ctagArray.push(jsonData.datasets[i].ctag);        ",
+									"",
+									"    }",
+									"    tenantArray.sort();",
+									"    pm.environment.set(\"tenantArray\",tenantArray);",
+									"    pm.environment.set(\"tenantArrayCount\",tenantArray.length);",
+									"  ",
+									"    subprojectArray.sort();",
+									"    pm.environment.set(\"subprojectArray\",subprojectArray);",
+									"    pm.environment.set(\"subprojectArrayCount\",subprojectArray.length);",
+									"    ",
+									"    datasetNameArray.sort();",
+									"    pm.environment.set(\"datasetNameArray\",datasetNameArray);",
+									"    pm.environment.set(\"datasetNameArrayCount\",datasetNameArray.length);",
+									"",
+									"    pathArray.sort();",
+									"    pm.environment.set(\"pathArray\",pathArray);",
+									"    pm.environment.set(\"pathArrayCount\",pathArray.length);",
+									"",
+									"    ltagArray.sort();",
+									"    pm.environment.set(\"ltagArray\",ltagArray);",
+									"    pm.environment.set(\"ltagArrayCount\",ltagArray.length);",
+									"  ",
+									"    created_byArray.sort();",
+									"    pm.environment.set(\"created_byArray\",created_byArray);",
+									"    pm.environment.set(\"created_byArrayCount\",created_byArray.length);",
+									"",
+									"    gtagsArray.sort();",
+									"    pm.environment.set(\"gtagsArray\",gtagsArray);",
+									"",
+									"    gcsurlArray.sort();",
+									"    pm.environment.set(\"gcsurlArray\",gcsurlArray);",
+									"    pm.environment.set(\"gcsurlArrayCount\",gcsurlArray.length);",
+									"",
+									"    ctagArray.sort();",
+									"    pm.environment.set(\"ctagArray\",ctagArray);",
+									"    pm.environment.set(\"ctagArrayCount\",ctagArray.length);",
+									"    ",
+									"    // if there is a next page token re-execute this call for retrieve the new page otherwise check the results and move to the next call",
+									"    if (jsonData.nextPageCursor != \"\") {",
+									"        postman.setNextRequest('DATASET SELECT LIST: Get list of datasets in a subproject');",
+									"    }",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
 								"type": "text/javascript"
 							}
 						},
@@ -8585,7 +8585,7 @@
 									"var path = \"/\" + makeID_dataset(4) + \"/\"\r",
 									"postman.setEnvironmentVariable(\"testPath\", path);\r",
 									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));\r",
-									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForStatus\", 60);"
+									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForStatus\", 10);"
 								],
 								"type": "text/javascript"
 							}
@@ -10656,37 +10656,52 @@
 							"script": {
 								"exec": [
 									"console.log(request.name)\r",
-									"if (responseCode.code != 200) {\r",
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
 									"    console.log(pm.response.text())\r",
 									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"\r",
 									"} else {\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"\r",
-									"    var jsonData = pm.response.json();\r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
 									"\r",
-									"    pm.test(\"Status code is 200\", function () {\r",
-									"        pm.response.to.have.status(200);\r",
-									"    });\r",
-									"\r",
-									"    if (jsonData.status != 'Completed') {\r",
-									"        console.log(\"Operation status: \" + jsonData.status);\r",
-									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
-									"    }\r",
-									"    else {\r",
-									"        pm.test(\"Validate operation status\", function () {\r",
-									"            pm.expect(jsonData.status).to.eql('Completed');\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
 									"        });\r",
 									"\r",
-									"        pm.test(\"Validate datasets count\", function () {\r",
-									"            pm.expect(jsonData.dataset_cnt).to.eql(2);\r",
-									"            pm.expect(jsonData.completed_cnt).to.eql(2);\r",
-									"            pm.expect(jsonData.failed_cnt).to.eql(0);\r",
-									"        });\r",
-									"        \r",
-									"        // Reset environment variables if _.retryOnFailure function was used before\r",
-									"        var key = request.name + '_counter';\r",
-									"        pm.environment.unset(key);\r",
-									"        postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        if (jsonData.status != 'Completed') {\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
+									"        }\r",
+									"        else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('Completed');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(2);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(2);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);\r",
+									"            });\r",
+									"            \r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
 									"    }\r",
 									"}"
 								],
@@ -11019,37 +11034,52 @@
 							"script": {
 								"exec": [
 									"console.log(request.name)\r",
-									"if (responseCode.code != 200) {\r",
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
 									"    console.log(pm.response.text())\r",
 									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"\r",
 									"} else {\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"\r",
-									"    var jsonData = pm.response.json();\r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
 									"\r",
-									"    pm.test(\"Status code is 200\", function () {\r",
-									"        pm.response.to.have.status(200);\r",
-									"    });\r",
-									"\r",
-									"    if (jsonData.status != 'Completed') {\r",
-									"        console.log(\"Operation status: \" + jsonData.status);\r",
-									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
-									"    }\r",
-									"    else {\r",
-									"        pm.test(\"Validate operation status\", function () {\r",
-									"            pm.expect(jsonData.status).to.eql('Completed');\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
 									"        });\r",
 									"\r",
-									"        pm.test(\"Validate datasets count\", function () {\r",
-									"            pm.expect(jsonData.dataset_cnt).to.eql(2);\r",
-									"            pm.expect(jsonData.completed_cnt).to.eql(2);\r",
-									"            pm.expect(jsonData.failed_cnt).to.eql(0);\r",
-									"        });\r",
+									"        if (jsonData.status != 'Completed') {\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
 									"        \r",
-									"        // Reset environment variables if _.retryOnFailure function was used before\r",
-									"        var key = request.name + '_counter';\r",
-									"        pm.environment.unset(key);\r",
-									"        postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        } else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('Completed');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(2);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(2);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);\r",
+									"            });\r",
+									"            \r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
 									"    }\r",
 									"}"
 								],
@@ -26929,9 +26959,7 @@
 									"const OriginalFiles = [\"randomfile1.txt\", \"randomfile2.txt\", \"randomfile3.txt\"];\r",
 									"postman.setEnvironmentVariable(\"OriginalFiles\", OriginalFiles);\r",
 									"\r",
-									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForStatus\", 60);\r",
-									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForSizeCheck\", 60);\r",
-									""
+									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForStatus\", 10);"
 								],
 								"type": "text/javascript"
 							}
@@ -27242,8 +27270,6 @@
 									"    else {",
 									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?', '/blob1?'));",
 									"    }",
-									"    ",
-									"    console.log(pm.variables.get(\"acsSasUrl1\"))",
 									"",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
@@ -27701,7 +27727,7 @@
 									"    });",
 									"",
 									"    postman.setEnvironmentVariable('virtual_folder2', jsonData.gcsurl.split('/')[1]);",
-									"    console.log('virtual_folder2', pm.environment.get('virtual_folder2'));",
+									"    console.log('virtual_folder2: ' + pm.environment.get('virtual_folder2'));",
 									"",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
@@ -27988,33 +28014,50 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"if (responseCode.code != 200) {\r",
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
 									"    console.log(pm.response.text())\r",
 									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"} else {\r",
-									"    var jsonData = pm.response.json();\r",
-									"    pm.test(\"Status code is 200\", function () {\r",
-									"        pm.response.to.have.status(200);\r",
-									"    });\r",
-									"    if (jsonData.status != 'CompletedWithErrors') {\r",
-									"        console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
-									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
-									"    }\r",
-									"    else {\r",
-									"        pm.test(\"Validate operation status\", function () {\r",
-									"            pm.expect(jsonData.status).to.eql('CompletedWithErrors');\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
 									"        });\r",
 									"\r",
-									"        pm.test(\"Validate datasets count\", function () {\r",
-									"            pm.expect(jsonData.dataset_cnt).to.eql(2);\r",
-									"            pm.expect(jsonData.completed_cnt).to.eql(1);\r",
-									"            pm.expect(jsonData.failed_cnt).to.eql(1);\r",
-									"        });\r",
+									"        if (jsonData.status != 'CompletedWithErrors') {\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
+									"        \r",
+									"        } else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('CompletedWithErrors');\r",
+									"            });\r",
 									"\r",
-									"        // Reset environment variables if _.retryOnFailure function was used before\r",
-									"        var key = request.name + '_counter';\r",
-									"        pm.environment.unset(key);\r",
-									"        postman.setEnvironmentVariable('execCounter', 1)\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(2);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(1);\r",
+									"            });\r",
+									"\r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
 									"    }\r",
 									"}"
 								],
@@ -28398,37 +28441,52 @@
 							"script": {
 								"exec": [
 									"console.log(request.name)\r",
-									"if (responseCode.code != 200) {\r",
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
 									"    console.log(pm.response.text())\r",
 									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"\r",
 									"} else {\r",
-									"\r",
-									"    var jsonData = pm.response.json();\r",
-									"\r",
-									"    pm.test(\"Status code is 200\", function () {\r",
-									"        pm.response.to.have.status(200);\r",
-									"    });\r",
-									"\r",
-									"    if (jsonData.status != 'Completed') {\r",
-									"        console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
-									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
-									"    }\r",
-									"    else {\r",
-									"        pm.test(\"Validate operation status\", function () {\r",
-									"            pm.expect(jsonData.status).to.eql('Completed');\r",
-									"        });\r",
-									"\r",
-									"        pm.test(\"Validate datasets count\", function () {\r",
-									"            pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
-									"            pm.expect(jsonData.completed_cnt).to.eql(1);\r",
-									"            pm.expect(jsonData.failed_cnt).to.eql(0);\r",
-									"        });\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
 									"        \r",
-									"        // Reset environment variables if _.retryOnFailure function was used before\r",
-									"        var key = request.name + '_counter';\r",
-									"        pm.environment.unset(key);\r",
-									"        postman.setEnvironmentVariable('execCounter', 1)\r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
+									"\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
+									"        });\r",
+									"\r",
+									"        if (jsonData.status != 'Completed') {\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForStatus\"));\r",
+									"        \r",
+									"        } else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('Completed');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);\r",
+									"            });\r",
+									"            \r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
 									"    }\r",
 									"}"
 								],
@@ -28678,7 +28736,7 @@
 									"const OriginalFiles = [\"randomfile1.txt\", \"randomfile2.txt\", \"randomfile3.txt\"];\r",
 									"postman.setEnvironmentVariable(\"OriginalFiles\", OriginalFiles);\r",
 									"\r",
-									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForComputedSize\", 60);\r",
+									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForComputedSize\", 10);\r",
 									""
 								],
 								"type": "text/javascript"
@@ -28830,246 +28888,244 @@
 					},
 					"response": []
 				},
-                {
-                  "name": "COMPUTE-SIZE DATASET GET: Retrieve the dataset after register",
-                  "event": [
-                    {
-                      "listen": "test",
-                      "script": {
-                        "exec": [
-                          "if (responseCode.code != 200) {",
-                          "    console.log(pm.response.text())",
-                          "    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-                          "",
-                          "} else {",
-                          "    var jsonData = pm.response.json();",
-                          "",
-                          "    pm.test(\"Status code is 200\", function () {",
-                          "        pm.response.to.have.status(200);",
-                          "    });",
-                          "",
-                          "    pm.test(\"sbit_count\", function () {",
-                          "        pm.expect(jsonData.sbit_count).to.eql(1);",
-                          "    });",
-                          "",
-                          "    pm.test(\"sbit\", function () {",
-                          "        postman.setEnvironmentVariable(\"sbit\", jsonData.sbit);",
-                          "    });",
-                          "",
-                          "    pm.test(\"computed_size is not present\", function () {",
-                          "        pm.expect(jsonData.computed_size).not.to.exist;",
-                          "        pm.expect(jsonData.computed_size_date).not.to.exist;",
-                          "    });",
-                          "",
-                          "    postman.setEnvironmentVariable('virtual_folder', jsonData.gcsurl.split('/')[1]);",
-                          "    console.log(\"virtual_folder\", pm.environment.get(\"virtual_folder\"));",
-                          "",
-                          "    // Reset environment variables if _.retryOnFailure function was used before",
-                          "    var key = request.name + '_counter';",
-                          "    pm.environment.unset(key);",
-                          "    postman.setEnvironmentVariable('execCounter', 1)",
-                          "}"
-                        ],
-                        "type": "text/javascript"
-                      }
-                    }
-                  ],
-                  "request": {
-                    "method": "GET",
-                    "header": [
-                      {
-                        "key": "Authorization",
-                        "value": "Bearer {{STOKEN}}"
-                      },
-                      {
-                        "key": "data-partition-id",
-                        "value": "{{datapartition}}"
-                      },
-                      {
-                        "key": "x-api-key",
-                        "value": "{{SVC_API_KEY}}"
-                      },
-                      {
-                        "key": "appkey",
-                        "value": "{{DE_APP_KEY}}",
-                        "type": "text"
-                      }
-                    ],
-                    "url": {
-                      "raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
-                      "host": [
-                        "{{SVC_URL}}"
-                      ],
-                      "path": [
-                        "dataset",
-                        "tenant",
-                        "{{tenant}}",
-                        "subproject",
-                        "{{subproject}}",
-                        "dataset",
-                        "{{dsx01}}"
-                      ],
-                      "query": [
-                        {
-                          "key": "path",
-                          "value": "{{testPathEncoded}}"
-                        }
-                      ]
-                    }
-                  },
-                  "response": []
-                },
-                {
-                  "name": "COMPUTE-SIZE UPLOAD CONNECTION STRING: Generate upload connection credentials for dataset",
-                  "event": [
-                    {
-                      "listen": "test",
-                      "script": {
-                        "exec": [
-                          "console.log(pm.environment.get('serviceCloudProvider'));",
-                          "",
-                          "if (responseCode.code != 200) {",
-                          "    console.log(pm.response.text())",
-                          "    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-                          "",
-                          "} else {",
-                          "    var jsonData = pm.response.json();",
-                          "",
-                          "    pm.test(\"Status code is 200\", function () {",
-                          "        pm.response.to.have.status(200);",
-                          "    });",
-                          "",
-                          "    pm.test(\"Validate Credential Details\", function () {",
-                          "        pm.expect(jsonData.access_token).to.exist;",
-                          "        pm.expect(jsonData.token_type).to.exist;",
-                          "        pm.expect(jsonData.expires_in).to.greaterThan(0);",
-                          "    });",
-                          "",
-                          "    postman.setEnvironmentVariable(\"UploadStorageCredential\", jsonData.access_token);",
-                          "",
-                          "    // Reset environment variables if _.retryOnFailure function was used before",
-                          "    var key = request.name + '_counter';",
-                          "    pm.environment.unset(key);",
-                          "    postman.setEnvironmentVariable('execCounter', 1)",
-                          "}"
-                        ],
-                        "type": "text/javascript"
-                      }
-                    }
-                  ],
-                  "request": {
-                    "method": "GET",
-                    "header": [
-                      {
-                        "key": "Authorization",
-                        "value": "Bearer {{STOKEN}}"
-                      },
-                      {
-                        "key": "data-partition-id",
-                        "value": "{{datapartition}}"
-                      },
-                      {
-                        "key": "x-api-key",
-                        "value": "{{SVC_API_KEY}}"
-                      },
-                      {
-                        "key": "appkey",
-                        "value": "{{DE_APP_KEY}}",
-                        "type": "text"
-                      }
-                    ],
-                    "url": {
-                      "raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}",
-                      "host": [
-                        "{{SVC_URL}}"
-                      ],
-                      "path": [
-                        "utility",
-                        "upload-connection-string"
-                      ],
-                      "query": [
-                        {
-                          "key": "sdpath",
-                          "value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}"
-                        }
-                      ]
-                    }
-                  },
-                  "response": []
-                },
-                {
-                  "name": "COMPUTE-SIZE UPLOAD NEW TO ACS: Upload first blob",
-                  "event": [
-                    {
-                      "listen": "test",
-                      "script": {
-                        "exec": [
-                          "if (responseCode.code != 201) {",
-                          "    console.log(pm.response.text())",
-                          "    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-                          "",
-                          "} else {",
-                          "    pm.test(\"Status code is 201\", function () {",
-                          "        pm.response.to.have.status(201);",
-                          "    });",
-                          "",
-                          "    pm.test(\"Check content length\", function () {",
-                          "        pm.response.to.be.header(\"Content-Length\", \"0\");",
-                          "    });",
-                          "",
-                          "    postman.setEnvironmentVariable(\"blobSize1\", pm.request.body.raw.length);",
-                          "",
-                          "    // Reset environment variables if _.retryOnFailure function was used before",
-                          "    var key = request.name + '_counter';",
-                          "    pm.environment.unset(key);",
-                          "    postman.setEnvironmentVariable('execCounter', 1);",
-                          "}"
-                        ],
-                        "type": "text/javascript"
-                      }
-                    },
-                    {
-                      "listen": "prerequest",
-                      "script": {
-                        "exec": [
-                          "if  (pm.environment.get(\"virtual_folder\") != undefined) {",
-                          "        pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob1?'));",
-                          "}",
-                          "else {",
-                          "        pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob1?'));",
-                          "}"
-                        ],
-                        "type": "text/javascript"
-                      }
-                    }
-                  ],
-                  "request": {
-                    "method": "PUT",
-                    "header": [
-                      {
-                        "key": "x-ms-blob-type",
-                        "value": "BlockBlob",
-                        "type": "text"
-                      },
-                      {
-                        "key": "appkey",
-                        "value": "{{DE_APP_KEY}}",
-                        "type": "text"
-                      }
-                    ],
-                    "body": {
-                      "mode": "raw",
-                      "raw": "hello world from e2e"
-                    },
-                    "url": {
-                      "raw": "{{acsSasUrl}}",
-                      "host": [
-                        "{{acsSasUrl}}"
-                      ]
-                    }
-                  },
-                  "response": []
-                },
+				{
+					"name": "COMPUTE-SIZE DATASET GET: Retrieve the dataset after register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"sbit\", function () {",
+									"        postman.setEnvironmentVariable(\"sbit\", jsonData.sbit);",
+									"    });",
+									"",
+									"    pm.test(\"computed_size is not present\", function () {",
+									"        pm.expect(jsonData.computed_size).not.to.exist;",
+									"        pm.expect(jsonData.computed_size_date).not.to.exist;",
+									"    });",
+									"",
+									"    postman.setEnvironmentVariable('virtual_folder', jsonData.gcsurl.split('/')[1]);",
+									"    console.log(\"virtual_folder: \" + pm.environment.get(\"virtual_folder\"));",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "COMPUTE-SIZE UPLOAD CONNECTION STRING: Generate upload connection credentials for dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Credential Details\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"        pm.expect(jsonData.token_type).to.exist;",
+									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
+									"    });",
+									"",
+									"    postman.setEnvironmentVariable(\"UploadStorageCredential\", jsonData.access_token);",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"upload-connection-string"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "COMPUTE-SIZE UPLOAD NEW TO ACS: Upload first blob",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 201) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 201\", function () {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"",
+									"    pm.test(\"Check content length\", function () {",
+									"        pm.response.to.be.header(\"Content-Length\", \"0\");",
+									"    });",
+									"",
+									"    postman.setEnvironmentVariable(\"blobSize1\", pm.request.body.raw.length);",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if  (pm.environment.get(\"virtual_folder\") != undefined) {",
+									"        pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob1?'));",
+									"}",
+									"else {",
+									"        pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob1?'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "hello world from e2e"
+						},
+						"url": {
+							"raw": "{{acsSasUrl}}",
+							"host": [
+								"{{acsSasUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
 				{
 					"name": "COMPUTE-SIZE DATASET CLOSE: Patch and close the dataset using sbit",
 					"event": [
@@ -29175,23 +29231,29 @@
 									"",
 									"} else {",
 									"    var jsonData = pm.response.json();",
-									"",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
-									"    pm.test(\"Metadata is saved\", function () {",
-									"        pm.expect(jsonData.metadata.k1).to.eql('v1');",
-									"        pm.expect(jsonData.metadata.k2.k3).to.eql('v3');",
-									"    });",
-									"",
 									"    const blobSize1 = parseInt(pm.environment.get(\"blobSize1\"));",
 									"",
 									"    if (jsonData.computed_size != blobSize1) {",
+									"        var sleepDuration = 5;",
+									"        var waitUntilTime = new Date().getTime() + sleepDuration * 1000;",
+									"        ",
 									"        console.log(\"computed_size: \" + jsonData.computed_size);",
+									"        console.log('Wait ' + sleepDuration + ' sec');",
+									"        while (new Date().getTime() < waitUntilTime) {",
+									"            // Do Nothing -> Wait",
+									"        }",
 									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetriesForComputedSize\"));",
 									"    ",
 									"    } else {",
+									"        pm.test(\"Status code is 200\", function () {",
+									"            pm.response.to.have.status(200);",
+									"        });",
+									"",
+									"        pm.test(\"Metadata is saved\", function () {",
+									"            pm.expect(jsonData.metadata.k1).to.eql('v1');",
+									"            pm.expect(jsonData.metadata.k2.k3).to.eql('v3');",
+									"        });",
+									"    ",
 									"        pm.test(\"Validate computed_size\", function () {",
 									"            pm.expect(jsonData.computed_size).to.exist;",
 									"            pm.expect(jsonData.computed_size).to.eql(blobSize1);",
@@ -29288,20 +29350,20 @@
 								"type": "text/javascript"
 							}
 						},
-                        {
-                          "listen": "prerequest",
-                          "script": {
-                            "exec": [
-                              "if  (pm.environment.get(\"virtual_folder\") != undefined) {",
-                              "    pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob2?'));",
-                              "}",
-                              "else {",
-                              "    pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob2?'));",
-                              "}"
-                            ],
-                            "type": "text/javascript"
-                          }
-                        }
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if  (pm.environment.get(\"virtual_folder\") != undefined) {",
+									"    pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob2?'));",
+									"}",
+									"else {",
+									"    pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob2?'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
 					],
 					"request": {
 						"method": "PUT",
