@@ -200,6 +200,7 @@ variables:
     - sed -i 's|#{SDMS_PREFIX}#|'$GC_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
   script:
     - docker build -t $GC_GCR_REGISTRY/$SEISMIC_GC_SERVICE/$IMAGE_NAME:$CI_COMMIT_TAG -f $SEISMIC_GC_DOCKERFILE_NAME .
+    - cd $CI_PROJECT_DIR
     - docker push $GC_GCR_REGISTRY/$SEISMIC_GC_SERVICE/$IMAGE_NAME:$CI_COMMIT_TAG
   rules:
     - if: '$GC == "1" && $CI_COMMIT_TAG'
