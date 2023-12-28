@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { Request as expRequest } from 'express';
-import { DatasetListRequest, DatasetModel, MatchQueryFilter } from '.';
+import { DatasetListRequest, DatasetModel } from '.';
 import { DatasetFilterParser } from './filter-parser';
 import { Auth } from '../../auth';
 import { Config } from '../../cloud';
@@ -203,7 +203,11 @@ export class DatasetParser {
                 throw (Error.make(Error.Status.NOT_IMPLEMENTED,
                     'The \'filter\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
             }
-            input.filter = DatasetFilterParser.parseFilter(params.filter);
+            try {
+                input.filter = DatasetFilterParser.parseFilter(params.filter);
+            } catch (error){
+                throw (Error.make(Error.Status.BAD_REQUEST, error.message));
+            }
         }
 
         delete input.dataset.path;

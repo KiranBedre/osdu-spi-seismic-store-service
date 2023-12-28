@@ -26,7 +26,8 @@ public class RedisConvertersTests
         OperationId = Guid.NewGuid().ToString(),
         Tenant = "tenant001",
         Subproject = "subproj007",
-        Query = "SELECT c.id FROM c",
+        Query = "SELECT c.id FROM c WHERE (c.data.subproject = @parameter)",
+        Parameters = "[{\"name\":\"@parameter\",\"value\":\"subproject123\"}]\""
     };
 
     private static DeleteOperationStatus GetDelOpStatus() => new()
@@ -48,6 +49,7 @@ public class RedisConvertersTests
             new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
             new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
             new HashEntry(useJsonAttrNames?"query":"Query",msg.Query),
+            new HashEntry(useJsonAttrNames?"parameters":"Parameters",msg.Parameters),
         };
 
     [Fact]
@@ -61,12 +63,13 @@ public class RedisConvertersTests
 
         // Assert
         _ = he.Should().NotBeEmpty()
-            .And.HaveCount(5)
+            .And.HaveCount(6)
             .And.ContainSingle(h => h.Name == "OperationId" && h.Value == msg.OperationId)
             .And.ContainSingle(h => h.Name == "CreatedBy" && h.Value == msg.CreatedBy.ToString())
             .And.ContainSingle(h => h.Name == "Tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "Subproject" && h.Value == msg.Subproject)
-            .And.ContainSingle(h => h.Name == "Query" && h.Value == msg.Query);
+            .And.ContainSingle(h => h.Name == "Query" && h.Value == msg.Query)
+            .And.ContainSingle(h => h.Name == "Parameters" && h.Value == msg.Parameters);
     }
 
     [Fact]
@@ -80,12 +83,13 @@ public class RedisConvertersTests
 
         // Assert
         _ = he.Should().NotBeEmpty()
-            .And.HaveCount(5)
+            .And.HaveCount(6)
             .And.ContainSingle(h => h.Name == "operation_id" && h.Value == msg.OperationId)
             .And.ContainSingle(h => h.Name == "createdBy" && h.Value == msg.CreatedBy.ToString())
             .And.ContainSingle(h => h.Name == "tenant" && h.Value == msg.Tenant)
             .And.ContainSingle(h => h.Name == "subproject" && h.Value == msg.Subproject)
-            .And.ContainSingle(h => h.Name == "query" && h.Value == msg.Query);
+            .And.ContainSingle(h => h.Name == "query" && h.Value == msg.Query)
+            .And.ContainSingle(h => h.Name == "parameters" && h.Value == msg.Parameters);
     }
 
     [Fact]

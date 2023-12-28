@@ -117,6 +117,7 @@ export class TestOperationHandler {
 
         const journalStub = this.sandbox.createStubInstance<IJournal>(azure.AzureCosmosDbDAO);
         journalStub.pathExists.returns(Promise.resolve(true));
+        journalStub.listDatasetsQuery.returns(['query', []]);
         this.sandbox.stub(JournalFactoryTenantClient, 'get').returns(journalStub);
 
         return journalStub;

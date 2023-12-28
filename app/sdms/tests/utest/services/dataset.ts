@@ -829,7 +829,7 @@ export class TestDatasetSVC {
         Tx.sectionInit('others');
 
         Tx.test(async () => {
-            this.journal.listDatasets.resolves([[{}], {}] as never);
+            this.journal.listDatasets.resolves([[], {}] as never);
             this.sandbox.stub(DatasetDAO, 'fixOldModel').resolves();
             await DatasetDAO.list(this.journal, this.dataset, null, null, null, null);
         });

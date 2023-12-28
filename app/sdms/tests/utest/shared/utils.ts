@@ -18,6 +18,7 @@ import { Utils } from '../../../src/shared';
 import { Buffer } from 'buffer';
 import * as crypto from 'crypto';
 import { Tx } from '../utils';
+import { expect } from 'chai';
 
 import sinon from 'sinon';
 import { Config } from '../../../src/cloud/config';
@@ -43,7 +44,8 @@ export class TestUtils {
          this.testisEmail();
          this.resolveJsonRefs();
          this.checkSauthV1EmailDomainName();
-
+         this.testSanitizeOperator();
+         this.testSanitizeFieldName();
 
       });
 
@@ -187,6 +189,44 @@ export class TestUtils {
          this.sandbox.define(Config, 'CLOUDPROVIDER', 'google');
          const res = Utils.checkSauthV1EmailDomainName('slbservice.com@slb.com');
          Tx.checkTrue(res === 'slbservice.com@delfiserviceaccount.com');
+      });
+   }
+
+
+   private static testSanitizeOperator() {
+      Tx.sectionInit('check operator');
+
+      Tx.test(() => {
+         const supportedOperators: any[] = ['=', '!=', '<', '>', '<=', '>=', 'CONTAINS', 'RegexMatch', 'LIKE', 'STARTSWITH'];
+         supportedOperators.forEach((operator) => {
+            const result = Utils.sanitizeOperator(operator);
+            Tx.checkTrue(result === operator);
+         });
+      });
+
+      Tx.test(() => {
+            const unsupportedOperator: any = 'INVALID_OPERATOR';
+            const expectError = expect(() => Utils.sanitizeOperator(unsupportedOperator)).to.throw();
+            expectError.to.have.property('message').match(RegExp(`Operator \`${unsupportedOperator}\` not supported`));
+         });
+   }
+
+   private static testSanitizeFieldName() {
+      Tx.sectionInit('check field name');
+
+      Tx.test(() => {
+         const userInput = '  field name  ';
+          const expected = 'field name';
+          const result = Utils.sanitizeFieldName(userInput);
+          Tx.checkTrue(result === expected);
+      });
+
+      Tx.test(() => {
+         const unsupportedFieldNames: string[] = ['field@name', 'gtags FROM c--'];
+         unsupportedFieldNames.forEach((fieldName) => {
+            const expectError = expect(() => Utils.sanitizeFieldName(fieldName)).to.throw();
+            expectError.to.have.property('message').match(RegExp(`\`${fieldName}\` contains invalid characters. Only letters, numbers, space and _ are allowed.`));
+         });
       });
    }
 }

@@ -34,7 +34,11 @@ export class Parser {
                 throw (Error.make(Error.Status.NOT_IMPLEMENTED,
                     'The \'filter\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
             }
-            input.filter = DatasetFilterParser.parseFilter(req.body.filter);
+            try {
+                input.filter = DatasetFilterParser.parseFilter(req.body.filter);
+            } catch (error) {
+                throw (Error.make(Error.Status.BAD_REQUEST, error.message));
+            }
         }
 
         return input;

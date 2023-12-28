@@ -16,7 +16,7 @@
 
 import crypto from 'crypto';
 
-import { CosmosClient, Container, FeedResponse, ItemResponse, OperationInput, BulkOperationType } from '@azure/cosmos';
+import { CosmosClient, Container, FeedResponse, ItemResponse, OperationInput, BulkOperationType, SqlParameter } from '@azure/cosmos';
 import { AbstractJournal, AbstractJournalTransaction, IJournalExtendedQueryModel, IJournalQueryModel,
     IJournalTransaction, JournalFactory } from '../../journal';
 import { TenantModel } from '../../../services/tenant';
@@ -24,6 +24,8 @@ import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
 import { Config } from '../..';
 import { CallContext, Error, Utils } from '../../../shared';
+import { Operator } from '../../../services/dataset/model';
+
 
 import axios, { AxiosInstance } from 'axios';
 import { DatasetModel, ListDatasetsParams, QueryFilter, QueryFilterVisitor, AndQueryFilter, MatchQueryFilter,
@@ -139,16 +141,19 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     private async getMetaDataByKeys(keys: any[]): Promise<any[]> {
+        const parameters: SqlParameter[] = [];
         let query = 'SELECT * FROM c WHERE c.id = ';
         for (let i = 0; i < keys.length; i++) {
             if (i === 0) {
-                query += '\"' + keys[i].partitionKey + '\"';
+                query += `@id${i}`;
             }
             else {
-                query += ' OR c.id = \"' + keys[i].partitionKey + '\"';
+                query += ` OR c.id = @id${i}`;
             }
+            parameters.push({name: '@id' + i, value: keys[i].partitionKey});
+
         }
-        return (await (await this.getCosmoContainer()).items.query(query).fetchAll()).resources;
+        return (await (await this.getCosmoContainer()).items.query({query, parameters}).fetchAll()).resources;
     }
 
     public async getIdByKeys(keys: any[]): Promise<string[]> {
@@ -249,21 +254,25 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async listFolders(dataset: DatasetModel): Promise<any[]> {
+        const [query, sqlParams] = this.distinctPathsQuery(dataset.subproject, dataset.path);
         return this.getSubfoldersUsingDistinctPathsQuery(
-            this.distinctPathsQuery(dataset.tenant, dataset.subproject, dataset.path), dataset);
+            query, sqlParams, dataset);
     }
 
     override customizeDatasetsQuery(query: IJournalQueryModel, params: ListDatasetsParams) : IJournalQueryModel {
         return query.filter('subproject', params.dataset.subproject);
     }
 
-    private async getSubfoldersUsingDistinctPathsQuery(sqlQuery: string, dataset: DatasetModel) {
+    private async getSubfoldersUsingDistinctPathsQuery(sqlQuery: string,
+        sqlParams: SqlParameter[],
+        dataset: DatasetModel) {
         if (AzureConfig.SIDECAR_ENABLE_QUERY) {
             const cParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
             const url = AzureConfig.SIDECAR_URL + '/query'
             const payload = {
                 'cs': 'AccountEndpoint=' + cParams.endpoint + ';' + 'AccountKey=' + cParams.key + ';',
                 'sql': sqlQuery,
+                'parameters': JSON.stringify(sqlParams),
                 'corrid': CallContext.correlationId
             };
             try {
@@ -287,14 +296,15 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 this.checkAndParseCosmosError(error);
             }
         } else {
-            const response = await (await this.getCosmoContainer()).items.query(sqlQuery).fetchAll();
-            const results = response.resources.flatMap(dataPath => {
-                // finds the path of the subfolder that is nested in dataset.path.
-                // e.g. if record.path is "/dev/" and dataset.path is "/dev/folder/foo/bar/",
-                // the result will be "/dev/folder/"
-                if (dataPath !== dataset.path)
-                    return dataPath.substring(0, dataPath.indexOf('/', dataset.path.length) + 1);
-            });
+            const response = await (await this.getCosmoContainer()).items.query({
+                query: sqlQuery,
+                parameters: sqlParams
+            }).fetchAll();
+            // results contain the path of the subfolder that is nested in dataset.path.
+            // e.g. if dataset.path is "/dev/" and dataPath is "/dev/folder/foo/bar/",
+            // the result will be "/dev/folder/"
+            const results = response.resources.filter(dataPath => dataPath !== dataset.path).
+                flatMap(dataPath => dataPath.substring(0, dataPath.indexOf('/', dataset.path.length) + 1));
             const uniquePaths = [...new Set(results)].map(p => ({
                 path: p
             }));
@@ -302,14 +312,21 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
     }
 
-    private distinctPathsQuery(tenant: string, subproject: string, path: string): string {
-        // select distinct paths filtering by tenant, subproject and path
-        return  'SELECT DISTINCT VALUE c.data.path' +
-            ' FROM c WHERE c.data.subproject = "' + subproject +
-            '" AND STARTSWITH(c.data.path, "' + path + '", false)';
+    private distinctPathsQuery(subproject: string, path: string): [string, SqlParameter[]] {
+        // select distinct paths filtering by subproject and path
+        const sqlQuery = `SELECT DISTINCT VALUE c.data.path` +
+            ` FROM c WHERE c.data.subproject = @subproject` +
+            ` AND STARTSWITH(c.data.path, @path, false)`;
+
+        const sqlParameters: SqlParameter[] = [
+            { name: '@subproject', value: subproject },
+            { name: '@path', value: path }
+        ];
+
+        return [sqlQuery, sqlParameters];
     }
 
-    public datasetsQueryString(query: IJournalQueryModel): string {
+    public datasetsQueryString(query: IJournalQueryModel): [string, SqlParameter[]] {
         const cosmosQuery = (query as AzureCosmosDbQuery);
         let sqlQuery: string;
 
@@ -320,7 +337,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 if (fieldList) {
                     fieldList += ', ';
                 }
-                fieldList += ((field === 'id') ? 'c.' : 'c.data.') + field;
+                const sanitizedField = Utils.sanitizeFieldName(field);
+                fieldList += ((sanitizedField === 'id') ? 'c.' : 'c.data.') + sanitizedField;
             }
             sqlQuery = 'SELECT ' + fieldList
         } else {
@@ -330,8 +348,11 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         sqlQuery += ' FROM c';
 
         // add filters
+        const sqlParams: SqlParameter[] = [];
         if (cosmosQuery.queryFilter) {
-            sqlQuery += ' WHERE ' + QueryFilterEvaluator.convert(cosmosQuery.queryFilter)
+            const [sql, params] = QueryFilterEvaluator.convert(cosmosQuery.queryFilter);
+            sqlQuery += ' WHERE ' + sql;
+            sqlParams.push(...params);
         }
 
         // group results by field
@@ -341,18 +362,19 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 if (groupByList) {
                     groupByList += ', ';
                 }
-                groupByList += 'c.data.' + field;
+                groupByList += 'c.data.' + Utils.sanitizeFieldName(field);
             }
             sqlQuery += ' GROUP BY ' + groupByList;
         }
 
-        return sqlQuery;
+        return [sqlQuery, sqlParams];
     }
 
     public async runQuery(query: IJournalQueryModel): Promise<[any[], { endCursor?: string }]> {
         const cosmosQuery = (query as AzureCosmosDbQuery);
 
         let sqlQuery: string;
+        let sqlParams: SqlParameter[] = [];
         let response: FeedResponse<any>;
 
         if (cosmosQuery.kind === Config.SUBPROJECTS_KIND) {
@@ -361,7 +383,11 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
 
         if (cosmosQuery.kind === Config.DATASETS_KIND) {
-            sqlQuery = this.datasetsQueryString(query);
+            try {
+                [sqlQuery, sqlParams] = this.datasetsQueryString(query);
+            } catch (error) {
+                throw (Error.make(Error.Status.BAD_REQUEST, error.message))
+            }
 
             if (AzureConfig.SIDECAR_ENABLE_QUERY) {
                 const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
@@ -371,6 +397,11 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                     'AccountKey=' + connectionParams.key + ';'
                 payload['sql'] = sqlQuery;
                 payload['corrid'] = CallContext.correlationId;
+
+                if (sqlParams.length) {
+                    payload['parameters'] =  JSON.stringify(sqlParams);
+                }
+
                 if (cosmosQuery.pagingStart) {
                     cosmosQuery.pagingStart = cosmosQuery.pagingStart.replace(/\\/g, '');
                     if (cosmosQuery.pagingStart.startsWith('\"[')) {
@@ -416,12 +447,19 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 }
             } else {
                 if (cosmosQuery.pagingStart || cosmosQuery.pagingLimit) {
-                    response = await (await this.getCosmoContainer()).items.query(sqlQuery, {
+                    const querySpec = {
+                        query: sqlQuery,
+                        parameters: sqlParams,
                         continuationToken: cosmosQuery.pagingStart,
                         maxItemCount: cosmosQuery.pagingLimit
-                    }).fetchNext();
+                    };
+                    response = await (await this.getCosmoContainer()).items.query(querySpec).fetchNext();
                 } else {
-                    response = await (await this.getCosmoContainer()).items.query(sqlQuery).fetchAll();
+                    const querySpec = {
+                        query: sqlQuery,
+                        parameters: sqlParams
+                    }
+                    response = await (await this.getCosmoContainer()).items.query(querySpec).fetchAll();
                 }
             }
         }
@@ -486,9 +524,6 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 }
 
-declare type Operator = '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch' | 'LIKE' | 'STARTSWITH';
-declare type Type = 'STRING' | 'BOOLEAN' | 'NUMBER';
-
 export class AzureCosmosDbQuery implements IJournalExtendedQueryModel {
 
     public constructor(namespace: string, kind: string) {
@@ -496,7 +531,7 @@ export class AzureCosmosDbQuery implements IJournalExtendedQueryModel {
         this.kind = kind;
     }
 
-    filter(property: string, operator?: Operator, value?: {}, type?: Type): IJournalQueryModel {
+    filter(property: string, operator?: Operator, value?: {}): IJournalQueryModel {
 
         if (value === undefined) {
             value = operator;
@@ -511,21 +546,7 @@ export class AzureCosmosDbQuery implements IJournalExtendedQueryModel {
             value = '';
         }
 
-        if (type === undefined) {
-            if (typeof value === 'number') {
-                type = 'NUMBER';
-            }
-            else if (operator === 'LIKE'
-                && typeof value === 'string'
-                && Utils.isBoolean(value)) {
-                type = 'BOOLEAN';
-            }
-            else {
-                type = 'STRING';
-            }
-        }
-
-        return this.filterBy(new MatchQueryFilter(property, operator, value, type));
+        return this.filterBy(new MatchQueryFilter(property, operator, value));
     }
 
     filterBy(queryFilter: QueryFilter): this {
@@ -663,7 +684,7 @@ export class AzureCosmosDbTransactionDAO extends AbstractJournalTransaction {
 }
 
 class QueryFilterEvaluator extends QueryFilterVisitor {
-    result: string;
+    result: [string, SqlParameter[]];
 
     visitAnd(element: AndQueryFilter): void {
         this.result = QueryFilterEvaluator.convertAnd(element);
@@ -681,53 +702,57 @@ class QueryFilterEvaluator extends QueryFilterVisitor {
         this.result = QueryFilterEvaluator.convertOr(element);
     }
 
-    static convert(element: QueryFilter): string {
+    static convert(element: QueryFilter):  [string, SqlParameter[]] {
         const visitor = new QueryFilterEvaluator()
         element.accept(visitor);
         return visitor.result;
     }
 
-    private static convertAnd(element: AndQueryFilter): string {
-        return element.filters.map(queryFilter => {
-            return '('
-            + QueryFilterEvaluator.convert(queryFilter)
-            + ')'
-        }).join(' AND ');
+    private static convertAnd(element: AndQueryFilter):  [string, SqlParameter[]] {
+        const sqlParams: SqlParameter[] = [];
+        const result = element.filters.map(queryFilter => {
+            const filterResult = QueryFilterEvaluator.convert(queryFilter);
+            sqlParams.push(...filterResult[1]);
+            return '(' + filterResult[0] + ')';
+        });
+        return [result.join(' AND '), sqlParams];
     }
 
-    private static convertOr(element: OrQueryFilter): string {
-        return element.filters.map(queryFilter => {
-            return '('
-            + QueryFilterEvaluator.convert(queryFilter)
-            + ')'
-        }).join(' OR ');
+    private static convertOr(element: OrQueryFilter): [string, SqlParameter[]] {
+        const sqlParams: SqlParameter[] = [];
+        return [element.filters.map(queryFilter => {
+            const filterResult = QueryFilterEvaluator.convert(queryFilter);
+            sqlParams.push(...filterResult[1]);
+            return '(' + filterResult[0] + ')';
+        }).join(' OR '), sqlParams];
     }
 
-    private static convertMatch(element: MatchQueryFilter): string {
+    private static convertMatch(element: MatchQueryFilter): [string, SqlParameter[]]  {
+        const sqlParams: SqlParameter[] = [];
+        let sql = '';
+
+        const paramName = '@parameter'+ Utils.makeID(4);
         if (element.operator === 'CONTAINS') {
             // Using EXISTS (SELECT ... ) is preferable to ARRAY_CONTAINS, as it supports putting NOT in front of the
-            // query, which allows a simple implementation for the `not` operator.
-            // Using IS_STRING is necessary to support the `not` operator, otherwise datasets that are not strings
-            // are not returned when using the `not` operator.
-            return '(EXISTS (SELECT VALUE 1 FROM t IN c.data.' + element.property + ' WHERE t = ' + '\'' +
-                element.value + '\'' + ') OR (IS_STRING(c.data.' + element.property + ') AND STRINGEQUALS(c.data.' +
-                element.property + ', ' + '\'' + element.value + '\'' + ')))';
+            // query, which allows a simple implementation for the `not` filter operator.
+            // Using IS_STRING is necessary to support the `not` operator as well, otherwise datasets that are not
+            // strings are not returned when using the `not` operator.
+            sql = `(EXISTS (SELECT VALUE 1 FROM t IN c.data.${element.property} WHERE t = ${paramName}) OR ` +
+            `(IS_STRING(c.data.${element.property}) AND STRINGEQUALS(c.data.${element.property}, ${paramName})))`;
         } else if (element.operator === 'RegexMatch') {
-            return '(RegexMatch(c.data.' + element.property + ', \'' + element.value + '\')' + ')';
+            sql = `(RegexMatch(c.data.${element.property}, ${paramName}))`;
         } else if (element.operator === 'STARTSWITH') {
-            return '(STARTSWITH(c.data.' + element.property + ', \'' + element.value + '\', false)' + ')';
+            sql = `(STARTSWITH(c.data.${element.property}, ${paramName}, false))`;
         } else {
-            if (element.type === 'STRING') {
-                return 'c.data.' + element.property + ' ' + element.operator + ' "' + element.value + '"';
-            }
-            else {
-                return 'c.data.' + element.property + ' ' + element.operator + ' ' + element.value;
-            }
+            sql = `c.data.${element.property} ${element.operator} ${paramName}`;
         }
+        sqlParams.push({ name: paramName, value: element.value });
+        return [sql, sqlParams ];
     }
 
-    private static convertNot(element: NotQueryFilter): string {
-        return 'NOT ('
-                + QueryFilterEvaluator.convert(element.filter) + ')';
+    private static convertNot(element: NotQueryFilter): [string, SqlParameter[]] {
+        const filterResult = QueryFilterEvaluator.convert(element.filter);
+        return  ['NOT ('
+                + filterResult[0] + ')', filterResult[1]];
     };
 }

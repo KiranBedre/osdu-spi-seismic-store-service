@@ -19,6 +19,7 @@ import {CloudFactory} from './cloud';
 import {TenantModel} from '../services/tenant';
 import {DatasetModel, ListDatasetsParams, QueryFilter} from '../services/dataset';
 import {Error} from '../shared';
+import { SqlParameter } from '@azure/cosmos';
 
 export interface IJournalQueryModel {
     filter(property: string, value: {}): IJournalQueryModel;
@@ -53,7 +54,7 @@ export interface IJournal {
     getQueryFilterSymbolContains(): string;
     listFolders(dataset: DatasetModel): Promise<any[]>;
     listDatasets(params: ListDatasetsParams): Promise<[any[], { endCursor?: string }]>;
-    listDatasetsQuery(params: ListDatasetsParams): string;
+    listDatasetsQuery(params: ListDatasetsParams): [string, SqlParameter[]];
     KEY: symbol;
     pathExists(subproject: string, path: string): Promise<boolean>;
 }
@@ -156,13 +157,13 @@ export abstract class AbstractJournal implements IJournal {
         return this.runQuery(query);
     }
 
-    public listDatasetsQuery(params: ListDatasetsParams): string
+    public listDatasetsQuery(params: ListDatasetsParams): [string, SqlParameter[]]
     {
         const query = this.getDatasetsQuery(params);
         return this.datasetsQueryString(query);
     }
 
-    public datasetsQueryString(query: IJournalQueryModel): string {
+    public datasetsQueryString(query: IJournalQueryModel): [string, SqlParameter[]] {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
     public deleteMulti(keys: string[]): Promise<void> {

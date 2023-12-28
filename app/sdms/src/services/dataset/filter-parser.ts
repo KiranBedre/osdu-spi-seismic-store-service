@@ -16,6 +16,7 @@
 
 import { AndQueryFilter, MatchQueryFilter, NotQueryFilter, OrQueryFilter, QueryFilter } from '.';
 import { Error } from '../../shared';
+import { Utils } from './../../shared/utils';
 
 export class DatasetFilterParser {
 
@@ -46,18 +47,6 @@ export class DatasetFilterParser {
     }
 
     private static parseMatch(input: any): MatchQueryFilter {
-        let type;
-        switch (typeof input.value) {
-            case 'boolean':
-                type = 'BOOLEAN';
-                break;
-            case 'number':
-                type = 'NUMBER';
-                break;
-            default:
-                type = 'STRING';
-        }
-
         if (!input.property) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'Filter property missing.'));
@@ -66,13 +55,15 @@ export class DatasetFilterParser {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'Filter operator missing.'));
         }
-        return new MatchQueryFilter(input.property, input.operator, input.value, type);
+        const operator = Utils.sanitizeOperator(input.operator);
+        const property =  Utils.sanitizeFieldName(input.property);
+        return new MatchQueryFilter(property, operator, input.value);
     }
 
     private static disallowExtraKeys(input: any) {
         if (Object.keys(input).length > 1) {
             throw (Error.make(Error.Status.BAD_REQUEST,
-                'Unexpected filter property.'));
+                'Unexpected filter property: `' + input + '`.'));
         }
     }
 }

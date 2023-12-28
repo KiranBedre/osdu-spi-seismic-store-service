@@ -51,7 +51,7 @@ public class CosmosController : ControllerBase
                 _telemetryClient.TrackTrace("SDMS Sidecar Trace",
                                             SeverityLevel.Information,
                                             customProperties);
-                return Ok(await _dataAccess.QueryAsync(body.cs, body.sql, body.ctoken, body.limit));
+                return Ok(await _dataAccess.QueryAsync(body.cs, body.sql, body.parameters, body.ctoken, body.limit));
             }
             else if (body.cs == null)
             {
