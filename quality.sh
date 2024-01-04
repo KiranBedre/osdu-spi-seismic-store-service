@@ -170,16 +170,23 @@ fi
 printf "\n%s\n" "-------------------------------------------------------"
 echo "lint .NET"
 printf "%s\n" "-------------------------------------------------------"
-if [ -x "$(command -v dotnet)" ]; then
-    currentPath=$(pwd)
-    cd app/sdms/src/cloud/providers/azure/sidecar/
-    echo "check sdms sidecar code format"
-    dotnet format --verify-no-changes
-    check_exit $?
-    # echo "run sdms sidecar unit test"
-    # dotnet test
-    # check_exit $?
-    cd "$currentPath"
+runDotNetLint=true
+if [[ $automated == true ]]; then
+  if ! git diff --cached --name-only --diff-filter=ACM | grep -q ".cs"; then
+    runDotNetLint=false
+  fi
+fi
+
+if [[ -x "$(command -v dotnet)" && $runDotNetLint == true ]]; then
+  currentPath=$(pwd)
+  cd app/sdms/src/cloud/providers/azure/sidecar/
+  echo "check sdms sidecar code format"
+  dotnet format --verify-no-changes
+  check_exit $?
+  # echo "run sdms sidecar unit test"
+  # dotnet test
+  # check_exit $?
+  cd "$currentPath"
 else
     echo "dotnet not found, code format check skipped"
 fi

@@ -70,6 +70,7 @@ export interface ConfigModel {
     FEATURE_FLAG_CCM_INTERACTION: boolean;
     FEATURE_FLAG_POLICY_SVC_INTERACTION: boolean;
     FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE?: boolean;
+    FEATURE_FLAG_ENABLE_BULK_DELETE?: boolean;
     FULL_DATA_ACCESS_GROUP?: string;
     CCM_SERVICE_URL: string;
     CCM_TOKEN_SCOPE: string;
@@ -165,6 +166,7 @@ export abstract class Config implements IConfig {
     public static FEATURE_FLAG_CCM_INTERACTION = false;
     public static FEATURE_FLAG_POLICY_SVC_INTERACTION = false;
     public static FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE = false;
+    public static FEATURE_FLAG_ENABLE_BULK_DELETE = false;
 
     // Full Data Permission Group
     public static FULL_DATA_ACCESS_GROUP: string;
@@ -307,6 +309,7 @@ export abstract class Config implements IConfig {
         Config.FEATURE_FLAG_CCM_INTERACTION = model.FEATURE_FLAG_CCM_INTERACTION;
         Config.FEATURE_FLAG_POLICY_SVC_INTERACTION = model.FEATURE_FLAG_POLICY_SVC_INTERACTION;
         Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE = model.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE;
+        Config.FEATURE_FLAG_ENABLE_BULK_DELETE = model.FEATURE_FLAG_ENABLE_BULK_DELETE;
 
         Config.FULL_DATA_ACCESS_GROUP = process.env.FULL_DATA_ACCESS_GROUP || 'users.data.root';
 
