@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c003a366-5ba4-4503-b140-caa97443c431",
+		"_postman_id": "052bc12f-0eba-4d37-90a6-499f1424cc82",
 		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -19,6 +19,7 @@
 									"    pm.response.to.have.status(200);",
 									"    pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));",
 									"});",
+									"",
 									"pm.environment.set('appAdminEmail', pm.environment.get('adminEmail'));",
 									"if( pm.environment.get('serviceCloudProvider') !== 'gc' && pm.environment.get('serviceCloudProvider') !== 'google' && pm.environment.get('serviceCloudProvider') !== 'ibm') {",
 									"    pm.environment.set('adminEmail', pm.environment.get('adminEmail').split('@')[0]);",
@@ -26,7 +27,17 @@
 									"",
 									"pm.test(\"Body matches string\", function () {",
 									"    pm.expect(pm.response.text()).to.include(\"service OK\");",
-									"});"
+									"});",
+									"",
+									"// Test Bulk Delete feature flag",
+									"if (!pm.environment.get('testBulkDelete')) {",
+									"    pm.environment.set('testBulkDelete', 'false');",
+									"};",
+									"",
+									"// Test Compute Size feature flag",
+									"if ( !pm.environment.get('testComputeSize') ) {",
+									"    pm.environment.set('testComputeSize', 'false');",
+									"};"
 								],
 								"type": "text/javascript"
 							}
@@ -8641,8 +8652,10 @@
 									"pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));",
 									"",
 									"//skip this folder for ! azure",
+									"console.log('feature flag testBulkDelete is : ' + pm.environment.get('testBulkDelete'));",
 									"const provider = pm.environment.get('serviceCloudProvider');",
-									"if( provider !== 'azure') {",
+									"if( provider !== 'azure' || (pm.environment.get('testBulkDelete') === 'false') ) {",
+									"    console.log('Skip the Compute size folder');",
 									"    postman.setNextRequest('DATASET FILTER STATUS UNSET: Cleanup test environment');",
 									"}"
 								],
@@ -27881,9 +27894,11 @@
 							"script": {
 								"exec": [
 									"console.log('Dataset variables are initialized for datasets folder');",
-									"postman.setEnvironmentVariable('execCounter', 1)",
-									"if (pm.environment.get('serviceCloudProvider') !== 'azure') {",
-									"        postman.setNextRequest(\"BULK-DELETE CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"postman.setEnvironmentVariable('execCounter', 1);",
+									"console.log('feature flag testBulkDelete is : ' + pm.environment.get('testBulkDelete'));",
+									"if ( (pm.environment.get('serviceCloudProvider') !== 'azure') || (pm.environment.get('testBulkDelete') === 'false') ) {",
+									"    console.log('Skip the Compute size folder');",
+									"    postman.setNextRequest(\"BULK-DELETE CLEANUP STATUS UNSET: Cleanup test environment\");",
 									"}"
 								],
 								"type": "text/javascript"
@@ -29659,8 +29674,10 @@
 								"exec": [
 									"console.log('Dataset variables are initialized for datasets folder');",
 									"postman.setEnvironmentVariable('execCounter', 1)",
-									"if (pm.environment.get('serviceCloudProvider') !== 'azure') {",
-									"        postman.setNextRequest(\"COMPUTE-SIZE CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"console.log('feature flag testComputeSize is : ' + pm.environment.get('testComputeSize'));",
+									"if ( (pm.environment.get('serviceCloudProvider') !== 'azure') || (pm.environment.get('testComputeSize') === 'false') ) {",
+									"    console.log('Skip the Compute size folder');",
+									"    postman.setNextRequest(\"COMPUTE-SIZE CLEANUP STATUS UNSET: Cleanup test environment\");",
 									"}"
 								],
 								"type": "text/javascript"

@@ -24,7 +24,8 @@ export enum Feature {
     STACKDRIVER_EXPORTER,
     CCM_INTERACTION,
     POLICY_SERVICE_INTERACTION,
-    POST_PROCESS_ON_DATASET_CLOSE
+    POST_PROCESS_ON_DATASET_CLOSE,
+    BULK_DELETE
 }
 
 export class FeatureFlags {
@@ -36,7 +37,8 @@ export class FeatureFlags {
             flag === Feature.STACKDRIVER_EXPORTER && Config.FEATURE_FLAG_STACKDRIVER_EXPORTER ||
             flag === Feature.CCM_INTERACTION && Config.FEATURE_FLAG_CCM_INTERACTION ||
             flag === Feature.POLICY_SERVICE_INTERACTION && Config.FEATURE_FLAG_POLICY_SVC_INTERACTION ||
-            flag === Feature.POST_PROCESS_ON_DATASET_CLOSE && Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE;
+            flag === Feature.POST_PROCESS_ON_DATASET_CLOSE && Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE ||
+            flag === Feature.BULK_DELETE && Config.FEATURE_FLAG_ENABLE_BULK_DELETE;
 
     }
 }

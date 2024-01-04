@@ -178,7 +178,7 @@ if [[ $automated == true ]]; then
   fi
 fi
 
-if [ -x "$(command -v dotnet)" && $runDotNetLint == true ]; then
+if [[ -x "$(command -v dotnet)" && $runDotNetLint == true ]]; then
   currentPath=$(pwd)
   cd app/sdms/src/cloud/providers/azure/sidecar/
   echo "check sdms sidecar code format"
