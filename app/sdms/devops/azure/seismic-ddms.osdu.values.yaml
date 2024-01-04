@@ -91,52 +91,52 @@ configuration:
       limit:
         cpu: 1
         memory: 2Gi
-  #####################################
-  # Seismic metadata deletion Service #
-  #####################################
-  - service: seismic-ddms-deletion-service
-    container:
-      image: seismic-ddms-deletion-service
-      tag: latest
-      containerPort: 8001
-    probe:
-      liveness:
-        path: /healthz
-    config:
-      HOST_PORT: "8001"
-      DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
-      SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
-      SDMS_REDIS_QUEUE_NAME: "sdms-queue-bulkdelete"
-      SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
-      SDMS_REDIS_QUEUE_PORT: "6380"
-      SDMS_REDIS_LOCKS_PORT: "6380"
-    request:
-      cpu: 0.1
-      memory: 1Gi
-    limit:
-      cpu: 1
-      memory: 4Gi
-  #####################################
-  # Seismic compute size Service #
-  #####################################
-  - service: seismic-ddms-computesize-service
-    container:
-      image: seismic-ddms-computesize-service
-      tag: latest
-      containerPort: 8002
-    probe:
-      liveness:
-        path: /healthz
-    config:
-      HOST_PORT: "8002"
-      DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
-      SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
-      SDMS_COMPUTE_SIZE_QUEUE: "sdms-queue-computesize"
-      SDMS_REDIS_QUEUE_PORT: "6380"
-      SDMS_REDIS_LOCKS_PORT: "6380"
-    request:
-      cpu: 0.1
-      memory: 1Gi
-    limit:
-      cpu: 1
-      memory: 4Gi
+  # #####################################
+  # # Seismic metadata deletion Service #
+  # #####################################
+  # - service: seismic-ddms-deletion-service
+  #   container:
+  #     image: seismic-ddms-deletion-service
+  #     tag: latest
+  #     containerPort: 8001
+  #   probe:
+  #     liveness:
+  #       path: /healthz
+  #   config:
+  #     HOST_PORT: "8001"
+  #     DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+  #     SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+  #     SDMS_REDIS_QUEUE_NAME: "sdms-queue-bulkdelete"
+  #     SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
+  #     SDMS_REDIS_QUEUE_PORT: "6380"
+  #     SDMS_REDIS_LOCKS_PORT: "6380"
+  #   request:
+  #     cpu: 0.1
+  #     memory: 1Gi
+  #   limit:
+  #     cpu: 1
+  #     memory: 4Gi
+  # #####################################
+  # # Seismic compute size Service #
+  # #####################################
+  # - service: seismic-ddms-computesize-service
+  #   container:
+  #     image: seismic-ddms-computesize-service
+  #     tag: latest
+  #     containerPort: 8002
+  #   probe:
+  #     liveness:
+  #       path: /healthz
+  #   config:
+  #     HOST_PORT: "8002"
+  #     DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+  #     SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+  #     SDMS_COMPUTE_SIZE_QUEUE: "sdms-queue-computesize"
+  #     SDMS_REDIS_QUEUE_PORT: "6380"
+  #     SDMS_REDIS_LOCKS_PORT: "6380"
+  #   request:
+  #     cpu: 0.1
+  #     memory: 1Gi
+  #   limit:
+  #     cpu: 1
+  #     memory: 4Gi

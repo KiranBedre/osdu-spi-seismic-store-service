@@ -17,7 +17,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './optype';
-import { Error, Response, Utils } from '../../shared';
+import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { IBulkDeleteOperationQueueTask } from './model';
 import { Config, JournalFactoryTenantClient } from '../../cloud';
 import { Parser } from './parser';
@@ -56,7 +56,7 @@ export class Handler {
     // trigger bulk delete operation for datasets with a given path within the subproject
     private static async bulkDelete(req: expRequest): Promise<IOperation> {
 
-        if (Config.CLOUDPROVIDER !== 'azure') {
+        if (!FeatureFlags.isEnabled(Feature.BULK_DELETE)) {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
 
@@ -123,7 +123,7 @@ export class Handler {
     // get status of a bulk delete operation
     private static async bulkDeleteStatus(req: expRequest): Promise<IOperationStatus> {
 
-        if (Config.CLOUDPROVIDER !== 'azure') {
+        if (!FeatureFlags.isEnabled(Feature.BULK_DELETE)) {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
         }
 

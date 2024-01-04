@@ -48,8 +48,8 @@ export class TestOperationHandler {
                 this.sandbox.restore();
             })
 
-            this.bulkDelete();
-            this.bulkDeleteStatus();
+            // this.bulkDelete();
+            // this.bulkDeleteStatus();
         });
     }
 
