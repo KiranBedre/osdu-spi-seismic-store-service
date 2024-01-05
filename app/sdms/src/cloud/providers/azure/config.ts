@@ -195,8 +195,9 @@ export class AzureConfig extends Config {
                 FEATURE_FLAG_CCM_INTERACTION: process.env.FEATURE_FLAG_CCM_INTERACTION ?
                     process.env.FEATURE_FLAG_CCM_INTERACTION === 'true' : false,
                 FEATURE_FLAG_POLICY_SVC_INTERACTION: process.env.FEATURE_FLAG_POLICY_SVC_INTERACTION === 'true',
-                FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE: process.env.POST_PROCESS_ON_DATASET_CLOSE !== undefined ?
-                    process.env.POST_PROCESS_ON_DATASET_CLOSE === 'true' : true,
+                FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE:
+                    process.env.POST_PROCESS_ON_DATASET_CLOSE === 'true' || false,
+                FEATURE_FLAG_ENABLE_BULK_DELETE: process.env.FEATURE_FLAG_ENABLE_BULK_DELETE === 'true' || false,
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,
                 CCM_TOKEN_SCOPE: AzureConfig.CCM_TOKEN_SCOPE,
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?

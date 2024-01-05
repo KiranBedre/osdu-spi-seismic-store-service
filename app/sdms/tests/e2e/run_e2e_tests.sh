@@ -21,7 +21,8 @@ usage() {
             "--seistore-svc-api-key=... --user-idtoken=... --tenant=..." \
             "--datapartition=... --legaltag01=... --legaltag02=... " \
             "--newuser(optional)=... --newusergroup(optional)=... --VCS-provider(optional)=... " \
-            "--admin-email(optional)=... --de-app-key(optional)=... --subproject(optional)=... \n "
+            "--admin-email(optional)=... --de-app-key(optional)=... --subproject(optional)=... " \
+            "--testBulkDelete(optional)=... --testComputeSize(optional)=... \n "
     printf "\n[ERROR] %s\n" "$1"
 }
 
@@ -112,6 +113,14 @@ case $i in
   entitlements_user="${i#*=}"
   shift
   ;;
+   --testBulkDelete=*)
+  testBulkDelete="${i#*=}"
+  shift
+  ;;
+  --testComputeSize=*)
+  testComputeSize="${i#*=}"
+  shift
+  ;;
   *)
   usage "unknown option $i"
   ;;
@@ -142,14 +151,6 @@ if [ -z "${de_app_key}" ]; then
    de_app_key="random_string"
 fi
 
-if [ -z "${subproject}" ]; then
-   sed -i "s/#{SUBPROJECT}#//g" ./tests/e2e/postman_env.json
-fi
-
-if [ -z "${admin_email}" ]; then
- sed -i "s/#{ADMINEMAIL}#//g" ./tests/e2e/postman_env.json 
-fi
-
 # print logs
 printf "\n%s\n" "--------------------------------------------"
 printf "%s\n" "seismic store regression tests"
@@ -168,6 +169,9 @@ printf "%s\n" "subproject = ${subproject}"
 printf "%s\n" "domain_name = ${domain_name}"
 printf "%s\n" "hostname = ${hostname}"
 printf "%s\n" "entitlements_user = ${entitlements_user}"
+printf "%s\n\n" "***FEATURE FLAGS***"
+printf "%s\n" "testBulkDelete = ${testBulkDelete}"
+printf "%s\n" "testComputeSize = ${testComputeSize}"
 printf "%s\n" "--------------------------------------------"
 
 # replace values in the main env
@@ -190,6 +194,8 @@ then
    sed -i "s/#{DOMAINNAME}#/${domain_name}/g" ./tests/e2e/postman_env.json
    sed -i "s,#{HOSTNAME}#,${hostname},g" ./tests/e2e/postman_env.json
    sed -i "s/#{ENTITLEMENTS_USER}#/${entitlements_user}/g" ./tests/e2e/postman_env.json
+   sed -i "s/#{testBulkDelete}#/${testBulkDelete}/g" ./tests/e2e/postman_env.json
+   sed -i "s/#{testComputeSize}#/${testComputeSize}/g" ./tests/e2e/postman_env.json
    cp ./tests/e2e/postman_env.json ./tests/e2e/postman_env_initiated.json
 
    echo "-----------------------------------------------------------"
