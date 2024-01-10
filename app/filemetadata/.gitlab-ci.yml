@@ -10,6 +10,9 @@ include:
   # scan for secrets
   - local: "app/filemetadata/devops/osdu/scanners/scan-for-secrets-python.yml"
 
+  # vulnerability Scan
+  - local: "app/filemetadata/devops/osdu/scanners/gitlab-ultimate.yml"
+
   # deploy
   # azure
   - local: "app/filemetadata/devops/osdu/cloud-providers/azure.yml"

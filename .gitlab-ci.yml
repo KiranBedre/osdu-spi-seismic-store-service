@@ -8,6 +8,9 @@ include:
   # fossa
   - local: "devops/osdu/scanners/fossa.yml"
 
+  # gitlab-ultimate
+  - local: "devops/osdu/scanners/gitlab-ultimate.yml"
+
   # cloud-providers
   # aws
   - local: "devops/osdu/cloud-providers/aws.yml"
