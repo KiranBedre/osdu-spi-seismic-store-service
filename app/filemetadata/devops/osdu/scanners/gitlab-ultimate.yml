@@ -1,0 +1,48 @@
+filemetadata_gemnasium-python-dependency_scanning:
+  extends:
+    - .ds-analyzer
+    - .cyclonedx-reports
+  variables:
+    PIP_REQUIREMENTS_FILE: requirements.txt
+    DS_ANALYZER_NAME: "gemnasium-python"
+    ANALYZER_TARGET_DIR: "$CI_PROJECT_DIR/app/$FILEMETADATA_SERVICE"
+  rules:
+    - if: $DEPENDENCY_SCANNING_DISABLED
+      when: never
+    - if: $DS_EXCLUDED_ANALYZERS =~ /gemnasium-python/
+      when: never
+    - if: $CI_COMMIT_BRANCH &&
+          $GITLAB_FEATURES =~ /\bdependency_scanning\b/ &&
+          $CI_GITLAB_FIPS_MODE == "true"
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      exists: !reference [.gemnasium-python-shared-rule, exists]
+      variables:
+        DS_IMAGE_SUFFIX: "-fips"
+    - if: $CI_COMMIT_BRANCH &&
+          $GITLAB_FEATURES =~ /\bdependency_scanning\b/
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      exists: !reference [.gemnasium-python-shared-rule, exists]
+    # Support passing of $PIP_REQUIREMENTS_FILE
+    # See https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#configuring-specific-analyzers-used-by-dependency-scanning
+    - if: $CI_COMMIT_BRANCH &&
+          $GITLAB_FEATURES =~ /\bdependency_scanning\b/ &&
+          $PIP_REQUIREMENTS_FILE &&
+          $CI_GITLAB_FIPS_MODE == "true"
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      variables:
+        DS_IMAGE_SUFFIX: "-fips"
+    - if: $CI_COMMIT_BRANCH &&
+          $GITLAB_FEATURES =~ /\bdependency_scanning\b/ &&
+          $PIP_REQUIREMENTS_FILE
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+  before_script:
+    - cd app/filemetadata
+    - cp pip.conf /etc

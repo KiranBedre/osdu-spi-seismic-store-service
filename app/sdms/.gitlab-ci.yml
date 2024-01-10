@@ -21,6 +21,9 @@ include:
   # scan for secrets
   - local: "app/sdms/devops/osdu/scanners/scan-for-secrets-node.yml"
 
+  # vulnerability Scan
+  - local: "app/sdms/devops/osdu/scanners/gitlab-ultimate.yml"
+
   # deploy
   # azure
   - local: "app/sdms/devops/osdu/cloud-providers/azure.yml"
