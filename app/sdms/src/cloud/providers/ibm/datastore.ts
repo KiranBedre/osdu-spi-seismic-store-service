@@ -70,11 +70,11 @@ export class DatastoreDAO extends AbstractJournal {
         this.docParams.docId = key.name;
         entityDocument = await this.docDb.getDocument(this.docParams).then(
             (result: any) => {
-                result[this.KEY] = result[this.KEY.toString()];
-                delete result[this.KEY.toString()];
+                result.result[this.KEY] = result.result[this.KEY.toString()];
+                delete result.result[this.KEY.toString()];
                 logger.info('Deleted field');
-                logger.debug(result[this.KEY.toString()]);
-                return [result];
+                logger.debug(result.result[this.KEY.toString()]);
+                return [result.result];
             }
         ).catch((error: any) => {
             logger.error('Get failed to fetch the document.');
