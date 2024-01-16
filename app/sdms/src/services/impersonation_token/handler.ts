@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -126,6 +126,7 @@ export class ImpersonationTokenHandler {
                 requestBody.resources[index].resource + ' subproject resource.'));
         }
 
+        const userAzp = Utils.getAzpFromPayload(req.headers.authorization) || user;
         const impersonationToken = await this.getImpersonationToken();
         const impersonatedBy = await Utils.getUserId(
             req.headers.authorization);
@@ -133,6 +134,7 @@ export class ImpersonationTokenHandler {
         // Build and sign the impersonation token context
         const context = {
             user,
+            userAzp,
             metadata: requestBody.metadata,
             resources: requestBody.resources,
             impersonated_by: impersonatedBy,
