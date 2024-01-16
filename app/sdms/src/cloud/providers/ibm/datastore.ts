@@ -40,7 +40,7 @@ export class DatastoreDAO extends AbstractJournal {
             await cloudantOb.getDatabaseInformation({ db: IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition });
             logger.debug('Got DB connection');
         } catch (err) {
-            if(err.statusCode === 404)
+            if(err.code === 404)
             {
                 logger.debug('Database does not exist. Creating database.');
                 await cloudantOb.putDatabase({ db: IbmConfig.DOC_DB_COLLECTION + '-' + dataPartition } )
