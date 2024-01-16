@@ -16,7 +16,7 @@ export class TestAWSCredentials {
                 this.sandbox = sinon.createSandbox();
                 
                 this.awsCredentials = new AWSCredentials();
-                this.sandbox.stub(AWSConfig, 'AWS_TENANT_GROUP_NAME').value('test-tenant-group-name');
+                
             }); 
 
             afterEach(() => { this.sandbox.restore(); });

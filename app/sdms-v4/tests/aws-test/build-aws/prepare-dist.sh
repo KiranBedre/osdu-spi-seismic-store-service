@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # This script prepares the dist directory for the integration tests.
-# Must be run from the root of the repository
+# Must be run from the root of the repostiory
 
 set -e
 

@@ -7,14 +7,14 @@ class MockExpressResponse {
     public locals: any = {
         trace: {
             flush: () => undefined,
-            start: () => undefined,
+            start: (msg: string) => undefined,
             stop: () => undefined,
         },
     };
     public send(data: any) { this.data = data; }
     public status(code: number) { this.statusCode = code; return { send: this.send }; }
-    public set() { return this; }
-    public get() { return ''; }
+    public set(data: any) { return this; }
+    public get(data: any) { return ''; }
 }
 
 class MockExpressRequest {
@@ -26,7 +26,7 @@ class MockExpressRequest {
 
 export class Tx {
 
-    public static getReq(tenant = 't', subproject = 'spx01', path = 'p', dataset = 'd') {
+    public static getReq(tenant = 't', subproject = 'spx01', path = 'p', dataset = 'd', authorization = 'a') {
         const expReq = (new MockExpressRequest() as unknown) as expRequest;
         expReq.params.tenantid = tenant; expReq.params.subprojectid = subproject;
         expReq.query.path = path; expReq.params.datasetid = dataset;
@@ -46,7 +46,7 @@ export class Tx {
         this.sectionTitle = title;
     }
 
-    public static testInit(mex: string): string {
+    public static testInit(mex: string, nl: boolean = false): string {
         this.sectionCount = 0;
         return '\n  [ ' + mex.toUpperCase() + ' ]\n';
     }
