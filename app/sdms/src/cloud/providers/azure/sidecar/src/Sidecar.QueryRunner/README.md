@@ -10,4 +10,4 @@ This project provides an [.env.example](.env.example) file that provides the bas
 
 | Name                              | Description  |
 | ---| --- |
-| __KEYVAULT_URL__               | Required. The Keyvault stores secret values for all partitions, for example AppInsights Instrumentation Key.
+| __KEYVAULT_URL__               | Required. The Keyvault stores secret values for all partitions, for example AppInsights Instrumentation Key |
