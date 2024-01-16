@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import { Config } from '../../config';
 import { AbstractLogger, LoggerFactory } from '../../logger';
 import { AzureConfig } from './config';
 import { Request } from 'express';
+import { Auth } from '../../../auth';
+import { ImpersonationTokenHandler } from '../../../services/impersonation_token/handler';
 
 @LoggerFactory.register('azure')
 export class AzureInsightsLogger extends AbstractLogger {
@@ -70,7 +72,14 @@ export class AzureInsightsLogger extends AbstractLogger {
             // Log party to which the JWT was originally issued
             if ('authorization' in httpRequest.headers) {
                 try {
-                    const azp = Utils.getAzpFromPayload(httpRequest.headers.authorization);
+                    let azp = Utils.getAzpFromPayload(httpRequest.headers.authorization);
+                    if (Auth.isImpersonationToken(httpRequest.headers.authorization)) {
+                        const context = httpRequest.get('impersonation-token-context');
+                        if (context) {
+                            const tokenContext = ImpersonationTokenHandler.decodeContext(context);
+                            azp = tokenContext.userAzp;
+                        }
+                    }
                     if (azp) {
                         envelope.data.baseData.properties['azp'] = azp;
                     }
