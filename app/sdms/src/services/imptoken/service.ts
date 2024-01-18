@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,21 +17,25 @@
 import { Request as expRequest, Response as expResponse, Router } from 'express';
 import { ImpTokenHandler } from './handler';
 import { ImpTokenOP } from './optype';
+import { CallContext } from '../../shared/context';
 
 const router = Router();
 
 // generate an impersonation token
 router.post('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'imptoken-generate';
     await ImpTokenHandler.handler(req, res, ImpTokenOP.Generate);
 });
 
 // refresh an impersonation token
 router.put('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'imptoken-refresh';
     await ImpTokenHandler.handler(req, res, ImpTokenOP.Refresh);
 });
 
 // patch an impersonation token
 router.patch('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'imptoken-patch';
     await ImpTokenHandler.handler(req, res, ImpTokenOP.Patch);
 });
 

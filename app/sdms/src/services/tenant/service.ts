@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,25 +17,30 @@
 import { Request as expRequest, Response as expResponse, Router } from 'express';
 import { TenantHandler } from './handler';
 import { TenantOP } from './optype';
+import { CallContext } from '../../shared/context';
 
 const router = Router();
 
 router.get('/sdpath', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'tenant-sdpath';
     await TenantHandler.handler(req, res, TenantOP.GETSDPATH);
 });
 
 // create a tenant project
 router.post('/:tenantid', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'tenant-create';
     await TenantHandler.handler(req, res, TenantOP.CREATE);
 });
 
 // get a tenant project
 router.get('/:tenantid', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'tenant-get';
     await TenantHandler.handler(req, res, TenantOP.GET);
 });
 
 // delete a tenant project
 router.delete('/:tenantid', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'tenant-delete';
     await TenantHandler.handler(req, res, TenantOP.DELETE);
 });
 
