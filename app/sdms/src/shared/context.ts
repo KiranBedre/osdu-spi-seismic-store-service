@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 export class CallContext {
     public static correlationId: string;
+    public static endpointId: string;
 
     public static reset() {
 
         CallContext.correlationId = undefined;
+        CallContext.endpointId = undefined;
     }
 }
