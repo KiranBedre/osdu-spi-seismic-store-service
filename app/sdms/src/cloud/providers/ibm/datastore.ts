@@ -68,7 +68,7 @@ export class DatastoreDAO extends AbstractJournal {
         await this.initDb(this.dataPartition);
         // using the field 'name' to fetch the document. Note: the get() is expecting the field _id
         this.docParams.docId = key.name;
-        entityDocument = await this.docDb.getDocument(this.docParams).then(
+                entityDocument = await this.docDb.getDocument(this.docParams).then(
             (result: any) => {
                 result.result[this.KEY] = result.result[this.KEY.toString()];
                 delete result.result[this.KEY.toString()];
@@ -117,7 +117,7 @@ export class DatastoreDAO extends AbstractJournal {
             await this.docDb.postDocument(postDocumentParams);
             logger.info('Document updated.');
         } catch(err){
-            if(err.statusCode === 404)
+            if(err.code === 404)
             {
                 logger.info('Document does not exist. This will be a new document');
                 const customizedOb = {};
