@@ -181,11 +181,12 @@ export class DatastoreDAO extends AbstractJournal {
         // tableName datasets??
         const mangoQuery = queryObject.prepareStatement(Config.DATASETS_KIND, queryObject.namespace, queryObject.kind);
         logger.debug(mangoQuery);
+        mangoQuery['db']=IbmConfig.DOC_DB_COLLECTION + '-' + this.dataPartition;
         let docs;
         logger.info('Connecting to DB.');
         await this.initDb(this.dataPartition);
-        await this.docDb.postSearch(mangoQuery).then((doc) => {
-            docs = doc.result?.rows;
+        await this.docDb.postFind(mangoQuery).then((doc) => {
+            docs = doc.result?.docs;
             logger.debug(docs);
         });
         logger.info('Find query executed.');
@@ -193,12 +194,12 @@ export class DatastoreDAO extends AbstractJournal {
             if (!result) {
                 return result;
             } else {
-                if (result?.doc[this.KEY.toString()]) {
-                    result.doc[this.KEY] = result.doc[this.KEY.toString()];
-                    delete result.doc[this.KEY.toString()];
+                if (result?.[this.KEY.toString()]) {
+                    result[this.KEY] = result[this.KEY.toString()];
+                    delete result[this.KEY.toString()];
                     return result;
                 } else {
-                    return result;
+                return result;
                 }
             }
         });
@@ -573,7 +574,7 @@ class QueryStatementBuilder {
         keyQuery['Symbol(id)'] = { partitionKey: { $eq: this.namespace + '-' + this.kind }, kind: { $eq: this.kind } };
         andWrapper['$and'].push(keyQuery);
         selectorQuery['selector'] = andWrapper;
-
+        
         for (const filter of this.filterExpressions) {
             const filterObject = JSON.parse(filter);
             const op = filterObject.operator;
