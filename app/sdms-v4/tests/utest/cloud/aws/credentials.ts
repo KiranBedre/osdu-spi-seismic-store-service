@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 import { Tx } from "../../utils";
-import { AWSConfig, AWSCredentials, AwsSecrets } from '../../../../src/cloud/providers/aws';
+import { AWSCredentials, AwsSecrets } from '../../../../src/cloud/providers/aws';
 import { AWSSSMhelper } from '../../../../src/cloud/providers/aws/ssmhelper';
 import axios from 'axios';
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
