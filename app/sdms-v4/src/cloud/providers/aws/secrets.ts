@@ -24,7 +24,7 @@ export class AwsSecrets {
         const res = cache.get<string>(cacheKey);
         if (res !== undefined) {
             return res;
-        };
+        }
 
         const results = await PartitionCoreService.getPartitionConfiguration(dataPartitionID);
         const tenantInfo = results['tenantId']['value'];
@@ -38,7 +38,7 @@ export class AwsSecrets {
         const res = cache.get<string>(cacheKey);
         if (res !== undefined) {
             return res;
-        };
+        }
 
         const tenantId = await AwsSecrets.getTenantIdFromPartitionID(dataPartitionID);
         const tenantSsmPrefix = '/osdu/tenant-groups/' + AWSConfig.AWS_TENANT_GROUP_NAME + '/tenants/' + tenantId;

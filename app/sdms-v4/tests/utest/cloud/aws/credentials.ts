@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 import { Tx } from "../../utils";
-import { AWSConfig, AWSCredentials, AwsSecrets } from '../../../../src/cloud/providers/aws';
+import { AWSCredentials, AwsSecrets } from '../../../../src/cloud/providers/aws';
 import { AWSSSMhelper } from '../../../../src/cloud/providers/aws/ssmhelper';
 import axios from 'axios';
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
@@ -16,7 +16,7 @@ export class TestAWSCredentials {
                 this.sandbox = sinon.createSandbox();
                 
                 this.awsCredentials = new AWSCredentials();
-                this.sandbox.stub(AWSConfig, 'AWS_TENANT_GROUP_NAME').value('test-tenant-group-name');
+                
             }); 
 
             afterEach(() => { this.sandbox.restore(); });
