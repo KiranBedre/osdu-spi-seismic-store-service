@@ -384,8 +384,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 GPL-3.0-or-later
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
@@ -447,43 +445,31 @@ The following software have components provided under the terms of this license:
 ========================================================================
 LGPL-3.0-or-later
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 LPL-1.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 LPL-1.02
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 LPPL-1.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 LPPL-1.1
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 LPPL-1.2
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
@@ -537,6 +523,7 @@ The following software have components provided under the terms of this license:
 - @types/caseless (from https://www.npmjs.com/package/@types/caseless)
 - @types/color-name (from https://www.npmjs.com/package/@types/color-name)
 - @types/connect (from https://www.npmjs.com/package/@types/connect)
+- @types/debug (from https://www.npmjs.com/package/@types/debug)
 - @types/duplexify (from https://www.npmjs.com/package/@types/duplexify)
 - @types/express (from https://www.npmjs.com/package/@types/express)
 - @types/express-jwt (from https://www.npmjs.com/package/@types/express-jwt)
@@ -556,6 +543,7 @@ The following software have components provided under the terms of this license:
 - @types/mdurl (from https://www.npmjs.com/package/@types/mdurl)
 - @types/mime (from https://www.npmjs.com/package/@types/mime)
 - @types/minimatch (from https://www.npmjs.com/package/@types/minimatch)
+- @types/ms (from https://www.npmjs.com/package/@types/ms)
 - @types/node (from https://www.npmjs.com/package/@types/node)
 - @types/node-fetch (from https://www.npmjs.com/package/@types/node-fetch)
 - @types/qs (from https://www.npmjs.com/package/@types/qs)
@@ -999,22 +987,16 @@ The following software have components provided under the terms of this license:
 ========================================================================
 OGTSL
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 OLDAP-1.1
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 OLDAP-1.2
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
@@ -1039,8 +1021,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 Unlicense
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - markdown-it-anchor (from https://www.npmjs.com/package/markdown-it-anchor)
 - tweetnacl (from https://www.npmjs.com/package/tweetnacl)
 
@@ -1054,8 +1034,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 WTFPL
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
@@ -1075,8 +1053,6 @@ The following software have components provided under the terms of this license:
 ========================================================================
 ogl-uk-3.0
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
@@ -1094,15 +1070,11 @@ unknown
 ========================================================================
 wxWindows
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - @prisma/client (from https://www.npmjs.com/package/@prisma/client)
 - prisma (from https://www.npmjs.com/package/prisma)
 
 ========================================================================
 zlib-acknowledgement
 ========================================================================
-The following software have components provided under the terms of this license:
-
 - @prisma/client (from https://www.npmjs.com/package/@prisma/client)
 - prisma (from https://www.npmjs.com/package/prisma)
