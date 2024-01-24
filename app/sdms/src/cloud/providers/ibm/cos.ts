@@ -94,7 +94,7 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('error listing bucket objects ');
                 logger.error(err.stack);
-                throw err;
+                //throw err;
             }
             const items = data.Contents;
 
