@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,16 +17,19 @@
 import { Request, Response, Router } from 'express';
 import { Handler } from './handler';
 import { Operation } from './optype';
+import { CallContext } from '../../shared/context';
 
 const router = Router();
 
 // push a bulk delete operation
 router.put('/bulk-delete', async (req: Request, res: Response) => {
+    CallContext.endpointId = 'operation-bulk-delete-push';
     await Handler.handle(req, res, Operation.BulkDeletePush);
 });
 
 // get the status of a bulk delete operation
 router.get('/bulk-delete/:operationid', async (req: Request, res: Response) => {
+    CallContext.endpointId = 'operation-bulk-delete-get';
     await Handler.handle(req, res, Operation.BulkDeleteStatus);
 });
 

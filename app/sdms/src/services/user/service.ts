@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,26 +17,31 @@
 import { Request as expRequest, Response as expResponse, Router } from 'express';
 import { UserHandler } from './handler';
 import { UserOP } from './optype';
+import { CallContext } from '../../shared/context';
 
 const router = Router();
 
 // Add a registered user to a resource
 router.put('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'user-add';
     await UserHandler.handler(req, res, UserOP.Add);
 });
 
 // Retrieve user roles
 router.get('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'user-list';
     await UserHandler.handler(req, res, UserOP.List);
 });
 
 // Remove a user from subproject
 router.delete('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'user-remove';
     await UserHandler.handler(req, res, UserOP.Remove);
 });
 
 // retrieve the roles of the user
 router.get('/roles', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'user-roles';
     await UserHandler.handler(req, res, UserOP.Roles);
 });
 
