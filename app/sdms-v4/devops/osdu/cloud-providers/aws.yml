@@ -41,6 +41,8 @@ sdms_v4_aws_containerize:
     - docker push $AWS_IMAGE_TAG_BASE:$CI_COMMIT_SHA
     - docker push $AWS_IMAGE_TAG_BASE:latest
   only:
+    variables:
+      - $AWS == '1'
     changes:
       - devops/**/*
       - app/sdms-v4/**/*
@@ -76,6 +78,8 @@ sdms_v4_aws-update-tf:
     - kubectl -n ${AWS_SERVICE_NAMESPACE}-${AWS_SERVICE_NAMESPACE_SUFFIX} rollout restart deployment/${AWS_EKS_DEPLOYMENT_NAME}
     - kubectl -n ${AWS_SERVICE_NAMESPACE}-${AWS_SERVICE_NAMESPACE_SUFFIX} rollout status -w deployment/${AWS_EKS_DEPLOYMENT_NAME} --timeout=300s
   only:
+    variables:
+      - $AWS_SKIP_DEPLOY != 'true' && $AWS == '1' && $AWS_DEPLOY_TARGET == 'TF'
     changes:
       - devops/**/*
       - app/sdms-v4/**/*
