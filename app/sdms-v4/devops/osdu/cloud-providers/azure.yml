@@ -93,6 +93,8 @@ sdms_v4_azure_deploy:
     # - helm show chart $HELM_CHART_OCI_V4 --version $HELM_CHART_OCI_VERSION
     # Uninstall if found in default namespace
     - helm uninstall ${SDMS_V4_SERVICE_NAME} -n default --wait || echo [INFO] No ${SDMS_V4_SERVICE_NAME} in default
+    # Uninstall if found in proper namespace
+    - helm uninstall ${SDMS_V4_SERVICE_NAME} -n ${NAMESPACE} --wait || echo [INFO] No seismic-store-service
     # Display helm chart
     - >
       helm template ${SDMS_V4_SERVICE_NAME} devops/azure/chart
