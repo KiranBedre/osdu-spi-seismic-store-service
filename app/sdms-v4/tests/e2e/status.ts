@@ -39,7 +39,7 @@ export class TestStatus {
     private status() {
         it('service status', async () => {
             const result = await Utils.sendAxiosRequest(axios.get(Config.url + '/status', this.getRequestOptions()));
-            expect(result.status).to.be.equals('running');
+            expect(result?.data.status).to.be.equals('running');
         });
     }
 
@@ -48,7 +48,7 @@ export class TestStatus {
             const result = await Utils.sendAxiosRequest(
                 axios.get(Config.url + '/status/readiness', this.getRequestOptions())
             );
-            expect(result.ready).to.be.true;
+            expect(result?.data.ready).to.be.true;
         });
     }
 }
