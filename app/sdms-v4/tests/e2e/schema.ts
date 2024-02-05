@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,22 +93,22 @@ export class TestSchema {
 
         describe('# Test ' + this.model + ' endpoints\n', () => {
             this.register();
-            // this.getById();
-            // this.list();
+            this.getById();
+            this.list();
             this.patch();
-            // this.listVersions();
-            // this.getByIdAndVersion();
-            // if (this.hasBulk) {
-            //     this.uploadConnectionString();
-            //     this.downloadConnectionString();
-            //     this.bulkData = Utils.generateRandomData(1024);
-            //     this.upload();
-            //     this.download();
-            // }
-            // this.delete();
-            // if (this.hasBulk) {
-            //     this.download(false);
-            // }
+            this.listVersions();
+            this.getByIdAndVersion();
+            if (this.hasBulk) {
+                this.uploadConnectionString();
+                this.downloadConnectionString();
+                this.bulkData = Utils.generateRandomData(1024);
+                this.upload();
+                this.download();
+            }
+            this.delete();
+            if (this.hasBulk) {
+                this.download(false);
+            }
         });
     }
 
@@ -394,145 +394,358 @@ export class TestSchema {
         });
     }
 
-    // private listVersions() {
-    //     it('list all versions of a ' + this.tag + ' dataset by record-id ', async () => {
-    //         const results = await Utils.sendAxiosRequest(
-    //             axios.get(
-    //                 Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
-    //                 this.getRequestOptions()
-    //             )
-    //         );
-    //         expect(results.length).to.be.equals(2);
-    //         expect(results[0]).to.be.equals(parseInt(this.recordsVersion[0]));
-    //         expect(results[1]).to.be.equals(parseInt(this.recordPatchedVersion));
-    //     });
-    // }
+    private listVersions() {
+        const title = `list all versions of a ${this.tag} dataset by record-id`;
+        it(title, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
+                    this.getRequestOptions()
+                )
+            );
+            expect(results?.status).to.be.equal(200);
+            expect(results?.data.length).to.be.equals(2);
+            expect(results?.data[0]).to.be.equals(parseInt(this.recordsVersion[0]));
+            expect(results?.data[1]).to.be.equals(parseInt(this.recordPatchedVersion));
+        });
+        it(`${title} - negative 1 - no data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
+                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(400);
+        });
+        it(`${title} - negative 2 - fake data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
+                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(403);
+        });
+        it(`${title} - negative 3 - invalid record id`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '-fake/versions',
+                    this.getRequestOptions()
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(404);
+        });
+    }
 
-    // private getByIdAndVersion() {
-    //     it('get a ' + this.tag + ' dataset by record-id and version', async () => {
-    //         const result = await Utils.sendAxiosRequest(
-    //             axios.get(
-    //                 Config.url +
-    //                     '/' +
-    //                     this.endpoint +
-    //                     '/v1/record/' +
-    //                     this.recordsId[0] +
-    //                     '/version/' +
-    //                     this.recordPatchedVersion,
-    //                 this.getRequestOptions()
-    //             )
-    //         );
-    //         expect(result.kind).to.be.equals(this.inputModel.kind);
-    //         expect(result.version).to.be.equals(+this.recordPatchedVersion);
-    //         expect(result.id).to.be.equals(this.recordsId[0]);
-    //     });
-    // }
+    private getByIdAndVersion() {
+        const title = `get a ${this.tag} dataset by record-id and version`;
+        it(title, async () => {
+            const result = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url +
+                        '/' +
+                        this.endpoint +
+                        '/v1/record/' +
+                        this.recordsId[0] +
+                        '/version/' +
+                        this.recordPatchedVersion,
+                    this.getRequestOptions()
+                )
+            );
+            expect(result?.status).to.be.equal(200);
+            expect(result?.data.kind).to.be.equals(this.inputModel.kind);
+            expect(result?.data.version).to.be.equals(+this.recordPatchedVersion);
+            expect(result?.data.id).to.be.equals(this.recordsId[0]);
+        });
+        it(`${title} - negative 1 - no data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url +
+                        '/' +
+                        this.endpoint +
+                        '/v1/record/' +
+                        this.recordsId[0] +
+                        '/version/' +
+                        this.recordPatchedVersion,
+                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(400);
+        });
+        it(`${title} - negative 2 - fake data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url +
+                        '/' +
+                        this.endpoint +
+                        '/v1/record/' +
+                        this.recordsId[0] +
+                        '/version/' +
+                        this.recordPatchedVersion,
+                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(403);
+        });
+        it(`${title} - negative 3 - invalid record id`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url +
+                        '/' +
+                        this.endpoint +
+                        '/v1/record/' +
+                        this.recordsId[0] +
+                        '-fake' +
+                        '/version/' +
+                        this.recordPatchedVersion,
+                    this.getRequestOptions()
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(404);
+        });
+        it(`${title} - negative 4 - invalid record version`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url +
+                        '/' +
+                        this.endpoint +
+                        '/v1/record/' +
+                        this.recordsId[0] +
+                        '/version/' +
+                        this.recordPatchedVersion +
+                        '-fake',
+                    this.getRequestOptions()
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(400);
+        });
+    }
 
-    // private delete() {
-    //     it('delete ' + this.recordsNumber + ' ' + this.tag + ' dataset by record id', async () => {
-    //         for (let i = 0; i < this.recordsNumber; i++) {
-    //             await Utils.sendAxiosRequest(
-    //                 axios.delete(
-    //                     Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[i],
-    //                     this.getRequestOptions()
-    //                 )
-    //             );
-    //         }
-    //     });
-    // }
+    private delete() {
+        const title = `delete ${this.recordsNumber} ${this.tag} dataset by record id`;
+        it(title, async () => {
+            for (let i = 0; i < this.recordsNumber; i++) {
+                const result = await Utils.sendAxiosRequest(
+                    axios.delete(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[i],
+                        this.getRequestOptions()
+                    )
+                );
+                expect(result?.status).to.be.equal(200);
+            }
+        });
+        it(`${title} - negative 1 - no data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.delete(
+                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(400);
+        });
+        it(`${title} - negative 2 - fake data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.delete(
+                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(403);
+        });
+        it(`${title} - negative 3 - no record id`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.delete(Config.url + '/' + this.endpoint + '/v1/record/', this.getRequestOptions()),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(404);
+        });
+    }
 
-    // private uploadConnectionString() {
-    //     it('generate connection strings to upload bulks', async () => {
-    //         const record = this.recordsId[0];
-    //         this.uploadBulkCS = await Utils.sendAxiosRequest(
-    //             axios.get(Config.url + '/connection-string/upload/record/' + record, this.getRequestOptions())
-    //         );
-    //         expect(this.uploadBulkCS.access_token).to.not.be.undefined;
-    //         expect(this.uploadBulkCS.expires_in).to.not.be.undefined;
-    //         expect(this.uploadBulkCS.expires_in).to.be.greaterThan(0);
-    //         expect(this.uploadBulkCS.token_type).to.not.be.undefined;
-    //     });
-    // }
+    private uploadConnectionString() {
+        const title = `generate connection strings to upload bulks`;
+        it(title, async () => {
+            const result = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/upload/record/' + this.recordsId[0],
+                    this.getRequestOptions()
+                )
+            );
+            expect(result?.status).to.be.equal(200);
+            expect(result?.data.access_token).to.not.be.undefined;
+            expect(result?.data.expires_in).to.not.be.undefined;
+            expect(result?.data.expires_in).to.be.greaterThan(0);
+            expect(result?.data.token_type).to.not.be.undefined;
+            this.uploadBulkCS = result?.data;
+        });
+        it(`${title} - negative 1 - no data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/upload/record/' + this.recordsId[0],
+                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(400);
+        });
+        it(`${title} - negative 2 - fake data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/upload/record/' + this.recordsId[0],
+                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(403);
+        });
+        it(`${title} - negative 3 - no record id`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(Config.url + '/connection-string/upload/record/', this.getRequestOptions()),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(404);
+        });
+        it(`${title} - negative 4 - invalid record id`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/upload/record/' + this.recordsId[0] + '-fake',
+                    this.getRequestOptions()
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(404);
+        });
+    }
 
-    // private downloadConnectionString() {
-    //     it('generate connection strings to download bulks', async () => {
-    //         const record = this.recordsId[0];
-    //         this.downloadBulkCS = await Utils.sendAxiosRequest(
-    //             axios.get(Config.url + '/connection-string/download/record/' + record, this.getRequestOptions())
-    //         );
-    //         expect(this.downloadBulkCS.access_token).to.not.be.undefined;
-    //         expect(this.downloadBulkCS.expires_in).to.not.be.undefined;
-    //         expect(this.downloadBulkCS.expires_in).to.be.greaterThan(0);
-    //         expect(this.downloadBulkCS.token_type).to.not.be.undefined;
-    //     });
-    // }
+    private downloadConnectionString() {
+        const title = `generate connection strings to download bulks`;
+        it(title, async () => {
+            const result = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/download/record/' + this.recordsId[0],
+                    this.getRequestOptions()
+                )
+            );
+            expect(result?.status).to.be.equal(200);
+            expect(result?.data.access_token).to.not.be.undefined;
+            expect(result?.data.expires_in).to.not.be.undefined;
+            expect(result?.data.expires_in).to.be.greaterThan(0);
+            expect(result?.data.token_type).to.not.be.undefined;
+            this.downloadBulkCS = result?.data;
+        });
+        it(`${title} - negative 1 - no data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/download/record/' + this.recordsId[0],
+                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(400);
+        });
+        it(`${title} - negative 2 - fake data partition`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/download/record/' + this.recordsId[0],
+                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(403);
+        });
+        it(`${title} - negative 3 - no record id`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(Config.url + '/connection-string/download/record/', this.getRequestOptions()),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(404);
+        });
+        it(`${title} - negative 4 - invalid record id`, async () => {
+            const results = await Utils.sendAxiosRequest(
+                axios.get(
+                    Config.url + '/connection-string/download/record/' + this.recordsId[0] + '-fake',
+                    this.getRequestOptions()
+                ),
+                false
+            );
+            expect(results?.response?.status).to.be.equal(404);
+        });
+    }
 
-    // private upload() {
-    //     it('upload test data', async () => {
-    //         const provider = (await axios.get(Config.url + '/status', this.getRequestOptions())).headers[
-    //             'service-provider'
-    //         ];
-    //         if (provider === 'azure') {
-    //             await axios.put(
-    //                 this.uploadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'),
-    //                 this.bulkData,
-    //                 {
-    //                     headers: {
-    //                         'x-ms-blob-type': 'BlockBlob',
-    //                         'Content-Type': 'text/plain',
-    //                     },
-    //                 }
-    //             );
-    //             try {
-    //                 await axios.put(
-    //                     this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'),
-    //                     this.bulkData,
-    //                     {
-    //                         headers: {
-    //                             'x-ms-blob-type': 'BlockBlob',
-    //                             'Content-Type': 'text/plain',
-    //                         },
-    //                     }
-    //                 );
-    //             } catch (error) {
-    //                 expect(error?.response?.status).to.be.equal(403);
-    //             }
-    //         } else {
-    //             console.error('### The "upload" bulk test has not been implemented for "' + provider + '"');
-    //         }
-    //     });
-    // }
+    private upload() {
+        it('upload test data', async () => {
+            const provider = (await axios.get(Config.url + '/status', this.getRequestOptions())).headers[
+                'service-provider'
+            ];
+            if (provider === 'azure') {
+                await axios.put(
+                    this.uploadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'),
+                    this.bulkData,
+                    {
+                        headers: {
+                            'x-ms-blob-type': 'BlockBlob',
+                            'Content-Type': 'text/plain',
+                        },
+                    }
+                );
+                try {
+                    await axios.put(
+                        this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'),
+                        this.bulkData,
+                        {
+                            headers: {
+                                'x-ms-blob-type': 'BlockBlob',
+                                'Content-Type': 'text/plain',
+                            },
+                        }
+                    );
+                } catch (error) {
+                    expect(error?.response?.status).to.be.equal(403);
+                }
+            } else {
+                console.error('### The "upload" bulk test has not been implemented for "' + provider + '"');
+            }
+        });
+    }
 
-    // private download(exist = true) {
-    //     it('download test data', async () => {
-    //         const provider = (await axios.get(Config.url + '/status', this.getRequestOptions())).headers[
-    //             'service-provider'
-    //         ];
-    //         if (provider === 'azure') {
-    //             if (exist) {
-    //                 expect(
-    //                     (await axios.get(this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?')))
-    //                         .data
-    //                 ).to.be.equals(this.bulkData);
-    //                 expect(
-    //                     (await axios.get(this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?')))
-    //                         .data
-    //                 ).to.be.equals(this.bulkData);
-    //             } else {
-    //                 try {
-    //                     await axios.get(this.uploadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'));
-    //                 } catch (error) {
-    //                     expect(error?.response?.status).to.be.equal(404);
-    //                 }
-    //                 try {
-    //                     await axios.get(this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'));
-    //                 } catch (error) {
-    //                     expect(error?.response?.status).to.be.equal(404);
-    //                 }
-    //             }
-    //         } else {
-    //             console.error('### The "download" bulk test has not been implemented for "' + provider + '"');
-    //         }
-    //     });
-    // }
+    private download(exist = true) {
+        it('download test data', async () => {
+            const provider = (await axios.get(Config.url + '/status', this.getRequestOptions())).headers[
+                'service-provider'
+            ];
+            if (provider === 'azure') {
+                if (exist) {
+                    expect(
+                        (await axios.get(this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?')))
+                            .data
+                    ).to.be.equals(this.bulkData);
+                    expect(
+                        (await axios.get(this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?')))
+                            .data
+                    ).to.be.equals(this.bulkData);
+                } else {
+                    try {
+                        await axios.get(this.uploadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'));
+                    } catch (error) {
+                        expect(error?.response?.status).to.be.equal(404);
+                    }
+                    try {
+                        await axios.get(this.downloadBulkCS.access_token.replace('?', '/' + this.bulkDataName + '?'));
+                    } catch (error) {
+                        expect(error?.response?.status).to.be.equal(404);
+                    }
+                }
+            } else {
+                console.error('### The "download" bulk test has not been implemented for "' + provider + '"');
+            }
+        });
+    }
 }
