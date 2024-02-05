@@ -711,7 +711,7 @@ export class TestSchema {
                     expect(error?.response?.status).to.be.equal(403);
                 }
             } else {
-                console.error('### The "upload" bulk test has not been implemented for "' + provider + '"');
+                console.error('### The "upload" bulk test has not been implemented for the "' + provider + '"');
             }
         });
     }
