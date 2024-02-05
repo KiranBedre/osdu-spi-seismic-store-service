@@ -17,24 +17,29 @@
 import { AxiosError, AxiosResponse } from 'axios';
 
 export class Utils {
-    public static async sendAxiosRequest(axiosRequest: Promise<AxiosResponse<any, any>>) {
+    public static async sendAxiosRequest(axiosRequest: Promise<AxiosResponse<any, any>>, mustThrow = true) {
         try {
-            return (await axiosRequest).data;
+            return await axiosRequest;
         } catch (e) {
-            const error = e as AxiosError;
-            if (error.response?.status) {
-                console.error('  ! Error Status: ' + error.response.status);
+            if (!mustThrow) {
+                return e;
+            } else {
+                const error = e as AxiosError;
+                if (error.response?.status) {
+                    console.error('  ! Error Status: ' + error.response.status);
+                }
+                if (error.response?.statusText) {
+                    console.error('  ! Error Status Text: ' + error.response.statusText);
+                }
+                if (error.response?.data) {
+                    console.error('  ! Error Data: ');
+                    console.error(error.response.data);
+                }
+                await Promise.reject(e);
             }
-            if (error.response?.statusText) {
-                console.error('  ! Error Status Text: ' + error.response.statusText);
-            }
-            if (error.response?.data) {
-                console.error('  ! Error Data: ');
-                console.error(error.response.data);
-            }
-            await Promise.reject(e);
         }
     }
+
     public static generateRandomData(length: number) {
         let result = '';
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
