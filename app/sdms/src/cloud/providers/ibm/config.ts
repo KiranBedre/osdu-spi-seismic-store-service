@@ -139,7 +139,7 @@ export class IbmConfig extends Config {
         IbmConfig.LOGGER_LEVEL = process.env.LOGGER_LEVEL || 'debug';
 
         Config.checkRequiredConfig(IbmConfig.LOCKSMAP_REDIS_INSTANCE_PORT, 'REDIS_INSTANCE_PORT');
-
+        Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST = true;
         // init generic configurations
         await Config.initServiceConfiguration({
             SERVICE_ENV: process.env.APP_ENVIRONMENT_IDENTIFIER,
