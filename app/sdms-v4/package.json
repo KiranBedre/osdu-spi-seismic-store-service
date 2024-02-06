@@ -17,7 +17,8 @@
         "postbuild": "npm run generate-docs",
         "prettier": "prettier -c src/**/*.ts",
         "start-service": "node --trace-warnings --trace-uncaught ./dist/server/server-start.js",
-        "test": "mocha -r ts-node/register tests/e2e/test.ts --timeout 150000 --bail --reporter mocha-multi-reporters --reporter-options configFile=./tests/e2e/config.json"
+        "test": "mocha -r ts-node/register tests/e2e/test.ts --timeout 150000 --bail --reporter mocha-multi-reporters --reporter-options configFile=./tests/e2e/config.json",
+        "test-auth": "mocha -r ts-node/register tests/auth/test.ts --timeout 150000 --bail --reporter mocha-multi-reporters --reporter-options configFile=./tests/auth/config.json"
     },
     "nyc": {
         "check-coverage": true,
