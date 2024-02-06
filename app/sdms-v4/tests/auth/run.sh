@@ -253,7 +253,7 @@ export URL=${osdu_url}${sdms_svc_path} \
 && npm run test-auth
 resTest=$?
 
-# compute and print execution time and exit
+# compute and print the execution time and exit
 printf "\n%s\n" "--------------------------------------------"
 end=$(date +%s)
 duration=$(expr $end - $start)
