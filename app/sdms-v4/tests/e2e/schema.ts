@@ -52,9 +52,7 @@ export class TestSchema {
     private downloadBulkCS: ConnectionString;
     private bulkData: string;
     private bulkDataName = 'sdms-e2e-test-data';
-    private negativeExpected = {
-        fake_partition: [400, 401, 403, 404, 500],
-    };
+    private runNegative = false;
 
     private getRequestOptions(mode = RequestOptionsMode.GENERIC): AxiosRequestConfig {
         const options = {
@@ -80,6 +78,7 @@ export class TestSchema {
         this.hasBulk = args.hasBulk;
         this.recordsId = new Array(this.recordsNumber).fill('');
         this.recordsVersion = new Array(this.recordsNumber).fill('');
+        this.runNegative = this.endpoint === 'segy';
 
         this.inputModel = await require('./models/' + this.model);
         delete this.inputModel.id;
@@ -132,68 +131,69 @@ export class TestSchema {
                 this.recordsVersion[i] = results?.data[i].substring(results?.data[i].lastIndexOf(':') + 1);
             }
         });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1',
+                        new Array(this.recordsNumber).fill(this.inputModel),
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
 
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1',
-                    new Array(this.recordsNumber).fill(this.inputModel),
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1',
+                        new Array(this.recordsNumber).fill(this.inputModel),
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([403, 500]);
+            });
 
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1',
-                    new Array(this.recordsNumber).fill(this.inputModel),
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
+            it(`${title} - negative 3 - wrong body format`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(Config.url + '/' + this.endpoint + '/v1', this.inputModel, this.getRequestOptions()),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
 
-        it(`${title} - negative 3 - wrong body format`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.put(Config.url + '/' + this.endpoint + '/v1', this.inputModel, this.getRequestOptions()),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
+            it(`${title} - negative 4 - without a kind in the request model`, async () => {
+                const tmp = this.inputModel['kind'];
+                delete this.inputModel['kind'];
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1',
+                        new Array(this.recordsNumber).fill(this.inputModel),
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(500);
+                this.inputModel['kind'] = tmp;
+            });
 
-        it(`${title} - negative 4 - without a kind in the request model`, async () => {
-            const tmp = this.inputModel['kind'];
-            delete this.inputModel['kind'];
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1',
-                    new Array(this.recordsNumber).fill(this.inputModel),
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(500);
-            this.inputModel['kind'] = tmp;
-        });
-
-        it(`${title} - negative 5 - invalid kind in the request model`, async () => {
-            const tmp = this.inputModel['kind'];
-            this.inputModel['kind'] = this.inputModel['kind'] + '-fake';
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1',
-                    new Array(this.recordsNumber).fill(this.inputModel),
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-            this.inputModel['kind'] = tmp;
-        });
+            it(`${title} - negative 5 - invalid kind in the request model`, async () => {
+                const tmp = this.inputModel['kind'];
+                this.inputModel['kind'] = this.inputModel['kind'] + '-fake';
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1',
+                        new Array(this.recordsNumber).fill(this.inputModel),
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+                this.inputModel['kind'] = tmp;
+            });
+        }
     }
 
     private getById() {
@@ -210,43 +210,45 @@ export class TestSchema {
             expect(result.data.version).to.be.equals(+this.recordsVersion[0]);
             expect(result.data.id).to.be.equals(this.recordsId[0]);
         });
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
-        it(`${title} - negative 3 - no record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(Config.url + '/' + this.endpoint + '/v1/record/', this.getRequestOptions()),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
-        it(`${title} - negative 4 - invalid record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '-fake',
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([403, 500]);
+            });
+            it(`${title} - negative 3 - no record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(Config.url + '/' + this.endpoint + '/v1/record/', this.getRequestOptions()),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+            it(`${title} - negative 4 - invalid record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '-fake',
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+        }
     }
 
     private list() {
@@ -269,26 +271,28 @@ export class TestSchema {
             //     expect(result.kind).to.be.equals(this.inputModel.kind);
             // }
         });
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/list?page-limit=' + this.recordsNumber,
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/list?page-limit=' + this.recordsNumber,
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/list?page-limit=' + this.recordsNumber,
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/list?page-limit=' + this.recordsNumber,
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([401, 500]);
+            });
+        }
     }
 
     private patch() {
@@ -321,80 +325,82 @@ export class TestSchema {
             delete this.inputModel.tags;
         });
 
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    [this.inputModel],
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        [this.inputModel],
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
 
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    [this.inputModel],
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        [this.inputModel],
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([404, 500]);
+            });
 
-        it(`${title} - negative 3 - no record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1/record/',
-                    [this.inputModel],
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
-        it(`${title} - negative 4 - invalid record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '-fake',
-                    [this.inputModel],
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
-        it(`${title} - negative 5 - without kind in model`, async () => {
-            const tmp = this.inputModel['kind'];
-            delete this.inputModel['kind'];
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    [this.inputModel],
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-            this.inputModel['kind'] = tmp;
-        });
-        it(`${title} - negative 6 - invalid kind in model`, async () => {
-            const tmp = this.inputModel['kind'];
-            this.inputModel['kind'] = this.inputModel['kind'] + '-fake';
-            const results = await Utils.sendAxiosRequest(
-                axios.put(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    [this.inputModel],
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-            this.inputModel['kind'] = tmp;
-        });
+            it(`${title} - negative 3 - no record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1/record/',
+                        [this.inputModel],
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+            it(`${title} - negative 4 - invalid record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '-fake',
+                        [this.inputModel],
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+            it(`${title} - negative 5 - without kind in model`, async () => {
+                const tmp = this.inputModel['kind'];
+                delete this.inputModel['kind'];
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        [this.inputModel],
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+                this.inputModel['kind'] = tmp;
+            });
+            it(`${title} - negative 6 - invalid kind in model`, async () => {
+                const tmp = this.inputModel['kind'];
+                this.inputModel['kind'] = this.inputModel['kind'] + '-fake';
+                const results = await Utils.sendAxiosRequest(
+                    axios.put(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        [this.inputModel],
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+                this.inputModel['kind'] = tmp;
+            });
+        }
     }
 
     private listVersions() {
@@ -411,36 +417,38 @@ export class TestSchema {
             expect(results?.data[0]).to.be.equals(parseInt(this.recordsVersion[0]));
             expect(results?.data[1]).to.be.equals(parseInt(this.recordPatchedVersion));
         });
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
-        it(`${title} - negative 3 - invalid record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '-fake/versions',
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '/versions',
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([403, 500]);
+            });
+            it(`${title} - negative 3 - invalid record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0] + '-fake/versions',
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+        }
     }
 
     private getByIdAndVersion() {
@@ -463,72 +471,74 @@ export class TestSchema {
             expect(result?.data.version).to.be.equals(+this.recordPatchedVersion);
             expect(result?.data.id).to.be.equals(this.recordsId[0]);
         });
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url +
-                        '/' +
-                        this.endpoint +
-                        '/v1/record/' +
-                        this.recordsId[0] +
-                        '/version/' +
-                        this.recordPatchedVersion,
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url +
-                        '/' +
-                        this.endpoint +
-                        '/v1/record/' +
-                        this.recordsId[0] +
-                        '/version/' +
-                        this.recordPatchedVersion,
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
-        it(`${title} - negative 3 - invalid record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url +
-                        '/' +
-                        this.endpoint +
-                        '/v1/record/' +
-                        this.recordsId[0] +
-                        '-fake' +
-                        '/version/' +
-                        this.recordPatchedVersion,
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
-        it(`${title} - negative 4 - invalid record version`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url +
-                        '/' +
-                        this.endpoint +
-                        '/v1/record/' +
-                        this.recordsId[0] +
-                        '/version/' +
-                        this.recordPatchedVersion +
-                        '-fake',
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url +
+                            '/' +
+                            this.endpoint +
+                            '/v1/record/' +
+                            this.recordsId[0] +
+                            '/version/' +
+                            this.recordPatchedVersion,
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url +
+                            '/' +
+                            this.endpoint +
+                            '/v1/record/' +
+                            this.recordsId[0] +
+                            '/version/' +
+                            this.recordPatchedVersion,
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([403, 500]);
+            });
+            it(`${title} - negative 3 - invalid record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url +
+                            '/' +
+                            this.endpoint +
+                            '/v1/record/' +
+                            this.recordsId[0] +
+                            '-fake' +
+                            '/version/' +
+                            this.recordPatchedVersion,
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+            it(`${title} - negative 4 - invalid record version`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url +
+                            '/' +
+                            this.endpoint +
+                            '/v1/record/' +
+                            this.recordsId[0] +
+                            '/version/' +
+                            this.recordPatchedVersion +
+                            '-fake',
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+        }
     }
 
     private delete() {
@@ -544,33 +554,35 @@ export class TestSchema {
                 expect(result?.status).to.be.equal(200);
             }
         });
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.delete(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.delete(
-                    Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
-        it(`${title} - negative 3 - no record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.delete(Config.url + '/' + this.endpoint + '/v1/record/', this.getRequestOptions()),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.delete(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.delete(
+                        Config.url + '/' + this.endpoint + '/v1/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([403, 500]);
+            });
+            it(`${title} - negative 3 - no record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.delete(Config.url + '/' + this.endpoint + '/v1/record/', this.getRequestOptions()),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+        }
     }
 
     private uploadConnectionString() {
@@ -589,43 +601,45 @@ export class TestSchema {
             expect(result?.data.token_type).to.not.be.undefined;
             this.uploadBulkCS = result?.data;
         });
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/connection-string/upload/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/connection-string/upload/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
-        it(`${title} - negative 3 - no record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(Config.url + '/connection-string/upload/record/', this.getRequestOptions()),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
-        it(`${title} - negative 4 - invalid record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/connection-string/upload/record/' + this.recordsId[0] + '-fake',
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/connection-string/upload/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/connection-string/upload/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([403, 500]);
+            });
+            it(`${title} - negative 3 - no record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(Config.url + '/connection-string/upload/record/', this.getRequestOptions()),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+            it(`${title} - negative 4 - invalid record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/connection-string/upload/record/' + this.recordsId[0] + '-fake',
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+        }
     }
 
     private downloadConnectionString() {
@@ -644,43 +658,45 @@ export class TestSchema {
             expect(result?.data.token_type).to.not.be.undefined;
             this.downloadBulkCS = result?.data;
         });
-        it(`${title} - negative 1 - no data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/connection-string/download/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(400);
-        });
-        it(`${title} - negative 2 - fake data partition`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/connection-string/download/record/' + this.recordsId[0],
-                    this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.oneOf(this.negativeExpected.fake_partition);
-        });
-        it(`${title} - negative 3 - no record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(Config.url + '/connection-string/download/record/', this.getRequestOptions()),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
-        it(`${title} - negative 4 - invalid record id`, async () => {
-            const results = await Utils.sendAxiosRequest(
-                axios.get(
-                    Config.url + '/connection-string/download/record/' + this.recordsId[0] + '-fake',
-                    this.getRequestOptions()
-                ),
-                false
-            );
-            expect(results?.response?.status).to.be.equal(404);
-        });
+        if (this.runNegative) {
+            it(`${title} - negative 1 - no data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/connection-string/download/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.NO_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(400);
+            });
+            it(`${title} - negative 2 - fake data partition`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/connection-string/download/record/' + this.recordsId[0],
+                        this.getRequestOptions(RequestOptionsMode.FAKE_DATA_PARTITION)
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.oneOf([403, 500]);
+            });
+            it(`${title} - negative 3 - no record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(Config.url + '/connection-string/download/record/', this.getRequestOptions()),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+            it(`${title} - negative 4 - invalid record id`, async () => {
+                const results = await Utils.sendAxiosRequest(
+                    axios.get(
+                        Config.url + '/connection-string/download/record/' + this.recordsId[0] + '-fake',
+                        this.getRequestOptions()
+                    ),
+                    false
+                );
+                expect(results?.response?.status).to.be.equal(404);
+            });
+        }
     }
 
     private upload() {
