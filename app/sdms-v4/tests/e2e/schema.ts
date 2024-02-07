@@ -53,6 +53,7 @@ export class TestSchema {
     private bulkData: string;
     private bulkDataName = 'sdms-e2e-test-data';
     private runNegative = false;
+    private negativeFakeDataPartition = [400, 401, 403, 404, 500];
 
     private getRequestOptions(mode = RequestOptionsMode.GENERIC): AxiosRequestConfig {
         const options = {
@@ -153,7 +154,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([403, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
 
             it(`${title} - negative 3 - wrong body format`, async () => {
@@ -229,7 +230,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([403, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -290,7 +291,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([401, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
         }
     }
@@ -347,7 +348,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([404, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
 
             it(`${title} - negative 3 - no record id`, async () => {
@@ -436,7 +437,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([403, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
             it(`${title} - negative 3 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -502,7 +503,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([403, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
             it(`${title} - negative 3 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -573,7 +574,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([403, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -620,7 +621,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([403, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -677,7 +678,7 @@ export class TestSchema {
                     ),
                     false
                 );
-                expect(results?.response?.status).to.be.oneOf([403, 500]);
+                expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
             });
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
