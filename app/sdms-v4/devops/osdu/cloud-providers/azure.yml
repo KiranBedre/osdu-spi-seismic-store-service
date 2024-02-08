@@ -15,7 +15,7 @@
 #  ***************************************************************************
 
 variables:
-  #seismic store service variables
+  # seismic store service variables
   SDMS_V4_SERVICE_NAME: seismic-ddms-v4
   SDMS_SERVICE_NAME: seismic-ddms
   ENV_VAULT: $AZURE_ENV_VAULT
@@ -34,6 +34,10 @@ sdms_v4_azure_containerize:
     - cd app/$SDMS_V4_SERVICE
     # Runtime image
     - docker build -t $SDMS_V4_UTEST_RUNTIME_IMAGE --file docker/runtime.Dockerfile .
+    # Extract OpenApi
+    - container_id=$(docker create "$SDMS_V4_UTEST_RUNTIME_IMAGE")
+    - docker cp "$container_id:/seistore-service/dist/docs/openapi.yaml" "./openapi.yaml"
+    - docker rm "$container_id"
     # Gitlab Container Registry
     - cd ../..
     # Runtime Image
@@ -63,6 +67,11 @@ sdms_v4_azure_containerize:
       - branches
       - merge_requests
       - tags
+  artifacts:
+    when: always
+    name: openapi.yaml
+    paths:
+      - app/$SDMS_V4_SERVICE/openapi.yaml
 
 sdms_v4_azure_container_scanning:
   extends: .azure_container_scanning
