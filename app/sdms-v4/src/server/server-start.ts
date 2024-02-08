@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { SharedCache, Utils } from '../shared';
-import { Config } from '../cloud';
+import { Config } from '../cloud/config';
 import path from 'path';
 
 async function ServerStart() {

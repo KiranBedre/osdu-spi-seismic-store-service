@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { Error, Response } from '../shared';
-import { Config } from '../cloud';
+import { Config } from '../cloud/config';
 import { Context } from '../shared/context';
 import { LoggerFactory } from '../cloud/logger';
 import { ServiceRouter } from '../apis';
@@ -51,6 +51,9 @@ export class Server {
 
     // Set of operations to perform before serving the request
     public sdmsMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
+        // Reset request context
+        Context.reset();
+
         // Create and set a correlation-id string if not exist
         if (!req.headers[Config.CORRELATION_ID]) {
             req.headers[Config.CORRELATION_ID] = uuidv4();
@@ -89,8 +92,8 @@ export class Server {
             LoggerFactory.build(Config.CLOUD_PROVIDER).trackRequest(req);
         }
 
-        // Initialize request execution context
-        Context.init(req);
+        // Identify the endpoint schema
+        Context.getEndpointSchema(req);
 
         // Continue service the request
         next();
