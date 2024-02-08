@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -17,30 +17,37 @@
 import { Router, Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './operations';
 import { SchemaHandler } from './handler';
+import { Context } from '../../shared/context';
 
 const SchemaRouter = Router();
 
 SchemaRouter.put('/v1', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'registerRecord-' + Context.schemaEndpoint.name;
     await SchemaHandler.handler(req, res, Operation.RegisterPatch);
 });
 
 SchemaRouter.get('/v1/list', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'listRecords-' + Context.schemaEndpoint.name;
     await SchemaHandler.handler(req, res, Operation.ListSchemas);
 });
 
 SchemaRouter.get('/v1/record/:id', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'getRecordById-' + Context.schemaEndpoint.name;
     await SchemaHandler.handler(req, res, Operation.Get);
 });
 
 SchemaRouter.delete('/v1/record/:id', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'deleteRecord-' + Context.schemaEndpoint.name;
     await SchemaHandler.handler(req, res, Operation.DeleteSchema);
 });
 
 SchemaRouter.get('/v1/record/:id/versions', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'listRecordVersions-' + Context.schemaEndpoint.name;
     await SchemaHandler.handler(req, res, Operation.GetAllVersionIDsOfSchema);
 });
 
 SchemaRouter.get('/v1/record/:id/version/:version', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'getRecordByVersion-' + Context.schemaEndpoint.name;
     await SchemaHandler.handler(req, res, Operation.GetVersionedSchema);
 });
 

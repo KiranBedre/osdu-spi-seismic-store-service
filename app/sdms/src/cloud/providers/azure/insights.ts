@@ -71,7 +71,7 @@ export class AzureInsightsLogger extends AbstractLogger {
 
             // Log requested endpoint name
             if (CallContext.endpointId !== undefined) {
-                envelope.data.baseData.properties['endpoint-name'] = CallContext.endpointId;
+                envelope.data.baseData.properties['endpoint-id'] = CallContext.endpointId;
             }
 
             // Log party to which the JWT was originally issued

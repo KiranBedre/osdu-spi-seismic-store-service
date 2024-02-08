@@ -23,7 +23,7 @@ export interface TestSchemaArgs {
     endpoint: string;
     tag: string;
     model: string;
-    hasBulk?: boolean;
+    hasBulks?: boolean;
 }
 
 interface ConnectionString {
@@ -42,7 +42,7 @@ export class TestSchema {
     private model: string;
     private tag: string;
     private endpoint: string;
-    private hasBulk?: boolean;
+    private hasBulks?: boolean;
     private recordsNumber = 1;
     private recordsId: string[];
     private recordsVersion: string[];
@@ -76,7 +76,7 @@ export class TestSchema {
         this.model = args.model;
         this.tag = args.tag;
         this.endpoint = args.endpoint;
-        this.hasBulk = args.hasBulk;
+        this.hasBulks = args.hasBulks;
         this.recordsId = new Array(this.recordsNumber).fill('');
         this.recordsVersion = new Array(this.recordsNumber).fill('');
         this.runNegative = this.endpoint === 'segy';
@@ -101,7 +101,7 @@ export class TestSchema {
             this.patch();
             this.listVersions();
             this.getByIdAndVersion();
-            if (this.hasBulk) {
+            if (this.hasBulks) {
                 this.uploadConnectionString();
                 this.downloadConnectionString();
                 this.bulkData = Utils.generateRandomData(1024);
@@ -109,7 +109,7 @@ export class TestSchema {
                 this.download();
             }
             this.delete();
-            if (this.hasBulk) {
+            if (this.hasBulks) {
                 this.download(false);
             }
         });

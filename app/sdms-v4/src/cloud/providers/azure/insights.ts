@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import * as appinsights from 'applicationinsights';
 import { AzureConfig } from './config';
 import { Config } from '../../config';
+import { Context } from '../../../shared/context';
 
 export class AzureInsights {
     public static preProcessTelemetryData(
@@ -48,6 +49,11 @@ export class AzureInsights {
             // Log the caller's id
             if (headers[Config.USER_ID_HEADER_KEY_NAME]) {
                 eData.properties['user-id'] = headers[Config.USER_ID_HEADER_KEY_NAME];
+            }
+
+            // Log the requested endpoint name
+            if (Context.endpointId !== undefined) {
+                eData.properties['endpoint-id'] = Context.endpointId;
             }
         }
         return true;
