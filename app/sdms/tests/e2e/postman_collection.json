@@ -58,9 +58,9 @@
 									"\r",
 									"const provider = pm.environment.get('serviceCloudProvider');",
 									"if(provider === 'ibm') {",
-									"    postman.setEnvironmentVariable(\"randomfile\",'randomfile')",
+									"    postman.setEnvironmentVariable(\"randomfilename\",'randomfile')",
 									"} else {\r",
-									"   postman.setEnvironmentVariable(\"randomfile\",'randomfile%')",
+									"   postman.setEnvironmentVariable(\"randomfilename\",'randomfile%')",
 									"}\r",
 									"// if subproject name is not provided then create random name, else keep subproject alive\r",
 									"if (!pm.environment.get(\"subproject\")) {\r",
@@ -5862,7 +5862,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name={{randomfile}}",
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name={{randomfilename}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -5876,7 +5876,7 @@
 							"query": [
 								{
 									"key": "search",
-									"value": "name={{randomfile}}"
+									"value": "name={{randomfilename}}"
 								}
 							]
 						}
