@@ -20,6 +20,12 @@
 									"    pm.environment.set('serviceCloudProvider', pm.response.headers.get('Service-Provider'));",
 									"});",
 									"",
+									"console.log('provider name' + pm.environment.get('serviceCloudProvider'));\r",
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
+									"    postman.setEnvironmentVariable(\"randomfilename\",'randomfile%')\r",
+									"} else {\r",
+									"   postman.setEnvironmentVariable(\"randomfilename\",'randomfile')\r",
+									"}\r",
 									"pm.environment.set('appAdminEmail', pm.environment.get('adminEmail'));",
 									"if( pm.environment.get('serviceCloudProvider') !== 'gc' && pm.environment.get('serviceCloudProvider') !== 'google' && pm.environment.get('serviceCloudProvider') !== 'ibm') {",
 									"    pm.environment.set('adminEmail', pm.environment.get('adminEmail').split('@')[0]);",
@@ -56,13 +62,6 @@
 									"   return result;\r",
 									"}\r",
 									"\r",
-									"const provider = pm.environment.get('serviceCloudProvider');\r",
-									"console.log('provider name' + provider);\r",
-									"if(provider !== 'ibm') {\r",
-									"    postman.setEnvironmentVariable(\"randomfilename\",'randomfile%')\r",
-									"} else {\r",
-									"   postman.setEnvironmentVariable(\"randomfilename\",'randomfile')\r",
-									"}\r",
 									"// if subproject name is not provided then create random name, else keep subproject alive\r",
 									"if (!pm.environment.get(\"subproject\")) {\r",
 									"    postman.setEnvironmentVariable(\"subproject\", makeID_general(16));\r",
@@ -5863,7 +5862,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name={{randomfilename}}",
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}?search=name={{randomfile}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -5877,7 +5876,7 @@
 							"query": [
 								{
 									"key": "search",
-									"value": "name={{randomfilename}}"
+									"value": "name={{randomfile}}"
 								}
 							]
 						}
