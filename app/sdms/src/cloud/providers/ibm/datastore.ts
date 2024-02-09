@@ -584,6 +584,10 @@ class QueryStatementBuilder {
                 logger.debug('$elemMatch operator');
                 filterQuery = { [filterObject.property]: { [filterObject.operator]: { '$eq': filterObject.value } } };
             }
+            else if(filterObject.operator === 'undefined')
+            {
+                filterQuery = { [filterObject.property]: { ['$regex']: filterObject.value } };
+            }
             else
                 filterQuery = { [filterObject.property]: { [filterObject.operator]: filterObject.value } };
             logger.debug('filterQuery - ');
