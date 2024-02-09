@@ -61,17 +61,15 @@ export class AWSCredentials extends AbstractCredentials {
         } else   // readOnly False
         {
             roleArn = await AWSCredentials.awsSSMHelper.getSSMParameter(osduTenantGroupSsmPrefix + '/seismic-ddms-v4/iam/upload-role-arn')
-            flagUpload = true;
         }
 
         credentials = await this.awsSTSHelper.getCredentials(s3bucket, partition+'/'+bucket,roleArn,flagUpload,AWSCredentials.expDuration);
 
-        const result = {
+        return {
             access_token: credentials,
             expires_in: +AWSCredentials.expDuration,
             token_type: 'unsignedurl: '+'s3://' + s3bucket + '/' + partition + '/'+bucket,
         };
-        return result;
     }
 
     // this will return serviceprincipal access token

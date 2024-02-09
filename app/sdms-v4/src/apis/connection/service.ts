@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -18,14 +18,17 @@ import { Router, Request as expRequest, Response as expResponse } from 'express'
 
 import { ConnectionsHandler } from './handler';
 import { Operation } from './operations';
+import { Context } from '../../shared/context';
 
 const ConnectionStringRouter = Router();
 
 ConnectionStringRouter.get('/upload/record/:id', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'getUploadConnectionString';
     await ConnectionsHandler.handler(req, res, Operation.GetUploadConnectionString);
 });
 
 ConnectionStringRouter.get('/download/record/:id', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'getDownloadConnectionString';
     await ConnectionsHandler.handler(req, res, Operation.GetDownloadConnectionString);
 });
 

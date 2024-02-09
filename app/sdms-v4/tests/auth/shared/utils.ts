@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -40,13 +40,27 @@ export class Utils {
         }
     }
 
-    public static generateRandomData(length: number) {
-        let result = '';
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    public static getTokenPayloadField(token: string | undefined, property: string): string | undefined {
+        const payload = this.getTokenPayload(token);
+        return payload ? payload[property] || undefined : undefined;
+    }
+
+    private static getTokenPayload(token: string | undefined): any {
+        if (token === undefined) {
+            return undefined;
         }
-        return result;
+
+        token = token.replace(' ', '');
+        token = token.replace('Bearer', '');
+        const tokens = token.split('.');
+
+        let payload = tokens.length === 3 ? tokens[1] : token;
+
+        const missingPadding = payload.length % 4;
+        if (missingPadding !== 0) {
+            payload += '='.repeat(4 - missingPadding);
+        }
+
+        return JSON.parse(Buffer.from(payload, 'base64').toString());
     }
 }

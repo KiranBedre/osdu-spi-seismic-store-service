@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -18,16 +18,19 @@ import { Router, Request as expRequest, Response as expResponse } from 'express'
 
 import { Operation } from './operations';
 import { StatusHandler } from './handler';
+import { Context } from '../../shared/context';
 
 const router = Router();
 
 // Get the service status
 router.get('/', async (_req: expRequest, res: expResponse) => {
+    Context.endpointId = 'getStatus';
     await StatusHandler.handler(res, Operation.Status);
 });
 
 // Get the service readiness status
 router.get('/readiness', async (_req: expRequest, res: expResponse) => {
+    Context.endpointId = 'getReadiness';
     await StatusHandler.handler(res, Operation.Readiness);
 });
 

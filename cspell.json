@@ -303,6 +303,8 @@
         "nodesecure",
         "nohup",
         "noninteractive",
+        "NONREG",
+        "noreg",
         "nopasswd",
         "NOPASSWD",
         "NORTHAMERICA",

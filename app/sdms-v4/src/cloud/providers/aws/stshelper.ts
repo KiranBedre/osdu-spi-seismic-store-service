@@ -49,14 +49,7 @@ export class AWSSTShelper {
         const command = new AssumeRoleCommand(stsParams);
         const roleCredentials = await this.sts.send(command);
 
-        const tempCredentials =
-            'AccessKeyId='+roleCredentials.Credentials.AccessKeyId +
-            ';SecretAccessKey=' +
-            roleCredentials.Credentials.SecretAccessKey +
-            ';SessionToken=' +
-            roleCredentials.Credentials.SessionToken;
-
-        return tempCredentials;
+        return `AccessKeyId=${roleCredentials.Credentials.AccessKeyId};SecretAccessKey=${roleCredentials.Credentials.SecretAccessKey};SessionToken=${roleCredentials.Credentials.SessionToken}`;
     }
 
     public createUploadPolicy(bucketName: string, keyPath: string): string {
@@ -118,8 +111,7 @@ export class AWSSTShelper {
             ],
         };
 
-        const policy = JSON.stringify(UploadPolicy);
-        return policy;
+        return JSON.stringify(UploadPolicy);
     }
 
     public createDownloadPolicy(bucketName: string, keyPath: string): string {
@@ -163,7 +155,6 @@ export class AWSSTShelper {
             ],
         };
 
-        const policy = JSON.stringify(downloadPolicy);
-        return policy;
+        return JSON.stringify(downloadPolicy);
     }
 }

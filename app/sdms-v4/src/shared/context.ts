@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,13 +14,19 @@
 // Limitations under the License.
 // ============================================================================
 
-import { SchemaEndpoint, SchemaEndpoints } from '../apis';
+import { SchemaEndpoint, SchemaEndpoints } from '../apis/schema/types';
 import express from 'express';
 
 export class Context {
     public static schemaEndpoint: SchemaEndpoint;
+    public static endpointId: string;
 
-    public static init(req: express.Request) {
+    public static reset() {
+        Context.schemaEndpoint = undefined;
+        Context.endpointId = undefined;
+    }
+
+    public static getEndpointSchema(req: express.Request) {
         for (const endpoint of SchemaEndpoints) {
             if (req.url.indexOf('/' + endpoint.name + '/') !== -1) {
                 Context.schemaEndpoint = endpoint;

@@ -4,7 +4,7 @@ ibm-deploy:
       echo 'empty'
   rules:
      - if: $DISABLED == 'true'
-      
+
 ibm-deploy-devpri:
   needs: []
   script:
@@ -19,7 +19,7 @@ ibm-test:
       echo 'empty'
   only:
       - $DISABLED == 'true'
-      
+
 ibm-test-py:
   needs: []
   extends: []
@@ -27,7 +27,7 @@ ibm-test-py:
       echo 'empty'
   only:
       - $DISABLED == 'true'
-      
+
 ibm-preship-promote:
   needs: []
   extends: []
@@ -35,7 +35,7 @@ ibm-preship-promote:
       echo 'empty'
   rules:
      - if: $DISABLED == 'true'
-      
+
 ibm-preship-promote-release:
   needs: []
   extends: []
@@ -43,7 +43,15 @@ ibm-preship-promote-release:
       echo 'empty'
   rules:
      - if: $DISABLED == 'true'
-      
+
+ibm-helm-charts-master:
+  extends: .ibm
+  stage: build
+  script:
+    echo 'empty'
+  rules:
+    - if: $DISABLED == 'true'
+
 .ibm-deploy:
   extends: .ibm
   stage: deploy
@@ -81,3 +89,18 @@ ibm-preship-promote-release:
   stage: publish
   rules:
     - if: '$CI_COMMIT_BRANCH == $IBM_PRESHIP_RELEASE_BRANCH'
+
+.ibm-helm-charts-master:
+  extends: .ibm
+  stage: build
+  tags: ["osdu-small"]
+  image:
+    name: alpine/helm:3.6.3
+    entrypoint: [""]
+  script:
+    - helm plugin install https://github.com/chartmuseum/helm-push.git
+    - helm cm-push ${IBM_HELM_CONFIG_PATH} ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/stable --username gitlab-ci-token --password $CI_JOB_TOKEN
+    - helm cm-push ${IBM_HELM_DEPLOY_PATH} ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/stable --username gitlab-ci-token --password $CI_JOB_TOKEN
+    - if [[ ! -z "$IBM_HELM_BOOTSTRAP_PATH" ]]; then helm cm-push ${IBM_HELM_BOOTSTRAP_PATH} ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/stable --username gitlab-ci-token --password $CI_JOB_TOKEN; fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'

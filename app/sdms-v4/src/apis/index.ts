@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 // Limitations under the License.
 // ============================================================================
 import { SchemaEndpoint, SchemaEndpoints, SchemaRouter } from './schema';
-import { Config } from '../cloud';
+import { Config } from '../cloud/config';
 import { ConnectionStringRouter } from './connection';
 import { Router } from 'express';
 import { StatusRouter } from './status';

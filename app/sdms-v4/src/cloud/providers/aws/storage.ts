@@ -89,8 +89,8 @@ export class AWSStorage extends AbstractStorage {
 
         try {
             const data = await this.s3.send(command);
-            const exists = data.$metadata.httpStatusCode === 200;
-            return exists;
+            
+            return data.$metadata.httpStatusCode === 200;
         } catch (error) {
             return false;
         }

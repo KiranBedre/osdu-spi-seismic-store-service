@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -86,7 +86,6 @@ export const SchemaEndpoints = [
         docDataType: 'Line Geometry',
         hasBulks: false,
     },
-
     {
         name: 'horizon',
         kind: 'osdu:wks:work-product-component--SeismicHorizon:1.2.0',

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,16 +17,19 @@
 import { Request as expRequest, Response as expResponse, Router } from 'express';
 import { ImpersonationTokenHandler } from './handler';
 import { ImpersonationTokenOps } from './optype';
+import { CallContext } from '../../shared/context';
 
 const router = Router();
 
 // generate an impersonation token
 router.post('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'impersonation-token-generate';
     await ImpersonationTokenHandler.handler(req, res, ImpersonationTokenOps.Generate);
 });
 
 // refresh an impersonation token
 router.put('/', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'impersonation-token-refresh';
     await ImpersonationTokenHandler.handler(req, res, ImpersonationTokenOps.Refresh);
 });
 

@@ -1,5 +1,5 @@
 #  ***************************************************************************
-#  Copyright 2017 - 2023, Schlumberger
+#  Copyright 2017 - 2024, Schlumberger
 #
 #  Licensed under the Apache License, Version 2.0(the "License");
 #  you may not use this file except in compliance with the License.
@@ -479,7 +479,7 @@ paths:
             </ul>
           </li>
         </ul>
-      operationId: dataset-lock-rm
+      operationId: dataset-unlock
       tags:
         - Dataset
       parameters:
@@ -601,7 +601,7 @@ paths:
     get:
       summary: "Validate if a dataset ctag matches the pre-existing ctag in metadata catalog."
       description: "<ul><li>Check if the provided dataset cTag match the one stored in the metadata catalog.</li><li>Required roles: subproject.admin, subproject.viewer</li></ul>"
-      operationId: ctag-check
+      operationId: dataset-ctag-check
       tags:
         - Dataset
       parameters:
@@ -672,7 +672,7 @@ paths:
             </ul>
           </li>
         </ul>
-      operationId: add-tag
+      operationId: dataset-add-tag
       tags:
         - Dataset
       parameters:
@@ -737,7 +737,7 @@ paths:
         <ul>
         <li>Compute and retrieve the size of a dataset and the date of when the size was computed.</li>
         <li>Required roles: subproject.admin</li></ul>
-      operationId: dataset-size
+      operationId: dataset-size-post
       tags:
         - Dataset
       parameters:
@@ -794,7 +794,7 @@ paths:
       description: |
         <ul>
         <li>Required roles: subproject.viewer</li></ul>
-      operationId: get-size
+      operationId: dataset-size-get
       tags:
         - Dataset
       parameters:
@@ -898,7 +898,7 @@ paths:
     #       <li>Return the list of datasets in a sub-project. The list can be filtered by gtags. Support pagination.</li>
     #       <li>Required roles: subproject.admin, subproject.viewer</li>
     #     </ul>
-    #   operationId: dataset-list
+    #   operationId: dataset-list-get
     #   tags:
     #     - Dataset
     #   parameters:
@@ -1156,7 +1156,7 @@ paths:
         <ul>
         <li>Return the list of datasets and sub-directories of a seismic store path.</li>
         <li>Required roles: subproject.admin, subproject.viewer</li></ul>
-      operationId: ls
+      operationId: utility-ls-get
       tags:
         - Utility
       parameters:
@@ -1219,7 +1219,7 @@ paths:
         <ul>
         <li>Return the list of datasets and sub-directories of a seismic store path.</li>
         <li>Required roles: subproject.admin, subproject.viewer</li></ul>
-      operationId: ls
+      operationId: utility-ls-post
       tags:
         - Utility
       parameters:
@@ -1261,7 +1261,7 @@ paths:
     get:
       summary: Retrieve the list of supported storage tiers
       description: "<ul><li>Return the list of storage tiers</ul>"
-      operationId: storage-tiers
+      operationId: utility-storage-tiers
       tags:
         - Utility
       responses:
@@ -1289,7 +1289,7 @@ paths:
           </ul>
         </li>
         </ul>
-      operationId: cp
+      operationId: utility-cp
       tags:
         - Utility
       parameters:
@@ -1356,7 +1356,7 @@ paths:
             </ul>
           </li>
         </ul>
-      operationId: gcs-access-token
+      operationId: utility-gcs-access-token
       tags:
         - Utility
       parameters:
@@ -1445,7 +1445,7 @@ paths:
                         </ul>
                       </li>
                     </ul>"
-      operationId: upload-connection-string
+      operationId: utility-upload-connection-string
       tags:
         - Utility
       parameters:
@@ -1530,7 +1530,7 @@ paths:
                         </ul>
                       </li>
                     </ul>"
-      operationId: download-connection-string
+      operationId: utility-download-connection-string
       tags:
         - Utility
       parameters:
@@ -1571,7 +1571,7 @@ paths:
         <ul>
         <li>Generate an impersonation credential token of a user for a set of subproject resources.</li>
         <li>Required roles: app.trusted</li></ul>
-      operationId: imp-token
+      operationId: imptoken-generate
       tags:
         - Impersonation Token (Obsolete)
       requestBody:
@@ -1601,7 +1601,7 @@ paths:
       description: "<ul><li>Refresh an impersonation credential token.</li><li>Required roles: none</li></ul>"
       security:
         - bearer: []
-      operationId: imp-token-refresh
+      operationId: imptoken-refresh
       tags:
         - Impersonation Token (Obsolete)
       requestBody:
@@ -1632,7 +1632,7 @@ paths:
         <ul>
         <li>Patch an impersonation credential token's refresh url and generate a new impersonation token.</li>
         <li>Required roles: none</li></ul>
-      operationId: imp-token-patch
+      operationId: imptoken-patch
       tags:
         - Impersonation Token (Obsolete)
       requestBody:
@@ -1926,7 +1926,7 @@ paths:
     get:
       summary: List subprojects in a tenant.
       description: "<ul><li>Return the list of sub-projects in a tenant.</li><li>Required roles: users.datalake.admin</li></ul>"
-      operationId: sub-project-list
+      operationId: subproject-list
       tags:
         - SubProject
       parameters:
@@ -2121,7 +2121,7 @@ paths:
     delete:
       summary: Remove a user from a subproject.
       description: "<ul><li>Remove a user from subproject default authorization groups if exists, otherwise, remove it from the first authorization group.</li><li>Required roles: subproject.admin</li></ul>"
-      operationId: user-rm
+      operationId: user-remove
       tags:
         - Users
       parameters:

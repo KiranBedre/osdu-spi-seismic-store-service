@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2023, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
 // Limitations under the License.
 // ============================================================================
 
-export class CallContext {
-    public static correlationId: string;
-    public static endpointId: string;
+import { TestAuth } from './auth';
 
-    public static reset() {
-
-        CallContext.correlationId = undefined;
-        CallContext.endpointId = undefined;
+class Test {
+    public static async run() {
+        new TestAuth().run();
     }
 }
+
+Test.run().catch(error => {
+    console.log(error);
+});
