@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ public class Cosmos : IDataAccess
         var patchOperations = new List<PatchOperation>();
         foreach (var pair in updates)
         {
-            patchOperations.Add(PatchOperation.Set(pair.Key, pair.Value));
+            patchOperations.Add(PatchOperation.Replace(pair.Key, pair.Value));
         }
         var itemResponse = await container.PatchItemAsync<object>(
             id: id,
