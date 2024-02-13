@@ -56,7 +56,7 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         this.listDatasets();
-            this.listDatasetsQuery();
+        this.listDatasetsQuery();
         });
     }
 
@@ -641,7 +641,8 @@ export class TestAzureCosmosDbListDatasets {
         const paramNamePattern = '@parameter[A-Za-z0-9]{4}';
 
         Tx.test(() => {
-            let dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
+            const model = this.getDatasetModel();
+            const dataset = model as DatasetModel;
             dataset.gtags = [];
             dataset.path = '';
 
@@ -655,7 +656,8 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(() => {
-            let dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
+            const model = this.getDatasetModel();
+            const dataset = model as DatasetModel;
             dataset.gtags = [];
 
             let [query, parameters] = this.cosmos.listDatasetsQuery({ dataset });
@@ -669,7 +671,8 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(() => {
-            const dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
+            const model = this.getDatasetModel();
+            const dataset = model as DatasetModel;
             dataset.gtags = [];
 
             let [query, parameters] = this.cosmos.listDatasetsQuery({ dataset, searchParam: 'field=value', selectParam: ['id', 'name'] });
@@ -679,7 +682,8 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(() => {
-            const dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
+            const model = this.getDatasetModel();
+            const dataset = model as DatasetModel;
             dataset.gtags = [];
 
             let [query, parameters] = this.cosmos.listDatasetsQuery({ dataset, selectParam: ['id', 'gcsurl'], recursive: true });
@@ -689,7 +693,8 @@ export class TestAzureCosmosDbListDatasets {
         });
 
         Tx.test(() => {
-            const dataset: DatasetModel = this.getDatasetModel('dataset1.txt');
+            const model = this.getDatasetModel();
+            const dataset = model as DatasetModel;
             dataset.gtags = [];
 
             let [query, parameters] =  this.cosmos.listDatasetsQuery({ dataset, filter: new MatchQueryFilter('property', 'RegexMatch', 'aRegex') });
@@ -699,7 +704,7 @@ export class TestAzureCosmosDbListDatasets {
         });
     }
 
-    public static getDatasetModel(name: string) {
+    public static getDatasetModel(name?: string) {
         return {
             name: name,
             tenant: 'tenant',

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,16 +19,37 @@ import { Error, Params, SDPath } from '../../shared';
 import { IBulkDeleteRequest } from '../dataset/model';
 import { Config } from '../../cloud';
 import { DatasetFilterParser } from '../dataset/filter-parser';
-import { IBulkDeleteOperationStatusRequest } from './model';
+import { IOperationStatusRequest } from './model';
 
 export class Parser {
 
     public static bulkDelete(req: expRequest): IBulkDeleteRequest {
         Params.checkString(req.query.path, 'path');
+
+        const fullPath = !(req.query.path as string).endsWith('/');
+
         const input = {
-            sdPath: SDPath.getFromString(req.query.path as string, false)
+            sdPath: SDPath.getFromString(req.query.path as string, fullPath)
         } as IBulkDeleteRequest;
 
+        this.checkFilter(req, input);
+
+        return input;
+    }
+
+    public static bulkDeleteStatus(req: expRequest): IOperationStatusRequest {
+
+        const args = {
+            dataPartitionId: req.headers['data-partition-id'] as string,
+            operationId: req.params.operationid
+        } as IOperationStatusRequest
+
+        this.checkDataPartitionId(args);
+
+        return args;
+    }
+
+    private static checkFilter(req: expRequest, input: any) {
         if (req.body.filter) {
             if(!Config.ENABLE_ADVANCED_QUERY_FILTERS) {
                 throw (Error.make(Error.Status.NOT_IMPLEMENTED,
@@ -40,23 +61,13 @@ export class Parser {
                 throw (Error.make(Error.Status.BAD_REQUEST, error.message));
             }
         }
-
-        return input;
     }
 
-    public static bulkDeleteStatus(req: expRequest): IBulkDeleteOperationStatusRequest {
-
-        const args = {
-            dataPartitionId: req.headers['data-partition-id'] as string,
-            operationId: req.params.operationid
-        } as IBulkDeleteOperationStatusRequest
-
+    private static checkDataPartitionId(args: IOperationStatusRequest) {
         if(!args.dataPartitionId) {
             throw (Error.make(
                 Error.Status.BAD_REQUEST, 'The \'data-partition-id\' header key has not been specified.'));
         }
-
-        return args;
     }
 
 }

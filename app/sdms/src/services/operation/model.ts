@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { IOperationQueueTask } from '../../shared/model';
 
-export interface IBulkDeleteOperationStatusRequest {
+export interface IOperationStatusRequest {
     dataPartitionId: string;
     operationId: string;
 }
