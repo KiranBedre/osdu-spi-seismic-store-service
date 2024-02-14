@@ -140,6 +140,7 @@ export class IbmConfig extends Config {
 
         Config.checkRequiredConfig(IbmConfig.LOCKSMAP_REDIS_INSTANCE_PORT, 'REDIS_INSTANCE_PORT');
         Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST = true;
+        Config.ENABLE_ADVANCED_QUERY_FILTERS = true;
         // init generic configurations
         await Config.initServiceConfiguration({
             SERVICE_ENV: process.env.APP_ENVIRONMENT_IDENTIFIER,
