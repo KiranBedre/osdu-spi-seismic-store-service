@@ -5826,7 +5826,7 @@
 									"        });",
 									"    });",
 									"    ",
-									"    console.log('datasetsCountForRandomFile'+pm.environment.get(\"datasetsCountForRandomFile\"));\r",
+									"    console.log('datasetsCountForRandomFile'+pm.environment.get(\"datasetsCountForRandomFile\")+'   jsonData.length'+pm.expect(jsonData.length));\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for randomfile\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForRandomFile\"));",
 									"    });",
