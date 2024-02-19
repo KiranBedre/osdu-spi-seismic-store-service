@@ -7086,6 +7086,9 @@
 								"exec": [
 									"if (responseCode.code != 400) {",
 									"    console.log(pm.response.text())",
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} ",
 									"",
 									"} else {",
 									"    pm.test(\"Status code is 400 Bad Request\", function () {",
