@@ -36,6 +36,7 @@ phases:
     runtime-versions:
       java: corretto8
     commands:
+      - n 20
       # fix error noted here: https://github.com/yarnpkg/yarn/issues/7866
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
       - apt-get update -y
@@ -101,9 +102,7 @@ phases:
       - docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
 
       - echo "Building docker image..."
-      #- docker build -f src/cloud/providers/aws/build-aws/Dockerfile -t ${ECR_IMAGE} .
-      - docker build -f src/cloud/providers/aws/build-aws/builder.Dockerfile -t ${ECR_IMAGE_BUILDER} .
-      - docker build -f src/cloud/providers/aws/build-aws/runtime.Dockerfile -t ${ECR_IMAGE_PROD} --build-arg docker_builder_image=${ECR_IMAGE_BUILDER} .
+      - docker build -f src/cloud/providers/aws/build-aws/runtime.Dockerfile -t ${ECR_IMAGE_PROD} .
       - docker tag  ${ECR_IMAGE_PROD} ${ECR_IMAGE_BRANCH_LATEST}
       - echo "Pushing docker image..."
       - docker push ${ECR_IMAGE_PROD}

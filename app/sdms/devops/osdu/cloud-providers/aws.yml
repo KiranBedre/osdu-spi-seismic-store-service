@@ -6,7 +6,6 @@ variables:
   AWS_SERVICE_GATEWAY: osdu-services/osdu-gateway
   AWS_ENVIRONMENT: dev
   AWS_DEPLOY_TARGET: TF
-  AWS_BUILDER_DOCKERFILE_PATH: src/cloud/providers/aws/build-aws/builder.Dockerfile
   AWS_RUNTIME_DOCKERFILE_PATH: src/cloud/providers/aws/build-aws/runtime.Dockerfile
   # skipping tests here. Using a local file to run tests
   AWS_SKIP_TESTS: "true"
@@ -26,7 +25,7 @@ sdms_aws-containerize:
   needs: ['sdms_compile-and-unit-test']
   script:
     - |
-      if [ -z $AWS_BUILDER_DOCKERFILE_PATH ] && [ -z $AWS_RUNTIME_DOCKERFILE_PATH ]; then
+      if [ -z $AWS_RUNTIME_DOCKERFILE_PATH ]; then
         echo Building BUILD_DIR/Dockerfile container
         docker build  -f $BUILD_DIR/Dockerfile -t $LOCAL_IMAGE_TAG .;
       else
@@ -46,8 +45,7 @@ sdms_aws-containerize:
         devops/scripts/detect_unused_packages.sh
         chmod +x devops/scripts/clean_package_json.sh
         devops/scripts/clean_package_json.sh
-        docker build -t builder:latest --file $AWS_BUILDER_DOCKERFILE_PATH .;
-        docker build -t $LOCAL_IMAGE_TAG --file $AWS_RUNTIME_DOCKERFILE_PATH --build-arg docker_builder_image=builder .;
+        docker build -t $LOCAL_IMAGE_TAG --file $AWS_RUNTIME_DOCKERFILE_PATH .;
       fi
     # Push to the localcontainer registry
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -183,13 +181,15 @@ sdms_aws-test-newman:
     - .aws_common_variables
     - .aws_variables
   stage: integration
-  image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-node/aws-node:v1.0-node14
+  image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-node/aws-node:v1.0-node18
   needs: ['sdms_aws-update-tf']
   variables:
     AWS_SDMS_PREFIX: /api/seismic-store/v3
   script:
     - cd app/$SDMS_SERVICE
-    - pip3 install -r devops/aws/requirements.txt
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - python3 -m pip install -r devops/aws/requirements.txt
     - svctoken=$(python3 ../../devops/scripts/aws_jwt_client.py)
     - >
       curl --insecure --location --request POST "$LEGAL_BASE_URL"'legaltags' \
