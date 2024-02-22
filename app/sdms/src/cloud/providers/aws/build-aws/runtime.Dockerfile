@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=14-alpine
+ARG docker_node_image_version=16-alpine
 
 # -------------------------------
 # Compilation stage
@@ -58,7 +58,6 @@ RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-head
 
 COPY src/cloud/providers/aws/build-aws/ssl.sh /seistore-service/ssl.sh
 COPY src/cloud/providers/aws/build-aws/entrypoint.sh /seistore-service/entrypoint.sh
-RUN npm ci --production
 RUN chmod +x /seistore-service/ssl.sh
 RUN chmod +x /seistore-service/entrypoint.sh
 ENTRYPOINT ["/bin/sh", "-c", "/seistore-service/entrypoint.sh"]
