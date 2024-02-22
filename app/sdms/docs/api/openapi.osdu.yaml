@@ -2329,7 +2329,11 @@ paths:
       tags:
         - Operations
       parameters:
-        - description: "The sdms subproject path as sd://tenant/subproject/(path)"
+        - description: "The sdms subproject path as sd://tenant/subproject/(path)
+            <ul>
+              <li>The sdms subproject path must end with '/' as sd://tenant/subproject/a/b/c/</li>
+              <li>The dataset must end with dataset name as sd://tenant/subproject/a/b/c/dataset</li>
+            </ul>"
           in: query
           name: path
           required: true

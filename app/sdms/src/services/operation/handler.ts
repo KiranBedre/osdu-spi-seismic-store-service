@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,16 +19,19 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './optype';
 import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { IBulkDeleteOperationQueueTask } from './model';
-import { Config, JournalFactoryTenantClient } from '../../cloud';
+import { Config, JournalFactoryTenantClient, StorageFactory } from '../../cloud';
 import { Parser } from './parser';
 import { Auth, AuthRoles } from '../../auth';
-import { DatasetModel, ListDatasetsParams } from '../dataset';
+import { DatasetDAO, DatasetModel, ListDatasetsParams } from '../dataset';
 import { SubProjectDAO, SubprojectAuth } from '../subproject';
 import { TenantDAO } from '../tenant';
 import { OperationType } from '../../shared/register';
 import { IOperation, IOperationStatus } from '../../shared/model';
 import { operationStatusStorage } from './status';
 import { TaskQueueFactory } from '../../cloud/taskQueue';
+import { SqlParameter } from '@azure/cosmos';
+import { ISDPathModel } from '../../shared/sdpath';
+import { ITenantModel } from '../tenant/model';
 
 export class Handler {
 
@@ -37,16 +40,15 @@ export class Handler {
 
         try {
 
-            if (op === Operation.BulkDeletePush) {
-                const operation = await this.bulkDelete(req);
-                Response.writeOK(res, operation, 202);
-                return;
-            }
-
-            if (op === Operation.BulkDeleteStatus) {
-                const status = await this.bulkDeleteStatus(req);
-                Response.writeOK(res, status);
-                return;
+            switch(op) {
+                case Operation.BulkDeletePush:
+                    Response.writeOK(res, await this.bulkDelete(req), 202);
+                    break;
+                case Operation.BulkDeleteStatus:
+                    Response.writeOK(res, await this.bulkDeleteStatus(req));
+                    break;
+                default:
+				    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
             }
 
         } catch (error) { Response.writeError(res, error); }
@@ -56,51 +58,13 @@ export class Handler {
     // trigger bulk delete operation for datasets with a given path within the subproject
     private static async bulkDelete(req: expRequest): Promise<IOperation> {
 
-        if (!FeatureFlags.isEnabled(Feature.BULK_DELETE)) {
-            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
-        }
+        this.checkFeature(Feature.BULK_DELETE);
 
         const userInput = Parser.bulkDelete(req);
         const sdPath = userInput.sdPath;
-
         const tenant = await TenantDAO.get(sdPath.tenant);
-
-        const dataset = {} as DatasetModel;
-        dataset.tenant = sdPath.tenant;
-        dataset.subproject = sdPath.subproject;
-        dataset.path = sdPath.path || '/';
-
-        const journalClient = JournalFactoryTenantClient.get(tenant);
-
-        const subproject = await SubProjectDAO.get(
-            journalClient, sdPath.tenant, sdPath.subproject);
-
-        // if the path is not defined, assume root
-        sdPath.path = sdPath.path || '/';
-
-        // check if the caller is write authorized (subproject admin)
-        await Auth.isWriteAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
-            tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
-            req.headers['impersonation-token-context'] as string);
-
-        // check if the path exists
-        if (!await journalClient.pathExists(subproject.name, dataset.path)) {
-            throw (Error.make(Error.Status.NOT_FOUND, 'Path not found'));
-        }
-
-        const user = req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization);
-        if (!user) {
-            throw (Error.make(Error.Status.BAD_REQUEST, 'User not found'));
-        }
-
-        const listParams: ListDatasetsParams = {
-            dataset,
-            selectParam: ['id', 'gcsurl', 'path', 'name'],
-            filter: userInput.filter,
-            recursive: true
-        };
-        const [sqlQuery, sqlParams] = journalClient.listDatasetsQuery(listParams);
+        const dataset = this.createDataset(sdPath);
+        const [sqlQuery, sqlParams, user] = await this.processRequest(req, sdPath, tenant, dataset, userInput);
 
         // push the bulk delete operation
         const operation = {
@@ -123,9 +87,7 @@ export class Handler {
     // get status of a bulk delete operation
     private static async bulkDeleteStatus(req: expRequest): Promise<IOperationStatus> {
 
-        if (!FeatureFlags.isEnabled(Feature.BULK_DELETE)) {
-            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
-        }
+        this.checkFeature(Feature.BULK_DELETE);
 
         const args = Parser.bulkDeleteStatus(req);
 
@@ -144,6 +106,69 @@ export class Handler {
         }
 
         return operationStatus;
+    }
+
+    private static checkFeature(feature: Feature) {
+        if (!FeatureFlags.isEnabled(feature)) {
+            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+        }
+    }
+
+    private static async processRequest(req: expRequest, sdPath: ISDPathModel, tenant: ITenantModel,
+        dataset: DatasetModel, userInput: any): Promise<[string, SqlParameter[], string]> {
+        const journalClient = JournalFactoryTenantClient.get(tenant);
+        const subproject = await SubProjectDAO.get(journalClient, sdPath.tenant, sdPath.subproject);
+
+        // if the path is not defined, assume root
+        sdPath.path = sdPath.path || '/';
+
+        // check if the caller is write authorized (subproject admin)
+        await Auth.isWriteAuthorized(req.headers.authorization,
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
+            tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
+            req.headers['impersonation-token-context'] as string);
+
+        // check if the path exists
+        if (!await journalClient.pathExists(subproject.name, dataset.path)) {
+            throw (Error.make(Error.Status.NOT_FOUND, 'Path not found'));
+        }
+
+        // check if dataset exists
+        if (dataset.name) {
+            const datasetOUT = subproject.enforce_key ?
+                await DatasetDAO.getByKey(journalClient, dataset) :
+                (await DatasetDAO.get(journalClient, dataset))[0];
+
+            if (!datasetOUT) {
+                throw (Error.make(Error.Status.NOT_FOUND,
+                    'The dataset ' + Config.SDPATHPREFIX + dataset.tenant + '/' +
+                    dataset.subproject + dataset.path + dataset.name + ' does not exist'));
+            }
+        }
+
+        // get user id
+        const user = req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization);
+        if (!user) {
+            throw (Error.make(Error.Status.BAD_REQUEST, 'User not found'));
+        }
+
+        const listParams: ListDatasetsParams = {
+            dataset,
+            selectParam: ['id', 'gcsurl', 'path', 'name'],
+            filter: userInput.filter,
+            recursive: true
+        };
+        const [sqlQuery, sqlParams] = journalClient.listDatasetsQuery(listParams);
+        return [sqlQuery, sqlParams, user];
+    }
+
+    private static createDataset(sdPath: ISDPathModel): DatasetModel{
+        const dataset = {} as DatasetModel;
+        if (sdPath.dataset) { dataset.name = sdPath.dataset; }
+        dataset.tenant = sdPath.tenant;
+        dataset.subproject = sdPath.subproject;
+        dataset.path = sdPath.path || '/';
+        return dataset;
     }
 
 }

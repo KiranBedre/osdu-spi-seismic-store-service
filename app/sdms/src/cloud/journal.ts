@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -147,6 +147,28 @@ export abstract class AbstractJournal implements IJournal {
         return query;
     }
 
+    public getDatasetQuery(params: ListDatasetsParams): IJournalQueryModel {
+        const dataset = params.dataset;
+        const selectParam = params.selectParam;
+
+        const queryModel = this.createQuery(
+            Config.SEISMIC_STORE_NS + '-' + dataset.tenant + '-' + dataset.subproject, Config.DATASETS_KIND)
+
+        let query: any = this.customizeDatasetsQuery(queryModel, params)
+
+        query = query.filter('name', dataset.name).filter('path', dataset.path);
+
+        if (dataset.gtags?.length) {
+            // filter based on gtags if parsed dataset model has gtags
+            for (const gtag of dataset.gtags) {
+                query = query.filter('gtags', this.getQueryFilterSymbolContains(), gtag);
+            }
+        }
+
+        if (selectParam){ query = query.select(selectParam); }
+        return query;
+    }
+
     protected customizeDatasetsQuery(queryModel: IJournalQueryModel, params: ListDatasetsParams) : IJournalQueryModel {
         return queryModel;
     }
@@ -159,7 +181,7 @@ export abstract class AbstractJournal implements IJournal {
 
     public listDatasetsQuery(params: ListDatasetsParams): [string, SqlParameter[]]
     {
-        const query = this.getDatasetsQuery(params);
+        const query = params.dataset.name === undefined ? this.getDatasetsQuery(params) : this.getDatasetQuery(params);
         return this.datasetsQueryString(query);
     }
 
