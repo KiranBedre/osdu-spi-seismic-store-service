@@ -23,8 +23,7 @@ FROM node:${docker_node_image_version} as runtime-builder
 
 ADD ./ /service
 WORKDIR /service
-RUN apk --no-cache upgrade \
-    apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
+RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && npm install --quiet node-gyp -g \
     && npm install --quiet husky -g \
     && npm install --quiet \
@@ -41,8 +40,7 @@ FROM node:${docker_node_image_version} as release
 COPY --from=runtime-builder /service/artifact /seistore-service
 WORKDIR /seistore-service
 
-RUN apk --no-cache upgrade \
-    apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
+RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && addgroup appgroup \
     && adduser --disabled-password --gecos --shell appuser --ingroup appgroup \
     && chown -R appuser:appgroup /seistore-service \

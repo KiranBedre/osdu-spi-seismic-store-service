@@ -25,7 +25,8 @@ FROM node:${docker_node_image_version} as runtime-builder
 
 ADD ./ /service
 WORKDIR /service
-RUN apk --no-cache add --virtual native-deps g++ openssl gcc libgcc libstdc++ linux-headers make python3 \
+RUN apk --no-cache upgrade \
+    && apk --no-cache add --virtual native-deps g++ openssl gcc libgcc libstdc++ linux-headers make python3 \
     && npm install --quiet node-gyp -g \
     && npm install --quiet \
     && npm run build \
@@ -47,7 +48,8 @@ ENV SSL_ENABLED "true"
 COPY --from=runtime-builder /service/artifact /seistore-service
 WORKDIR /seistore-service
 
-RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
+RUN apk --no-cache upgrade \
+    && apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && addgroup appgroup \
     && adduser --disabled-password --gecos --shell appuser --ingroup appgroup \
     && chown -R appuser:appgroup /seistore-service \
