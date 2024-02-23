@@ -574,11 +574,9 @@ class QueryStatementBuilder {
         keyQuery['Symbol(id)'] = { partitionKey: { $eq: this.namespace + '-' + this.kind }, kind: { $eq: this.kind } };
         andWrapper['$and'].push(keyQuery);
         selectorQuery['selector'] = andWrapper;
-        
         for (const filter of this.filterExpressions) {
             const filterObject = JSON.parse(filter);
             const op = filterObject.operator;
-
             let filterQuery = {};
             if (filterObject.operator === '$elemMatch') {
                 logger.debug('$elemMatch operator');
