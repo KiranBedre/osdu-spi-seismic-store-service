@@ -324,13 +324,9 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
             }
             let i = 0;
             let propertyValue = property;
-            while (true){
-                if (this.queryStatement.ExpressionAttributeValues[':'+propertyValue] !== undefined){ // already used
-                    propertyValue = propertyValue+i;  // gtag0, gtag1, gtag2....
-                    i++;
-                }else {
-                    break; // break true
-                }
+            while (this.queryStatement.ExpressionAttributeValues.hasOwnProperty(`:${propertyValue}`)) {
+                propertyValue = `${property}${i}`;
+                i++;
             }
             this.queryStatement.FilterExpression += 'contains(#' + property + ',:' + propertyValue + ')';
             this.queryStatement.ExpressionAttributeNames['#' + property] = property;
