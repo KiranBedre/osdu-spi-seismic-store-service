@@ -58,7 +58,7 @@ public class BulkDeletionWorkerTests
     [Theory]
     [InlineData(null)]
     [InlineData("/a/b/c")]
-    public async Task ProcessItemDeletion_WithInvalidGcsUrl_IncrementsFailedCount(string gcsurl)
+    public async Task ProcessItemDeletion_WithInvalidGcsUrl_IncrementsFailedCount(string? gcsurl)
     {
         // Arrange
         var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
