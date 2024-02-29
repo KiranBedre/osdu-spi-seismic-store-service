@@ -31,7 +31,7 @@
         "applicationinsights-native-metrics": "^0.0.6",
         "aws-sdk": "^2.1024.0",
         "axios": "^1.6.4",
-        "bull": "^4.10.4",
+        "bull": "^4.12.2",
         "colors": "^1.4.0",
         "copyfiles": "^2.4.1",
         "cors": "^2.8.5",
@@ -5270,17 +5270,16 @@
       }
     },
     "node_modules/bull": {
-      "version": "4.10.4",
-      "resolved": "https://registry.npmjs.org/bull/-/bull-4.10.4.tgz",
-      "integrity": "sha512-o9m/7HjS/Or3vqRd59evBlWCXd9Lp+ALppKseoSKHaykK46SmRjAilX98PgmOz1yeVaurt8D5UtvEt4bUjM3eA==",
+      "version": "4.12.2",
+      "resolved": "https://registry.npmjs.org/bull/-/bull-4.12.2.tgz",
+      "integrity": "sha512-WPuc0VCYx+cIVMiZtPwRpWyyJFBrj4/OgKJ6n9Jf4tIw7rQNV+HAKQv15UDkcTvfpGFehvod7Fd1YztbYSJIDQ==",
       "dependencies": {
         "cron-parser": "^4.2.1",
-        "debuglog": "^1.0.0",
         "get-port": "^5.1.1",
-        "ioredis": "^5.0.0",
+        "ioredis": "^5.3.2",
         "lodash": "^4.17.21",
-        "msgpackr": "^1.5.2",
-        "semver": "^7.3.2",
+        "msgpackr": "^1.10.1",
+        "semver": "^7.5.2",
         "uuid": "^8.3.0"
       },
       "engines": {
@@ -6409,15 +6408,6 @@
         "supports-color": {
           "optional": true
         }
-      }
-    },
-    "node_modules/debuglog": {
-      "version": "1.0.1",
-      "resolved": "https://registry.npmjs.org/debuglog/-/debuglog-1.0.1.tgz",
-      "integrity": "sha512-syBZ+rnAK3EgMsH2aYEOLUW7mZSY9Gb+0wUMCFsZvcmiz+HigA0LOcq/HoQqVuGG+EKykunc7QG2bzrponfaSw==",
-      "deprecated": "Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.",
-      "engines": {
-        "node": "*"
       }
     },
     "node_modules/decamelize": {
@@ -11064,9 +11054,9 @@
       "integrity": "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="
     },
     "node_modules/msgpackr": {
-      "version": "1.9.2",
-      "resolved": "https://registry.npmjs.org/msgpackr/-/msgpackr-1.9.2.tgz",
-      "integrity": "sha512-xtDgI3Xv0AAiZWLRGDchyzBwU6aq0rwJ+W+5Y4CZhEWtkl/hJtFFLc+3JtGTw7nz1yquxs7nL8q/yA2aqpflIQ==",
+      "version": "1.10.1",
+      "resolved": "https://registry.npmjs.org/msgpackr/-/msgpackr-1.10.1.tgz",
+      "integrity": "sha512-r5VRLv9qouXuLiIBrLpl2d5ZvPt8svdQTl5/vMvE4nzDMyEX4sgW5yWhuBBj5UmgwOTWj8CIdSXn5sAfsHAWIQ==",
       "optionalDependencies": {
         "msgpackr-extract": "^3.0.2"
       }
@@ -20021,17 +20011,16 @@
       "integrity": "sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw=="
     },
     "bull": {
-      "version": "4.10.4",
-      "resolved": "https://registry.npmjs.org/bull/-/bull-4.10.4.tgz",
-      "integrity": "sha512-o9m/7HjS/Or3vqRd59evBlWCXd9Lp+ALppKseoSKHaykK46SmRjAilX98PgmOz1yeVaurt8D5UtvEt4bUjM3eA==",
+      "version": "4.12.2",
+      "resolved": "https://registry.npmjs.org/bull/-/bull-4.12.2.tgz",
+      "integrity": "sha512-WPuc0VCYx+cIVMiZtPwRpWyyJFBrj4/OgKJ6n9Jf4tIw7rQNV+HAKQv15UDkcTvfpGFehvod7Fd1YztbYSJIDQ==",
       "requires": {
         "cron-parser": "^4.2.1",
-        "debuglog": "^1.0.0",
         "get-port": "^5.1.1",
-        "ioredis": "^5.0.0",
+        "ioredis": "^5.3.2",
         "lodash": "^4.17.21",
-        "msgpackr": "^1.5.2",
-        "semver": "^7.3.2",
+        "msgpackr": "^1.10.1",
+        "semver": "^7.5.2",
         "uuid": "^8.3.0"
       }
     },
@@ -20909,11 +20898,6 @@
       "requires": {
         "ms": "2.1.2"
       }
-    },
-    "debuglog": {
-      "version": "1.0.1",
-      "resolved": "https://registry.npmjs.org/debuglog/-/debuglog-1.0.1.tgz",
-      "integrity": "sha512-syBZ+rnAK3EgMsH2aYEOLUW7mZSY9Gb+0wUMCFsZvcmiz+HigA0LOcq/HoQqVuGG+EKykunc7QG2bzrponfaSw=="
     },
     "decamelize": {
       "version": "1.2.0",
@@ -24561,9 +24545,9 @@
       "integrity": "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="
     },
     "msgpackr": {
-      "version": "1.9.2",
-      "resolved": "https://registry.npmjs.org/msgpackr/-/msgpackr-1.9.2.tgz",
-      "integrity": "sha512-xtDgI3Xv0AAiZWLRGDchyzBwU6aq0rwJ+W+5Y4CZhEWtkl/hJtFFLc+3JtGTw7nz1yquxs7nL8q/yA2aqpflIQ==",
+      "version": "1.10.1",
+      "resolved": "https://registry.npmjs.org/msgpackr/-/msgpackr-1.10.1.tgz",
+      "integrity": "sha512-r5VRLv9qouXuLiIBrLpl2d5ZvPt8svdQTl5/vMvE4nzDMyEX4sgW5yWhuBBj5UmgwOTWj8CIdSXn5sAfsHAWIQ==",
       "requires": {
         "msgpackr-extract": "^3.0.2"
       }
