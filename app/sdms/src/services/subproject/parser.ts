@@ -92,12 +92,20 @@ export class SubProjectParser {
             this.checkAccessPolicy(req.body);
         }
 
-        return {
+        const args = {
             ltag: req.get('ltag'),
             access_policy: req.body ? req.body.access_policy : undefined,
             acls: req.body ? req.body.acls : undefined,
             recursive: req.query.recursive === 'true'
         };
+
+        // bad request if there are no field to patch
+        if (!args.ltag && !args.access_policy && !args.acls) {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The request does not contain any field to patch'));
+        }
+
+        return args;
     }
 
     private static checkAccessPolicy(req: expRequest): void {

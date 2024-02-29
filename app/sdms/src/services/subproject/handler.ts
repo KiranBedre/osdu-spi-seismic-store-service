@@ -264,12 +264,6 @@ export class SubProjectHandler {
 
         const parsedUserInput = SubProjectParser.patch(req);
 
-        // bad request if there are no field to patch
-        if (!parsedUserInput.ltag) {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'The request does not contain any field to patch'));
-        }
-
         // init journalClient client and key
         const journalClient = JournalFactoryTenantClient.get(tenant);
 
