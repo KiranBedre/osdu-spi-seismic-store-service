@@ -98,8 +98,6 @@ export class Credentials extends AbstractCredentials {
         };
         const url =  IbmConfig.KEYCLOAK_URL_TOKEN;
         const results = await axios.post(url, data, headers);
-        
-       
        // const token = adminClient.getAccessToken();
        const token = results['access_token'];
         logger.debug('Token - ' + token);
