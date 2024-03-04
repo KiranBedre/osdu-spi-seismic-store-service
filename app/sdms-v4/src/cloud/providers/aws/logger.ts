@@ -23,7 +23,7 @@ import { Request } from 'express';
 export class AwsLogger extends AbstractLogger {
     public trackRequest(req: Request): void {
         const data = {
-            message: '[' + req.method + '] ' + req.url,
+            message: '[' + req.method + '] ' + req.originalUrl,
             properties: {
                 'correlation-id': req.headers[Config.CORRELATION_ID],
                 'data-partition-id': req.headers[Config.DATA_PARTITION_ID],

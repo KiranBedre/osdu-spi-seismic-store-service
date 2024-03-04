@@ -118,5 +118,5 @@ sdms_v4_aws_test:
   artifacts:
     when: always
     paths:
-      - app/adms-v4/tests
+      - app/sdms-v4/tests
     expire_in: 14 days
