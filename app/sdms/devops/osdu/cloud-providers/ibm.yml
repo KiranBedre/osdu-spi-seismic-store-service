@@ -73,16 +73,16 @@ sdms_ibm-deploy-devpri:
 sdms_ibm-test-py:
   image: node:18
   stage: integration
-  allow_failure: true
+  allow_failure: false
   extends:
     - .ibm-test-py
   needs: ["sdms_ibm-deploy"]
   script:
     - cd app/$SDMS_SERVICE
     - apt-get update
-    - apt-get install -y python
+    - apt-get install -y python3
     - apt-get install -y python3-pip
-    - pip install requests
+    - apt-get install -y python3-requests
     - svctoken=$(python3 ../../devops/scripts/ibm_jwt_client.py)
     - echo $svctoken > /dev/null
     - npm install -g newman

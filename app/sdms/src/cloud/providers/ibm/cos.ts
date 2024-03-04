@@ -58,7 +58,6 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('Error while creating bucket. Error stack - ');
                 logger.error(err.stack);
-                throw err;
             }
             else
             {
@@ -78,7 +77,6 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('Unable to delete bucket. Error stack');
                 logger.error(err.stack);
-                throw err;
             }
             logger.info('Removed bucket.');
           })
@@ -94,20 +92,20 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('error listing bucket objects ');
                 logger.error(err.stack);
-                throw err;
             }
-            const items = data.Contents;
+            else{
+                const items = data.Contents;
 
-            if(!items || items.length<=0)
-                logger.info('No items to delete.');
-            else
-                for (const item of items) {
-                    const objectKey = item.Key;
-                    logger.info('Object to be deleted. objectKey-');
-                    logger.debug(objectKey);
-                    // tslint:disable-next-line: no-floating-promises no-console
-                    self.deleteObject(bucketName, objectKey).catch((error)=>{ console.log('error')})
-                }
+                if(!items || items.length<=0)
+                    logger.info('No items to delete.');
+                else
+                    for (const item of items) {
+                        const objectKey = item.Key;
+                        logger.info('Object to be deleted. objectKey-');
+                        logger.debug(objectKey);
+                        // tslint:disable-next-line: no-floating-promises no-console
+                        self.deleteObject(bucketName, objectKey).catch((error)=>{ console.log('error')})
+                    }}
         });
         logger.info('Returning from Cos.deleteFiles.');
     }
@@ -124,7 +122,6 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('Object not saved.');
                 logger.error(err.stack);
-                throw err;
             }
             else
             {
@@ -144,7 +141,6 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('Unable to remove object');
                 logger.error(err.stack);
-                throw err;
             }
             logger.info('Removed the object')
         });
@@ -161,9 +157,9 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('Error in listing objects.');
                 logger.error(err.stack);
-                throw err;
             }
-
+            else
+            {
             logger.info('Fetched objects.');
             logger.debug(data);
 
@@ -189,6 +185,7 @@ export class Cos extends AbstractStorage {
                     }
                 });
             }
+        }
         });
 
         logger.info('Returning from Cos.deleteObjects.');
@@ -211,9 +208,8 @@ export class Cos extends AbstractStorage {
             if (err) {
                 logger.error('Error in listing objects.');
                 logger.error(err.stack);
-                throw err;
             }
-
+            else{
             logger.info('Fetched objects.');
             logger.debug(data);
 
@@ -238,13 +234,13 @@ export class Cos extends AbstractStorage {
                         if (copyErr) {
                             logger.error('Unable to delete bucket. Error stack');
                             logger.error(copyErr.stack);
-                            throw copyErr;
                         }
                         logger.info('Object copied.');
                         logger.debug(copyData);
                     });
                 }
             }
+        }
         });
         logger.info('Returning from Cos.copy.');
     }
@@ -267,7 +263,6 @@ export class Cos extends AbstractStorage {
             if (err.statusCode === 404) {
                 return false;
             }
-            throw err;
         }
     }
 
