@@ -28,7 +28,7 @@ export class Context {
 
     public static getEndpointSchema(req: express.Request) {
         for (const endpoint of SchemaEndpoints) {
-            if (req.url.indexOf('/' + endpoint.name + '/') !== -1) {
+            if (req.originalUrl.indexOf('/' + endpoint.name + '/') !== -1) {
                 Context.schemaEndpoint = endpoint;
                 break;
             }

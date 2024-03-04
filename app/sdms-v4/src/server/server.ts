@@ -61,8 +61,8 @@ export class Server {
         res.locals[Config.CORRELATION_ID] = req.headers[Config.CORRELATION_ID];
 
         // Required data-partition-id header
-        const statusCall = req.url.endsWith('status');
-        const readinessCall = req.url.endsWith('readiness');
+        const statusCall = req.originalUrl.endsWith('status');
+        const readinessCall = req.originalUrl.endsWith('readiness');
         if (!req.headers['data-partition-id']) {
             if (!(statusCall || readinessCall)) {
                 Response.writeError(
