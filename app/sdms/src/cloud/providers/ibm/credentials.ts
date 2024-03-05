@@ -11,7 +11,6 @@ import { logger } from './logger';
 import { IBMSTShelper } from './stshelper';
 import { DatastoreDAO } from './datastore';
 import qs from 'qs';
-
 import axios from 'axios';
 
 // [TODO] all logger.info looks more DEBUG message should not be executed in production code
