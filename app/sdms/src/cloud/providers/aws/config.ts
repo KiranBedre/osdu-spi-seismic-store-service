@@ -52,11 +52,38 @@ export class AWSConfig extends Config {
         const addressContent = f.readFileSync(addressFile).toString();
         const portFile = path.join(fileLocation, 'LOCKSMAP_REDIS_INSTANCE_PORT');
         const portContent = f.readFileSync(portFile).toString();
+
+        const port = +process.env.PORT || 5000;
+        const impServiceAccountSigner = process.env.IMP_SERVICE_ACCOUNT_SIGNER || '';
+        const desServiceAppkey = process.env.DES_SERVICE_APPKEY || '';
+        const jwtExcludePaths = process.env.JWT_EXCLUDE_PATHS || '';
+        const jwtAudience = process.env.JWT_AUDIENCE || '';
+        const jwtEnableFeature = process.env.JWT_ENABLE_FEATURE ? process.env.JWT_ENABLE_FEATURE === 'true' : false;
+        const sslEnabled = process.env.SSL_ENABLED === 'true';
+        const featureFlagSeismicmetaStorage = process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== undefined ?
+            process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== 'false' : true;
+        const featureFlagImptoken = process.env.FEATURE_FLAG_IMPTOKEN !== undefined ?
+            process.env.FEATURE_FLAG_IMPTOKEN !== 'false' : true;
+        const featureFlagTrace = process.env.FEATURE_FLAG_TRACE !== undefined ? process.env.FEATURE_FLAG_TRACE !== 'false' : true;
+        const featureFlagLogging = process.env.FEATURE_FLAG_LOGGING !== undefined ? process.env.FEATURE_FLAG_LOGGING !== 'false' : true;
+        const featureFlagStackdriverExporter = process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== undefined ?
+            process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== 'false' : true;
+        const featureFlagCcmIntegration = process.env.FEATURE_FLAG_CCM_INTERACTION ?
+            process.env.FEATURE_FLAG_CCM_INTERACTION === 'true' : false;
+        const featureFlagPolicySvcInteraction = process.env.FEATURE_FLAG_POLICY_SVC_INTERACTION === 'true';
+        const CcmServiceUrl = process.env.CCM_SERVICE_URL || '';
+        const CcmTokenScope = process.env.CCM_TOKEN_SCOPE || '';
+        const userIdClaimForSdms = process.env.USER_ID_CLAIM_FOR_SDMS ? process.env.USER_ID_CLAIM_FOR_SDMS : 'subid';
+        const userIdClaimForEntitlementsSvc = process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC ?
+            process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC : 'email';
+        const sdmsPrefix = process.env.SDMS_PREFIX ? process.env.SDMS_PREFIX : '/seistore-svc/api/v3';
+        const desPolicyServiceHost = process.env.DES_POLICY_SERVICE_HOST || process.env.DES_SERVICE_HOST;
+
         await Config.initServiceConfiguration({
             SERVICE_ENV: process.env.SERVICE_ENV,
-            SERVICE_PORT: +process.env.PORT || 5000,
+            SERVICE_PORT: port,
             API_BASE_PATH: process.env.API_BASE_PATH,
-            IMP_SERVICE_ACCOUNT_SIGNER: process.env.IMP_SERVICE_ACCOUNT_SIGNER || '',
+            IMP_SERVICE_ACCOUNT_SIGNER: impServiceAccountSigner,
             LOCKSMAP_REDIS_INSTANCE_ADDRESS: addressContent,
             LOCKSMAP_REDIS_INSTANCE_PORT: +portContent,
             LOCKSMAP_REDIS_INSTANCE_KEY: keyContent,
@@ -67,38 +94,31 @@ export class AWSConfig extends Config {
             DES_SERVICE_HOST_ENTITLEMENT: process.env.ENTITLEMENTS_BASE_URL,
             DES_SERVICE_HOST_STORAGE: process.env.STORAGE_BASE_URL,
             DES_SERVICE_HOST_PARTITION: process.env.PARTITION_BASE_URL,
-            DES_SERVICE_APPKEY: process.env.DES_SERVICE_APPKEY || '',
+            DES_SERVICE_APPKEY: desServiceAppkey,
             DES_GROUP_CHAR_LIMIT: AWSConfig.DES_GROUP_CHAR_LIMIT,
             JWKS_URL: process.env.JWKS_URL,
-            JWT_EXCLUDE_PATHS: process.env.JWT_EXCLUDE_PATHS || '',
-            JWT_AUDIENCE: process.env.JWT_AUDIENCE || '',
-            JWT_ENABLE_FEATURE: process.env.JWT_ENABLE_FEATURE ? process.env.JWT_ENABLE_FEATURE === 'true' : false,
+            JWT_EXCLUDE_PATHS: jwtExcludePaths,
+            JWT_AUDIENCE: jwtAudience,
+            JWT_ENABLE_FEATURE: jwtEnableFeature,
             TENANT_JOURNAL_ON_DATA_PARTITION: true,
-            SSL_ENABLED: process.env.SSL_ENABLED === 'true',
+            SSL_ENABLED: sslEnabled,
             SSL_KEY_PATH: process.env.SSL_KEY_PATH,
             SSL_CERT_PATH: process.env.SSL_CERT_PATH,
-            FEATURE_FLAG_SEISMICMETA_STORAGE: process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== undefined ?
-                process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== 'false' : true,
-            FEATURE_FLAG_IMPTOKEN: process.env.FEATURE_FLAG_IMPTOKEN !== undefined ?
-                process.env.FEATURE_FLAG_IMPTOKEN !== 'false' : true,
-            FEATURE_FLAG_TRACE: process.env.FEATURE_FLAG_TRACE !== undefined ?
-                process.env.FEATURE_FLAG_TRACE !== 'false' : true,
-            FEATURE_FLAG_LOGGING: process.env.FEATURE_FLAG_LOGGING !== undefined ?
-                process.env.FEATURE_FLAG_LOGGING !== 'false' : true,
-            FEATURE_FLAG_STACKDRIVER_EXPORTER: process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== undefined ?
-                process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== 'false' : true,
-            FEATURE_FLAG_CCM_INTERACTION: process.env.FEATURE_FLAG_CCM_INTERACTION ?
-                process.env.FEATURE_FLAG_CCM_INTERACTION === 'true' : false,
-            FEATURE_FLAG_POLICY_SVC_INTERACTION: process.env.FEATURE_FLAG_POLICY_SVC_INTERACTION === 'true',
-            CCM_SERVICE_URL: process.env.CCM_SERVICE_URL || '',
-            CCM_TOKEN_SCOPE: process.env.CCM_TOKEN_SCOPE || '',
+            FEATURE_FLAG_SEISMICMETA_STORAGE: featureFlagSeismicmetaStorage,
+            FEATURE_FLAG_IMPTOKEN: featureFlagImptoken,
+            FEATURE_FLAG_TRACE: featureFlagTrace,
+            FEATURE_FLAG_LOGGING: featureFlagLogging,
+            FEATURE_FLAG_STACKDRIVER_EXPORTER: featureFlagStackdriverExporter,
+            FEATURE_FLAG_CCM_INTERACTION: featureFlagCcmIntegration,
+            FEATURE_FLAG_POLICY_SVC_INTERACTION: featureFlagPolicySvcInteraction,
+            CCM_SERVICE_URL: CcmServiceUrl,
+            CCM_TOKEN_SCOPE: CcmTokenScope,
             CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS,
-            USER_ID_CLAIM_FOR_SDMS: process.env.USER_ID_CLAIM_FOR_SDMS ? process.env.USER_ID_CLAIM_FOR_SDMS : 'subid',
-            USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC: process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC ?
-                process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC : 'email',
+            USER_ID_CLAIM_FOR_SDMS: userIdClaimForSdms,
+            USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC: userIdClaimForEntitlementsSvc,
             USER_ASSOCIATION_SVC_PROVIDER: process.env.USER_ASSOCIATION_SVC_PROVIDER,
-            SDMS_PREFIX: process.env.SDMS_PREFIX ? process.env.SDMS_PREFIX : '/seistore-svc/api/v3',
-            DES_POLICY_SERVICE_HOST: process.env.DES_POLICY_SERVICE_HOST || process.env.DES_SERVICE_HOST
+            SDMS_PREFIX: sdmsPrefix,
+            DES_POLICY_SERVICE_HOST: desPolicyServiceHost
         });
     }
 
