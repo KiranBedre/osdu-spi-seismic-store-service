@@ -10,9 +10,8 @@ import { IbmConfig } from './config';
 import { logger } from './logger';
 import { IBMSTShelper } from './stshelper';
 import { DatastoreDAO } from './datastore';
-
-import { GrantTypes } from 'keycloak-admin/lib/utils/auth';
-import KcAdminClient from 'keycloak-admin';
+import qs from 'qs';
+import axios from 'axios';
 
 // [TODO] all logger.info looks more DEBUG message should not be executed in production code
 // [TODO] don't use any! use types
@@ -83,38 +82,23 @@ export class Credentials extends AbstractCredentials {
 
     public async getServiceCredentials(): Promise<string> {
         logger.info('In Credentials.getServiceCredentials.');
-        const adminClient = new KcAdminClient();
-        adminClient.setConfig(
-            {
-                baseUrl: IbmConfig.KEYCLOAK_BASEURL,
-                realmName: IbmConfig.KEYCLOAK_REALM,
-                requestConfig: {
-                    // `url` is the server URL that will be used for the request
-                    url: IbmConfig.KEYCLOAK_URL_TOKEN,
-                    // `method` is the request method to be used when making the request
-                    method: 'post', // default
-                },
-            }
-        );
-        const credentials = {
+
+        const data = qs.stringify({
             username: IbmConfig.KEYCLOAK_USERNAME,
-            // pragma: allowlist nextline secret
             password: IbmConfig.KEYCLOAK_PASSWORD,
-            grantType: IbmConfig.KEYCLOAK_GRANTTYPE as GrantTypes,
+            grantType: IbmConfig.KEYCLOAK_GRANTTYPE,
             clientId: IbmConfig.KEYCLOAK_CLIENTID,
             clientSecret: IbmConfig.KEYCLOAK_CLIENTSECRET,
+        });
+        const headers = {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
         };
-
-        logger.info('Authenticating.');
-        try {
-            await adminClient.auth(credentials);
-        } catch (error) {
-            logger.error('Authentication failure.');
-            throw new Error(error);
-        }
-
-        logger.info('Getting token by calling getAccessToken.');
-        const token = adminClient.getAccessToken();
+        const url =  IbmConfig.KEYCLOAK_URL_TOKEN;
+        const results = await axios.post(url, data, headers);
+       // const token = adminClient.getAccessToken();
+       const token = results['access_token'];
         logger.debug('Token - ' + token);
         logger.info('Returning from Credentials.getStorageCredentials.');
         return token;
