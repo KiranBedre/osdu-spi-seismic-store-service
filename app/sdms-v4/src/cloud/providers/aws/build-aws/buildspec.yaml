@@ -92,7 +92,7 @@ phases:
       # using jar instead of executable since exe requires 32 bit image and doesn't work on codebuild 4.0
       - |
         java -jar sonar-scanner-4.6.2.2472/lib/sonar-scanner-cli-4.6.2.2472.jar -Dsonar.projectKey=seismic-store-service-v4 -Dsonar.host.url=${SONAR_URL} \
-          -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME} -Dsonar.sources=${SONAR_PATH} -Dsonar.tests=${SONAR_TEST_PATH} -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+          -Dsonar.login=${SONAR_USERNAME} -Dsonar.password=${SONAR_PASSWORD} -Dsonar.branch.name=${BRANCH_NAME} -Dsonar.sources=${SONAR_PATH} -Dsonar.tests=${SONAR_TEST_PATH} -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.typescript.tsconfigPath=./src/cloud/providers/aws/build-aws/tsconfig.json
 
       - echo "Logging into Docker Hub..."
       - docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
