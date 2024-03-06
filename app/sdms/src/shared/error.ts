@@ -52,6 +52,12 @@ export class Error {
 
     public static makeForHTTPRequest(error: any, mexPrefix: string = '[seismic-store-service]'): ErrorModel {
         if (axios.isAxiosError(error)) {
+            if (typeof error.response.data === 'string' && error.response.data !== null) {
+                return this.make(error.response.status, error.response.statusText + ', '
+                    + error.response.data, mexPrefix)
+            } else if (typeof error.response.data === 'object' && error.response.data !== null) {
+                return this.make(error.response.status, JSON.stringify(error.response.data), mexPrefix)
+            }
             return this.make(error.response.status, error.response.statusText, mexPrefix)
         } else if (typeof error === 'object' && error.name === 'StatusCodeError') {
             return this.make(
