@@ -54,6 +54,20 @@ spec:
             runAsNonRoot: true
           ports:
             - containerPort: 8080
+          livenessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /api/seismic-store/v3/svcstatus
+                port: 5000
+              initialDelaySeconds: 120
+              periodSeconds: 60
+          readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /api/seismic-store/v3/svcstatus/readiness
+                port: 5000
+              initialDelaySeconds: 120 
+              periodSeconds: 15
           resources:
             requests:
               cpu: {{ .Values.data.requestsCpu | quote }}
