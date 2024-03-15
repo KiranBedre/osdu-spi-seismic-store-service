@@ -15,8 +15,8 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_builder_image_version=16.15-slim
-ARG docker_node_image_version=14-alpine
+ARG docker_node_builder_image_version=16-slim
+ARG docker_node_image_version=16-alpine
 
 # -------------------------------
 # Compilation stage
@@ -52,7 +52,7 @@ RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-head
     && chown -R appuser:appgroup /seistore-service \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/npm' >> /etc/sudoers \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/node' >> /etc/sudoers \
-    && npm install --production --quiet \
+    && npm install --production --quiet --force  \
     && apk del native-deps \
     && apk add --update --no-cache openssl1.1-compat \
     && npx prisma generate --schema=/seistore-service/src/cloud/providers/anthos/schema.prisma
