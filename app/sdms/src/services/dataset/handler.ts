@@ -681,7 +681,7 @@ export class DatasetHandler {
             datasetIN.name = newName;
 
             Config.disableStrongConsistencyEmulation();
-            const datasetAlreadyExist = this.findDataset(subproject, journalClient, datasetIN);
+            const datasetAlreadyExist = await this.findDataset(subproject, journalClient, datasetIN);
             Config.enableStrongConsistencyEmulation();
 
             // check if dataset already exist
@@ -691,7 +691,7 @@ export class DatasetHandler {
                     datasetIN.subproject + datasetIN.path + newName + ' already exists'));
             }
 
-            datasetOUTKey = this.findDatasetKey(subproject, journalClient, datasetIN);
+            datasetOUTKey =  await this.findDatasetKey(subproject, journalClient, datasetIN);
             // if (subproject.enforce_key) {
             //     datasetOUTKey = journalClient.createKey({
             //         namespace: Config.SEISMIC_STORE_NS + '-' + datasetIN.tenant + '-' + datasetIN.subproject,
