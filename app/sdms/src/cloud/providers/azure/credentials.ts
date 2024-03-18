@@ -14,10 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import axios from 'axios';
-import qs from 'qs';
-
-import { Error } from '../../../shared';
+import { Error, Utils, cacheShared, getInMemoryCacheInstance } from '../../../shared';
 import { AbstractCredentials, CredentialsFactory, IAccessTokenModel } from '../../credentials';
 import {
     ContainerSASPermissions,
@@ -185,6 +182,46 @@ class RetriableAzureCredential extends DefaultAzureCredential {
     }
 
     public getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken | null> {
+        let token;
+        if (cacheShared.isInitialized()) {
+            token = this.getCachedToken(scopes, options);
+        }
+        else {
+            token = this.createNewToken(scopes, options);
+        }
+        return token;
+    }
+
+    public async getCachedToken(scopes: string | string[], options?: GetTokenOptions):Promise<AccessToken> {
+        let expireIn = 0;
+        const cacheKey = 'mi-token-' + (typeof scopes === 'string' ? scopes : scopes.join('-'));
+        const inMemoryCache = getInMemoryCacheInstance();
+        let credentialToken = inMemoryCache.get<AccessToken>(cacheKey);
+        let cacheTTL = inMemoryCache.getTtl(cacheKey);
+        if (cacheTTL <= 0 || !cacheTTL) {
+            credentialToken = await cacheShared.get(cacheKey) as AccessToken;
+            cacheTTL = await cacheShared.getTTL(cacheKey);
+            if (cacheTTL <= 0 || !cacheTTL) {
+                credentialToken = await this.createNewToken(scopes, options) as AccessToken;
+                expireIn = Math.floor(Utils.getExpTimeFromPayload(credentialToken.token) - Date.now()/1000);
+                cacheTTL = expireIn - KExpiresMargin;
+                if(cacheTTL <= 0 || !cacheTTL) {
+                    throw Error.make(Error.Status.UNKNOWN,
+                        'An error occurred while generating the auth credential. ' +
+                        'The credential expiration time is ' + expireIn + ' seconds. ' +
+                        'The minimum acceptable expiration time by the service is ' +
+                        KExpiresMargin + ' seconds.');
+                }
+                await cacheShared.set(cacheKey, credentialToken, cacheTTL);
+            }
+            cacheTTL = cacheTTL + Math.floor(Math.random() * (120 - 30 + 1)) + 30;
+            inMemoryCache.set<AccessToken>(cacheKey, credentialToken, cacheTTL);
+        }
+        credentialToken.expiresOnTimestamp = expireIn || Math.floor(
+            Utils.getExpTimeFromPayload(credentialToken.token) - Date.now()/1000);
+        return credentialToken;
+    }
+    public createNewToken(scopes: string | string[], options?: GetTokenOptions):Promise<AccessToken> {
         const requestOptions = {...options, ...this.defaultRequestOptions};
         return this.retry(() => this.credentials.getToken(scopes, requestOptions));
     }

@@ -80,6 +80,10 @@ export class Cache extends CacheCore {
             return await this.redisClient.ttl(key);
         }
     }
+
+    public isInitialized(): boolean {
+        return this.redisClient !== undefined;
+    }
 }
 
 export const cacheShared = new Cache();
