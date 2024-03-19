@@ -72,6 +72,23 @@ paths:
         "403":
           description: Forbidden.
 
+  /info:
+    get:
+      summary: Seismic store service info.
+      description: "<ul><li>Return the seismic store service deployment information.</li><li>Required roles: none</li></ul>"
+      security:
+        - bearer: []
+      operationId: service-info
+      tags:
+        - Info
+      responses:
+        "200":
+          description: Service info.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Info"
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}:
     post:
       summary: Register a new dataset.
@@ -2428,6 +2445,24 @@ components:
           type: string
       example:
         status: running
+    Info:
+      required:
+        - info
+      properties:
+        group_id:
+          type: string
+        artifact_id:
+          type: string
+        build_time:
+          type: string
+        connected_outer_services:
+          type: array
+      example:
+        info:
+          group_id: org.opengroup.osdu.sdms.v3
+          artifact_id: sdms-v3
+          build_time: 2024-03-05T14:03:48.865Z
+          connected_outer_services: []
     DatasetListBody:
       type: object
       properties:

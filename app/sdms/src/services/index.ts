@@ -20,6 +20,7 @@ import { DatasetRouter } from './dataset/service';
 import { GeneralRouter } from './general/service';
 import { ImpTokenRouter } from './imptoken/service';
 import { ImpersonationTokenRouter } from './impersonation_token/service';
+import { InfoRouter } from './info/service';
 import { SubprojectRouter } from './subproject/service';
 import { SvcAppRouter } from './svcapp/service';
 import { TenantRouter } from './tenant/service';
@@ -34,6 +35,9 @@ router.use(Config.API_BASE_PATH + '/dataset', DatasetRouter);
 
 // general
 router.use(Config.API_BASE_PATH + '/svcstatus', GeneralRouter);
+
+// info
+router.use(Config.API_BASE_PATH + '/info', InfoRouter);
 
 // impersonation token
 // [TODO] obsolete to remove in V4

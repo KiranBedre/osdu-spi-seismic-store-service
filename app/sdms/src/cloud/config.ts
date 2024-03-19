@@ -257,6 +257,16 @@ export abstract class Config implements IConfig {
     // Enable advanced query filters in Dataset List and Bulk Delete
     public static ENABLE_ADVANCED_QUERY_FILTERS: boolean = false;
 
+    // Info
+    public static GROUP_ID: string = 'org.opengroup.osdu.sdms.v3';
+    public static ARTIFACT_ID: string = 'sdms-v3';
+    public static BUILD_TIME: string;
+    public static BRANCH: string;
+    public static COMMIT_ID: string;
+    public static COMMIT_MESSAGE: string;
+    public static VERSION: string;
+    public static CONNECTED_OUTER_SERVICES: string[];
+
     public static setCloudProvider(cloudProvider: string) {
         Config.CLOUDPROVIDER = cloudProvider;
         if (Config.CLOUDPROVIDER === undefined) {
@@ -401,6 +411,14 @@ export abstract class Config implements IConfig {
         // ImpersonationToken cache expire margin
         Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN = +(
             process.env.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN || (8 * 60))
+
+        // Initialize info
+        Config.BUILD_TIME = process.env.BUILD_TIME || new Date().toISOString();
+        Config.BRANCH = process.env.BRANCH;
+        Config.COMMIT_ID = process.env.COMMIT_ID;
+        Config.COMMIT_MESSAGE = process.env.COMMIT_MESSAGE;
+        Config.VERSION = process.env.VERSION;
+        Config.CONNECTED_OUTER_SERVICES = process.env.CONNECTED_OUTER_SERVICES?.split(',') || [];
 
     }
 

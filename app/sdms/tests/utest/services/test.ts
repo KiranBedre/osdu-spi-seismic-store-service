@@ -17,6 +17,7 @@
 import { TestAppSVC } from './app';
 import { TestDatasetSVC } from './dataset';
 import { TestGeneralSVC } from './general';
+import { TestInfoSVC } from './info';
 import { TestImpTokenSVC } from './imptoken';
 import { TestImpersonationTokenSVC } from './impersonation_token';
 import { TestLocker } from './locker';
@@ -41,6 +42,7 @@ export class TestServices {
 		describe(Tx.title('utest seismic store [services]'), () => {
 
 			TestGeneralSVC.run();
+			TestInfoSVC.run();
 			TestDatasetSVC.run();
 			TestImpTokenSVC.run();
 			TestImpersonationTokenSVC.run();

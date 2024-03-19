@@ -21,4 +21,5 @@ spec:
                        "*/swagger-ui.html/swagger-ui-standalone-preset.js",
                        "*/swagger-ui.html/swagger-ui.css",
                        "*/svcstatus",
-                       "*/svcstatus/readiness"]
+                       "*/svcstatus/readiness",
+                       "*/info"]

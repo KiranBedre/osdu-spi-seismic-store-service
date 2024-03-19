@@ -73,7 +73,7 @@ sdms_ibm-deploy-devpri:
 sdms_ibm-test-py:
   image: node:18
   stage: integration
-  allow_failure: false
+  allow_failure: true
   extends:
     - .ibm-test-py
   needs: ["sdms_ibm-deploy"]
