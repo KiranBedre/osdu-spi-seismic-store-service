@@ -141,7 +141,8 @@ export class Server {
                     const imptokenCall = (req.method === 'PUT' && req.url.endsWith('imptoken'));
                     const statusCall = req.url.endsWith('svcstatus');
                     const readinessCall = req.url.endsWith('readiness');
-                    if (!(imptokenCall || statusCall || readinessCall)) {
+                    const infoCall = req.url.endsWith('info');
+                    if (!(imptokenCall || statusCall || readinessCall || infoCall)) {
                         Response.writeError(res, Error.make(
                             Error.Status.UNAUTHENTICATED,
                             'Unauthenticated Access. Authorizations not found in the request.'));
