@@ -6,7 +6,6 @@ global:
 data:
   # Configmap
   logLevel: "ERROR"
-  cloudProvider: "gc"
   port: "5000"
   partitionHost: "http://partition"
   storageHost: "http://storage"

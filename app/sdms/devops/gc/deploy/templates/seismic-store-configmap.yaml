@@ -6,7 +6,6 @@ metadata:
   name: {{  printf "%s-config" .Values.conf.appName | quote }}
   namespace: {{ .Release.Namespace | quote }}
 data:
-  CLOUDPROVIDER: {{ .Values.data.cloudProvider | quote }}
   DES_SERVICE_HOST_COMPLIANCE: {{ .Values.data.legalHost | quote}}
   DES_SERVICE_HOST_ENTITLEMENT: {{ .Values.data.entitlementsHost | quote}}
   DES_SERVICE_HOST_STORAGE: {{ .Values.data.storageHost | quote}}
@@ -17,7 +16,9 @@ data:
   {{- if .Values.global.onPremEnabled }}
   SERVICE_ENV: {{ .Values.data.serviceEnv | quote }}
   DES_SERVICE_HOST: "http://des"
+  CLOUDPROVIDER: "anthos"
   {{- else }}
+  CLOUDPROVIDER: "gc"
   USER_ID_FROM_PROVIDER_API: "true"
   TENANT_JOURNAL_ON_DATA_PARTITION: "true"
   {{- end }}

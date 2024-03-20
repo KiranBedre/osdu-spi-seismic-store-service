@@ -40,7 +40,6 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|---------|
 | **data.logLevel** | logging level | string | "ERROR" | yes |
-| **data.cloudProvider** | cloud provider | string | "gc" | yes |
 | **data.port** | port | string | "5000" | yes |
 | **data.partitionHost** | partition service endpoint | string | "<http://partition>" | yes |
 | **data.storageHost** | storage service endpoint | string | "<http://storage>" | yes |
@@ -97,7 +96,7 @@ Run this command from within this directory:
 helm install gc-seismic-store-sdms-deploy .
 ```
 
-## Uninstalling the Chart
+## Uninstalling the chart
 
 To uninstall the helm deployment:
 
