@@ -36,4 +36,5 @@ spec:
                        "*/swagger-ui.html/swagger-ui-standalone-preset.js", "*/swagger-ui.html/swagger-ui.css",
                        "*/swagger-ui.html", "*/swagger-ui.html*", "*/swagger-ui.html/*",
                        "*/swagger-resources","{{ .Values.configEnv.sdmsPrefix }}/swagger-resources/*",
-                       "{{ .Values.configEnv.sdmsPrefix }}/webjars/*","{{ .Values.configEnv.sdmsPrefix }}/status"]
+                       "{{ .Values.configEnv.sdmsPrefix }}/webjars/*","{{ .Values.configEnv.sdmsPrefix }}/status",
+                       "{{ .Values.configEnv.sdmsPrefix }}/info"]

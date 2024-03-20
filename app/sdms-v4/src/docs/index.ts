@@ -78,6 +78,22 @@ paths:
         200:
           $ref: "#/components/responses/service.status.ready"
 `;
+export const infoPaths = `
+  ### ==============================================================================
+  ### INFO PATHS
+  ### ==============================================================================
+
+  /info:
+    get:
+      summary: "SDDMS service info"
+      description: "This api returns the service info"
+      operationId: service-info
+      tags:
+        - Service Info
+      responses:
+        200:
+          $ref: "#/components/responses/service.info"
+`;
 export const connectionStrings = ` 
   ### ==============================================================================
   ### CONNECTION STRINGS
@@ -176,6 +192,15 @@ export const fixedResponses = `
           examples:
             service.status.ready:
               $ref: "#/components/examples/service.status.ready"
+    service.info:
+      description: The service info
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/service.info"
+          examples:
+            service.info:
+              $ref: "#/components/examples/service.info"
     record.id.list:
       description: The list of datasets record ID
       content:

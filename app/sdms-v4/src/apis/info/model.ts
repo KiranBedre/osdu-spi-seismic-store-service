@@ -13,21 +13,14 @@
 // See the License for the specific language governing permissions and
 // Limitations under the License.
 // ============================================================================
-import { SchemaEndpoint, SchemaEndpoints, SchemaRouter } from './schema';
-import { Config } from '../cloud/config';
-import { ConnectionStringRouter } from './connection';
-import { Router } from 'express';
-import { StatusRouter } from './status';
-import { InfoRouter } from './info';
 
-const router = Router();
-
-router.use(Config.APIS_BASE_PATH + '/status', StatusRouter);
-router.use(Config.APIS_BASE_PATH + '/info', InfoRouter);
-for (const endpoint of SchemaEndpoints) {
-    router.use(Config.APIS_BASE_PATH + '/' + endpoint.name, SchemaRouter);
+export interface Info {
+    group_id: string;
+    artifact_id: string;
+    version?: string;
+    build_time?: string;
+    branch?: string;
+    commit_id?: string;
+    commit_message?: string;
+    connected_outer_services?: string[];
 }
-router.use(Config.APIS_BASE_PATH + '/connection-string', ConnectionStringRouter);
-
-export { router as ServiceRouter };
-export { SchemaEndpoint, SchemaEndpoints };

@@ -13,21 +13,17 @@
 // See the License for the specific language governing permissions and
 // Limitations under the License.
 // ============================================================================
-import { SchemaEndpoint, SchemaEndpoints, SchemaRouter } from './schema';
-import { Config } from '../cloud/config';
-import { ConnectionStringRouter } from './connection';
-import { Router } from 'express';
-import { StatusRouter } from './status';
-import { InfoRouter } from './info';
 
-const router = Router();
+import { Router, Request as expRequest, Response as expResponse } from 'express';
+import { Operation } from './operations';
+import { InfoHandler } from './handler';
+import { Context } from '../../shared/context';
 
-router.use(Config.APIS_BASE_PATH + '/status', StatusRouter);
-router.use(Config.APIS_BASE_PATH + '/info', InfoRouter);
-for (const endpoint of SchemaEndpoints) {
-    router.use(Config.APIS_BASE_PATH + '/' + endpoint.name, SchemaRouter);
-}
-router.use(Config.APIS_BASE_PATH + '/connection-string', ConnectionStringRouter);
+const InfoRouter = Router();
 
-export { router as ServiceRouter };
-export { SchemaEndpoint, SchemaEndpoints };
+InfoRouter.get('/', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'getInfo';
+    await InfoHandler.handler(res, Operation.Info);
+});
+
+export { InfoRouter };

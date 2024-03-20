@@ -29,7 +29,8 @@ usage() {
     "           --sdms-svc-path:    optional - the sdms service endpoints base path (default=/seistore-svc/api/v4/)" \
     "           --acl-owners:       optional - a group to set as owners" \
     "           --acl-viewers:      optional - a group to set as viewers" \
-    "           --legal-tag:        optional - a compliance legal tag"
+    "           --legal-tag:        optional - a compliance legal tag" \
+    "           --sdms-url:         optional - sdms v4 url"
   printf '\n'
   exit 1
 }
@@ -153,6 +154,10 @@ case $i in
   legal_tag="${i#*=}"
   shift
   ;;
+  --sdms-url=*)
+  sdms_url="${i#*=}"
+  shift
+  ;;
   *)
   usage "unknown option $i"
   ;;
@@ -200,12 +205,17 @@ if [ -n "${acl_owners_domain}" ] || [ -n "${acl_viewers_domain}" ]; then
   fi
 fi
 
+if [ -z "${sdms_url}" ]; then
+  printf "\n"
+  sdms_url=$osdu_url
+fi
+
 # print execution configurations
 printf "\n%s\n" "--------------------------------------------"
 printf "%s\n" "Seismic DMS V4 regression tests parameters"
 printf "%s\n" "--------------------------------------------"
 printf "\n%s\n" "osdu deployment url = ${osdu_url}"
-printf "%s\n" "sdms v4 service url = ${osdu_url}${sdms_svc_path}"
+printf "%s\n" "sdms v4 service url = ${sdms_url}${sdms_svc_path}"
 printf "%s\n" "partition = ${partition}"
 printf "%s\n" "credentials = **********************"
 printf "%s\n" "legal tag = ${legal_tag}"
@@ -216,7 +226,7 @@ printf "%s\n" "Seismic DMS V4 regression tests"
 printf "%s\n" "--------------------------------------------"
 
 # set env variables and run tests
-export URL=${osdu_url}${sdms_svc_path} \
+export URL=${sdms_url}${sdms_svc_path} \
 && export PARTITION=${partition} \
 && export TOKEN=${access_token} \
 && export ACL_ADMINS=${acl_owners} \

@@ -74,6 +74,16 @@ export abstract class Config implements IConfig {
     // User ID Header Key
     public static USER_ID_HEADER_KEY_NAME: string;
 
+    // Info
+    public static GROUP_ID: string = 'org.opengroup.osdu.sdms.v4';
+    public static ARTIFACT_ID: string = 'sdms-v4';
+    public static BUILD_TIME: string;
+    public static BRANCH: string;
+    public static COMMIT_ID: string;
+    public static COMMIT_MESSAGE: string;
+    public static VERSION: string;
+    public static CONNECTED_OUTER_SERVICES: string[];
+
     // Initialization methods
     public static setCloudProvider(cloudProvider: string | undefined) {
         if (!cloudProvider) {

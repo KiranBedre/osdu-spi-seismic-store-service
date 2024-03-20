@@ -63,8 +63,9 @@ export class Server {
         // Required data-partition-id header
         const statusCall = req.originalUrl.endsWith('status');
         const readinessCall = req.originalUrl.endsWith('readiness');
+        const infoCall = req.originalUrl.endsWith('info');
         if (!req.headers['data-partition-id']) {
-            if (!(statusCall || readinessCall)) {
+            if (!(statusCall || readinessCall || infoCall)) {
                 Response.writeError(
                     res,
                     Error.make(Error.Status.BAD_REQUEST, 'Missing required request header "data-partition-id".')
@@ -75,7 +76,7 @@ export class Server {
 
         // Required authorization header
         if (!req.headers.authorization) {
-            if (!(statusCall || readinessCall)) {
+            if (!(statusCall || readinessCall || infoCall)) {
                 Response.writeError(
                     res,
                     Error.make(
@@ -88,7 +89,7 @@ export class Server {
         }
 
         // track request
-        if (!(statusCall || readinessCall) && Config.LOGGER_ENABLED) {
+        if (!(statusCall || readinessCall || infoCall) && Config.LOGGER_ENABLED) {
             LoggerFactory.build(Config.CLOUD_PROVIDER).trackRequest(req);
         }
 
