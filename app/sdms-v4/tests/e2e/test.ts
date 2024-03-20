@@ -17,6 +17,7 @@
 import { TestSchema, TestSchemaArgs } from './schema';
 import { Config } from './shared/config';
 import { TestStatus } from './status';
+import { TestInfo } from './info';
 
 const testSchemasArgs = [
     {
@@ -113,6 +114,8 @@ class Test {
         Config.load();
         // check if the service is up and running
         new TestStatus().run();
+        // check if info endpoint is up and running
+        new TestInfo().run();
         // execute tests for each schema type
         for (const arg of testSchemasArgs) {
             await new TestSchema().run(arg);

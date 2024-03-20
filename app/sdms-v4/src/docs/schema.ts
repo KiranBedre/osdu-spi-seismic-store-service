@@ -63,6 +63,16 @@ export const SchemaExamples = [
         value: 'ready: true',
     },
     {
+        title: 'service.info',
+        summary: 'service info',
+        value: `info: {
+          group_id: org.opengroup.osdu.sdms.v4,
+          artifact_id: sdms-v4,
+          build_time: 2024-03-05T14:03:48.865Z,
+          connected_outer_services: []
+        }`,
+    },
+    {
         title: 'record.id.version.list',
         summary: 'record id versioned',
         value: '["osdu:dataset:b47f793a-dc9c-5d11-8d59-6cc611a98926:1653406745040912"]',
@@ -189,6 +199,16 @@ export const SchemaCollections = [
         properties: [
             `ready: 
           type: boolean`,
+        ],
+    },
+    {
+        name: 'service.info',
+        title: 'The service info',
+        description: 'The service info',
+        type: 'object',
+        properties: [
+            `info: 
+          type: object`,
         ],
     },
     {

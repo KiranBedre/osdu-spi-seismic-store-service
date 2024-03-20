@@ -23,6 +23,7 @@ import {
     legal,
     serviceInfo,
     statusPaths,
+    infoPaths,
 } from '.';
 import fs from 'fs';
 import path from 'path';
@@ -38,6 +39,8 @@ ${legal}
 ${serviceInfo}
 
 ${statusPaths}
+
+${infoPaths}
 
 ${Collection[0]}
 
