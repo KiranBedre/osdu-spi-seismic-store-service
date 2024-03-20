@@ -147,6 +147,14 @@ export abstract class Config implements IConfig {
         Config.CALLER_FORWARD_HEADERS = Config.CALLER_FORWARD_HEADERS
             ? Config.CALLER_FORWARD_HEADERS + ',' + Config.CORRELATION_ID
             : Config.CORRELATION_ID;
+
+        // Initialize info
+        Config.BUILD_TIME = this.getEnvString('BUILD_TIME', new Date().toISOString());
+        Config.BRANCH = this.getEnvString('process.env.BRANCH');
+        Config.COMMIT_ID = this.getEnvString('process.env.COMMIT_ID');
+        Config.COMMIT_MESSAGE = this.getEnvString('process.env.COMMIT_MESSAGE');
+        Config.VERSION = this.getEnvString('process.env.VERSION');
+        Config.CONNECTED_OUTER_SERVICES = this.getEnvString('CONNECTED_OUTER_SERVICES')?.split(',') || [];
     }
 
     protected static getEnvBoolean(key: string, defaultValue?: boolean): boolean {
