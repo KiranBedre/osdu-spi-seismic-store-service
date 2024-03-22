@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "65eab975-813c-449f-a1b0-0efe5f521e3e",
+		"_postman_id": "3dee0cb6-1c0c-4c82-8930-df436925a1db",
 		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -2915,7 +2915,6 @@
 									"pm.environment.unset('subprojectTest3')",
 									"pm.environment.unset('subprojectTest4')",
 									"pm.environment.unset('subprojectLongName')",
-									"pm.environment.unset('domain')",
 									"pm.environment.unset('dsx01')",
 									"",
 									"console.log('Subproject variables were removed for subproject folder');",
