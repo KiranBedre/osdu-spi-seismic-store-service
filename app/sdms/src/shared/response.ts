@@ -17,6 +17,7 @@
 import { Response as expResponse } from 'express';
 import { Config, LoggerFactory } from '../cloud';
 import { Feature, FeatureFlags } from './featureflags';
+import { Error } from '../shared/error';
 
 import xssfilters from 'xss-filters';
 import { CallContext } from './context';
@@ -34,7 +35,14 @@ export class Response {
             const message = typeof (err.error) === 'object' && typeof (err.error.message) === 'string' ?
                 err.error.message : typeof (err.message) === 'string' ? err.message : err;
             if (FeatureFlags.isEnabled(Feature.LOGGING) && res.locals['disabled_error_logs'] !== true ) {
-                LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(err));
+                const error = JSON.stringify(err);
+                if (error === '{}') {
+                    LoggerFactory.build(Config.CLOUDPROVIDER).error(
+                        JSON.stringify(Error.make((code < 100 ? 500 : code), message)));
+                }
+                else {
+                    LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(err));
+                }
             }
             this.write(res, code < 100 ? 500 : code, message);
         } else {
