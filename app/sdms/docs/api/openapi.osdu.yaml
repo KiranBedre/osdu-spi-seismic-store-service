@@ -316,10 +316,12 @@ paths:
         <li>Patchable fields: <ul>
         <li><b>dataset_new_name:</b> new name to use for the dataset (rename).</li>
         <li><b>filemetadata:</b> This is a seismic store specific field and describes how the physical data is stored in the cloud storage system (GCS/AzureContainer etc.). This metadata is mainly used by client libraries to correctly reconstruct the dataset. For example you can store a dataset as truncated in multiple objects of 64MB each, name them from 0 to N and save the filemetadata = “{nObject: N, totalSize: 1024, objsize: 64, sizeUnit: MB}”.</li>
-        <li><b>last_modified_date:</b> Mark this field as true to update the dataset last modified date.</li>
         <li><b>gtags:</b> Upsert tags to an existing dataset metadata. If the dataset metadata already has gtags, then new gtags are appended to this list.</li>
         <li><b>ltag:</b> Update the existing legalTag value.</b></li>
-        <li><b>readonly:</b> Update the dataset mode to readonly (true) or to read/write (false).</li></ul></li></ul>
+        <li><b>readonly:</b> Update the dataset mode to readonly (true) or to read/write (false).</li>
+        </ul></li>
+        <li><b>NOTE:</b> last_modified_date is updated automatically with each metadata change through Patch endpoint calling.</li>
+        </ul>
       operationId: dataset-patch
       tags:
         - Dataset
@@ -1884,9 +1886,6 @@ paths:
           <li>Possible actions:</li>
           <ul>
             <li>legal tag and/or ACLs groups can be patched by providing new values</li>
-            <li>access policy can be changed from <i>uniform</i> to <i>dataset</i></li>
-            <li><b>NOTE:</b> It is not possible to change subproject access policy from <i>dataset</i> to <i>uniform</i></li>
-            <li><b>NOTE:</b> This operation is eventual consistent and it can take up to 5s before it gets completely applied</li>
           </ul>
         </ul>
       operationId: subproject-patch
