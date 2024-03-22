@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "43627d7a-d20c-4a3f-800b-a2ddcdda238a",
+		"_postman_id": "65eab975-813c-449f-a1b0-0efe5f521e3e",
 		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -5823,10 +5823,10 @@
 									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
 									"    });",
 									"    ",
-									"     let randomfileList = []; ",        
+									"     let randomfileList = []; ",
 									"    pm.test('Ensure that item\\'s name starts with \"randomfile\"', () => {",
 									"        jsonData.forEach(item => {",
-									"            randomfileList.push(item);",                       
+									"            randomfileList.push(item);",
 									"            pm.expect(item.name).to.match(/^randomfile/);",
 									"        });",
 									"    });",
@@ -5920,7 +5920,7 @@
 									"        }      ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for tenant\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForTenant\"));",
 									"    });",
@@ -6012,7 +6012,7 @@
 									"        } ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for subproject\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForSubproject\"));",
 									"    });",
@@ -6181,7 +6181,7 @@
 									"        }",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for ltag\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForLtag\"));",
 									"    });",
@@ -6274,7 +6274,7 @@
 									"        }  ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for path\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForPath\"));",
 									"    });",
@@ -6443,7 +6443,7 @@
 									"        }   ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for owner\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForOwner\"));",
 									"    });",
@@ -6531,7 +6531,7 @@
 									"        pm.expect(ctagValue).to.eql(pm.environment.get(\"ctag\"));",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for ctag\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForCtag\"));",
 									"    });",
@@ -7189,7 +7189,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of tenant arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"tenantArrayCount\"));",
 									"    });",
@@ -7291,7 +7291,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of subproject arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"subprojectArrayCount\"));",
 									"    });",
@@ -7393,7 +7393,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of name arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetNameArrayCount\"));",
 									"    });",
@@ -7495,7 +7495,7 @@
 									"    });",
 									"    ",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of path arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"pathArrayCount\"));",
 									"    });",
@@ -7595,7 +7595,7 @@
 									"    });",
 									"    ",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of ltag arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"ltagArrayCount\"));",
 									"    });",
@@ -7697,7 +7697,7 @@
 									"    });",
 									"    ",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of created_by arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"created_byArrayCount\"));",
 									"    });",
@@ -7799,9 +7799,8 @@
 									"    });",
 									"",
 									"    var expectedArray = pm.environment.get(\"gtagsArray\")",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",	
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    var gtagsArrayCurrent = jsonData.map(item => item.gtags.length > 1 ? item.gtags : [item.gtags[0]]);",
-				
 									"    pm.test(\"Compare the count of gtags arrays\", function () {",
 									"        pm.expect(gtagsArrayCurrent.length).to.equal(expectedArray.length);",
 									"    });",
@@ -7821,7 +7820,7 @@
 									"",
 									"                // Check if the dataset has only one key, which should be \"gtags\"",
 									"                const keys = Object.keys(item);",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",	
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"                if (keys.length !== 1 || keys[0] !== \"gtags\") {",
 									"                    return false;",
 									"                }",
@@ -7910,7 +7909,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of gcsurl arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"gcsurlArrayCount\"));",
 									"    });",
@@ -8012,7 +8011,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of ctag arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"ctagArrayCount\"));",
 									"    });",
@@ -17171,75 +17170,6 @@
 			"name": "domain api schema management",
 			"item": [
 				{
-					"name": "API SCHEMA CHECK IF DOMAIN API TESTS ARE ENABLED",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 200) {",
-									"    console.log(pm.response.text())",
-									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"",
-									"} else {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
-									"    pm.test(\"Body matches string\", function () {",
-									"        pm.expect(pm.response.text()).to.include(\"service OK\");",
-									"    });",
-									"",
-									"    if(pm.environment.get(\"runDomainAPITests\") == 'false' || pm.environment.get(\"runDomainAPITests\") == undefined  ){",
-									"        postman.setNextRequest(\"API SCHEMA STATUS UNSET: Cleanup test environment\")",
-									"    }",
-									"",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/svcstatus",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"svcstatus"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "API SCHEMA STATUS SET: Create test environment",
 					"event": [
 						{
@@ -17319,7 +17249,7 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET REGISTER: Register a dataset with more than one storage schema record",
+					"name": "API SCHEMA NEGATIVE DATASET REGISTER: Register a dataset with more than one storage schema record",
 					"event": [
 						{
 							"listen": "test",
@@ -17578,18 +17508,53 @@
 									"    });",
 									"",
 									"    pm.test(\"Check seismicmetadata\", () => {",
-									"        pm.expect(jsonData.seismicmeta).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.id).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.kind).to.eql(pm.environment.get('datapartition') + \":wks:seismic3d:1.0.5\");",
-									"        pm.expect(jsonData.seismicmeta.acl).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.acl.viewers).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.acl.owners).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.legal).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.legal.legaltags).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.legal.otherRelevantDataCountries).to.contain(\"US\");",
-									"        pm.expect(jsonData.seismicmeta.data.binNodePositions[0].features[0].geometry.coordinates[0][1]).to.equal(242030.61);",
-									"        pm.expect(jsonData.seismicmeta.data.binNodePositions[0].features[0].geometry.type).to.equal(\"AnyCrsMultiPoint\");",
+									"        const { seismicmeta } = jsonData;",
+									"        const { data, locationAtIndexZero, originalBulk, derivedBulk, legal } = seismicmeta;",
+									"",
+									"        pm.expect(seismicmeta).not.equal(null);",
+									"        pm.expect(seismicmeta.id).not.equal(null);",
+									"        pm.expect(seismicmeta.kind).to.eql(`${pm.environment.get('datapartition')}:wks:seismic3d:1.0.5`);",
+									"        pm.expect(seismicmeta.acl).not.equal(null);",
+									"        pm.expect(seismicmeta.acl.viewers).not.equal(null);",
+									"        pm.expect(seismicmeta.acl.owners).not.equal(null);",
+									"        pm.expect(legal).not.equal(null);",
+									"        pm.expect(legal.legaltags).not.equal(null);",
+									"        pm.expect(legal.otherRelevantDataCountries).to.be.an('array').that.includes(\"US\");",
+									"",
+									"        if (data && data.binNodePositions && data.binNodePositions.length > 0) {",
+									"            const [firstPosition] = data.binNodePositions;",
+									"            pm.expect(firstPosition.features).to.be.an('array').that.is.not.empty;",
+									"            pm.expect(firstPosition.features[0].geometry.coordinates[0][1]).to.equal(242030.61);",
+									"            pm.expect(firstPosition.features[0].geometry.type).to.equal(\"AnyCrsMultiPoint\");",
+									"        }",
+									"",
+									"        if (locationAtIndexZero && locationAtIndexZero.features) {",
+									"            pm.expect(locationAtIndexZero.features[0].geometry.coordinates[2]).to.equal(-1234);",
+									"            pm.expect(locationAtIndexZero.persistableReferenceUnitZ.baseMeasurement.type).to.equal(\"UM\");",
+									"        }",
+									"",
+									"        if (originalBulk) {",
+									"            pm.expect(originalBulk.size).to.equal(2873437400);",
+									"            pm.expect(originalBulk.type).to.equal(\"SEGY\");",
+									"            pm.expect(originalBulk.url).to.equal(\"sd://SNTC/colors/test.segy\");",
+									"        }",
+									"",
+									"        if (derivedBulk) {",
+									"            pm.expect(derivedBulk.length).to.equal(2);",
+									"            pm.expect(derivedBulk[0].size).to.equal(1223488818);",
+									"            pm.expect(derivedBulk[0].type).to.equal(\"ZGY\");",
+									"            pm.expect(derivedBulk[0].url).to.equal(\"sd://SNTC/colors/test.zgy\");",
+									"            pm.expect(derivedBulk[1].size).to.equal(2653649950);",
+									"            pm.expect(derivedBulk[1].type).to.equal(\"DIO\");",
+									"            pm.expect(derivedBulk[1].url).to.equal(\"sd://SNTC/colors/test.DIO\");",
+									"        }",
 									"    });",
+									"",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
 									"}"
 								],
 								"type": "text/javascript"
@@ -17848,18 +17813,44 @@
 									"    });",
 									"",
 									"    pm.test(\"Check seismicmetadata\", () => {",
-									"        pm.expect(jsonData.seismicmeta).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.kind).to.eql(pm.environment.get('datapartition') +\":wks:seismic3d:1.0.5\");",
-									"        pm.expect(jsonData.seismicmeta.acl).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.acl.viewers).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.acl.owners).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.legal).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.legal.legaltags).not.equal(null);",
-									"        pm.expect(jsonData.seismicmeta.legal.otherRelevantDataCountries).to.contain(\"US\");",
-									"        pm.expect(jsonData.seismicmeta.data.geometry.coordinates[0][1]).to.equal(9.32);",
-									"        pm.expect(jsonData.seismicmeta.data.geometry.type).to.equal(\"Polygon\");",
-									"        pm.expect(jsonData.seismicmeta.meta[0].kind).to.eql(\"Unit\");",
+									"        const { seismicmeta } = jsonData;",
+									"        const { data, legal, meta } = seismicmeta;",
+									"",
+									"        pm.expect(seismicmeta).not.equal(null);",
+									"        pm.expect(seismicmeta.id).not.equal(null);",
+									"        pm.expect(seismicmeta.kind).to.eql(`${pm.environment.get('datapartition')}:wks:seismic3d:1.0.5`);",
+									"        ",
+									"        if (legal) {",
+									"            pm.expect(legal.legaltags).to.be.an('array').that.includes(pm.environment.get('legaltag01'));",
+									"            pm.expect(legal.otherRelevantDataCountries).to.be.an('array').that.includes(\"US\");",
+									"        }",
+									"",
+									"        if (data && data.geometry) {",
+									"            pm.expect(data.geometry.type).to.equal(\"Polygon\");",
+									"            pm.expect(data.geometry.coordinates).to.be.an('array').with.lengthOf(2);",
+									"            pm.expect(data.geometry.coordinates[0]).to.eql([-93.61, 9.32]);",
+									"            pm.expect(data.geometry.coordinates[1]).to.eql([-93.78, 29.44]);",
+									"        }",
+									"",
+									"        if (meta) {",
+									"            meta.forEach(item => {",
+									"                if (item.kind === \"Unit\") {",
+									"                    pm.expect(item.name).to.equal(\"ft/s\");",
+									"                    pm.expect(item.persistableReference.scaleOffset.scale).to.equal(0.3048);",
+									"                    pm.expect(item.persistableReference.scaleOffset.offset).to.equal(0);",
+									"                    pm.expect(item.persistableReference.symbol).to.equal(\"ft/s\");",
+									"                    pm.expect(item.persistableReference.baseMeasurement.ancestry).to.equal(\"Velocity\");",
+									"                    pm.expect(item.persistableReference.baseMeasurement.type).to.equal(\"UM\");",
+									"                }",
+									"            });",
+									"        }",
 									"    });",
+									"",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
 									"}"
 								],
 								"type": "text/javascript"
@@ -17916,7 +17907,7 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET DELETE 1: Delete dataset dsx02 with seismicmeta",
+					"name": "API SCHEMA DATASET DELETE : Delete dataset dsx01 with seismicmeta",
 					"event": [
 						{
 							"listen": "test",
@@ -17958,7 +17949,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -17969,14 +17960,14 @@
 								"subproject",
 								"{{subproject}}",
 								"dataset",
-								"{{dsx02}}"
+								"{{dsx01}}"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET REGISTER WITH OPENZGY_V1: Register a dataset with openzgy (schema validation error for missing kind)",
+					"name": "API SCHEMA NEGATIVE DATASET REGISTER WITH OPENZGY_V1: Register a dataset with openzgy (schema validation error for missing kind)",
 					"event": [
 						{
 							"listen": "test",
@@ -18027,7 +18018,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"openzgy_v1\": {\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"opendes:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"opendes:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"opendes:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"opendes:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"opendes:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"opendes:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"opendes:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"opendes:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/opendes/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/opendes/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"meta\": [],\r\n        \"id\": \"opendes:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb475\",\r\n        \"version\": 1637208623527796,\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ],\r\n            \"owners\": [\r\n                \"data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"opendes-seistore-test-01\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"createTime\": \"2021-11-16T02:08:16.420Z\",\r\n        \"modifyUser\": \"39916b94-71a9-409e-856e-0f29558fa908\",\r\n        \"modifyTime\": \"2021-11-18T04:10:23.817Z\"\r\n    }\r\n}"
+							"raw": "{\r\n    \"openzgy_v1\": {\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"{{datapartition}}:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"{{datapartition}}:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"{{datapartition}}:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"{{datapartition}}:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"{{datapartition}}:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"{{datapartition}}:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"meta\": [],\r\n        \"id\": \"{{datapartition}}:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb475\",\r\n        \"version\": 1637208623527796,\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"createTime\": \"2021-11-16T02:08:16.420Z\",\r\n        \"modifyUser\": \"39916b94-71a9-409e-856e-0f29558fa908\",\r\n        \"modifyTime\": \"2021-11-18T04:10:23.817Z\"\r\n    }\r\n}"
 						},
 						"url": {
 							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
@@ -18048,7 +18039,7 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET REGISTER WITH OPENZGY_V1: Register a dataset with openzgy (schema validation errors for incorrect kind)",
+					"name": "API SCHEMA NEGATIVE DATASET REGISTER WITH OPENZGY_V1: Register a dataset with openzgy (schema validation errors for incorrect kind)",
 					"event": [
 						{
 							"listen": "test",
@@ -18101,7 +18092,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"openzgy_v1\": {\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"opendes:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"opendes:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"opendes:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"opendes:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"opendes:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"opendes:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"opendes:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"opendes:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/opendes/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/opendes/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"meta\": [],\r\n        \"id\": \"opendes:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb475\",\r\n        \"kind\": \"incorrect-kind\",\r\n        \"version\": 1637208623527796,\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ],\r\n            \"owners\": [\r\n                \"data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"opendes-seistore-test-01\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"createTime\": \"2021-11-16T02:08:16.420Z\",\r\n        \"modifyUser\": \"39916b94-71a9-409e-856e-0f29558fa908\",\r\n        \"modifyTime\": \"2021-11-18T04:10:23.817Z\"\r\n    }\r\n}"
+							"raw": "{\r\n    \"openzgy_v1\": {\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"{{datapartition}}:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"{{datapartition}}:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"{{datapartition}}:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"{{datapartition}}:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"{{datapartition}}:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"{{datapartition}}:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"meta\": [],\r\n        \"id\": \"{{datapartition}}:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb475\",\r\n        \"kind\": \"incorrect-kind\",\r\n        \"version\": 1637208623527796,\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"createTime\": \"2021-11-16T02:08:16.420Z\",\r\n        \"modifyUser\": \"39916b94-71a9-409e-856e-0f29558fa908\",\r\n        \"modifyTime\": \"2021-11-18T04:10:23.817Z\"\r\n    }\r\n}"
 						},
 						"url": {
 							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
@@ -18122,7 +18113,81 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET REGISTER WITH OPENZGY_V1: Register a dataset with openzgy (storage record id is computed by backend and returned to client)",
+					"name": "API SCHEMA NEGATIVE DATASET REGISTER WITH OPENZGY_V1: Register a dataset with openzgy (schema validation errors for incorrect checksum)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check error message\", function () {",
+									"        pm.response.text().includes(\"[seismic-store-service] /data/DatasetProperties/FileSourceInfos/1/Checksum must match pattern '^([0-9a-fA-F]{2})+$'/data/DatasetProperties/Checksum must match pattern '^[0-9a-fA-F]{32}'\")",
+									"    });",
+									"",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"openzgy_v1\": {\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"{{datapartition}}:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"{{datapartition}}:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"{{datapartition}}:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"{{datapartition}}:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"{{datapartition}}:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"{{datapartition}}:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"checksum-value\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"checksum-value\"\r\n            },\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"meta\": [],\r\n        \"version\": 1637223275655929,\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0\",\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"createTime\": \"2021-11-16T02:08:16.420Z\",\r\n        \"modifyUser\": \"39916b94-71a9-409e-856e-0f29558fa908\",\r\n        \"modifyTime\": \"2021-11-18T08:14:36.310Z\"\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "API SCHEMA DATASET REGISTER WITH OPENZGY_V1: Register a dataset with openzgy (storage record id is computed by backend and returned to client) Copy",
 					"event": [
 						{
 							"listen": "test",
@@ -18171,7 +18236,6 @@
 									"",
 									"    pm.test(\"Check openzgy_v1 schema record\", () => {",
 									"        pm.expect(jsonData.seismicmeta_guid).not.equal(null);",
-									"        // pm.expect(jsonData.seismicmeta_guid).eql(jsonData.openzgy_v1.id);",
 									"    });",
 									"}"
 								],
@@ -18206,7 +18270,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"openzgy_v1\": {\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"opendes:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"opendes:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"opendes:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"opendes:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"opendes:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"opendes:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"opendes:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"opendes:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/opendes/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/opendes/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"meta\": [],\r\n        \"version\": 1637223275655929,\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0\",\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ],\r\n            \"owners\": [\r\n                \"data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"opendes-seistore-test-01\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"createTime\": \"2021-11-16T02:08:16.420Z\",\r\n        \"modifyUser\": \"39916b94-71a9-409e-856e-0f29558fa908\",\r\n        \"modifyTime\": \"2021-11-18T08:14:36.310Z\"\r\n    }\r\n}"
+							"raw": "{\r\n    \"openzgy_v1\": {\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"{{datapartition}}:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"{{datapartition}}:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"{{datapartition}}:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"{{datapartition}}:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"{{datapartition}}:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"{{datapartition}}:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"{{datapartition}}:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"meta\": [],\r\n        \"version\": 1637223275655929,\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0\",\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"createTime\": \"2021-11-16T02:08:16.420Z\",\r\n        \"modifyUser\": \"39916b94-71a9-409e-856e-0f29558fa908\",\r\n        \"modifyTime\": \"2021-11-18T08:14:36.310Z\"\r\n    }\r\n}"
 						},
 						"url": {
 							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
@@ -18283,10 +18347,46 @@
 									"    })",
 									"",
 									"    pm.test(\"Check openzgy_v1 record matches the post from previous request\", () => {",
-									"        pm.expect(jsonData.openzgy_v1).not.equal(null);",
-									"        pm.expect(jsonData.openzgy_v1.id).not.equal(null);",
-									"        pm.expect(jsonData.openzgy_v1.data.ResourceHomeRegionID).equal('opendes:reference-data--OSDURegion:AWSEastUSA:');",
-									"    });",
+									"        ",
+									"        pm.expect(jsonData).to.have.property('openzgy_v1');",
+									"        pm.expect(jsonData.openzgy_v1).to.have.property('data');",
+									"",
+									"        // Check Specific Data Values",
+									"        const datapartition = pm.environment.get(\"datapartition\");",
+									"        const legaltag01 = pm.environment.get(\"legaltag01\");",
+									"        const domain = pm.environment.get(\"domain\");",
+									"",
+									"        pm.expect(jsonData.openzgy_v1.data.ResourceHomeRegionID).to.equal(`${datapartition}:reference-data--OSDURegion:AWSEastUSA:`);",
+									"        pm.expect(jsonData.openzgy_v1.data.ResourceHostRegionIDs[0]).to.equal(`${datapartition}:reference-data--OSDURegion:AWSEastUSA:`);",
+									"        pm.expect(jsonData.openzgy_v1.data.ResourceCurationStatus).to.equal(`${datapartition}:reference-data--ResourceCurationStatus:CREATED:`);",
+									"        pm.expect(jsonData.openzgy_v1.data.ResourceLifecycleStatus).to.equal(`${datapartition}:reference-data--ResourceLifecycleStatus:LOADING:`);",
+									"        pm.expect(jsonData.openzgy_v1.data.ResourceSecurityClassification).to.equal(`${datapartition}:reference-data--ResourceSecurityClassification:RESTRICTED:`);",
+									"        pm.expect(jsonData.openzgy_v1.data.ExistenceKind).to.equal(`${datapartition}:reference-data--ExistenceKind:Prototype:`);",
+									"        pm.expect(jsonData.openzgy_v1.data.EncodingFormatTypeID).to.equal(`${datapartition}:reference-data--EncodingFormatType:text%2Fcsv:`);",
+									"        pm.expect(jsonData.openzgy_v1.data.SchemaFormatTypeID).to.equal(`${datapartition}:reference-data--SchemaFormatType:CWLS%20LAS3:`);",
+									"",
+									"        // Check File Collection Path",
+									"        pm.expect(jsonData.openzgy_v1.data.DatasetProperties.FileCollectionPath).to.equal(`s3://default_bucket/${datapartition}/data/vds-dataset/`);",
+									"",
+									"        // Check kind",
+									"        pm.expect(jsonData.openzgy_v1.kind).to.equal('osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0');",
+									"",
+									"        // Check File Source Infos",
+									"        pm.expect(jsonData.openzgy_v1.data.DatasetProperties.FileSourceInfos[0].FileSource).to.equal(`s3://default_bucket/${datapartition}/data/vds-dataset/vds-file-1`);",
+									"        pm.expect(jsonData.openzgy_v1.data.DatasetProperties.FileSourceInfos[1].FileSource).to.equal(`s3://default_bucket/${datapartition}/data/vds-dataset/vds-file-2`);",
+									"",
+									"        // Check ACL",
+									"        pm.expect(jsonData.openzgy_v1.acl.owners[0]).to.equal(`data.default.owners@${domain}`);",
+									"        pm.expect(jsonData.openzgy_v1.acl.viewers[0]).to.equal(`data.default.viewers@${domain}`);",
+									"",
+									"        // Check Legal",
+									"        pm.expect(jsonData.openzgy_v1.legal.status).to.equal('compliant');",
+									"        pm.expect(jsonData.openzgy_v1.legal.legaltags[0]).to.equal(legaltag01);",
+									"        pm.expect(jsonData.openzgy_v1.legal.otherRelevantDataCountries[0]).to.equal('US');",
+									"",
+									"        // Check Tags",
+									"        pm.expect(jsonData.openzgy_v1.tags.NameOfKey).to.equal('String value');",
+									"        });",
 									"}"
 								],
 								"type": "text/javascript"
@@ -18339,7 +18439,7 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET DELETE WITH SEGY_V1: Delete the dataset with segy_v1",
+					"name": "API SCHEMA DATASET DELETE WITH OPENZGY_V1: Delete the dataset with openzgy_v1",
 					"event": [
 						{
 							"listen": "test",
@@ -18381,6 +18481,226 @@
 							}
 						],
 						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "API SCHEMA NEGATIVE DATASET REGISTER WITH SEGY_V1: Register a dataset with segy (schema validation error for missing kind)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status to be 400 as the schema body does not contain kind\", function () {",
+									"       pm.response.to.have.status(400)",
+									"    });",
+									"",
+									"    pm.test(\"Check error message\", function () {",
+									"        pm.response.text().includes(\"must have required property 'kind'\")",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"segy_v1\": {\r\n        \"version\": 1562066009929332,\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createTime\": \"2020-12-16T11:46:20.163Z\",\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"modifyTime\": \"2020-12-16T11:52:24.477Z\",\r\n        \"modifyUser\": \"vmanohar@slb.com\",\r\n        \"ancestry\": {\r\n            \"parents\": []\r\n        },\r\n        \"meta\": [],\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"namespace:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"namespace:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"namespace:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"namespace:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"namespace:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"namespace:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"namespace:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"namespace:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"VectorHeaderMapping\": [\r\n                {\r\n                    \"KeyName\": \"namespace:reference-data--HeaderKeyName:CMPX:\",\r\n                    \"WordFormat\": \"namespace:reference-data--WordFormatType:INT:\",\r\n                    \"WordWidth\": 2,\r\n                    \"Position\": 2,\r\n                    \"UoM\": \"namespace:reference-data--UnitOfMeasure:m:\",\r\n                    \"ScalarIndicator\": \"STANDARD\",\r\n                    \"ScalarOverride\": 12345.6\r\n                }\r\n            ],\r\n            \"SEGYRevision\": \"rev 0\",\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"id\": \"{{datapartition}}:dataset--FileCollection.SEGY:c26bfb75-721a-481b-9b93-cd91fb739d4b\",\r\n        \"acl\": {\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ],\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ]\r\n        }\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "API SCHEMA NEGATIVE DATASET REGISTER WITH SEGY_V1: Register a dataset with segy(schema validation errors for incorrect kind)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check error message\", function () {",
+									"        pm.response.text().includes(\"/kind must match pattern \\\"osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0\\\"\")",
+									"    });",
+									"",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"segy_v1\": {\r\n        \"kind\": \"incorrect-kind\",\r\n        \"version\": 1562066009929332,\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createTime\": \"2020-12-16T11:46:20.163Z\",\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"modifyTime\": \"2020-12-16T11:52:24.477Z\",\r\n        \"modifyUser\": \"vmanohar@slb.com\",\r\n        \"ancestry\": {\r\n            \"parents\": []\r\n        },\r\n        \"meta\": [],\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"namespace:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"namespace:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"namespace:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"namespace:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"namespace:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"namespace:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"namespace:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"namespace:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"VectorHeaderMapping\": [\r\n                {\r\n                    \"KeyName\": \"namespace:reference-data--HeaderKeyName:CMPX:\",\r\n                    \"WordFormat\": \"namespace:reference-data--WordFormatType:INT:\",\r\n                    \"WordWidth\": 2,\r\n                    \"Position\": 2,\r\n                    \"UoM\": \"namespace:reference-data--UnitOfMeasure:m:\",\r\n                    \"ScalarIndicator\": \"STANDARD\",\r\n                    \"ScalarOverride\": 12345.6\r\n                }\r\n            ],\r\n            \"SEGYRevision\": \"rev 0\",\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"id\": \"{{datapartition}}:dataset--FileCollection.SEGY:c26bfb75-721a-481b-9b93-cd91fb739d4b\",\r\n        \"acl\": {\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ],\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ]\r\n        }\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "API SCHEMA NEGATIVE DATASET REGISTER WITH SEGY_V1: Register a dataset with segy(schema validation errors for incorrect checksum)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check error message\", function () {",
+									"        pm.response.text().includes(\"[seismic-store-service] /data/DatasetProperties/FileSourceInfos/1/Checksum must match pattern '^([0-9a-fA-F]{2})+$'/data/DatasetProperties/Checksum must match pattern '^[0-9a-fA-F]{32}'\")",
+									"    });",
+									"",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"segy_v1\": {\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.SEGY:1.0.0\",\r\n        \"version\": 1562066009929332,\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createTime\": \"2020-12-16T11:46:20.163Z\",\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"modifyTime\": \"2020-12-16T11:52:24.477Z\",\r\n        \"modifyUser\": \"vmanohar@slb.com\",\r\n        \"ancestry\": {\r\n            \"parents\": []\r\n        },\r\n        \"meta\": [],\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"namespace:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"namespace:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"namespace:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"namespace:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"namespace:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"namespace:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"namespace:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"namespace:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"checksum-value\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"checksum-value\"\r\n            },\r\n            \"VectorHeaderMapping\": [\r\n                {\r\n                    \"KeyName\": \"namespace:reference-data--HeaderKeyName:CMPX:\",\r\n                    \"WordFormat\": \"namespace:reference-data--WordFormatType:INT:\",\r\n                    \"WordWidth\": 2,\r\n                    \"Position\": 2,\r\n                    \"UoM\": \"namespace:reference-data--UnitOfMeasure:m:\",\r\n                    \"ScalarIndicator\": \"STANDARD\",\r\n                    \"ScalarOverride\": 12345.6\r\n                }\r\n            ],\r\n            \"SEGYRevision\": \"rev 0\",\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"id\": \"{{datapartition}}:dataset--FileCollection.SEGY:c26bfb75-721a-481b-9b93-cd91fb739d4b\",\r\n        \"acl\": {\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ],\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ]\r\n        }\r\n    }\r\n}"
+						},
+						"url": {
 							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx03}}",
 							"host": [
 								"{{SVC_URL}}"
@@ -18399,7 +18719,7 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET REGISTER WITH SEGY_V1: Register a dataset with segy (storage record id is computed by backend and returned to client)",
+					"name": "API SCHEMA DATASET REGISTER WITH SEGY_V1: Register a dataset with segy (storage record id is computed by backend and returned to client) Copy",
 					"event": [
 						{
 							"listen": "test",
@@ -18448,7 +18768,6 @@
 									"",
 									"    pm.test(\"Check segy_v1 schema record\", () => {",
 									"        pm.expect(jsonData.seismicmeta_guid).not.equal(null);",
-									"        // pm.expect(jsonData.seismicmeta_guid).eql(jsonData.segy_v1.id);",
 									"    });",
 									"}"
 								],
@@ -18483,7 +18802,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"segy_v1\": {\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.SEGY:1.0.0\",\r\n        \"version\": 1562066009929332,\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createTime\": \"2020-12-16T11:46:20.163Z\",\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"modifyTime\": \"2020-12-16T11:52:24.477Z\",\r\n        \"modifyUser\": \"vmanohar@slb.com\",\r\n        \"ancestry\": {\r\n            \"parents\": []\r\n        },\r\n        \"meta\": [],\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"namespace:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"namespace:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"namespace:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"namespace:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"namespace:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"namespace:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"namespace:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"namespace:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/opendes/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/opendes/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/opendes/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"VectorHeaderMapping\": [\r\n                {\r\n                    \"KeyName\": \"namespace:reference-data--HeaderKeyName:CMPX:\",\r\n                    \"WordFormat\": \"namespace:reference-data--WordFormatType:INT:\",\r\n                    \"WordWidth\": 2,\r\n                    \"Position\": 2,\r\n                    \"UoM\": \"namespace:reference-data--UnitOfMeasure:m:\",\r\n                    \"ScalarIndicator\": \"STANDARD\",\r\n                    \"ScalarOverride\": 12345.6\r\n                }\r\n            ],\r\n            \"SEGYRevision\": \"rev 0\",\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"id\": \"opendes:dataset--FileCollection.SEGY:c26bfb75-721a-481b-9b93-cd91fb739d4b\",\r\n        \"acl\": {\r\n            \"owners\": [\r\n                \"data.default.owners@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ],\r\n            \"viewers\": [\r\n                \"data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"opendes-seistore-test-01\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ]\r\n        }\r\n    }\r\n}"
+							"raw": "{\r\n    \"segy_v1\": {\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.SEGY:1.0.0\",\r\n        \"version\": 1562066009929332,\r\n        \"tags\": {\r\n            \"NameOfKey\": \"String value\"\r\n        },\r\n        \"createTime\": \"2020-12-16T11:46:20.163Z\",\r\n        \"createUser\": \"vmanohar@slb.com\",\r\n        \"modifyTime\": \"2020-12-16T11:52:24.477Z\",\r\n        \"modifyUser\": \"vmanohar@slb.com\",\r\n        \"ancestry\": {\r\n            \"parents\": []\r\n        },\r\n        \"meta\": [],\r\n        \"data\": {\r\n            \"ResourceHomeRegionID\": \"namespace:reference-data--OSDURegion:AWSEastUSA:\",\r\n            \"ResourceHostRegionIDs\": [\r\n                \"namespace:reference-data--OSDURegion:AWSEastUSA:\"\r\n            ],\r\n            \"ResourceCurationStatus\": \"namespace:reference-data--ResourceCurationStatus:CREATED:\",\r\n            \"ResourceLifecycleStatus\": \"namespace:reference-data--ResourceLifecycleStatus:LOADING:\",\r\n            \"ResourceSecurityClassification\": \"namespace:reference-data--ResourceSecurityClassification:RESTRICTED:\",\r\n            \"Source\": \"Example Data Source\",\r\n            \"ExistenceKind\": \"namespace:reference-data--ExistenceKind:Prototype:\",\r\n            \"Name\": \"Dataset X221/15\",\r\n            \"Description\": \"As originally delivered by ACME.com.\",\r\n            \"TotalSize\": \"13245217273\",\r\n            \"EncodingFormatTypeID\": \"namespace:reference-data--EncodingFormatType:text%2Fcsv:\",\r\n            \"SchemaFormatTypeID\": \"namespace:reference-data--SchemaFormatType:CWLS%20LAS3:\",\r\n            \"Endian\": \"BIG\",\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/\",\r\n                \"IndexFilePath\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-dataset.index\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-1\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-1\",\r\n                        \"Name\": \"vds-file-1\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:46:20.163Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:20:05.356Z\",\r\n                        \"FileSize\": \"439452464\",\r\n                        \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    },\r\n                    {\r\n                        \"FileSource\": \"s3://default_bucket/{{datapartition}}/data/vds-dataset/vds-file-2\",\r\n                        \"PreloadFilePath\": \"s3://staging-area/r7/raw-data/provided/documents/vds-file-2\",\r\n                        \"Name\": \"vds-file-2\",\r\n                        \"PreloadFileCreateUser\": \"somebody@acme.org\",\r\n                        \"PreloadFileCreateDate\": \"2019-12-16T11:50:40.321Z\",\r\n                        \"PreloadFileModifyUser\": \"somebody.else@acme.org\",\r\n                        \"PreloadFileModifyDate\": \"2019-12-20T17:59:03.456Z\",\r\n                        \"FileSize\": \"433645463\",\r\n                        \"Checksum\": \"204e9800998ecf8427ed41d8cd98f00b\",\r\n                        \"ChecksumAlgorithm\": \"MD5\"\r\n                    }\r\n                ],\r\n                \"Checksum\": \"d41d8cd98f00b204e9800998ecf8427e\"\r\n            },\r\n            \"VectorHeaderMapping\": [\r\n                {\r\n                    \"KeyName\": \"namespace:reference-data--HeaderKeyName:CMPX:\",\r\n                    \"WordFormat\": \"namespace:reference-data--WordFormatType:INT:\",\r\n                    \"WordWidth\": 2,\r\n                    \"Position\": 2,\r\n                    \"UoM\": \"namespace:reference-data--UnitOfMeasure:m:\",\r\n                    \"ScalarIndicator\": \"STANDARD\",\r\n                    \"ScalarOverride\": 12345.6\r\n                }\r\n            ],\r\n            \"SEGYRevision\": \"rev 0\",\r\n            \"ExtensionProperties\": {}\r\n        },\r\n        \"id\": \"{{datapartition}}:dataset--FileCollection.SEGY:c26bfb75-721a-481b-9b93-cd91fb739d4b\",\r\n        \"acl\": {\r\n            \"owners\": [\r\n                \"data.default.owners@{{domain}}\"\r\n            ],\r\n            \"viewers\": [\r\n                \"data.default.viewers@{{domain}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{legaltag01}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"US\"\r\n            ]\r\n        }\r\n    }\r\n}"
 						},
 						"url": {
 							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx03}}",
@@ -18560,11 +18879,52 @@
 									"    })",
 									"",
 									"    pm.test(\"Check segy_v1 record matches the post from previous request\", () => {",
-									"        pm.expect(jsonData.segy_v1).not.equal(null);",
-									"        console.log(jsonData.segy_v1);",
-									"        pm.expect(jsonData.segy_v1.id).not.equal(null);",
-									"        pm.expect(jsonData.segy_v1.data.TotalSize).equal('13245217273');",
+									"",
+									"        // Check Kind",
+									"        pm.expect(jsonData.segy_v1.kind).to.equal('osdu:wks:dataset--FileCollection.SEGY:1.0.0');",
+									"",
+									"        // Check Tags",
+									"        pm.expect(jsonData.segy_v1.tags.NameOfKey).to.equal('String value');",
+									"",
+									"        // Check Data fields",
+									"        const datapartition = pm.environment.get(\"datapartition\");",
+									"",
+									"        pm.expect(jsonData.segy_v1.data.ResourceHomeRegionID).to.equal(`namespace:reference-data--OSDURegion:AWSEastUSA:`);",
+									"        pm.expect(jsonData.segy_v1.data.Name).to.equal('Dataset X221/15');",
+									"        pm.expect(jsonData.segy_v1.data.Description).to.equal('As originally delivered by ACME.com.');",
+									"        pm.expect(jsonData.segy_v1.data.TotalSize).to.equal('13245217273');",
+									"        pm.expect(jsonData.segy_v1.data.EncodingFormatTypeID).to.equal(`namespace:reference-data--EncodingFormatType:text%2Fcsv:`);",
+									"        pm.expect(jsonData.segy_v1.data.SchemaFormatTypeID).to.equal(`namespace:reference-data--SchemaFormatType:CWLS%20LAS3:`);",
+									"        pm.expect(jsonData.segy_v1.data.Endian).to.equal('BIG');",
+									"        pm.expect(jsonData.segy_v1.data.SEGYRevision).to.equal('rev 0');",
+									"",
+									"        // Check File Collection Path",
+									"        pm.expect(jsonData.segy_v1.data.DatasetProperties.FileCollectionPath).to.equal(`s3://default_bucket/${datapartition}/data/vds-dataset/`);",
+									"",
+									"        // Check File Source Infos",
+									"        pm.expect(jsonData.segy_v1.data.DatasetProperties.FileSourceInfos[0].FileSource).to.equal(`s3://default_bucket/${datapartition}/data/vds-dataset/vds-file-1`);",
+									"        pm.expect(jsonData.segy_v1.data.DatasetProperties.FileSourceInfos[1].FileSource).to.equal(`s3://default_bucket/${datapartition}/data/vds-dataset/vds-file-2`);",
+									"",
+									"        // Check Vector Header Mapping",
+									"        pm.expect(jsonData.segy_v1.data.VectorHeaderMapping[0].KeyName).to.equal('namespace:reference-data--HeaderKeyName:CMPX:');",
+									"        pm.expect(jsonData.segy_v1.data.VectorHeaderMapping[0].WordFormat).to.equal('namespace:reference-data--WordFormatType:INT:');",
+									"        pm.expect(jsonData.segy_v1.data.VectorHeaderMapping[0].WordWidth).to.equal(2);",
+									"        pm.expect(jsonData.segy_v1.data.VectorHeaderMapping[0].Position).to.equal(2);",
+									"        pm.expect(jsonData.segy_v1.data.VectorHeaderMapping[0].UoM).to.equal('namespace:reference-data--UnitOfMeasure:m:');",
+									"        pm.expect(jsonData.segy_v1.data.VectorHeaderMapping[0].ScalarIndicator).to.equal('STANDARD');",
+									"        pm.expect(jsonData.segy_v1.data.VectorHeaderMapping[0].ScalarOverride).to.equal(12345.6);",
+									"",
+									"        // Check ACL",
+									"        const domain = pm.environment.get(\"domain\");",
+									"        pm.expect(jsonData.segy_v1.acl.owners[0]).to.equal(`data.default.owners@${domain}`);",
+									"        pm.expect(jsonData.segy_v1.acl.viewers[0]).to.equal(`data.default.viewers@${domain}`);",
+									"",
+									"        // Check Legal",
+									"        const legaltag01 = pm.environment.get(\"legaltag01\");",
+									"        pm.expect(jsonData.segy_v1.legal.legaltags[0]).to.equal(legaltag01);",
+									"        pm.expect(jsonData.segy_v1.legal.otherRelevantDataCountries[0]).to.equal('US');",
 									"    });",
+									"",
 									"}"
 								],
 								"type": "text/javascript"
@@ -18617,7 +18977,7 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET DELETE WITH SEGY_V1 2: Delete the dataset with segy_v1",
+					"name": "API SCHEMA DATASET DELETE WITH SEGY_V1: Delete the dataset with segy_v1",
 					"event": [
 						{
 							"listen": "test",
@@ -18673,66 +19033,6 @@
 					"response": []
 				},
 				{
-					"name": "API SCHEMA DATASET DELETE WITH OPENZGY_V1 2: Delete the dataset with openzgy_v1",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 200) {",
-									"    console.log(pm.response.text())",
-									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"",
-									"} else {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.expect(pm.response.code).to.be.eql(200)",
-									"    });",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}"
-							},
-							{
-								"key": "data-partition-id",
-								"value": "{{datapartition}}"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"dataset",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}",
-								"dataset",
-								"{{dsx02}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "API SCHEMA STATUS UNSET: Cleanup test environment",
 					"event": [
 						{
@@ -18761,6 +19061,7 @@
 									"    pm.environment.unset('gcsBucketName')",
 									"    pm.environment.unset('gcsObjectPrefix')",
 									"    pm.environment.unset('dsx01_record_type')",
+									"    pm.environment.unset('domain')",
 									"    postman.setEnvironmentVariable('execCounter', 1)",
 									"}"
 								],
