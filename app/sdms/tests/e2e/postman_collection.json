@@ -61,7 +61,6 @@
 									"   }\r",
 									"   return result;\r",
 									"}\r",
-									"\r",
 									"// if subproject name is not provided then create random name, else keep subproject alive\r",
 									"if (!pm.environment.get(\"subproject\")) {\r",
 									"    postman.setEnvironmentVariable(\"subproject\", makeID_general(16));\r",
