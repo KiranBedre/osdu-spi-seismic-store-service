@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Config, CredentialsFactory } from '../../cloud';
+import { Config, CredentialsFactory, DatabaseFactory } from '../../cloud';
 import { Error, Response, Utils } from '../../shared';
 import { Request as expRequest, Response as expResponse } from 'express';
 import { Context } from '../../shared/context';
 import { Operation } from './operations';
 import { Parser } from './parser';
 import { StorageCoreService } from '../../services';
+import { DatasetRecordV3 } from './model';
 
 export class ConnectionsHandler {
     public static async handler(req: expRequest, res: expResponse, op: Operation) {
@@ -55,16 +56,66 @@ export class ConnectionsHandler {
             recordVersion
         );
 
-        // for upload connection strings only
-        if (!readonly) {
-            // ensure the user is owner by trying upsert an entry (skip-dupes-applies)
-            await StorageCoreService.insertRecords(req.headers.authorization, [record], dataPartition, true);
+        if (!record.data.DatasetProperties.FileCollectionPath.startsWith('sd://')) {
+            // for upload connection strings only
+            if (!readonly) {
+                // ensure the user is owner by trying upsert an entry (skip-dupes-applies)
+                await StorageCoreService.insertRecords(req.headers.authorization, [record], dataPartition, true);
+            }
+
+            const bucketId = Utils.constructBucketID(recordId);
+            const storageCredentials = await CredentialsFactory.build(Config.CLOUD_PROVIDER, {
+                dataPartition,
+            }).getStorageCredentials(bucketId, readonly, dataPartition);
+            return storageCredentials;
+        } else {
+            const dataRecord = this.getDatasetRecordV3(record);
+            const result = await DatabaseFactory.build(Config.CLOUD_PROVIDER, {
+                dataPartition,
+            }).getStorageUrlFromV3Catalogue(dataRecord.subproject, dataRecord.path, dataRecord.name);
+
+            const storageCredentials = await CredentialsFactory.build(Config.CLOUD_PROVIDER, {
+                dataPartition,
+            }).getStorageCredentials(result.bucket, readonly, dataPartition, result.virtualFolder);
+            console.log(storageCredentials);
+            return storageCredentials;
+        }
+    }
+
+    private static getDatasetRecordV3(record: any): DatasetRecordV3 {
+        const { FileCollectionPath, FileSourceInfos } = record.data.DatasetProperties;
+        let name: string;
+        let filePath: string;
+        if (FileSourceInfos === undefined || FileSourceInfos[0].FileSource === undefined) {
+            name = FileCollectionPath.replace('sd://', '').split('/').pop();
+        } else if (FileCollectionPath === FileSourceInfos[0].FileSource) {
+            name = FileSourceInfos[0].FileSource.replace('sd://', '').split('/').pop();
+        } else {
+            name = FileSourceInfos[0].FileSource.replace('./', '');
+        }
+        filePath = FileCollectionPath;
+        while (filePath.endsWith('/')) {
+            filePath = filePath.slice(0, -1);
         }
 
-        const bucketId = Utils.constructBucketID(recordId);
-        const storageCredentials = await CredentialsFactory.build(Config.CLOUD_PROVIDER, {
-            dataPartition,
-        }).getStorageCredentials(bucketId, readonly, dataPartition);
-        return storageCredentials;
+        const filePathList = filePath.replace('sd://', '').split('/');
+
+        if (filePathList === null || name === null) {
+            throw Error.makeForHTTPRequest('Cannot get SDMS-v3 dataset record');
+        }
+
+        filePathList.shift(); // remove tenant
+        const subproject = filePathList.shift(); //get and remove subproject
+
+        if (filePathList.length !== 0 && filePathList[filePathList.length - 1] === name) {
+            filePathList.pop(); // remove the name
+        }
+        const path = filePathList.length !== 0 ? `/${filePathList.join('/')}/` : '/';
+
+        return {
+            subproject,
+            path,
+            name,
+        };
     }
 }

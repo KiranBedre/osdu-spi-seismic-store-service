@@ -20,3 +20,4 @@ export { CredentialsFactory } from './credentials';
 export { ReadinessFactory } from './readiness';
 export { StorageFactory } from './storage';
 export { LoggerFactory } from './logger';
+export { DatabaseFactory } from './database';

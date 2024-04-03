@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -66,12 +66,13 @@ export class AzureCredentials extends AbstractCredentials {
     public async getStorageCredentials(
         bucket: string,
         readonly: boolean,
-        partition: string
+        partition: string,
+        objectPrefix?: string
     ): Promise<IAccessTokenModel> {
         const accountName = await AzureSecrets.getStorageResourceSecrets(partition);
         const now = new Date();
         const expiration = this.addMinutes(now, SasExpirationInMinutes);
-        const sasToken = await this.generateSASToken(accountName, bucket, expiration, readonly);
+        const sasToken = await this.generateSASToken(accountName, bucket, objectPrefix, expiration, readonly);
         const result = {
             access_token: sasToken,
             expires_in: 3599,
@@ -83,6 +84,7 @@ export class AzureCredentials extends AbstractCredentials {
     private async generateSASToken(
         accountName: string,
         containerName: string,
+        folderName: string,
         expiration: Date,
         readOnly: boolean
     ): Promise<string> {
@@ -100,7 +102,7 @@ export class AzureCredentials extends AbstractCredentials {
         permissions.delete = !readOnly;
         permissions.read = true;
 
-        const containerSAS = generateBlobSASQueryParameters(
+        const sasQueryParameters = generateBlobSASQueryParameters(
             {
                 containerName,
                 permissions,
@@ -110,7 +112,11 @@ export class AzureCredentials extends AbstractCredentials {
             userDelegationKey,
             accountName
         );
-        return `https://${accountName}.blob.core.windows.net/${containerName}?${containerSAS.toString()}`;
+
+        const baseSasUrl = `https://${accountName}.blob.core.windows.net/${containerName}`;
+        const sasToken = sasQueryParameters.toString();
+
+        return folderName ? `${baseSasUrl}/${folderName}?${sasToken}` : `${baseSasUrl}?${sasToken}`;
     }
 
     private async getDelegationKey(blobServiceClient: BlobServiceClient): Promise<UserDelegationKey> {
