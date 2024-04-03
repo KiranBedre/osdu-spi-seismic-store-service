@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "43627d7a-d20c-4a3f-800b-a2ddcdda238a",
+		"_postman_id": "331d16a2-d70a-4f8f-90b5-77b5231e6fa0",
 		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -5823,10 +5823,10 @@
 									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
 									"    });",
 									"    ",
-									"     let randomfileList = []; ",        
+									"     let randomfileList = []; ",
 									"    pm.test('Ensure that item\\'s name starts with \"randomfile\"', () => {",
 									"        jsonData.forEach(item => {",
-									"            randomfileList.push(item);",                       
+									"            randomfileList.push(item);",
 									"            pm.expect(item.name).to.match(/^randomfile/);",
 									"        });",
 									"    });",
@@ -5920,7 +5920,7 @@
 									"        }      ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for tenant\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForTenant\"));",
 									"    });",
@@ -6012,7 +6012,7 @@
 									"        } ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for subproject\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForSubproject\"));",
 									"    });",
@@ -6181,7 +6181,7 @@
 									"        }",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for ltag\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForLtag\"));",
 									"    });",
@@ -6274,7 +6274,7 @@
 									"        }  ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for path\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForPath\"));",
 									"    });",
@@ -6443,7 +6443,7 @@
 									"        }   ",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for owner\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForOwner\"));",
 									"    });",
@@ -6531,7 +6531,7 @@
 									"        pm.expect(ctagValue).to.eql(pm.environment.get(\"ctag\"));",
 									"    });",
 									"",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Verify dataset count Matches dataset count for ctag\", function () {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetsCountForCtag\"));",
 									"    });",
@@ -7189,7 +7189,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of tenant arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"tenantArrayCount\"));",
 									"    });",
@@ -7291,7 +7291,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of subproject arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"subprojectArrayCount\"));",
 									"    });",
@@ -7393,7 +7393,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of name arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"datasetNameArrayCount\"));",
 									"    });",
@@ -7495,7 +7495,7 @@
 									"    });",
 									"    ",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of path arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"pathArrayCount\"));",
 									"    });",
@@ -7595,7 +7595,7 @@
 									"    });",
 									"    ",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of ltag arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"ltagArrayCount\"));",
 									"    });",
@@ -7697,7 +7697,7 @@
 									"    });",
 									"    ",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of created_by arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"created_byArrayCount\"));",
 									"    });",
@@ -7799,9 +7799,8 @@
 									"    });",
 									"",
 									"    var expectedArray = pm.environment.get(\"gtagsArray\")",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",	
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    var gtagsArrayCurrent = jsonData.map(item => item.gtags.length > 1 ? item.gtags : [item.gtags[0]]);",
-				
 									"    pm.test(\"Compare the count of gtags arrays\", function () {",
 									"        pm.expect(gtagsArrayCurrent.length).to.equal(expectedArray.length);",
 									"    });",
@@ -7821,7 +7820,7 @@
 									"",
 									"                // Check if the dataset has only one key, which should be \"gtags\"",
 									"                const keys = Object.keys(item);",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",	
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"                if (keys.length !== 1 || keys[0] !== \"gtags\") {",
 									"                    return false;",
 									"                }",
@@ -7910,7 +7909,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of gcsurl arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"gcsurlArrayCount\"));",
 									"    });",
@@ -8012,7 +8011,7 @@
 									"    });",
 									"",
 									"    // Test to compare the count of arrays",
-									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",					
+									"if(pm.environment.get('serviceCloudProvider') !== 'ibm') {\r",
 									"    pm.test(\"Compare the count of ctag arrays\", function() {",
 									"        pm.expect(jsonData.length).to.eql(pm.environment.get(\"ctagArrayCount\"));",
 									"    });",
@@ -24428,6 +24427,82 @@
 								{
 									"key": "email",
 									"value": "{{newuser}}"
+								},
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "USER REMOVE: Remove admin user from subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status to be 400 as the schema body does not contain kind\", function () {",
+									"       pm.response.to.have.status(400)",
+									"    });",
+									"",
+									"    pm.test(\"Check error message\", function () {",
+									"        pm.response.text().includes(\"[seismic-store-service] A user cannot remove himself.\")",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/user?email={{adminEmail}}&path=sd://{{tenant}}/{{subproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"user"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "{{adminEmail}}"
 								},
 								{
 									"key": "path",
