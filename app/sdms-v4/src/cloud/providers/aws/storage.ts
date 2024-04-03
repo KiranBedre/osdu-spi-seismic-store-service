@@ -14,8 +14,13 @@
 
 import { AWSConfig } from './config';
 import { AbstractStorage, StorageFactory } from '../../storage';
-import { S3, 
-    HeadObjectCommand, HeadObjectCommandInput, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+    S3,
+    HeadObjectCommand,
+    HeadObjectCommandInput,
+    PutObjectCommand,
+    DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { AwsSecrets } from './secrets';
 
 // Aws implementation
@@ -31,7 +36,7 @@ export class AWSStorage extends AbstractStorage {
         super();
         this.s3 = new S3({
             region: AWSConfig.AWS_REGION,
-            apiVersion: '2006-03-01'
+            apiVersion: '2006-03-01',
         });
         this.dataPartition = args.dataPartition;
         this.awsBucket = '';
@@ -47,7 +52,7 @@ export class AWSStorage extends AbstractStorage {
         await this.getBucket();
         const params = {
             Bucket: this.awsBucket,
-            Key: this.dataPartition+'/'+bucketName + '/',
+            Key: this.dataPartition + '/' + bucketName + '/',
             Body: '',
         };
         try {
@@ -63,7 +68,7 @@ export class AWSStorage extends AbstractStorage {
     public async deleteBucket(bucketName: string): Promise<void> {
         await this.getBucket();
 
-        const object = this.dataPartition+'/'+bucketName;
+        const object = this.dataPartition + '/' + bucketName;
         const params = {
             Bucket: this.awsBucket,
             Key: object + '/',
@@ -80,8 +85,8 @@ export class AWSStorage extends AbstractStorage {
     // folderName is a string without / at the end
     public async bucketExists(bucketName: string): Promise<boolean> {
         await this.getBucket();
-        const folder = this.dataPartition+'/'+bucketName;
-        const params : HeadObjectCommandInput = {
+        const folder = this.dataPartition + '/' + bucketName;
+        const params: HeadObjectCommandInput = {
             Bucket: this.awsBucket,
             Key: folder,
         };
@@ -89,7 +94,7 @@ export class AWSStorage extends AbstractStorage {
 
         try {
             const data = await this.s3.send(command);
-            
+
             return data.$metadata.httpStatusCode === 200;
         } catch (error) {
             return false;

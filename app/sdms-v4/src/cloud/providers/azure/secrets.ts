@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ export class AzureSecrets {
 
     // Instrumentation key
     private static AI_INSTRUMENTATION_KEY = 'appinsights-key';
+
+    public static DATA_PARTITION_COSMOS_ENDPOINT = 'cosmos-endpoint';
+    public static DATA_PARTITION_COSMOS_PRIMARY_KEY = 'cosmos-primary-key';
 
     // Redis keys
     public static REDIS_HOST = 'redis-hostname';
