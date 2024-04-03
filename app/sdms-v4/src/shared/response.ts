@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ export class Response {
             'X-Content-Type-Options': 'nosniff',
             'X-Frame-Options': 'DENY',
             'X-XSS-Protection': '1',
+            'content-security-policy': "default-src 'self'; frame-ancestors 'none'",
         };
         headers[Config.CORRELATION_ID] = res.locals[Config.CORRELATION_ID];
         res.set(headers)

@@ -13,23 +13,19 @@
 // See the License for the specific language governing permissions and
 // Limitations under the License.
 // ============================================================================
-import { SchemaEndpoint, SchemaEndpoints, SchemaRouter } from './schema';
-import { Config } from '../cloud/config';
-import { ConnectionStringRouter } from './connection';
-import { RootRouter } from './root';
-import { Router } from 'express';
-import { StatusRouter } from './status';
-import { InfoRouter } from './info';
+
+import { Router, Request as expRequest, Response as expResponse } from 'express';
+import { Error, Response } from '../../shared';
 
 const router = Router();
 
-router.use(Config.APIS_BASE_PATH + '/status', StatusRouter);
-router.use(Config.APIS_BASE_PATH + '/info', InfoRouter);
-for (const endpoint of SchemaEndpoints) {
-    router.use(Config.APIS_BASE_PATH + '/' + endpoint.name, SchemaRouter);
-}
-router.use(Config.APIS_BASE_PATH + '/connection-string', ConnectionStringRouter);
-router.use(Config.APIS_BASE_PATH + '/', RootRouter);
+// Get the root call
+router.all('/', async (req: expRequest, res: expResponse) => {
+    try {
+        throw Error.make(Error.Status.NOT_IMPLEMENTED, "'" + req.url + "'");
+    } catch (error) {
+        Response.writeError(res, error);
+    }
+});
 
-export { router as ServiceRouter };
-export { SchemaEndpoint, SchemaEndpoints };
+export { router as RootRouter };
