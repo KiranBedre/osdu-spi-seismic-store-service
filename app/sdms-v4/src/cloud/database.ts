@@ -14,28 +14,32 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Config, ConfigFactory } from '../../config';
-import { AzureInsights } from './insights';
+import { CloudFactory } from './cloud';
 
-import { AzureSecrets } from './secrets';
+export interface IDatabase {
+    getStorageUrlFromV3Catalogue(
+        subproject: string,
+        path: string,
+        name: string
+    ): Promise<{
+        bucket: string;
+        virtualFolder: string;
+    }>;
+}
 
-@ConfigFactory.register('azure')
-export class AzureConfig extends Config {
-    // Application Resource ID
-    public static APP_RESOURCE_ID: string;
+export abstract class AbstractDatabase implements IDatabase {
+    public abstract getStorageUrlFromV3Catalogue(
+        subproject: string,
+        path: string,
+        name: string
+    ): Promise<{
+        bucket: string;
+        virtualFolder: string;
+    }>;
+}
 
-    // Logs and Monitor
-    public static AI_INSTRUMENTATION_KEY: string;
-
-    // KeyVault Url
-    public static KEYVAULT_URL: string;
-
-    public async init(): Promise<void> {
-        // Load secrets
-        AzureConfig.KEYVAULT_URL = process.env.KEYVAULT_URL;
-        Config.checkRequiredConfig(AzureConfig.KEYVAULT_URL, 'KEYVAULT_URL');
-        await AzureSecrets.loadSecrets();
-        // Initialize insights
-        AzureInsights.initialize();
+export class DatabaseFactory extends CloudFactory {
+    public static build(providerLabel: string, args: { [key: string]: any } = {}): IDatabase {
+        return CloudFactory.build(providerLabel, AbstractDatabase, args) as IDatabase;
     }
 }

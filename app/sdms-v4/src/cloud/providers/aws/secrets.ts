@@ -17,7 +17,6 @@ import { AWSSSMhelper } from './ssmhelper';
 import { AWSConfig } from './config';
 
 export class AwsSecrets {
-
     public static async getTenantIdFromPartitionID(dataPartitionID: string): Promise<string> {
         const cache = getInMemoryCacheInstance();
         const cacheKey = 'aws-tenant' + dataPartitionID;
@@ -32,7 +31,10 @@ export class AwsSecrets {
         return tenantInfo;
     }
 
-    public static async getBucketFromPartitionID(dataPartitionID: string, awsSSMHelper: AWSSSMhelper = new AWSSSMhelper()): Promise<string> {
+    public static async getBucketFromPartitionID(
+        dataPartitionID: string,
+        awsSSMHelper: AWSSSMhelper = new AWSSSMhelper()
+    ): Promise<string> {
         const cache = getInMemoryCacheInstance();
         const cacheKey = 'aws-bucket' + dataPartitionID;
         const res = cache.get<string>(cacheKey);
@@ -48,7 +50,5 @@ export class AwsSecrets {
 
         cache.set<string>(cacheKey, awsBucket, 3600);
         return awsBucket;
-
     }
-
 }

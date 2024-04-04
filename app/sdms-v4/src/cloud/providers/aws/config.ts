@@ -35,7 +35,7 @@ export class AWSConfig extends Config {
         AWSConfig.LOGGER_LEVEL = process.env.LOGGER_LEVEL || 'info';
 
         // read from files
-        const fileLocation = process.env.PARAMETER_MOUNT_PATH
+        const fileLocation = process.env.PARAMETER_MOUNT_PATH;
         const keyFile = path.join(fileLocation, 'REDIS_KEY');
         const keyData = f.readFileSync(keyFile).toString();
         const keyContent = JSON.parse(keyData).token;

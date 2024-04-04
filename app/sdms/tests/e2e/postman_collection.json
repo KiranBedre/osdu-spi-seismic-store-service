@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "3dee0cb6-1c0c-4c82-8930-df436925a1db",
+		"_postman_id": "331d16a2-d70a-4f8f-90b5-77b5231e6fa0",
 		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -24728,6 +24728,82 @@
 								{
 									"key": "email",
 									"value": "{{newuser}}"
+								},
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "USER REMOVE: Remove admin user from subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status to be 400 as the schema body does not contain kind\", function () {",
+									"       pm.response.to.have.status(400)",
+									"    });",
+									"",
+									"    pm.test(\"Check error message\", function () {",
+									"        pm.response.text().includes(\"[seismic-store-service] A user cannot remove himself.\")",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/user?email={{adminEmail}}&path=sd://{{tenant}}/{{subproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"user"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "{{adminEmail}}"
 								},
 								{
 									"key": "path",

@@ -23,7 +23,7 @@ export class AWSSSMhelper {
         this.ssm = new SSM({
             region: AWSConfig.AWS_REGION,
             apiVersion: '2014-11-06',
-        })
+        });
     }
 
     public async getSSMParameter(paramName: string): Promise<string> {

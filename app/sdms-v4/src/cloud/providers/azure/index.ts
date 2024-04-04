@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -20,3 +20,4 @@ export { AzureSecrets } from './secrets';
 export { AzureReadiness } from './readiness';
 export { AzureCloudStorage } from './storage';
 export { AzureLogger } from './logger';
+export { AzureCosmosDb } from './database';
