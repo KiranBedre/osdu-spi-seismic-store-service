@@ -15,6 +15,7 @@
 // ============================================================================
 
 import { CloudFactory } from './cloud';
+import { Error } from '../shared';
 
 export interface IDatabase {
     getStorageUrlFromV3Catalogue(
@@ -28,14 +29,17 @@ export interface IDatabase {
 }
 
 export abstract class AbstractDatabase implements IDatabase {
-    public abstract getStorageUrlFromV3Catalogue(
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    public getStorageUrlFromV3Catalogue(
         subproject: string,
         path: string,
         name: string
     ): Promise<{
         bucket: string;
         virtualFolder: string;
-    }>;
+    }> {
+        throw Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.');
+    }
 }
 
 export class DatabaseFactory extends CloudFactory {
