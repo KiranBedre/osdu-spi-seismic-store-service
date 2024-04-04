@@ -77,7 +77,6 @@ export class ConnectionsHandler {
             const storageCredentials = await CredentialsFactory.build(Config.CLOUD_PROVIDER, {
                 dataPartition,
             }).getStorageCredentials(result.bucket, readonly, dataPartition, result.virtualFolder);
-            console.log(storageCredentials);
             return storageCredentials;
         }
     }
@@ -101,7 +100,7 @@ export class ConnectionsHandler {
         const filePathList = filePath.replace('sd://', '').split('/');
 
         if (filePathList === null || name === null) {
-            throw Error.makeForHTTPRequest('Cannot get SDMS-v3 dataset record');
+            Error.makeForHTTPRequest('The SDMS-V3 storage uri cannot be extracted from the specified record.');
         }
 
         filePathList.shift(); // remove tenant
