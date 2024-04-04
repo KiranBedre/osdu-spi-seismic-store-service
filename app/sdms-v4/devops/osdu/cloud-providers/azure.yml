@@ -96,38 +96,36 @@ sdms_v4_azure_deploy:
   environment: $DEPLOY_ENVIRONMENT_AZURE
   needs:
     - sdms_v4_azure_containerize
+    - azure_containerize_helm
   script:
-    - cd app/$SDMS_V4_SERVICE
     - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash -s -- --version v3.9.1
-    # - helm show chart $HELM_CHART_OCI_V4 --version $HELM_CHART_OCI_VERSION
+    - helm show chart $HELM_CHART_OCI --version $HELM_CHART_OCI_VERSION
     # Uninstall if found in default namespace
     - helm uninstall ${SDMS_V4_SERVICE_NAME} -n default --wait || echo [INFO] No ${SDMS_V4_SERVICE_NAME} in default
     # Uninstall if found in proper namespace
     - helm uninstall ${SDMS_V4_SERVICE_NAME} -n ${NAMESPACE} --wait || echo [INFO] No seismic-store-service
-    # Display helm chart
-    - >
-      helm template ${SDMS_V4_SERVICE_NAME} devops/azure/chart
-      --set global.podidentity=${SDMS_SERVICE_NAME}-identity
-      --set configEnv.keyvaultUrl="${ENV_VAULT}"
-      --set configEnv.desServiceHost="https://${AZURE_DNS_NAME}"
-      --set container.image=${AZURE_REGISTRY}.azurecr.io/${SDMS_V4_SERVICE_NAME}
-      --set container.tag=${CI_COMMIT_SHA}
-      --set istioDnsHost=${AZURE_DNS_NAME}
-      --set global.namespace=${NAMESPACE}
-      --create-namespace
-      -n ${NAMESPACE} -f devops/azure/chart/values.yaml --wait --timeout 10m
     # Install/upgrade helm chart
     - >
-      helm upgrade -i ${SDMS_V4_SERVICE_NAME} devops/azure/chart
+      helm upgrade -i ${SDMS_V4_SERVICE_NAME} $HELM_CHART_OCI --version $HELM_CHART_OCI_VERSION
       --set global.podidentity=${SDMS_SERVICE_NAME}-identity
+      --set azure.tenant=${AZURE_TENANT_ID}
+      --set azure.subscription=$AZURE_SUBSCRIPTION_ID
+      --set azure.resourcegroup=$(az keyvault secret show --id https://${ENV_VAULT}.vault.azure.net/secrets/base-name-cr --query value -otsv)-rg
+      --set azure.identity=$(az keyvault secret show --id https://${ENV_VAULT}.vault.azure.net/secrets/base-name-cr --query value -otsv)-osdu-identity
+      --set azure.identity_id=$(az keyvault secret show --id https://${ENV_VAULT}.vault.azure.net/secrets/osdu-identity-id --query value -otsv)
+      --set azure.keyvault.name=${ENV_VAULT}
+      --set azure.acr=${AZURE_REGISTRY}.azurecr.io
+      --set ingress.dns=${AZURE_DNS_NAME}
+      --set azure.service_account_id=$(az keyvault secret show --id https://${ENV_VAULT}.vault.azure.net/secrets/app-dev-sp-username --query value -otsv)
       --set configEnv.keyvaultUrl="${ENV_VAULT}"
       --set configEnv.desServiceHost="https://${AZURE_DNS_NAME}"
-      --set container.image=${AZURE_REGISTRY}.azurecr.io/${SDMS_V4_SERVICE_NAME}
-      --set container.tag=${CI_COMMIT_SHA}
+      --set configuration[0].container.image=${SDMS_V4_SERVICE_NAME}
+      --set configuration[0].container.tag=${CI_COMMIT_SHA}
+      --set ingress.dns=${AZURE_DNS_NAME}
       --set istioDnsHost=${AZURE_DNS_NAME}
       --set global.namespace=${NAMESPACE}
       --create-namespace
-      -n ${NAMESPACE} -f devops/azure/chart/values.yaml --wait --timeout 10m
+      -n ${NAMESPACE} -f app/sdms-v4/devops/azure/${SDMS_V4_SERVICE_NAME}.osdu.values.yaml --wait --timeout 10m
     # Wait for service to be running to start
     - |
       kubectl rollout status deployment.v1.apps/${SDMS_V4_SERVICE_NAME} -n ${NAMESPACE} --timeout=900s
@@ -182,3 +180,16 @@ sdms_v4_azure_test:
       - app/sdms-v4/junit-e2e-test-report.xml
     reports:
       junit: app/sdms-v4/junit-e2e-test-report.xml
+
+sdms_v4_azure_publish:
+  needs:
+    - sdms_v4_azure_deploy
+    - sdms_v4_azure_containerize
+    - azure_containerize_helm
+  extends: .azure_publish
+  environment: $DEPLOY_ENVIRONMENT_AZURE
+  variables:
+    SHA_IMAGE: ${SDMS_V4_SERVICE_NAME}:${CI_COMMIT_SHA}
+  script:
+   - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/seismic-metadata:${AZ_VER}
+   - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
