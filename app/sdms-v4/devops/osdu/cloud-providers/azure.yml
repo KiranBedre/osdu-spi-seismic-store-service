@@ -191,5 +191,5 @@ sdms_v4_azure_publish:
   variables:
     SHA_IMAGE: ${SDMS_V4_SERVICE_NAME}:${CI_COMMIT_SHA}
   script:
-   - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/seismic-metadata:${AZ_VER}
+   - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/seismic-ddms-v4:${AZ_VER}
    - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
