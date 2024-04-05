@@ -106,7 +106,7 @@ curl --location --request POST "$ENTITLEMENTS_URL"'groups' \
 }
 '
 
-./tests/e2e/run_e2e_tests.sh --seistore-svc-url=$SEISMIC_DMS_URL --seistore-svc-api-key='xx' --user-idtoken=$token --tenant=$tenant --subproject=$subproject --admin-email=$ADMIN_USER --datapartition=$tenant --legaltag01=$legaltag --legaltag02=$legaltag --newuser=$newuser --newusergroup=$newusergroup
+./tests/e2e/run_e2e_tests.sh --seistore-svc-url=$SEISMIC_DMS_URL --seistore-svc-api-key='xx' --user-idtoken=$token --tenant=$tenant --subproject=$subproject --admin-email=$ADMIN_USER --datapartition=$tenant --legaltag01=$legaltag --legaltag02=$legaltag --newuser=$newuser --newusergroup=$newusergroup --VCS-Provider="gitlab"
 TEST_EXIT_CODE=$?
 mv newman newman_test_reports
 popd
