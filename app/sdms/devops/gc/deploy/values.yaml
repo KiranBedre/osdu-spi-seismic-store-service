@@ -22,7 +22,7 @@ data:
   limitsMemory: "1G"
   serviceAccountName: "seismic-store"
   imagePullPolicy: "IfNotPresent"
-  redisImage: "docker.io/library/redis:7"
+  redisImage: "docker.io/library/redis:7.2-alpine"
   image: ""
 
 conf:
