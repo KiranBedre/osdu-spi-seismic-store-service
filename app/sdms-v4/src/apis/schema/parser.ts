@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -33,16 +33,26 @@ export class Parser {
             if (!validationResult || !validationResult.valid) {
                 throw Error.make(Error.Status.BAD_REQUEST, 'Schema validation error: ' + validationResult.error);
             }
+
+            // check if the kind is acceptable with the current endpoint
+            this.checkKinds(record.kind, Context.schemaEndpoint.kind);
         }
         return req.body;
     }
 
     public static get(req: expRequest): string {
-        return req.params.id as string;
+        const recordId = req.params.id as string;
+        // check if the id is acceptable with the current endpoint
+        Parser.checkIds(recordId);
+        return recordId;
     }
 
     public static getVersion(req: expRequest): [string, string] {
-        return [req.params.id as string, req.params.version as string];
+        const recordId = req.params.id as string;
+        const recordVersion = req.params.version as string;
+        // check if the id is acceptable with the current endpoint
+        Parser.checkIds(recordId);
+        return [recordId, recordVersion];
     }
 
     public static async listSchemas(req: expRequest, dataPartition: string): Promise<SchemaListRequest> {
@@ -52,6 +62,63 @@ export class Parser {
                 paginationLimit: +req.query['page-limit'],
                 paginationCursor: req.query['next-page-token'] as string,
             },
+        };
+    }
+
+    public static checkKinds(recordKind: string, endpointKind: string): void {
+        const recKind = this.kindParser(recordKind);
+        const endKind = this.kindParser(endpointKind);
+        if (recKind.kindLabel != endKind.kindLabel) {
+            throw Error.make(
+                Error.Status.BAD_REQUEST,
+                `Schema validation error: Record kind ${recKind.kindLabel} not valid.`
+            );
+        }
+        if (recKind.kindVersionMajor != endKind.kindVersionMajor) {
+            throw Error.make(
+                Error.Status.BAD_REQUEST,
+                `Schema validation error: Record kind version ${recKind.kindVersionMajor}not valid.`
+            );
+        }
+    }
+
+    public static checkIds(recordId: string): void {
+        const tmp1 = Context.schemaEndpoint.kind.split('--')[0].split(':');
+        const tmp2 = Context.schemaEndpoint.kind.split('--')[1].split(':');
+        const pattern = `^[\\w\\-\\.]+:${tmp1[tmp1.length - 1]}\\-\\-${tmp2[0]}:[\\w\\-\\.\\:\\%]+$`;
+        if (new RegExp(pattern).test(recordId) == false) {
+            throw Error.make(
+                Error.Status.BAD_REQUEST,
+                `Schema validation error: record id "${recordId}" 
+                does not match endpoint required pattern "${pattern}".`
+            );
+        }
+    }
+
+    private static kindParser(kind: string): {
+        kindLabel: string;
+        kindVersion: string;
+        kindVersionMajor: string;
+        kindVersionMinor: string;
+        kindVersionPatch: string;
+    } {
+        const kindLabel = kind.substring(0, kind.lastIndexOf(':'));
+        const kindVersion = kind.substring(kind.lastIndexOf(':') + 1);
+        const kindVersionMajor = kindVersion.split('.')[0];
+        const kindVersionMinor = kindVersion.split('.')[1];
+        const kindVersionPatch = kindVersion.split('.')[2];
+        return {
+            kindLabel,
+            kindVersion,
+            kindVersionMajor,
+            kindVersionMinor,
+            kindVersionPatch,
+        } as {
+            kindLabel: string;
+            kindVersion: string;
+            kindVersionMajor: string;
+            kindVersionMinor: string;
+            kindVersionPatch: string;
         };
     }
 }
