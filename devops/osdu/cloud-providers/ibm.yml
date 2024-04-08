@@ -3,5 +3,6 @@ include:
   # ibm-global
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/ibm.yml"
+    ref: release/0.26
 
   - local: "devops/osdu/cloud-providers/ibm-common-pipeline.yml"
