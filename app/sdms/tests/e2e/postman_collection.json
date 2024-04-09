@@ -5448,7 +5448,7 @@
 									"    ",
 									"    //test for dataset new name",
 									"    pm.test(\"Verify new Dataset name\", function () {",
-									"        pm.expect(jsonData.name).to.eql(pm.environment.get('newDatasetName'));",
+									"        pm.expect(jsonData.name).to.eql(\"newdataset\");",
 									"    });",
 									"    ",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
@@ -5464,18 +5464,7 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"function makeName_dataset(length) {\r",
-									"   var result           = '';\r",
-									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
-									"   var charactersLength = characters.length;\r",
-									"   for ( var i = 0; i < length - 1; i++ ) {\r",
-									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
-									"   }\r",
-									"   return result;\r",
-									"}\r",
-									"\r",
-									"\r",
-									"postman.setEnvironmentVariable(\"newDatasetName\", makeName_dataset(10));"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -5508,7 +5497,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"dataset_new_name\": \"{{newDatasetName}}\"\n}",
+							"raw": "{\n\t\"dataset_new_name\": \"newdataset\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
