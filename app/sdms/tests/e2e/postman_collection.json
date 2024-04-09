@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "904971e5-1afe-429f-9fa4-ca5580c07300",
+		"_postman_id": "ec967566-e761-49dd-8427-edf8b40b7f88",
 		"name": "SDMS-E2E ver.M23 - Release 0.26",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -5028,7 +5028,7 @@
 					"response": []
 				},
 				{
-					"name": "DATASET PATCH 2: Patch a dataset dsx02 metadata",
+					"name": "DATASET PATCH: Patch a dataset dsx02 with filemetadata",
 					"event": [
 						{
 							"listen": "test",
@@ -5049,7 +5049,123 @@
 									"        pm.expect(jsonData.sbit_count).to.eql(0);",
 									"    });",
 									"",
-									"    pm.environment.unset('datasetdsx02sbit');",
+									"    // Test for metadata",
+									"    pm.test(\"Verify metadata\", function () {",
+									"",
+									"        // Check if metadata exists",
+									"        pm.expect(jsonData.metadata).to.exist;",
+									"",
+									"        // Check specific keys and values in metadata",
+									"        pm.expect(jsonData.metadata.k1).to.eql(\"v1\");",
+									"        pm.expect(jsonData.metadata.k2).to.eql(\"v2\");",
+									"        pm.expect(jsonData.metadata.k3.k4).to.eql(\"v4\");",
+									"    });",
+									"",
+									"    // Test for filemetadata",
+									"    pm.test(\"Verify filemetadata\", function () {",
+									"     ",
+									"        // Check if filemetadata exists",
+									"        pm.expect(jsonData.filemetadata).to.exist;",
+									"",
+									"        // Check specific keys and values in filemetadata",
+									"        pm.expect(jsonData.filemetadata.type).to.eql(\"GENERIC\");",
+									"        pm.expect(jsonData.filemetadata.size).to.eql(1021);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"metadata\": { \"k1\": \"v1\", \"k2\": \"v2\", \"k3\": { \"k4\": \"v4\" } },\n\t\"filemetadata\": {\"type\": \"GENERIC\", \"size\": 1021 }\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}?path={{testPathEncoded}}&close={{datasetdsx02sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{datasetdsx02sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET PATCH: Patch a dataset dsx02 with readonly",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Test for readonly",
+									"    pm.test(\"Verify readonly property\", function () {",
+									"       ",
+									"        // Check if readonly property exists",
+									"        pm.expect(jsonData.readonly).to.exist;",
+									"",
+									"        // Check the value of readonly property",
+									"        pm.expect(jsonData.readonly).to.be.true;",
+									"    });",
 									"    ",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
@@ -5088,10 +5204,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"metadata\": { \"k1\": \"v1\", \"k2\": \"v2\", \"k3\": { \"k4\": \"v4\" } },\n\t\"filemetadata\": {\"type\": \"GENERIC\", \"size\": 1021 },\n\t\"last_modified_date\": true\n}"
+							"raw": "{\n\t\"readonly\": true\n}"
 						},
 						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}?path={{testPathEncoded}}&close={{datasetdsx02sbit}}",
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}?path={{testPathEncoded}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -5111,7 +5227,312 @@
 								},
 								{
 									"key": "close",
-									"value": "{{datasetdsx02sbit}}"
+									"value": "{{datasetdsx02sbit}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET PATCH: Patch a dataset dsx02 with gtags",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Test for gtags",
+									"    pm.test(\"Verify gtags property\", function () {",
+									"    ",
+									"        // Check if gtags property exists",
+									"        pm.expect(jsonData.gtags).to.exist;",
+									"",
+									"        // Check the length of gtags array",
+									"        pm.expect(jsonData.gtags.length).to.eql(3);",
+									"",
+									"        // Check specific values in gtags array",
+									"        pm.expect(jsonData.gtags).to.include(\"tag01\");",
+									"        pm.expect(jsonData.gtags).to.include(\"tag02\");",
+									"        pm.expect(jsonData.gtags).to.include(\"tag03\");",
+									"    });",
+									"",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"gtags\": [\n        \"tag01\",\n        \"tag02\",\n        \"tag03\"\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{datasetdsx02sbit}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET PATCH: Patch a dataset dsx02 with ltag",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    //test for ltag",
+									"    pm.test(\"Verify new ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get('legaltag02'));",
+									"    });",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"ltag\": \"{{legaltag02}}\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{datasetdsx02sbit}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET PATCH: Patch a dataset dsx02 with dataset new name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    //test for dataset new name",
+									"    pm.test(\"Verify new Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('newDatasetName'));",
+									"    });",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeName_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"newDatasetName\", makeName_dataset(10));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"dataset_new_name\": \"{{newDatasetName}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx02}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx02}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
 								}
 							]
 						}
@@ -5207,6 +5628,8 @@
 									"pm.environment.unset('randomDatasetName');",
 									"pm.environment.unset('OriginalFiles')",
 									"pm.environment.unset('CurrentlFiles')",
+									"pm.environment.unset('datasetdsx02sbit');",
+									"pm.environment.unset('newDatasetName');",
 									"postman.setEnvironmentVariable('execCounter', 1)",
 									"",
 									"console.log('Dataset variables were removed for datasets folder');"
