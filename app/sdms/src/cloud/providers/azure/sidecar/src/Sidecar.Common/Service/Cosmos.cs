@@ -177,15 +177,14 @@ public class Cosmos : IDataAccess
     {
         if (!_cosmosClients.ContainsKey(cs))
         {
-            _cosmosClients[cs] = new CosmosClient(cs, new CosmosClientOptions()
+            _cosmosClients.Add(cs, new CosmosClient(cs, new CosmosClientOptions()
             {
                 SerializerOptions = new CosmosSerializationOptions()
                 {
                     IgnoreNullValues = true
                 },
                 ConnectionMode = ConnectionMode.Direct,
-            });
+            }));
         }
     }
-
 }
