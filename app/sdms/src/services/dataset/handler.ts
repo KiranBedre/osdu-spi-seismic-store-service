@@ -176,9 +176,14 @@ export class DatasetHandler {
     }
 
     private static async datasetExists(subproject: SubProjectModel, journalClient: IJournal, dataset: DatasetModel) {
+        const strongEmulationFlag = Config.ENABLE_STRONG_CONSISTENCY_EMULATION;
+
         Config.disableStrongConsistencyEmulation();
         const datasetAlreadyExist = await this.findDataset(subproject, journalClient, dataset);
-        Config.enableStrongConsistencyEmulation();
+
+        if(strongEmulationFlag) {
+            Config.enableStrongConsistencyEmulation();
+        }
 
         // check if dataset already exist
         if (datasetAlreadyExist) {
@@ -263,9 +268,7 @@ export class DatasetHandler {
             if (storageSchemaRecord) {
                 delete dataset.storageSchemaRecordType;
             }
-
             return dataset;
-
         } catch (err) {
 
             // rollback
@@ -680,10 +683,14 @@ export class DatasetHandler {
 
             datasetIN.name = newName;
 
+            const strongEmulationFlag = Config.ENABLE_STRONG_CONSISTENCY_EMULATION;
+
             Config.disableStrongConsistencyEmulation();
             const datasetAlreadyExist = await this.findDataset(subproject, journalClient, datasetIN);
-            Config.enableStrongConsistencyEmulation();
 
+            if(strongEmulationFlag) {
+                Config.enableStrongConsistencyEmulation();
+            }
             // check if dataset already exist
             if (datasetAlreadyExist) {
                 throw (Error.make(Error.Status.ALREADY_EXISTS,
@@ -1006,10 +1013,10 @@ export class DatasetHandler {
             tenant, datasets[0].subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
-
         // Check if the required datasets exist
-        Config.disableStrongConsistencyEmulation();
         let results: boolean[] = [];
+        const strongEmulationFlag = Config.ENABLE_STRONG_CONSISTENCY_EMULATION;
+        Config.disableStrongConsistencyEmulation();
         if (subproject.enforce_key) {
             if (Config.CLOUDPROVIDER !== 'azure') {
                 for (const dataset of datasets) {
@@ -1023,11 +1030,12 @@ export class DatasetHandler {
                 results.push((await DatasetDAO.get(journalClient, dataset))[0] !== undefined);
             }
         }
-        Config.enableStrongConsistencyEmulation();
 
+        if(strongEmulationFlag) {
+            Config.enableStrongConsistencyEmulation();
+        }
         return results;
     }
-
     // Retrieve the dataset size for a list of datasets
     // Required role: subproject.viewer
     private static async sizes(req: expRequest, tenant: TenantModel, subproject: SubProjectModel) {
@@ -1044,10 +1052,11 @@ export class DatasetHandler {
             tenant, datasets[0].subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
-
         // get size from each datasets
-        Config.disableStrongConsistencyEmulation();
         let results: number[] = [];
+        const strongEmulationFlag = Config.ENABLE_STRONG_CONSISTENCY_EMULATION;
+
+        Config.disableStrongConsistencyEmulation();
         if (subproject.enforce_key) {
             if (Config.CLOUDPROVIDER !== 'azure') {
                 for (let dataset of datasets) {
@@ -1073,8 +1082,10 @@ export class DatasetHandler {
                     -1 : dataset.filemetadata.size);
             }
         }
-        Config.enableStrongConsistencyEmulation();
 
+        if(strongEmulationFlag) {
+            Config.enableStrongConsistencyEmulation();
+        }
         return results;
     }
 
