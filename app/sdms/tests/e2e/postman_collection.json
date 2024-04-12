@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ec967566-e761-49dd-8427-edf8b40b7f88",
+		"_postman_id": "9872b994-4a2f-4cf2-ad80-261662df58a1",
 		"name": "SDMS-E2E ver.M24 - Release 0.27",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -5224,11 +5224,6 @@
 								{
 									"key": "path",
 									"value": "{{testPathEncoded}}"
-								},
-								{
-									"key": "close",
-									"value": "{{datasetdsx02sbit}}",
-									"disabled": true
 								}
 							]
 						}
@@ -5326,11 +5321,6 @@
 								{
 									"key": "path",
 									"value": "{{testPathEncoded}}"
-								},
-								{
-									"key": "close",
-									"value": "{{datasetdsx02sbit}}",
-									"disabled": true
 								}
 							]
 						}
@@ -5359,6 +5349,12 @@
 									"    pm.test(\"Verify new ltag\", function () {",
 									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get('legaltag02'));",
 									"    });",
+									"",
+									"    //skip dataset patch with new dataset name test for AWS as it not support",
+									"    const provider = pm.environment.get('serviceCloudProvider');",
+									"    if (provider === 'aws') {",
+									"        postman.setNextRequest('DATASET DELETE 2: Delete a dataset dsx02');",
+									"    }",
 									"    ",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
@@ -5417,11 +5413,6 @@
 								{
 									"key": "path",
 									"value": "{{testPathEncoded}}"
-								},
-								{
-									"key": "close",
-									"value": "{{datasetdsx02sbit}}",
-									"disabled": true
 								}
 							]
 						}
@@ -5448,7 +5439,7 @@
 									"    ",
 									"    //test for dataset new name",
 									"    pm.test(\"Verify new Dataset name\", function () {",
-									"        pm.expect(jsonData.name).to.eql(\"newdataset\");",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('newDatasetName'));",
 									"    });",
 									"    ",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
@@ -5464,7 +5455,18 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									""
+									"function makeName_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"newDatasetName\", makeName_dataset(10));"
 								],
 								"type": "text/javascript"
 							}
@@ -5497,7 +5499,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"dataset_new_name\": \"newdataset\"\n}",
+							"raw": "{\n\t\"dataset_new_name\": \"{{newDatasetName}}\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
