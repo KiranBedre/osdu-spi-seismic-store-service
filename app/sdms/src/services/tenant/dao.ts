@@ -66,7 +66,7 @@ export class TenantDAO {
     public static async getAll(): Promise<TenantModel[]> {
 
         if (Config.TENANT_JOURNAL_ON_DATA_PARTITION) {
-            throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'The invoked method is not implemented for ' +
+            throw (Error.make(Error.Status.BAD_REQUEST, 'Tenant must be provided for ' +
                 'solutions having tenant\' journal deployed on client resources'));
         }
 

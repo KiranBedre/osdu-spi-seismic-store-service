@@ -145,7 +145,7 @@ export class TenantHandler {
                 }
             }
         } catch (error) {
-            if ((error as ErrorModel).error.code === Error.Status.NOT_IMPLEMENTED) {
+            if ((error as ErrorModel).error.code === Error.Status.BAD_REQUEST) {
                 return Config.SDPATHPREFIX + dataPartition;
             } else { throw error; }
         }
