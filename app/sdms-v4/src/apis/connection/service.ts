@@ -17,8 +17,8 @@
 import { Router, Request as expRequest, Response as expResponse } from 'express';
 
 import { ConnectionsHandler } from './handler';
+import { Context } from '../../shared';
 import { Operation } from './operations';
-import { Context } from '../../shared/context';
 
 const ConnectionStringRouter = Router();
 

@@ -21,16 +21,23 @@ export class Context {
     public static schemaEndpoint: SchemaEndpoint;
     public static endpointId: string;
 
-    public static reset() {
-        Context.schemaEndpoint = undefined;
-        Context.endpointId = undefined;
-    }
-
-    public static getEndpointSchema(req: express.Request) {
+    public static setSchemaReferenceFromEndpointName(req: express.Request) {
         for (const endpoint of SchemaEndpoints) {
             if (req.originalUrl.indexOf('/' + endpoint.name + '/') !== -1) {
-                Context.schemaEndpoint = endpoint;
+                this.schemaEndpoint = endpoint;
                 break;
+            }
+        }
+    }
+
+    public static setSchemaReferenceFromRecordId(req: express.Request) {
+        const recordId = req?.params?.id as string;
+        if (recordId.length > 0) {
+            for (const endpoint of SchemaEndpoints) {
+                if (recordId.match(endpoint.idPattern)) {
+                    this.schemaEndpoint = endpoint;
+                    break;
+                }
             }
         }
     }

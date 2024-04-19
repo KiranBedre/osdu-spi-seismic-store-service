@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
 // ============================================================================
 
 import axios, { AxiosRequestConfig } from 'axios';
-import { Config } from './shared/config';
-import { Utils } from './shared/utils';
+import { Config, Utils } from './shared';
 import { expect } from 'chai';
 
 export class TestStatus {
@@ -40,7 +39,7 @@ export class TestStatus {
         it('service status', async () => {
             const result = await Utils.sendAxiosRequest(axios.get(Config.url + '/status', this.getRequestOptions()));
             expect(result?.data.status).to.be.equals('running');
-        });
+        }).retries(Config.retries);
     }
 
     private readiness() {
@@ -49,6 +48,6 @@ export class TestStatus {
                 axios.get(Config.url + '/status/readiness', this.getRequestOptions())
             );
             expect(result?.data.ready).to.be.true;
-        });
+        }).retries(Config.retries);
     }
 }

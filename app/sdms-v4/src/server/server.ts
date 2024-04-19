@@ -14,9 +14,8 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Error, Response } from '../shared';
+import { Context, Error, Response } from '../shared';
 import { Config } from '../cloud/config';
-import { Context } from '../shared/context';
 import { LoggerFactory } from '../cloud/logger';
 import { ServiceRouter } from '../apis';
 import cors from 'cors';
@@ -51,8 +50,8 @@ export class Server {
 
     // Set of operations to perform before serving the request
     public sdmsMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
-        // Reset request context
-        Context.reset();
+        // Reset request endpointId
+        Context.endpointId = undefined;
 
         // Create and set a correlation-id string if not exist
         if (!req.headers[Config.CORRELATION_ID]) {
@@ -94,7 +93,7 @@ export class Server {
         }
 
         // Identify the endpoint schema
-        Context.getEndpointSchema(req);
+        Context.setSchemaReferenceFromEndpointName(req);
 
         // Continue service the request
         next();

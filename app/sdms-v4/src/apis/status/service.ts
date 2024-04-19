@@ -16,9 +16,9 @@
 
 import { Router, Request as expRequest, Response as expResponse } from 'express';
 
+import { Context } from '../../shared';
 import { Operation } from './operations';
 import { StatusHandler } from './handler';
-import { Context } from '../../shared/context';
 
 const router = Router();
 
