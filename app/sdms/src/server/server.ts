@@ -75,7 +75,17 @@ export class Server {
 
         this.app = express();
         this.app.use(express.urlencoded({ extended: false }));
-        this.app.use(express.json({ limit: '50MB' }));
+        this.app.use(express.json({ limit: '50MB' }), (error, req, res, next) => {
+            if (error) {
+                if ((error.message as string).match('^Unexpected token . in JSON')) {
+                    Response.writeError(res, Error.make(Error.Status.BAD_REQUEST, error.message));
+                } else {
+                    Response.writeError(res, Error.make(Error.Status.UNKNOWN, error.message));
+                }
+            } else {
+                next();
+            }
+        });
         this.app.disable('x-powered-by');
         this.app.use(cors(this.corsOptions));
         this.app.options('*', cors());
