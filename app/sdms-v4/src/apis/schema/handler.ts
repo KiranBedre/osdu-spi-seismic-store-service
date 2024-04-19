@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
 // ============================================================================
 
 import { Config, StorageFactory } from '../../cloud';
-import { Response, Utils } from '../../shared';
+import { Context, Response, Utils } from '../../shared';
 import { Request as expRequest, Response as expResponse } from 'express';
-import { Context } from '../../shared/context';
 import { Operation } from './operations';
 import { Parser } from './parser';
 import { SearchService } from '../../services/search';
@@ -25,8 +24,8 @@ import { StorageCoreService } from '../../services';
 
 export class SchemaHandler {
     public static async handler(req: expRequest, res: expResponse, op: Operation) {
-        const dataPartition = req.headers[Config.DATA_PARTITION_ID] as string;
         try {
+            const dataPartition = req.headers[Config.DATA_PARTITION_ID] as string
             if (op === Operation.RegisterPatch) {
                 Response.writeOK(res, await this.register(req, dataPartition));
             } else if (op === Operation.Get) {

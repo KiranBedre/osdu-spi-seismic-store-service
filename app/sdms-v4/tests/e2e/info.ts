@@ -15,8 +15,7 @@
 // ============================================================================
 
 import axios, { AxiosRequestConfig } from 'axios';
-import { Config } from './shared/config';
-import { Utils } from './shared/utils';
+import { Config, Utils } from './shared';
 import { expect } from 'chai';
 
 export class TestInfo {
@@ -39,7 +38,7 @@ export class TestInfo {
         it('service info', async () => {
             const result = await Utils.sendAxiosRequest(axios.get(Config.url + '/info', this.getRequestOptions()));
             expect(result?.data.info).to.not.be.undefined;;
-        });
+        }).retries(Config.retries);
     }
 
 }

@@ -14,8 +14,7 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Error, Params, Schema } from '../../shared';
-import { Context } from '../../shared/context';
+import { Context, Error, Params, Schema } from '../../shared';
 import { SchemaListRequest } from './model';
 import { Request as expRequest } from 'express';
 

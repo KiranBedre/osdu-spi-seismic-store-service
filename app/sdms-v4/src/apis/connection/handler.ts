@@ -15,9 +15,8 @@
 // ============================================================================
 
 import { Config, CredentialsFactory, DatabaseFactory } from '../../cloud';
-import { Error, Response, Utils } from '../../shared';
+import { Context, Error, Response, Utils } from '../../shared';
 import { Request as expRequest, Response as expResponse } from 'express';
-import { Context } from '../../shared/context';
 import { Operation } from './operations';
 import { Parser } from './parser';
 import { StorageCoreService } from '../../services';
@@ -25,14 +24,18 @@ import { DatasetRecordV3 } from './model';
 
 export class ConnectionsHandler {
     public static async handler(req: expRequest, res: expResponse, op: Operation) {
-        if (Context.schemaEndpoint && Context.schemaEndpoint.hasBulks === false) {
-            throw Error.make(
-                Error.Status.BAD_REQUEST,
-                'Connection strings cannot be released for ' + Context.schemaEndpoint.kind
-            );
-        }
-        const dataPartition = req.headers[Config.DATA_PARTITION_ID] as string;
         try {
+            Context.setSchemaReferenceFromRecordId(req);
+            if (!Context.schemaEndpoint) {
+                throw Error.make(Error.Status.BAD_REQUEST, 'The specified record id is not supported by SDMS');
+            }
+            if (Context.schemaEndpoint && !Context.schemaEndpoint.hasBulks) {
+                throw Error.make(
+                    Error.Status.BAD_REQUEST,
+                    'Connection strings cannot be released for ' + Context.schemaEndpoint.kind
+                );
+            }
+            const dataPartition = req.headers[Config.DATA_PARTITION_ID] as string;
             if (op === Operation.GetUploadConnectionString) {
                 Response.writeOK(res, await this.getConnectionString(req, dataPartition, false));
             } else if (op === Operation.GetDownloadConnectionString) {
