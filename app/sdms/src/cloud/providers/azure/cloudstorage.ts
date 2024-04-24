@@ -136,11 +136,17 @@ export class AzureCloudStorage extends AbstractStorage {
             }
             if (blobUrlsSplit.length) {
                 const batchClient = await this.getBlobBatchClient();
-                for (const chunk of blobUrlsSplit) {
-                    batchClient.deleteBlobs(chunk, this.defaultAzureCredential).catch((error) => {
-                        console.error(error)
-                    })
-                };
+                if(Config.FALLBACK_DATASET_DELETE) {
+                    for (const chunk of blobUrlsSplit) {
+                        batchClient.deleteBlobs(chunk, this.defaultAzureCredential).catch((error) => {
+                            console.error(error)
+                        })
+                    };
+                } else {
+                    for (const chunk of blobUrlsSplit) {
+                        await batchClient.deleteBlobs(chunk, this.defaultAzureCredential);
+                    }
+                }
             }
         } else {  // datasets managed as separate containers
             await this.deleteBucket(bucketName);

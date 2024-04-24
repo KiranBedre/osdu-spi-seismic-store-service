@@ -79,9 +79,9 @@ export class AzureInsightsLogger extends AbstractLogger {
                 try {
                     let azp = Utils.getAzpFromPayload(httpRequest.headers.authorization);
                     if (Auth.isImpersonationToken(httpRequest.headers.authorization)) {
-                        const context = httpRequest.get('impersonation-token-context');
-                        if (context) {
-                            const tokenContext = ImpersonationTokenHandler.decodeContext(context);
+                        const impContext = httpRequest.get('impersonation-token-context');
+                        if (impContext) {
+                            const tokenContext = ImpersonationTokenHandler.decodeContext(impContext);
                             azp = tokenContext.userAzp;
                         }
                     }
