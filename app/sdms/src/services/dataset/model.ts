@@ -43,6 +43,7 @@ export interface IDatasetModel {
     storageSchemaRecord?: any;
     computed_size?: number;
     computed_size_date?: string;
+    status?: string;
 }
 
 export interface IDatasetListRequest {
