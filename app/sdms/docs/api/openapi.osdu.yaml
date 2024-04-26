@@ -319,6 +319,7 @@ paths:
         <li><b>gtags:</b> Upsert tags to an existing dataset metadata. If the dataset metadata already has gtags, then new gtags are appended to this list.</li>
         <li><b>ltag:</b> Update the existing legalTag value.</b></li>
         <li><b>readonly:</b> Update the dataset mode to readonly (true) or to read/write (false).</li>
+        <li><b>status:</b> Update the dataset status.</li>
         </ul></li>
         <li><b>NOTE:</b> last_modified_date is updated automatically with each metadata change through Patch endpoint calling.</li>
         </ul>
@@ -2614,6 +2615,9 @@ components:
         readonly:
           type: boolean
           description: True if the dataset is readonly.
+        status:
+          type: string
+          description: The dataset status (if set).
         ltag:
           type: string
           description: Legal tag associated with the dataset.
@@ -2708,6 +2712,9 @@ components:
         readonly:
           type: boolean
           description: True if the dataset is read only.
+        status:
+          type: string
+          description: The status of the dataset (if set)
         seismicmeta:
           type: object
           description: Seismic metadata associated with the dataset which is used to create

@@ -242,6 +242,10 @@ export class DatasetParser {
         Params.checkBoolean(req.body.readonly, 'readonly', false);
         dataset.readonly = req.body.readonly;
 
+        // status
+        Params.checkString(req.body.status, 'status', false);
+        dataset.status = req.body.status;
+
         // remove the parameter... this field should always update when patch
         dataset.last_modified_date = new Date().toString();
 

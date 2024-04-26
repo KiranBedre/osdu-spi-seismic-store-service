@@ -566,9 +566,16 @@ export class DatasetHandler {
         const journalClient = JournalFactoryTenantClient.get(tenant);
 
         // Retrieve the dataset metadata
-        const dataset = subproject.enforce_key ?
-            await DatasetDAO.getByKey(journalClient, datasetIn) :
-            (await DatasetDAO.get(journalClient, datasetIn))[0];
+        let dataset: DatasetModel;
+        let datasetKey: any;
+        if (subproject.enforce_key) {
+            datasetKey = DatasetDAO.getKey(journalClient, datasetIn);
+            dataset = await DatasetDAO.getByKey(journalClient, datasetIn, datasetKey);
+        } else {
+            const results = await DatasetDAO.get(journalClient, datasetIn);
+            dataset = results[0];
+            datasetKey = results[1];
+        }
 
         // if the dataset does not exist return ok
         if (!dataset) {
@@ -581,21 +588,44 @@ export class DatasetHandler {
             tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
+        if (Config.FALLBACK_DATASET_DELETE) {
 
-        // Delete the dataset metadata on DEStorage
-        await DatasetDAO.delete(journalClient, dataset);
+            // Delete the dataset metadata on DEStorage
+            await DatasetDAO.delete(journalClient, dataset);
 
-        // Delete all physical objects (not wait for full objects deletion)
-        const bucket = DatasetUtils.getBucketFromDatasetResourceUri(dataset.gcsurl);
-        const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
-        StorageFactory.build(Config.CLOUDPROVIDER, tenant).deleteObjects(
-            bucket, virtualFolder).catch((error) => {
-            LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
-        });
+            // Delete all physical objects (not wait for full objects deletion)
+            const bucket = DatasetUtils.getBucketFromDatasetResourceUri(dataset.gcsurl);
+            const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
+            StorageFactory.build(Config.CLOUDPROVIDER, tenant).deleteObjects(
+                bucket, virtualFolder).catch((error) => {
+                LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
+            });
 
-        // remove any remaining locks (this should be removed with SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS)
-        const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
-        await Locker.unlock(datasetLockKey);
+            // remove any remaining locks (this should be removed with SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS)
+            const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
+            await Locker.unlock(datasetLockKey);
+
+        } else {
+
+            // Set the delete status on metadata
+            if(dataset.status === undefined || !dataset.status.startsWith('DELETE:')) {
+                dataset.status = 'DELETE:' + Date.now()
+                await DatasetDAO.update(journalClient, dataset, datasetKey);
+            }
+
+            // Delete all physical objects
+            const bucket = DatasetUtils.getBucketFromDatasetResourceUri(dataset.gcsurl);
+            const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
+            await StorageFactory.build(Config.CLOUDPROVIDER, tenant).deleteObjects(bucket, virtualFolder);
+
+            // Delete the dataset metadata
+            await DatasetDAO.delete(journalClient, dataset);
+
+            // remove any remaining locks (this should be removed with SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS)
+            const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
+            await Locker.unlock(datasetLockKey);
+
+        }
 
     }
 
@@ -671,6 +701,9 @@ export class DatasetHandler {
                 req.headers.authorization, datasetIN.ltag, tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
             datasetOUT.ltag = datasetIN.ltag;
+        }
+        if(datasetIN.status) {
+            datasetOUT.status = datasetIN.status;
         }
 
         if (newName) {
