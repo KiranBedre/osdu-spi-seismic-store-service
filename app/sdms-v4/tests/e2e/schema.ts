@@ -15,15 +15,14 @@
 // ============================================================================
 
 import axios, { AxiosRequestConfig } from 'axios';
-import { Config } from './shared/config';
-import { Utils } from './shared/utils';
+import { Config, Utils } from './shared';
 import { expect } from 'chai';
 
 export interface TestSchemaArgs {
     endpoint: string;
     tag: string;
     model: string;
-    hasBulks?: boolean;
+    hasBulks: boolean;
 }
 
 interface ConnectionString {
@@ -42,7 +41,7 @@ export class TestSchema {
     private model: string;
     private tag: string;
     private endpoint: string;
-    private hasBulks?: boolean;
+    private hasBulks: boolean;
     private recordsNumber = 1;
     private recordsId: string[];
     private recordsVersion: string[];
@@ -131,7 +130,7 @@ export class TestSchema {
                 this.recordsId[i] = results?.data[i].substring(0, results?.data[i].lastIndexOf(':'));
                 this.recordsVersion[i] = results?.data[i].substring(results?.data[i].lastIndexOf(':') + 1);
             }
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -143,7 +142,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
 
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -155,7 +154,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
 
             it(`${title} - negative 3 - wrong body format`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -163,7 +162,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
 
             it(`${title} - negative 4 - without a kind in the request model`, async () => {
                 const tmp = this.inputModel['kind'];
@@ -178,7 +177,7 @@ export class TestSchema {
                 );
                 expect(results?.response?.status).to.be.equal(500);
                 this.inputModel['kind'] = tmp;
-            });
+            }).retries(Config.retries);
 
             it(`${title} - negative 5 - invalid kind in the request model`, async () => {
                 const tmp = this.inputModel['kind'];
@@ -193,7 +192,7 @@ export class TestSchema {
                 );
                 expect(results?.response?.status).to.be.equal(404);
                 this.inputModel['kind'] = tmp;
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -210,7 +209,7 @@ export class TestSchema {
             expect(result.data.kind).to.be.equals(this.inputModel.kind);
             expect(result.data.version).to.be.equals(+this.recordsVersion[0]);
             expect(result.data.id).to.be.equals(this.recordsId[0]);
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -221,7 +220,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -231,14 +230,14 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(Config.url + '/' + this.endpoint + '/v1/record/', this.getRequestOptions()),
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 4 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -248,7 +247,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -271,7 +270,7 @@ export class TestSchema {
             // for (const result of results) {
             //     expect(result.kind).to.be.equals(this.inputModel.kind);
             // }
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -282,7 +281,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -292,7 +291,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -324,7 +323,7 @@ export class TestSchema {
             expect(result.data.tags['NameOfKey']).to.be.equals('testTag');
             delete this.inputModel.id;
             delete this.inputModel.tags;
-        });
+        }).retries(Config.retries);
 
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
@@ -337,7 +336,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
 
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -349,7 +348,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
 
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -361,7 +360,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 4 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.put(
@@ -372,7 +371,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 5 - without kind in model`, async () => {
                 const tmp = this.inputModel['kind'];
                 delete this.inputModel['kind'];
@@ -386,7 +385,7 @@ export class TestSchema {
                 );
                 expect(results?.response?.status).to.be.equal(404);
                 this.inputModel['kind'] = tmp;
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 6 - invalid kind in model`, async () => {
                 const tmp = this.inputModel['kind'];
                 this.inputModel['kind'] = this.inputModel['kind'] + '-fake';
@@ -400,7 +399,7 @@ export class TestSchema {
                 );
                 expect(results?.response?.status).to.be.equal(404);
                 this.inputModel['kind'] = tmp;
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -417,7 +416,7 @@ export class TestSchema {
             expect(results?.data.length).to.be.equals(2);
             expect(results?.data[0]).to.be.equals(parseInt(this.recordsVersion[0]));
             expect(results?.data[1]).to.be.equals(parseInt(this.recordPatchedVersion));
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -428,7 +427,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -438,7 +437,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 3 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -448,7 +447,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -471,7 +470,7 @@ export class TestSchema {
             expect(result?.data.kind).to.be.equals(this.inputModel.kind);
             expect(result?.data.version).to.be.equals(+this.recordPatchedVersion);
             expect(result?.data.id).to.be.equals(this.recordsId[0]);
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -488,7 +487,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -504,7 +503,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 3 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -521,7 +520,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 4 - invalid record version`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -538,7 +537,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -554,7 +553,7 @@ export class TestSchema {
                 );
                 expect(result?.status).to.be.equal(200);
             }
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -565,7 +564,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.delete(
@@ -575,14 +574,14 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.delete(Config.url + '/' + this.endpoint + '/v1/record/', this.getRequestOptions()),
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -601,7 +600,7 @@ export class TestSchema {
             expect(result?.data.expires_in).to.be.greaterThan(0);
             expect(result?.data.token_type).to.not.be.undefined;
             this.uploadBulkCS = result?.data;
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -612,7 +611,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -622,14 +621,14 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(Config.url + '/connection-string/upload/record/', this.getRequestOptions()),
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 4 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -639,7 +638,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -658,7 +657,7 @@ export class TestSchema {
             expect(result?.data.expires_in).to.be.greaterThan(0);
             expect(result?.data.token_type).to.not.be.undefined;
             this.downloadBulkCS = result?.data;
-        });
+        }).retries(Config.retries);
         if (this.runNegative) {
             it(`${title} - negative 1 - no data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
@@ -669,7 +668,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(400);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 2 - fake data partition`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -679,14 +678,14 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.oneOf(this.negativeFakeDataPartition);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 3 - no record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(Config.url + '/connection-string/download/record/', this.getRequestOptions()),
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
             it(`${title} - negative 4 - invalid record id`, async () => {
                 const results = await Utils.sendAxiosRequest(
                     axios.get(
@@ -696,7 +695,7 @@ export class TestSchema {
                     false
                 );
                 expect(results?.response?.status).to.be.equal(404);
-            });
+            }).retries(Config.retries);
         }
     }
 
@@ -733,7 +732,7 @@ export class TestSchema {
             } else {
                 console.error('### The "upload" bulk test has not been implemented for the "' + provider + '"');
             }
-        });
+        }).retries(Config.retries);
     }
 
     private download(exist = true) {
@@ -766,6 +765,6 @@ export class TestSchema {
             } else {
                 console.error('### The "download" bulk test has not been implemented for "' + provider + '"');
             }
-        });
+        }).retries(Config.retries);
     }
 }

@@ -17,7 +17,7 @@
 import * as appinsights from 'applicationinsights';
 import { AzureConfig } from './config';
 import { Config } from '../../config';
-import { Context } from '../../../shared/context';
+import { Context } from '../../../shared';
 
 export class AzureInsights {
     public static preProcessTelemetryData(

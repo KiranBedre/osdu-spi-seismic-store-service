@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { TestSchema, TestSchemaArgs } from './schema';
-import { Config } from './shared/config';
+import { Config } from './shared';
 import { TestStatus } from './status';
 import { TestInfo } from './info';
 

@@ -15,14 +15,15 @@
 // ============================================================================
 
 import { Router, Request as expRequest, Response as expResponse } from 'express';
-import { Error, Response } from '../../shared';
+import { Context, Error, Response } from '../../shared';
 
 const router = Router();
 
 // Get the root call
 router.all('/', async (req: expRequest, res: expResponse) => {
+    Context.endpointId = 'allRoot';
     try {
-        throw Error.make(Error.Status.NOT_IMPLEMENTED, "'" + req.url + "'");
+        throw Error.make(Error.Status.BAD_REQUEST, "'" + req.url + "'");
     } catch (error) {
         Response.writeError(res, error);
     }

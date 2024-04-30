@@ -14,22 +14,6 @@
 // Limitations under the License.
 // ============================================================================
 
-export class Config {
-    public static url: string | undefined;
-    public static partition: string | undefined;
-    public static idToken: string | undefined;
-    public static aclOwners: string | undefined;
-    public static aclViewers: string | undefined;
-    public static legalTags: string | undefined;
-    public static retries: number;
+export { Config } from './config';
+export { Utils } from './utils';
 
-    public static load() {
-        this.url = process.env.URL;
-        this.partition = process.env.PARTITION;
-        this.idToken = process.env.TOKEN;
-        this.aclOwners = process.env.ACL_ADMINS;
-        this.aclViewers = process.env.ACL_VIEWERS;
-        this.legalTags = process.env.LEGALTAGS;
-        this.retries = process.env.RETRY ? +process.env.RETRY : 5; // 5 is default retry count
-    }
-}

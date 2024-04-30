@@ -267,6 +267,9 @@ export abstract class Config implements IConfig {
     public static VERSION: string;
     public static CONNECTED_OUTER_SERVICES: string[];
 
+    // FallBack Temporary Configurations
+    public static FALLBACK_DATASET_DELETE = false
+
     public static setCloudProvider(cloudProvider: string) {
         Config.CLOUDPROVIDER = cloudProvider;
         if (Config.CLOUDPROVIDER === undefined) {
@@ -419,6 +422,9 @@ export abstract class Config implements IConfig {
         Config.COMMIT_MESSAGE = process.env.COMMIT_MESSAGE;
         Config.VERSION = process.env.VERSION;
         Config.CONNECTED_OUTER_SERVICES = process.env.CONNECTED_OUTER_SERVICES?.split(',') || [];
+
+        // FallBack Temporary Configurations
+        Config.FALLBACK_DATASET_DELETE =  process.env.FALLBACK_DATASET_DELETE === 'true'
 
     }
 

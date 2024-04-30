@@ -363,10 +363,9 @@ export class TestDatasetSVC {
                 subproject: 'subproject-a',
                 tenant: 'tenant-a',
             } as IDatasetModel;
-
-            this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, undefined]);
-
+            this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, 'key']);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
+            this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DatasetDAO, 'delete').resolves();
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'releaseMutex').resolves();
@@ -417,7 +416,8 @@ export class TestDatasetSVC {
             } as IDatasetModel;
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'delete').resolves();
-            this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, undefined]);
+            this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, 'key']);
+            this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DESStorage, 'deleteRecord').resolves();
             this.sandbox.stub(Locker, 'acquireMutex').resolves();
             this.sandbox.stub(Locker, 'releaseMutex').resolves();
