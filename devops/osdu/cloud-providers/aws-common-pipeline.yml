@@ -14,9 +14,9 @@ aws-update-helm:
 aws-update-tf:
   script:
       echo 'empty'
-  only:
-      - $DISABLED == 'true'
-  
+  rules:
+    - if: "$DISABLED == 'true'"
+
 .aws-containerize:
   extends:
     - .aws    
