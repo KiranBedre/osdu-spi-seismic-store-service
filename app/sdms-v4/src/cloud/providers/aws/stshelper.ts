@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { AWSConfig } from './config';
-import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts';
+import { STS, AssumeRoleCommand, Credentials } from '@aws-sdk/client-sts';
 
 export class AWSSTShelper {
     private sts: STS;
@@ -31,7 +31,7 @@ export class AWSSTShelper {
         roleArn: string,
         flagUpload: boolean,
         exp: string
-    ): Promise<string> {
+    ): Promise<Credentials> {
         let policy: string;
 
         if (flagUpload === true) policy = this.createUploadPolicy(bucketName, keyPath);
@@ -47,9 +47,13 @@ export class AWSSTShelper {
             DurationSeconds: expDuration,
         };
         const command = new AssumeRoleCommand(stsParams);
-        const roleCredentials = await this.sts.send(command);
+        const roleCredentials = await this.sts.send(command)
 
-        return `AccessKeyId=${roleCredentials.Credentials.AccessKeyId};SecretAccessKey=${roleCredentials.Credentials.SecretAccessKey};SessionToken=${roleCredentials.Credentials.SessionToken}`;
+        if (!roleCredentials) {
+            throw new Error("Failed to obtain credentials from STS.");
+        }
+        
+        return roleCredentials.Credentials;
     }
 
     public createUploadPolicy(bucketName: string, keyPath: string): string {
