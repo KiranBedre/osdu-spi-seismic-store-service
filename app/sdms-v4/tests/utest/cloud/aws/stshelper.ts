@@ -44,11 +44,7 @@ export class TestAwsStsHelper {
 
             const result = await this.stsHelper.getCredentials(bucket, keyPath, roleArn, flagUpload, exp);
 
-            Tx.checkTrue(result === 'AccessKeyId='+testCredentials.Credentials.AccessKeyId +
-            ';SecretAccessKey=' +
-            testCredentials.Credentials.SecretAccessKey +
-            ';SessionToken=' +
-            testCredentials.Credentials.SessionToken);
+            Tx.checkTrue(result === testCredentials.Credentials);
         });
 
         Tx.test(async () => {
@@ -58,11 +54,7 @@ export class TestAwsStsHelper {
 
             const result = await this.stsHelper.getCredentials(bucket, keyPath, roleArn, flagUpload, exp);
 
-            Tx.checkTrue(result === 'AccessKeyId='+testCredentials.Credentials.AccessKeyId +
-            ';SecretAccessKey=' +
-            testCredentials.Credentials.SecretAccessKey +
-            ';SessionToken=' +
-            testCredentials.Credentials.SessionToken);
+            Tx.checkTrue(result === testCredentials.Credentials);
         
         });
     }
