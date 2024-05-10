@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 import { Tx } from "../../utils";
-import { AWSCredentials, AwsSecrets } from '../../../../src/cloud/providers/aws';
+import { AWSConfig, AWSCredentials, AwsSecrets } from '../../../../src/cloud/providers/aws';
 import { AWSSSMhelper } from '../../../../src/cloud/providers/aws/ssmhelper';
 import axios from 'axios';
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
@@ -36,18 +36,26 @@ export class TestAWSCredentials {
             const partition = 'test-partition';
             const readonly = true;
             const expectedExpDuration = 1234;  
+            
             this.sandbox.stub(AwsSecrets, 'getTenantIdFromPartitionID').resolves(tenantId);
             this.sandbox.stub(AwsSecrets, 'getBucketFromPartitionID').resolves(s3bucket);
+            this.sandbox.stub(AWSConfig, 'AWS_REGION').value('us-east-1');
             const getSSMParameterStub = this.sandbox.stub(AWSSSMhelper.prototype, 'getSSMParameter');
             getSSMParameterStub.onCall(0).resolves(expectedExpDuration.toString());
             getSSMParameterStub.onCall(1).resolves('SomeRoleArn');
-            this.sandbox.stub((this.awsCredentials as any).awsSTSHelper, 'getCredentials').resolves('test-credentials');
-            const result = await this.awsCredentials.getStorageCredentials(s3bucket, readonly, partition)
+            this.sandbox.stub((this.awsCredentials as any).awsSTSHelper, 'getCredentials').resolves({
+                  AccessKeyId: 'fakeAccessKeyId',
+                  SecretAccessKey: 'fakeSecretAccessKey', // pragma: allowlist secret
+                  SessionToken: 'fakeSessionToken',
+                  Expiration: expectedExpDuration
+              });
 
+            const result = await this.awsCredentials.getStorageCredentials(s3bucket, readonly, partition)
+            
             const expected = {
-                access_token: 'test-credentials',
+                access_token: 'fakeSessionToken:fakeSecretAccessKey:fakeAccessKeyId:us-east-1',
                 expires_in: expectedExpDuration,
-                token_type: 'unsignedurl: '+'s3://' + s3bucket + '/' + partition + '/'+s3bucket,
+                token_type: 'unsignedURL: ' + 'https://' + s3bucket + '.s3.amazonaws.com/' + partition + '/' + s3bucket,
             }
             Tx.checkTrue(JSON.stringify(result) === JSON.stringify(expected)) 
         });

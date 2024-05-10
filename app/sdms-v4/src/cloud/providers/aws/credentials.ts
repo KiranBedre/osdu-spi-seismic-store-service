@@ -21,6 +21,7 @@ import qs from 'qs';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
 import { AwsSecrets } from './secrets';
+
 const KExpiresMargin = 300; // 5 minutes
 
 @CredentialsFactory.register('aws')
@@ -51,9 +52,6 @@ export class AWSCredentials extends AbstractCredentials {
             );
         }
         let roleArn = '';
-        let credentials = '';
-
-        let flagUpload = true;
 
         const osduTenantGroupSsmPrefix = '/osdu/tenant-groups/' + AWSConfig.AWS_TENANT_GROUP_NAME;
         // tslint:disable-next-line:triple-equals
@@ -62,7 +60,6 @@ export class AWSCredentials extends AbstractCredentials {
             roleArn = await AWSCredentials.awsSSMHelper.getSSMParameter(
                 osduTenantGroupSsmPrefix + '/seismic-ddms-v4/iam/download-role-arn'
             );
-            flagUpload = false;
         } // readOnly False
         else {
             roleArn = await AWSCredentials.awsSSMHelper.getSSMParameter(
@@ -70,21 +67,21 @@ export class AWSCredentials extends AbstractCredentials {
             );
         }
 
-        credentials = await this.awsSTSHelper.getCredentials(
+        const credentials = await this.awsSTSHelper.getCredentials(
             s3bucket,
             partition + '/' + bucket,
             roleArn,
-            flagUpload,
+            !readonly,
             AWSCredentials.expDuration
         );
 
         return {
-            access_token: credentials,
+            access_token: credentials.SessionToken + ':' + credentials.SecretAccessKey + ':' + credentials.AccessKeyId + ':' + AWSConfig.AWS_REGION,
             expires_in: +AWSCredentials.expDuration,
-            token_type: 'unsignedurl: ' + 's3://' + s3bucket + '/' + partition + '/' + bucket,
+            token_type: 'unsignedURL: ' + 'https://' + s3bucket + '.s3.amazonaws.com/' + partition + '/' + bucket,
         };
     }
-
+åß
     // this will return serviceprincipal access token
     public async getServiceCredentials(): Promise<string> {
         if (
