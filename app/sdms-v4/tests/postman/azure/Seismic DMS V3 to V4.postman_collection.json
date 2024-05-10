@@ -1,0 +1,2443 @@
+{
+	"info": {
+		"_postman_id": "1f5fca6c-75ad-4729-8369-05f49865c0bc",
+		"name": "Seismic DMS V3 -> V4 tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create test environment",
+			"item": [
+				{
+					"name": "Status Set v3",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"service OK\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_general(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"// if subproject name is not provided then create random name, else keep subproject alive\r",
+									"if (!pm.environment.get(\"Subproject\")) {\r",
+									"    postman.setEnvironmentVariable(\"Subproject\", makeID_general(16));\r",
+									"    postman.setEnvironmentVariable(\"hold_subproject\", \"false\")\r",
+									"    postman.setNextRequest(\"Subproject Register SDMS v3\");\r",
+									"} else {\r",
+									"    postman.setEnvironmentVariable(\"hold_subproject\", \"true\")\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL_V3}}/svcstatus",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Subproject Get SDMS v3",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Subproject Details\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get(\"Subproject\"));",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"Partition\"));",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"LegalTagV3\"));",
+									"        pm.expect(jsonData.gcs_bucket).to.exist;",
+									"    });",
+									"",
+									"    postman.setNextRequest(\"Status Set v4\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL_V3}}/subproject/tenant/{{Partition}}/subproject/{{Subproject}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Subproject Register SDMS v3",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"Subproject\", makeID_dataset(16));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (responseCode.code != 200) && (responseCode.code != 409)) {",
+									"    console.log(pm.response.text())",
+									"} else {",
+									"    pm.test(\"Status code is 200 or 409\", function () {",
+									"        pm.expect(pm.response.code).to.be.oneOf([200,409]);",
+									"    });",
+									" ",
+									"    if (pm.response.code === 200) {",
+									"        pm.test(\"Subproject created\", function () {",
+									"            var jsonData = pm.response.json();",
+									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"Subproject\"));",
+									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"Partition\"));",
+									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.gcs_bucket).to.exist;",
+									"        });",
+									"    };",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "ltag",
+								"value": "{{LegalTagV3}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"storage_class\": \"REGIONAL\",\n  \"storage_location\": \"US-CENTRAL1\"\n} \n"
+						},
+						"url": {
+							"raw": "{{SVC_URL_V3}}/subproject/tenant/{{Partition}}/subproject/{{Subproject}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Status Set v4",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check status\", function() {\r",
+									"    pm.expect(data.status).to.eql('running');\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Segy",
+			"item": [
+				{
+					"name": "Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.status).to.eql('running');\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// clean-up\r",
+									"pm.environment.unset(\"recordId\")\r",
+									"pm.environment.unset(\"recordVersion\")\r",
+									"pm.environment.unset(\"record\")\r",
+									"pm.environment.unset(\"recordPatch\")\r",
+									"pm.environment.unset(\"SAS_URI\")\r",
+									"pm.environment.unset(\"dataset\")\r",
+									"pm.environment.unset(\"testPathEncoded\")\r",
+									"pm.environment.unset(\"testPath\")\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.ready).to.be.true;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status/readiness",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status",
+								"readiness"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dataset Register SDMS v3",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dataset\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();",
+									"idPattern = /^[\\w\\-.]+:dataset--FileCollection.SEGY:[\\w\\-.:%]+$/;",
+									"",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"recordId\", jsonData.seismicmeta_guid);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"seismicmeta\":\r\n    {\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.SEGY:1.1.0\",\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"{{AclViewer}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"{{AclOwner}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{LegalTagV3}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"{{LegalTagORDC}}\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"data\": {\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"sd://{{Partition}}/{{Subproject}}/{{testPath}}/\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"{{dataset}}\"\r\n                    }\r\n                ]\r\n            }\r\n        }\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));    \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/upload/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"upload",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "This is a Dataset for SDMS-v3",
+							"options": {
+								"raw": {
+									"language": "xml"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));\r",
+									"})\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/download/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"download",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check downloaded data\", () => {\r",
+									"    pm.expect(pm.response.text()).to.be.eql('This is a Dataset for SDMS-v3')\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OpenZGY",
+			"item": [
+				{
+					"name": "Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.status).to.eql('running');\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// clean-up\r",
+									"pm.environment.unset(\"recordId\")\r",
+									"pm.environment.unset(\"recordVersion\")\r",
+									"pm.environment.unset(\"record\")\r",
+									"pm.environment.unset(\"recordPatch\")\r",
+									"pm.environment.unset(\"SAS_URI\")\r",
+									"pm.environment.unset(\"dataset\")\r",
+									"pm.environment.unset(\"testPathEncoded\")\r",
+									"pm.environment.unset(\"testPath\")\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.ready).to.be.true;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status/readiness",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status",
+								"readiness"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dataset Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// clean-up\r",
+									"pm.environment.unset(\"recordId\")\r",
+									"pm.environment.unset(\"recordVersion\")\r",
+									"pm.environment.unset(\"record\")\r",
+									"pm.environment.unset(\"recordPatch\")\r",
+									"pm.environment.unset(\"SAS_URI\")"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/openzgy/v1/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"openzgy",
+								"v1",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dataset Register for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dataset\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();",
+									"idPattern = /^[\\w\\-.]+:dataset--FileCollection.SEGY:[\\w\\-.:%]+$/;",
+									"",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"recordId\", jsonData.seismicmeta_guid);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"seismicmeta\":\r\n    {\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0\",\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"{{AclViewer}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"{{AclOwner}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{LegalTagV3}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"{{LegalTagORDC}}\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"data\": {\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"sd://{{Partition}}/{{Subproject}}/{{testPath}}/\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"{{dataset}}\"\r\n                    }\r\n                ]\r\n            }\r\n        }\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));    \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/upload/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"upload",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "This is a Dataset for SDMS-v3"
+						},
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));\r",
+									"})\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/download/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"download",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check downloaded data\", () => {\r",
+									"    pm.expect(pm.response.text()).to.be.eql('This is a Dataset for SDMS-v3')\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OpenVDS",
+			"item": [
+				{
+					"name": "Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.status).to.eql('running');\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// clean-up\r",
+									"pm.environment.unset(\"recordId\")\r",
+									"pm.environment.unset(\"recordVersion\")\r",
+									"pm.environment.unset(\"record\")\r",
+									"pm.environment.unset(\"recordPatch\")\r",
+									"pm.environment.unset(\"SAS_URI\")\r",
+									"pm.environment.unset(\"dataset\")\r",
+									"pm.environment.unset(\"testPathEncoded\")\r",
+									"pm.environment.unset(\"testPath\")\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.ready).to.be.true;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status/readiness",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status",
+								"readiness"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dataset Register for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dataset\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();",
+									"idPattern = /^[\\w\\-.]+:dataset--FileCollection.SEGY:[\\w\\-.:%]+$/;",
+									"",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"recordId\", jsonData.seismicmeta_guid);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"seismicmeta\":\r\n    {\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.Bluware.OpenVDS:1.0.0\",\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"{{AclViewer}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"{{AclOwner}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{LegalTagV3}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"{{LegalTagORDC}}\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"data\": {\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"sd://{{Partition}}/{{Subproject}}/{{testPath}}/\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"{{dataset}}\"\r\n                    }\r\n                ]\r\n            }\r\n        }\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));    \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/upload/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"upload",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "This is a Dataset for SDMS-v3"
+						},
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));\r",
+									"})\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/download/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"download",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check downloaded data\", () => {\r",
+									"    pm.expect(pm.response.text()).to.be.eql('This is a Dataset for SDMS-v3')\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Generic",
+			"item": [
+				{
+					"name": "Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.status).to.eql('running');\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// clean-up\r",
+									"pm.environment.unset(\"recordId\")\r",
+									"pm.environment.unset(\"recordVersion\")\r",
+									"pm.environment.unset(\"record\")\r",
+									"pm.environment.unset(\"recordPatch\")\r",
+									"pm.environment.unset(\"SAS_URI\")\r",
+									"pm.environment.unset(\"dataset\")\r",
+									"pm.environment.unset(\"testPathEncoded\")\r",
+									"pm.environment.unset(\"testPath\")\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check Dataset name\", function() {\r",
+									"    pm.expect(data.ready).to.be.true;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status/readiness",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status",
+								"readiness"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dataset Register for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dataset\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();",
+									"idPattern = /^[\\w\\-.]+:dataset--FileCollection.SEGY:[\\w\\-.:%]+$/;",
+									"",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"recordId\", jsonData.seismicmeta_guid);",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"seismicmeta\":\r\n    {\r\n        \"kind\": \"osdu:wks:dataset--FileCollection.Generic:1.0.0\",\r\n        \"acl\": {\r\n            \"viewers\": [\r\n                \"{{AclViewer}}\"\r\n            ],\r\n            \"owners\": [\r\n                \"{{AclOwner}}\"\r\n            ]\r\n        },\r\n        \"legal\": {\r\n            \"legaltags\": [\r\n                \"{{LegalTagV3}}\"\r\n            ],\r\n            \"otherRelevantDataCountries\": [\r\n                \"{{LegalTagORDC}}\"\r\n            ],\r\n            \"status\": \"compliant\"\r\n        },\r\n        \"data\": {\r\n            \"DatasetProperties\": {\r\n                \"FileCollectionPath\": \"sd://{{Partition}}/{{Subproject}}/{{testPath}}/\",\r\n                \"FileSourceInfos\": [\r\n                    {\r\n                        \"FileSource\": \"{{dataset}}\"\r\n                    }\r\n                ]\r\n            }\r\n        }\r\n    }\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));    \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/upload/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"upload",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "This is a Dataset for SDMS-v3"
+						},
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Connection String for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check connection string\", () => {\r",
+									"    pm.expect('access_token' in data).to.be.true\r",
+									"    pm.expect(data['access_token'].indexOf('sdms.blob.core.windows.net')).not.eql(-1);\r",
+									"    pm.expect('expires_in' in data).to.be.true\r",
+									"    pm.expect('token_type' in data).to.be.true\r",
+									"    pm.expect(data['token_type'].toLowerCase()).to.be.eql('sasurl')\r",
+									"    postman.setEnvironmentVariable(\"SAS_URI\", pm.response.json().access_token.replace('?', '/o?'));\r",
+									"})\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"value": "{{Partition}}",
+								"type": "default"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/connection-string/download/record/{{recordId}}",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"connection-string",
+								"download",
+								"record",
+								"{{recordId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Raw Data for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 : Dataset is created\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"check downloaded data\", () => {\r",
+									"    pm.expect(pm.response.text()).to.be.eql('This is a Dataset for SDMS-v3')\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{SAS_URI}}",
+							"host": [
+								"{{SAS_URI}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE for SDMS-v3 dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    //unset environment variables",
+									"    pm.environment.unset(\"dataset\")",
+									"    pm.environment.unset(\"testPathEncoded\")",
+									"    pm.environment.unset(\"testPath\")",
+									"",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL_V3}}/dataset/tenant/{{Partition}}/subproject/{{Subproject}}/dataset/{{dataset}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}",
+								"dataset",
+								"{{dataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cleanup",
+			"item": [
+				{
+					"name": "Skip Cleanup if Subproject name provided",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"hold_subproject\") == \"true\") {\r",
+									"    console.log('Subproject ' + pm.environment.get('Subproject') + ' will not be deleted');\r",
+									"    postman.setNextRequest(\"Cleanup Status\");\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup Subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL_V3}}/subproject/tenant/{{Partition}}/subproject/{{Subproject}}",
+							"host": [
+								"{{SVC_URL_V3}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{Partition}}",
+								"subproject",
+								"{{Subproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// if subproject name was not provided clean environment\r",
+									"if (pm.environment.get(\"hold_subproject\" !== \"true\")) {\r",
+									"    pm.environment.unset('Subproject');\r",
+									"}\r",
+									"pm.environment.unset('hold_subproject');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// clean-up\r",
+									"pm.environment.unset(\"recordId\")\r",
+									"pm.environment.unset(\"recordVersion\")\r",
+									"pm.environment.unset(\"record\")\r",
+									"pm.environment.unset(\"recordPatch\")\r",
+									"pm.environment.unset(\"SAS_URI\")\r",
+									"pm.environment.unset(\"dataset\")\r",
+									"pm.environment.unset(\"testPathEncoded\")\r",
+									"pm.environment.unset(\"testPath\")\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{ServiceEndpointsUrl}}/status",
+							"host": [
+								"{{ServiceEndpointsUrl}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
