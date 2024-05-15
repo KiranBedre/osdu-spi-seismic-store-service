@@ -38,6 +38,7 @@ export interface ConfigModel {
     REDIS_SHARED_INSTANCE_TLS_DISABLE?: boolean;
     SDMS_COMPUTE_SIZE_QUEUE?: string;
     SMDS_DELETION_QUEUE?: string;
+    SDMS_CHANGE_TIER_QUEUE?: string;
     DES_SERVICE_HOST_ENTITLEMENT: string;
     DES_SERVICE_HOST_COMPLIANCE: string;
     DES_SERVICE_HOST_STORAGE: string;
@@ -71,6 +72,7 @@ export interface ConfigModel {
     FEATURE_FLAG_POLICY_SVC_INTERACTION: boolean;
     FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE?: boolean;
     FEATURE_FLAG_ENABLE_BULK_DELETE?: boolean;
+    FEATURE_FLAG_ENABLE_CHANGE_TIER?: boolean;
     FULL_DATA_ACCESS_GROUP?: string;
     CCM_SERVICE_URL: string;
     CCM_TOKEN_SCOPE: string;
@@ -137,6 +139,9 @@ export abstract class Config implements IConfig {
     // Queue used for dataset metadata compute size jobs
     public static SDMS_COMPUTE_SIZE_QUEUE: string;
 
+    // Queue used for bulk change tier operation
+    public static SDMS_CHANGE_TIER_QUEUE: string;
+
     // DataEcosystem Configuration
     public static DES_SERVICE_HOST_ENTITLEMENT: string;
     public static DES_SERVICE_HOST_COMPLIANCE: string;
@@ -167,6 +172,7 @@ export abstract class Config implements IConfig {
     public static FEATURE_FLAG_POLICY_SVC_INTERACTION = false;
     public static FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE = false;
     public static FEATURE_FLAG_ENABLE_BULK_DELETE = false;
+    public static FEATURE_FLAG_ENABLE_CHANGE_TIER = false;
 
     // Full Data Permission Group
     public static FULL_DATA_ACCESS_GROUP: string;
@@ -314,6 +320,9 @@ export abstract class Config implements IConfig {
         Config.SDMS_COMPUTE_SIZE_QUEUE = model.SDMS_COMPUTE_SIZE_QUEUE ||
             process.env.SDMS_COMPUTE_SIZE_QUEUE;
 
+        Config.SDMS_CHANGE_TIER_QUEUE = model.SDMS_CHANGE_TIER_QUEUE ||
+            process.env.SDMS_CHANGE_TIER_QUEUE;
+
         Config.FEATURE_FLAG_SEISMICMETA_STORAGE = model.FEATURE_FLAG_SEISMICMETA_STORAGE;
         Config.FEATURE_FLAG_IMPTOKEN = model.FEATURE_FLAG_IMPTOKEN;
         Config.FEATURE_FLAG_TRACE = model.FEATURE_FLAG_TRACE;
@@ -323,6 +332,7 @@ export abstract class Config implements IConfig {
         Config.FEATURE_FLAG_POLICY_SVC_INTERACTION = model.FEATURE_FLAG_POLICY_SVC_INTERACTION;
         Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE = model.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE;
         Config.FEATURE_FLAG_ENABLE_BULK_DELETE = model.FEATURE_FLAG_ENABLE_BULK_DELETE;
+        Config.FEATURE_FLAG_ENABLE_CHANGE_TIER = model.FEATURE_FLAG_ENABLE_CHANGE_TIER;
 
         Config.FULL_DATA_ACCESS_GROUP = process.env.FULL_DATA_ACCESS_GROUP || 'users.data.root';
 

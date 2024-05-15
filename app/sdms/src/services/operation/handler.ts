@@ -19,6 +19,7 @@ import { Request as expRequest, Response as expResponse } from 'express';
 import { Operation } from './optype';
 import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { IBulkDeleteOperationQueueTask } from './model';
+import { IBulkChangeTierOperationQueueTask } from './model';
 import { Config, JournalFactoryTenantClient, StorageFactory } from '../../cloud';
 import { Parser } from './parser';
 import { Auth, AuthRoles } from '../../auth';
@@ -46,6 +47,12 @@ export class Handler {
                     break;
                 case Operation.BulkDeleteStatus:
                     Response.writeOK(res, await this.bulkDeleteStatus(req));
+                    break;
+                case Operation.BulkChangeTierPush:
+                    Response.writeOK(res, await this.bulkChangeTier(req), 202);
+                    break;
+                case Operation.BulkChangeTierStatus:
+                    Response.writeOK(res, await this.bulkChangeTierStatus(req));
                     break;
                 default:
 				    throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
@@ -108,6 +115,65 @@ export class Handler {
         return operationStatus;
     }
 
+    // trigger bulk change tier operation for datasets with a given path within the subproject
+    private static async bulkChangeTier(req: expRequest): Promise<IOperation> {
+
+        this.checkFeature(Feature.CHANGE_TIER);
+
+        const userInput = Parser.bulkChangeTier(req);
+        const sdPath = userInput.sdPath;
+        const changeTier = userInput.tier;
+        const tenant = await TenantDAO.get(sdPath.tenant);
+        const dataset = this.createDataset(sdPath);
+        const [sqlQuery, sqlParams, user] = await this.processRequest(req, sdPath, tenant, dataset, userInput);
+        const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
+
+        // check if incoming tier is supported by the cloud provider
+        await storage.checkSupportedTier(changeTier.toLowerCase());
+
+        // push the bulk change tier operation
+        const operation = {
+            type: OperationType.BULK_CHANGE_TIER,
+            operation_id: uuidv4(),
+            createdBy: user,
+            tenant: sdPath.tenant,
+            subproject: sdPath.subproject,
+            query: sqlQuery,
+            tier: (changeTier.charAt(0).toUpperCase() + changeTier.slice(1).toLowerCase()),
+            parameters: JSON.stringify(sqlParams),
+        } as IBulkChangeTierOperationQueueTask;
+
+        // init journalClient client
+        const taskQueue = TaskQueueFactory.build(Config.CLOUDPROVIDER);
+        await taskQueue.pushTask(operation);
+
+        return {operation_id: operation.operation_id}
+    }
+
+    // get status of a bulk tier change operation
+    private static async bulkChangeTierStatus(req: expRequest): Promise<IOperationStatus> {
+
+        this.checkFeature(Feature.CHANGE_TIER);
+
+        const args = Parser.bulkChangeTierStatus(req);
+
+        // Check if user has read access
+        await Auth.isUserRegistered(req.headers.authorization,
+            args.dataPartitionId + '.esd',
+            req[Config.DE_FORWARD_APPKEY]);
+
+        const operationStatus = await operationStatusStorage.getOperationStatus({
+            operation_id: args.operationId,
+            type: OperationType.BULK_CHANGE_TIER
+        });
+
+        if (!operationStatus) {
+            throw (Error.make(Error.Status.NOT_FOUND, 'Operation not found'));
+        }
+
+        return operationStatus;
+    }
+    
     private static checkFeature(feature: Feature) {
         if (!FeatureFlags.isEnabled(feature)) {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));

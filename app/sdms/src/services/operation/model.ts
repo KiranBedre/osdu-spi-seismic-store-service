@@ -28,3 +28,12 @@ export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
     query: string;
     parameters: string;
 }
+
+export interface IBulkChangeTierOperationQueueTask extends IOperationQueueTask {
+    createdBy: string;
+    tenant: string;
+    subproject: string;
+    query: string;
+    tier: string;
+    parameters: string;
+}
