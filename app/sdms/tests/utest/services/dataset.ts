@@ -505,7 +505,7 @@ export class TestDatasetSVC {
                     }
                 }
             };
-            this.sandbox.stub(DatasetDAO, 'get').resolves([{ sbit: 'W', sbit_count: 0 }, 'key'] as any);
+            this.sandbox.stub(DatasetDAO, 'get').resolves([{ sbit: 'W', sbit_count: 0, filemetadata: {} }, 'key'] as any);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
@@ -746,7 +746,8 @@ export class TestDatasetSVC {
                 async copy() { return; },
                 async randomBucketName() { return ''; },
                 getStorageTiers() { return ['tier-a', 'tier-b', 'tier-c']; },
-                async getObjectSize() { return 1; }
+                async getObjectSize() { return 1; },
+                async setStorageTiers() { return; }
             };
 
             this.sandbox.stub(DatasetParser, 'size').returns(dataset);

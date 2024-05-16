@@ -283,7 +283,8 @@ export class TestSubProjectSVC {
                 async copy() { return; },
                 async randomBucketName() { return ''; },
                 getStorageTiers() { return ['tier-a', 'tier-b', 'tier-c']; },
-                async getObjectSize() { return 1; }
+                async getObjectSize() { return 1; },
+                async setStorageTiers() {return; }
             };
             this.sandbox.stub(StorageFactory, 'build').returns(storage);
             this.sandbox.stub(SubprojectGroups, 'serviceAdminGroup').returns('adminGroup');

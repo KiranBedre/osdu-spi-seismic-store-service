@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { TokenCredential } from '@azure/identity';
-import { BlobBatchClient, BlobItem, BlobServiceClient } from '@azure/storage-blob';
+import { AccessTier, BlobBatchClient, BlobItem, BlobServiceClient } from '@azure/storage-blob';
 import { BlockBlobTier } from '@azure/storage-blob';
 import { Readable } from 'stream';
 import { AzureInsightsLogger } from '.';
@@ -189,7 +189,7 @@ export class AzureCloudStorage extends AbstractStorage {
     }
 
     public getStorageTiers(): string[] {
-        return Object.keys(BlockBlobTier);
+        return ["Hot", "Cool"];
     }
 
     public async getObjectSize(bucketName: string, prefix?: string): Promise<number> {
@@ -213,6 +213,26 @@ export class AzureCloudStorage extends AbstractStorage {
             }
         }
         return totalSize;
+    }
+
+    // change tier of multiple objects in a container
+    public async setStorageTiers(bucketName: string, prefix: string, tierId: AccessTier): Promise<void> {
+        const blobUrlsAsOne = await this.generateBlobUrls(bucketName, prefix);
+        const batchSize = 256; // MAX size set by Azure SDK is 256 changes per request
+        const blobUrlsSplit = [];
+        while (blobUrlsAsOne.length) {
+            blobUrlsSplit.push(
+                blobUrlsAsOne.splice(0, batchSize)
+            )
+          }
+        if (blobUrlsSplit.length) {
+            const batchClient = await this.getBlobBatchClient();
+            for (const chunk of blobUrlsSplit) {
+                batchClient.setBlobsAccessTier(chunk, this.defaultAzureCredential, tierId).catch((error) => {
+                    console.error(error)
+                })
+            };
+        }
     }
 
 }

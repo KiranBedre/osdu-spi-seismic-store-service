@@ -686,7 +686,15 @@ export class DatasetHandler {
             datasetOUT.metadata = datasetIN.metadata;
         }
         if (datasetIN.filemetadata) {
-            datasetOUT.filemetadata = datasetIN.filemetadata;
+            if(datasetOUT.filemetadata === undefined) {
+                datasetOUT.filemetadata = datasetIN.filemetadata
+            }
+            else {
+                // Will now only update or create new field in FileMetaData instead of overwriting all
+                for (const key of Object.keys(datasetIN.filemetadata)) {
+                    datasetOUT.filemetadata[key] = datasetIN.filemetadata[key];
+                }
+            }
         }
         if (datasetIN.last_modified_date) {
             datasetOUT.last_modified_date = datasetIN.last_modified_date;
@@ -741,6 +749,30 @@ export class DatasetHandler {
             // }
 
             datasetOUT.name = newName;
+        }
+
+        // check if tier_class is set in filemetadata
+        if (datasetIN.filemetadata?.tier_class !== undefined) {
+            const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
+            const supportedTiers = storage.getStorageTiers();
+            const tierClass: string = datasetIN.filemetadata.tier_class;
+
+            // Check if provided class change is supported
+            const index = supportedTiers.findIndex(item => tierClass.toLowerCase() === item.toLowerCase());
+            if (index === -1) {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The storage Tier option ' + '"' + tierClass + '"' + ' is not supported by this API. ' +
+                'Your available options are ' + supportedTiers.join(", ")));
+            }
+            datasetOUT.filemetadata.tier_class = supportedTiers[index];
+
+            // Updates all blobs storage tiers (not wait for all objects to update)
+            const bucket = DatasetUtils.getBucketFromDatasetResourceUri(datasetOUT.gcsurl);
+            const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(datasetOUT.gcsurl);
+            storage.setStorageTiers(
+                bucket, virtualFolder, supportedTiers[index]).catch((error) => {
+                    LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
+                });
         }
 
         if (datasetIN.storageSchemaRecord) {
