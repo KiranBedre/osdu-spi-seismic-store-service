@@ -31792,6 +31792,7 @@
 								"exec": [
 									"function makeID_dataset(length) {\r",
 									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
 									"   var charactersLength = characters.length;\r",
 									"   for ( var i = 0; i < length - 1; i++ ) {\r",
 									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
