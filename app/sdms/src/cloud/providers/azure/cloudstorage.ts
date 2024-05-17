@@ -189,7 +189,7 @@ export class AzureCloudStorage extends AbstractStorage {
     }
 
     public getStorageTiers(): string[] {
-        return ["Hot", "Cool"];
+        return Object.keys(BlockBlobTier);
     }
 
     public async getObjectSize(bucketName: string, prefix?: string): Promise<number> {

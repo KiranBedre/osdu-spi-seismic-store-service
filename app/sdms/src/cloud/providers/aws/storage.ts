@@ -241,4 +241,8 @@ export class AWSStorage extends AbstractStorage {
         return true;
     }
 
+    public getStorageTiers(): string[] {
+        throw new Error('Method not implemented.');
+    }
+
 }

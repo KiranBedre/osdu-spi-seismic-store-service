@@ -27,7 +27,7 @@ import { IStorage } from '../../../src/cloud/storage';
 import { DatasetAuth, DatasetDAO, DatasetModel } from '../../../src/services/dataset';
 import { DatasetHandler } from '../../../src/services/dataset/handler';
 import { Locker } from '../../../src/services/dataset/locker';
-import { IDatasetModel } from '../../../src/services/dataset/model';
+import { IDatasetModel, IDatasetPatchRequest } from '../../../src/services/dataset/model';
 import { DatasetOP } from '../../../src/services/dataset/optype';
 import { DatasetParser } from '../../../src/services/dataset/parser';
 import { SubProjectDAO, SubProjectModel } from '../../../src/services/subproject';
@@ -591,6 +591,13 @@ export class TestDatasetSVC {
                 }
             };
 
+            const datasetPatchRequest: IDatasetPatchRequest = {
+                dataset: this.dataset,
+                newName: 'new-dataset-01',
+                closeId: 'WLockRes',
+                applyChangeTier: 'hot'
+              };
+
             // datastore has no seismicmeta for the dataset
             const datasetOUT = this.dataset;
 
@@ -600,7 +607,7 @@ export class TestDatasetSVC {
             this.dataset.name = 'dataset-01';
 
             this.sandbox.stub(DatasetParser, 'patch').returns(
-             [this.dataset, 'new-dataset-01', 'WLockRes']);
+                datasetPatchRequest);
             this.sandbox.stub(Locker, 'unlock').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetOUT, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);

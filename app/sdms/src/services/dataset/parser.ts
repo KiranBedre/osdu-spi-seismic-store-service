@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { Request as expRequest } from 'express';
-import { DatasetListRequest, DatasetModel } from '.';
+import { DatasetListRequest, DatasetPatchRequest, DatasetModel, MatchQueryFilter } from '.';
 import { DatasetFilterParser } from './filter-parser';
 import { Auth } from '../../auth';
 import { Config } from '../../cloud';
@@ -218,47 +218,53 @@ export class DatasetParser {
         return this.createDatasetModelFromRequest(req);
     }
 
-    public static patch(req: expRequest): [DatasetModel, string, string] {
+    public static patch(req: expRequest): DatasetPatchRequest {
 
-        const closeId = req.query.close as string;
-        Params.checkString(closeId, 'close', false);
-        Params.checkBody(req.body, closeId === undefined); // body is required only if is not a closing request
+        const input = {
+            dataset: this.createDatasetModelFromRequest(req),
+        } as DatasetPatchRequest;
 
-        const dataset = this.createDatasetModelFromRequest(req);
+        input.closeId = req.query.close as string;
+        Params.checkString(input.closeId, 'close', false);
+        Params.checkBody(req.body, input.closeId === undefined); // body is required only if is not a closing request
 
         // Patch meta data
-        dataset.metadata = req.body.metadata;
-        dataset.filemetadata = req.body.filemetadata;
-        Params.checkObject(dataset.metadata, 'metadata', false);
-        Params.checkObject(dataset.filemetadata, 'filemetadata', false);
+        input.dataset.metadata = req.body.metadata;
+        input.dataset.filemetadata = req.body.filemetadata;
+        Params.checkObject(input.dataset.metadata, 'metadata', false);
+        Params.checkObject(input.dataset.filemetadata, 'filemetadata', false);
+
+        // Trigger storage tier change
+        input.applyChangeTier = req.body.change_tier as string;
+        Params.checkString(input.applyChangeTier, 'change_tier', false);
 
         // Patch tags
-        dataset.gtags = req.body.gtags;
-        dataset.ltag = req.body.ltag;
-        Params.checkArray(dataset.gtags, 'gtags', false);
-        Params.checkString(dataset.ltag, 'ltag', false);
+        input.dataset.gtags = req.body.gtags;
+        input.dataset.ltag = req.body.ltag;
+        Params.checkArray(input.dataset.gtags, 'gtags', false);
+        Params.checkString(input.dataset.ltag, 'ltag', false);
 
         // readonly
         Params.checkBoolean(req.body.readonly, 'readonly', false);
-        dataset.readonly = req.body.readonly;
+        input.dataset.readonly = req.body.readonly;
 
         // status
         Params.checkString(req.body.status, 'status', false);
-        dataset.status = req.body.status;
+        input.dataset.status = req.body.status;
 
         // remove the parameter... this field should always update when patch
-        dataset.last_modified_date = new Date().toString();
+        input.dataset.last_modified_date = new Date().toString();
 
         // Patch newName
-        const newName = req.body.dataset_new_name;
-        Params.checkString(newName, 'dataset_new_name', false);
+        input.newName = req.body.dataset_new_name;
+        Params.checkString(input.newName, 'dataset_new_name', false);
 
-        dataset.acls = req.body && 'acls' in req.body ? req.body.acls : undefined;
-        DatasetParser.validateAcls(dataset);
+        input.dataset.acls = req.body && 'acls' in req.body ? req.body.acls : undefined;
+        DatasetParser.validateAcls(input.dataset);
 
-        DatasetParser.validateStorageSchemaRecord(req, dataset);
+        DatasetParser.validateStorageSchemaRecord(req, input.dataset);
 
-        return [dataset, newName, closeId];
+        return input;
     }
 
     public static lock(req: expRequest): { dataset: DatasetModel, open4write: boolean, wid: string; } {

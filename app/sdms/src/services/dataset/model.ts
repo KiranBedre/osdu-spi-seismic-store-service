@@ -60,6 +60,13 @@ export interface IBulkDeleteRequest {
     filter?: QueryFilter,
 }
 
+export interface IDatasetPatchRequest {
+    dataset: IDatasetModel,
+    newName: string,
+    closeId: string,
+    applyChangeTier: string
+}
+
 export interface IPaginationModel {
     limit: number;
     cursor: string;
