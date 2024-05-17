@@ -32173,6 +32173,748 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY UPLOAD DSX01 NEW TO ACS - CONNECTION STRING: Upload blob for dataset dsx01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 201) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 201\", function () {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"",
+									"    pm.test(\"Check content length\", function () {",
+									"        pm.response.to.be.header(\"Content-Length\", \"0\");",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "hello world from e2e"
+						},
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX01 CLOSE: Close dataset using sbit for DSX01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}&x-ms-access-tier=Hot",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								},
+								{
+									"key": "x-ms-access-tier",
+									"value": "Hot"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY DOWNLOAD DSX01 FROM ACS - check the blob tier equals to hot",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Hot\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Hot\";",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);    ",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// if  (pm.environment.get(\"virtual_folder\") != undefined) {",
+									"//         pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob1?'));",
+									"// }",
+									"// else {",
+									"//         pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob1?'));",
+									"// }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER change tier to Cool of datasets in a subproject (with locked datasets)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 202) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 202\", function () {\r",
+									"        pm.response.to.have.status(202);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Validate Operation Id\", function () {\r",
+									"        pm.expect(jsonData.operation_id).to.exist;\r",
+									"        console.log(\"Operation ID: \" + jsonData.operation_id);\r",
+									"    });\r",
+									"\r",
+									"    let operation_id = jsonData.operation_id;\r",
+									"    pm.collectionVariables.set('operationId', operation_id)\r",
+									"    \r",
+									"    var sleepDuration = 10;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    console.log(pm.response.text())\r",
+									"    console.log('Wait ' + sleepDuration + ' sec');\r",
+									"    while (new Date().getTime() < waitUntilTime) {\r",
+									"        // Do Nothing -> Wait\r",
+									"    }\r",
+									"    \r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier?path=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}&tier=Cool",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}"
+								},
+								{
+									"key": "tier",
+									"value": "Cool"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER STATUS: Get status of the change-tier operation after first request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"} else {\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
+									"        });\r",
+									"\r",
+									"        while (jsonData.status === 'Started' || jsonData.status === 'InProgress') {\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"        }\r",
+									"\r",
+									"        if (jsonData.status === 'Completed') {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('Completed');\r",
+									"            });\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);\r",
+									"            });\r",
+									"        \r",
+									"        } else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('CompletedWithErrors');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(0);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(1);\r",
+									"            });\r",
+									"\r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
+									"    }\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier/{{operationId}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier",
+								"{{operationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY Check Tiers to Cool - check the blob's tier has changed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Cool\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Cool\";",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);    ",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER change tier to Cold of datasets in a subproject (with locked datasets)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 202) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 202\", function () {\r",
+									"        pm.response.to.have.status(202);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Validate Operation Id\", function () {\r",
+									"        pm.expect(jsonData.operation_id).to.exist;\r",
+									"        console.log(\"Operation ID: \" + jsonData.operation_id);\r",
+									"    });\r",
+									"\r",
+									"    let operation_id = jsonData.operation_id;\r",
+									"    pm.collectionVariables.set('operationId', operation_id)\r",
+									"\r",
+									"    var sleepDuration = 10;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    console.log(pm.response.text())\r",
+									"    console.log('Wait ' + sleepDuration + ' sec');\r",
+									"    while (new Date().getTime() < waitUntilTime) {\r",
+									"        // Do Nothing -> Wait\r",
+									"    }\r",
+									"    \r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier?path=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}&tier=Cold",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}"
+								},
+								{
+									"key": "tier",
+									"value": "Cold"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER STATUS: Get status of the bulk-delete operation after second deletion",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log(request.name)\r",
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"} else {\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));      \r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
+									"\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
+									"        });\r",
+									"\r",
+									"        if (jsonData.status != 'Completed') {\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));      \r",
+									"        } else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('Completed');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);\r",
+									"            });\r",
+									"            \r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
+									"    }\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier/{{operationId}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier",
+								"{{operationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY Check Tiers to Cold - check the blob's tier has changed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Cold\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Cold\";",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);    ",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER CLEANUP STATUS UNSET: Cleanup test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Reset environment variables if _.retryOnFailure function was used before",
+									"var key = request.name + '_counter';",
+									"pm.environment.unset(key);",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"console.log('Postman environment was cleaned up');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
