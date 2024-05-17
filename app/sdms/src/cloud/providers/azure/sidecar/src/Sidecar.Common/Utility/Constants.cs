@@ -65,11 +65,22 @@ public static class Constants
 
     public const int BLOB_BULK_DELETE_BATCH_SIZE = 1000;
 
+    public const int BLOB_BULK_CHANGE_TIER_BATCH_SIZE = 1000;
+
     public const string DELETE_LOCK_PREFIX = "WDELETE";
 
     public const string WRITE_LOCK_PREFIX = "W";
 
     public static class DeleteOperationStatus
+    {
+        public const string LAST_UPDATED_AT = "LastUpdatedAt";
+        public const string STATUS = "Status";
+        public const string STATUS_DESCRIPTION = "StatusDescription";
+        public const string DATASETS_CNT = "DatasetsCnt";
+        public const string COMPLETED_CNT = "CompletedCnt";
+        public const string FAILED_CNT = "FailedCnt";
+    }
+    public static class ChangeTierOperationStatus
     {
         public const string LAST_UPDATED_AT = "LastUpdatedAt";
         public const string STATUS = "Status";
