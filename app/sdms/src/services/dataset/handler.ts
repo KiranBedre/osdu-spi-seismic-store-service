@@ -697,10 +697,12 @@ export class DatasetHandler {
                     if(key === 'tier_class') {
                         const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
                         const supportedTiers = storage.getStorageTiers();
-                        const index = supportedTiers.findIndex(item => datasetIN.filemetadata[key].toLowerCase() === item.toLowerCase());
+                        const index = supportedTiers.findIndex(
+                            item => datasetIN.filemetadata[key].toLowerCase() === item.toLowerCase());
                         if (index === -1) {
                         throw (Error.make(Error.Status.BAD_REQUEST,
-                            'The storage Tier option ' + '"' + datasetIN.filemetadata[key] + '"' + ' is not supported by this API. ' +
+                            'The storage Tier option ' + '"' + datasetIN.filemetadata[key] +
+                            '"' + ' is not supported by this API. ' +
                             'Your available options are ' + supportedTiers.join(', ')));
                         }
                         datasetOUT.filemetadata[key] = supportedTiers[index];
@@ -907,7 +909,8 @@ export class DatasetHandler {
 
             if (subprojectAccessPolicy === Config.UNIFORM_ACCESS_POLICY) {
                 throw Error.make(Error.Status.BAD_REQUEST,
-                    'Subproject access policy is set to uniform and so the dataset ACLs cannot be applied. Patch the subproject access policy to dataset and attempt this operation again.');
+                    'Subproject access policy is set to uniform and so the dataset ACLs cannot be applied.\
+                    Patch the subproject access policy to dataset and attempt this operation again.');
             }
         }
     }
