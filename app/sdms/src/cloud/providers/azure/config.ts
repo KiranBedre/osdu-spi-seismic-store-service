@@ -114,6 +114,10 @@ export class AzureConfig extends Config {
             AzureConfig.SMDS_DELETION_QUEUE = process.env.SMDS_DELETION_QUEUE ||
                 AzureConfig.SMDS_DELETION_QUEUE || 'sdms-queue-bulkdelete';
 
+            // change tier operation status queue
+            AzureConfig.SDMS_CHANGE_TIER_QUEUE = process.env.SDMS_CHANGE_TIER_QUEUE ||
+                AzureConfig.SDMS_CHANGE_TIER_QUEUE || 'sdms-queue-changetier';
+
             // storage queue endpoint
             AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT ||
                 process.env.AZURE_STORAGE_QUEUE_ENDPOINT;
@@ -161,6 +165,7 @@ export class AzureConfig extends Config {
                 REDIS_SHARED_INSTANCE_TLS_DISABLE: AzureConfig.REDIS_SHARED_INSTANCE_TLS_DISABLE,
                 SMDS_DELETION_QUEUE: AzureConfig.SMDS_DELETION_QUEUE,
                 SDMS_COMPUTE_SIZE_QUEUE: AzureConfig.SDMS_COMPUTE_SIZE_QUEUE,
+                SDMS_CHANGE_TIER_QUEUE: AzureConfig.SDMS_CHANGE_TIER_QUEUE,
                 DES_SERVICE_HOST_COMPLIANCE: AzureConfig.DES_SERVICE_HOST_COMPLIANCE,
                 DES_SERVICE_HOST_ENTITLEMENT: AzureConfig.DES_SERVICE_HOST_ENTITLEMENT,
                 DES_SERVICE_HOST_STORAGE: AzureConfig.DES_SERVICE_HOST_STORAGE,
@@ -198,6 +203,7 @@ export class AzureConfig extends Config {
                 FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE:
                     process.env.POST_PROCESS_ON_DATASET_CLOSE === 'true' || false,
                 FEATURE_FLAG_ENABLE_BULK_DELETE: process.env.FEATURE_FLAG_ENABLE_BULK_DELETE === 'true' || false,
+                FEATURE_FLAG_ENABLE_CHANGE_TIER: process.env.FEATURE_FLAG_ENABLE_CHANGE_TIER === 'true' || false,
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,
                 CCM_TOKEN_SCOPE: AzureConfig.CCM_TOKEN_SCOPE,
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?

@@ -15,16 +15,19 @@
 // ============================================================================
 
 import { TokenCredential } from '@azure/identity';
-import { BlobBatchClient, BlobItem, BlobServiceClient } from '@azure/storage-blob';
+import {  AccessTier, BlobBatchClient, BlobItem, BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { BlockBlobTier } from '@azure/storage-blob';
 import { Readable } from 'stream';
 import { AzureInsightsLogger } from '.';
 
+import { Error } from '../../../shared'
 import { TenantModel } from '../../../services/tenant';
 import { Config } from '../../config';
 import { AbstractStorage, StorageFactory } from '../../storage';
 import { AzureCredentials } from './credentials';
 import { AzureDataEcosystemServices } from './dataecosystem';
+import { Tier } from './tiertype';
+import { Sku } from './sku';
 
 @StorageFactory.register('azure')
 export class AzureCloudStorage extends AbstractStorage {
@@ -213,6 +216,44 @@ export class AzureCloudStorage extends AbstractStorage {
             }
         }
         return totalSize;
+    }
+
+    public async getStorageAccountRedundancy(): Promise<string> {
+        
+        const accountName = await AzureDataEcosystemServices.getStorageResourceName(this.dataPartition);
+        const accountKey = await AzureDataEcosystemServices.getStorageResourceKey(this.dataPartition);
+        const key = new StorageSharedKeyCredential(
+            accountName,
+            accountKey
+        );
+        const client = new BlobServiceClient(
+            `https://${accountName}.blob.core.windows.net`,
+            key
+        );
+        const info = await client.getAccountInfo();
+        
+        return info.skuName;
+    }
+
+    public async checkSupportedTier(tierId: AccessTier): Promise<void> {
+        
+        // check if provided tier class is supported
+        const supportedTiers = this.getStorageTiers();
+        const index = supportedTiers.findIndex(item => tierId === item.toLowerCase());
+        if (index === -1) {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The storage Tier option ' + '"' + tierId + '"' + ' is not supported by this API. ' +
+                'Your available options are ' + supportedTiers.join(', ')));
+        }
+
+        // check storage account is support archive tier
+        const replication = await this.getStorageAccountRedundancy();
+        
+        if (Tier[supportedTiers[index]] === Tier.Archive && !(replication in Sku)) {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                "The current storage account does not support moving datasets to the Archive tier."
+                ));
+        }
     }
 
 }
