@@ -31958,6 +31958,221 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX01 GET: Retrieve the dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"sbit\", function () {",
+									"        postman.setEnvironmentVariable(\"sbit\", jsonData.sbit);",
+									"    });",
+									"",
+									"    pm.test(\"gcsurl\", () => {",
+									"        if (pm.environment.get('serviceCloudProvider') === 'gc') {",
+									"            postman.setEnvironmentVariable(\"gcsBucketName\", jsonData.gcsurl.split('$$')[0]);",
+									"            postman.setEnvironmentVariable(\"gcsObjectPrefix\", encodeURIComponent(jsonData.gcsurl.split('$$')[1]));",
+									"        } else {",
+									"            postman.setEnvironmentVariable(\"gcsBucketName\", jsonData.gcsurl.split('/')[0]);",
+									"            postman.setEnvironmentVariable(\"gcsObjectPrefix\", jsonData.gcsurl.split('/')[1]);",
+									"        }",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    });",
+									"",
+									"    pm.test(\"ctag\", function () {",
+									"        postman.setEnvironmentVariable(\"ctag\", jsonData.ctag);",
+									"    });",
+									"",
+									"    postman.setEnvironmentVariable('virtual_folder1', jsonData.gcsurl.split('/')[1]);",
+									"    console.log('virtual_folder1', pm.environment.get('virtual_folder1'));",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY UPLOAD DSX01 CONNECTION STRING: Generate upload connection credentials for dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log(pm.environment.get('serviceCloudProvider'));",
+									"",
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Credential Details\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"        pm.expect(jsonData.token_type).to.exist;",
+									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
+									"    });",
+									"",
+									"    if  (pm.environment.get(\"virtual_folder1\") != undefined) {",
+									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?',  '/'+pm.environment.get(\"virtual_folder1\")+'/blob1?'));",
+									"    }",
+									"    else {",
+									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?', '/blob1?'));",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}&x-ms-access-tier=Hot",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"upload-connection-string"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}"
+								},
+								{
+									"key": "x-ms-access-tier",
+									"value": "Hot"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
