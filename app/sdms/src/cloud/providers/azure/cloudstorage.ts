@@ -234,7 +234,6 @@ export class AzureCloudStorage extends AbstractStorage {
     }
 
     public async checkSupportedTier(tierId: AccessTier): Promise<void> {
-        
         // check if provided tier class is supported
         const supportedTiers = this.getStorageTiers();
         const index = supportedTiers.findIndex(item => tierId === item.toLowerCase());
@@ -243,7 +242,6 @@ export class AzureCloudStorage extends AbstractStorage {
                 'The storage Tier option ' + '"' + tierId + '"' + ' is not supported by this API. ' +
                 'Your available options are ' + supportedTiers.join(', ')));
         }
-        
         // check storage account is support archive tier
         const replication = await this.getStorageAccountRedundancy();
 
