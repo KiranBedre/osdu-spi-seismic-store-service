@@ -746,7 +746,8 @@ export class TestDatasetSVC {
                 async copy() { return; },
                 async randomBucketName() { return ''; },
                 getStorageTiers() { return ['tier-a', 'tier-b', 'tier-c']; },
-                async getObjectSize() { return 1; }
+                async getObjectSize() { return 1; },
+                async checkSupportedTier() { return; }
             };
 
             this.sandbox.stub(DatasetParser, 'size').returns(dataset);
