@@ -64,6 +64,7 @@ configuration:
       KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
       SIDECAR_URL: "https://localhost:7138"
       SIDECAR_ENABLE_QUERY: "true"
+      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-computesize"
     # Use only for secret rotation
     secrets:
       - name: AZ_REDIS_PASSWORD
