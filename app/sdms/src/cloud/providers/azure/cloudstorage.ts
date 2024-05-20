@@ -218,8 +218,7 @@ export class AzureCloudStorage extends AbstractStorage {
         return totalSize;
     }
 
-    public async getStorageAccountRedundancy(): Promise<string> {
-        
+    public async getStorageAccountRedundancy(): Promise<string> {  
         const accountName = await AzureDataEcosystemServices.getStorageResourceName(this.dataPartition);
         const accountKey = await AzureDataEcosystemServices.getStorageResourceKey(this.dataPartition);
         const key = new StorageSharedKeyCredential(
@@ -245,14 +244,14 @@ export class AzureCloudStorage extends AbstractStorage {
                 'The storage Tier option ' + '"' + tierId + '"' + ' is not supported by this API. ' +
                 'Your available options are ' + supportedTiers.join(', ')));
         }
-
+        
         // check storage account is support archive tier
         const replication = await this.getStorageAccountRedundancy();
         
         if (Tier[supportedTiers[index]] === Tier.Archive && !(replication in Sku)) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 "The current storage account does not support moving datasets to the Archive tier."
-                ));
+            ));
         }
     }
 
