@@ -64,7 +64,7 @@ configuration:
       KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
       SIDECAR_URL: "https://localhost:7138"
       SIDECAR_ENABLE_QUERY: "true"
-      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-computesize"
+      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
     # Use only for secret rotation
     secrets:
       - name: AZ_REDIS_PASSWORD
@@ -157,7 +157,7 @@ configuration:
       HOST_PORT: "8003"
       DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
       SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
-      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-computesize"
+      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
       SDMS_REDIS_QUEUE_PORT: "6380"
       SDMS_REDIS_LOCKS_PORT: "6380"
     request:
