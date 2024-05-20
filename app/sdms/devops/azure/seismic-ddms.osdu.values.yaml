@@ -149,7 +149,7 @@ configuration:
     container:
       image: seismic-ddms-changetier-service
       tag: latest
-      containerPort: 8002
+      containerPort: 8003
     probe:
       liveness:
         path: /healthz
