@@ -43,7 +43,7 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
         var successfullyLocked = new List<ChangeTierItem>();
         string? continuationToken = null;
         var i = 0;
-        var unlockErrors;
+        var unlockErrors = false;
         var totalDatasetCount = 0;
 
         do
