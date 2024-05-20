@@ -29,7 +29,7 @@ export class KeyVault {
     // pragma: allowlist nextline secret
     public static APP_RESOURCE_ID = 'aad-client-id';
     public static DATA_PARTITION_STORAGE_ACCOUNT_NAME = 'sdms-storage-account-name';
-    public static DATA_PARTITION_STORAGE_ACCOUNT_KEY = 'sdms-storage-account-key';
+    public static DATA_PARTITION_STORAGE_ACCOUNT_KEY = 'sdms-storage-account-key'; //pragma: allowlist secret
     public static DATA_PARTITION_COSMOS_ENDPOINT = 'cosmos-endpoint';
     public static DATA_PARTITION_COSMOS_PRIMARY_KEY = 'cosmos-primary-key';
     public static SERVICE_AUTH_PROVIDER_CREDENTIAL = 'sdms-svc-auth-provider-credential';
