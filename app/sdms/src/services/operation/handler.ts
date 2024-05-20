@@ -173,7 +173,7 @@ export class Handler {
 
         return operationStatus;
     }
-    
+
     private static checkFeature(feature: Feature) {
         if (!FeatureFlags.isEnabled(feature)) {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));

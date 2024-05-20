@@ -60,13 +60,13 @@ public class BulkChangeTierWorker : IBulkChangeTierWorker
 
         await Parallel.ForEachAsync(itemsToChangeTier,
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
-            async (item, innerCt) => await ProcessItemChangeTierAsync(dataPartitionId, blobClient, operationId, item, tier, innerCt)
+            async (item, innerCt) => await ProcessItemChangeTierAsync(dataPartitionId, blobClient, operationId, item, innerCt)
             );
 
         return _foundErrors;
     }
 
-    private async Task ProcessItemChangeTierAsync(string dataPartitionId, IBlobClient blobClient, string operationId, ChangeTierItem item, string tier, CancellationToken ct)
+    private async Task ProcessItemChangeTierAsync(string dataPartitionId, IBlobClient blobClient, string operationId, ChangeTierItem item, CancellationToken ct)
     {
         if (item.Gcsurl is null)
         {
