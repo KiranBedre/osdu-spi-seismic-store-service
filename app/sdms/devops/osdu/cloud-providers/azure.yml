@@ -299,10 +299,10 @@ sdms_azure_deploy:
       --set configuration[0].config.DES_SERVICE_HOST="https://${AZURE_DNS_NAME}"
       --set configuration[0].container.image=${SDMS_SERVICE_NAME}
       --set configuration[0].container.tag=${CI_COMMIT_SHA}
-      --set configuration[1].container.image=${SDMS_CHANGETIER_SERVICE_NAME}
-      --set configuration[1].container.tag=${CI_COMMIT_SHA}
       --set configuration[0].sidecar.container.image=${SDMS_SIDECAR_NAME}
       --set configuration[0].sidecar.container.tag=${CI_COMMIT_SHA}
+      --set configuration[1].container.image=${SDMS_CHANGETIER_SERVICE_NAME}
+      --set configuration[1].container.tag=${CI_COMMIT_SHA}
       --create-namespace
       -n ${NAMESPACE} -f app/sdms/devops/azure/${SDMS_SERVICE_NAME}.osdu.values.yaml --wait --timeout 10m
     # Wait for service to be running to start
