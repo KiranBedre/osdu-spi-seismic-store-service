@@ -20,7 +20,7 @@ import { BlockBlobTier } from '@azure/storage-blob';
 import { Readable } from 'stream';
 import { AzureInsightsLogger } from '.';
 
-import { Error } from '../../../shared'
+import { Error } from '../../../shared';
 import { TenantModel } from '../../../services/tenant';
 import { Config } from '../../config';
 import { AbstractStorage, StorageFactory } from '../../storage';

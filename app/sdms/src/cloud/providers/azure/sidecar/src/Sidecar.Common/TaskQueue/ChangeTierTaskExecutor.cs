@@ -39,13 +39,14 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
 
         var changeTierErrors = true;
         var lockErrors = true;
+        var unlockErrors = false;
         var lockSessionList = new List<WriteLockSession>();
         var successfullyLocked = new List<ChangeTierItem>();
         string? continuationToken = null;
         var i = 0;
-        var unlockErrors = false;
         var totalDatasetCount = 0;
-
+        _ = unlockErrors;
+        
         do
         {
             try
