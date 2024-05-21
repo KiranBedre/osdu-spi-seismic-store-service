@@ -31,6 +31,7 @@ export interface IStorage {
     randomBucketName(): Promise<string>;
     getStorageTiers(): string[];
     getObjectSize(bucketName: string, prefix?: string): Promise<number>;
+    getStorageAccountRedundancy(): Promise<string>;
     checkSupportedTier(tierId: string): Promise<void>;
 }
 

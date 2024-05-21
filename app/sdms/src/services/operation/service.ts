@@ -36,7 +36,7 @@ router.get('/bulk-delete/:operationid', async (req: Request, res: Response) => {
 // push a bulk change tier operation
 router.put('/change-tier', async (req: Request, res: Response) => {
     await Handler.handle(req, res, Operation.BulkChangeTierPush)
-})
+});
 
 // get the status of a bulk change tier operation
 router.get('/change-tier/:operationid', async (req: Request, res: Response) => {
