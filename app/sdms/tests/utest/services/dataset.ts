@@ -747,6 +747,7 @@ export class TestDatasetSVC {
                 async randomBucketName() { return ''; },
                 getStorageTiers() { return ['tier-a', 'tier-b', 'tier-c']; },
                 async getObjectSize() { return 1; },
+                async getStorageAccountRedundancy() { return ''; },
                 async checkSupportedTier() { return; }
             };
 
