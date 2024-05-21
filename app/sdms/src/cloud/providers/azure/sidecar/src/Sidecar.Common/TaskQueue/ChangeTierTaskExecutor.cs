@@ -39,12 +39,13 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
 
         var changeTierErrors = true;
         var lockErrors = true;
+        var unlockErrors = false;
         var lockSessionList = new List<WriteLockSession>();
         var successfullyLocked = new List<ChangeTierItem>();
         string? continuationToken = null;
         var i = 0;
-        var unlockErrors = false;
         var totalDatasetCount = 0;
+        _ = unlockErrors;
 
         do
         {
@@ -74,7 +75,7 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
             }
             finally
             {
-                unlockErrors = lockSessionList != null && await UnlockDatasetsAsync(status, successfullyLocked, lockSessionList);
+                unlockErrors = lockSessionList != null && await UnlockDatasetsAsync(lockSessionList);
                 successfullyLocked.Clear();
             }
             if (lockErrors || changeTierErrors || unlockErrors)
@@ -98,7 +99,7 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
             operationId, Constants.ChangeTierOperationStatus.STATUS_DESCRIPTION, status.Description(), ct);
     }
 
-    private async Task<bool> UnlockDatasetsAsync(IChangeTierOperationStatus op, List<ChangeTierItem> itemsToUnlock, List<WriteLockSession> lockSessionList)
+    private async Task<bool> UnlockDatasetsAsync(List<WriteLockSession> lockSessionList)
     {
         var unlockErrors = false;
         bool unlocked;
