@@ -65,7 +65,7 @@ configuration:
       SIDECAR_URL: "https://localhost:7138"
       SIDECAR_ENABLE_QUERY: "true"
       SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
-      FEATURE_FLAG_ENABLE_CHANGE_TIER: "true",
+      FEATURE_FLAG_ENABLE_CHANGE_TIER: "true"
     # Use only for secret rotation
     secrets:
       - name: AZ_REDIS_PASSWORD
