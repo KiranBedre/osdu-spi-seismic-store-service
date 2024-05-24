@@ -5681,6 +5681,10 @@
 							"script": {
 								"exec": [
 									"console.log('Dataset variables are initialized for datasets folder');",
+									"if ( (pm.environment.get('serviceCloudProvider') !== 'azure') ) {",
+									"    console.log('Skip the Change tier folder');",
+									"    postman.setNextRequest(\"CHANGE-TIER CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"}",
 									"",
 									"postman.setEnvironmentVariable('execCounter', 1)"
 								],
