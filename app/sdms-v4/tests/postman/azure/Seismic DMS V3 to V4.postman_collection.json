@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "fc56d021-49c0-4141-8bcd-d490ce0880d3",
+		"_postman_id": "3667a67a-199f-47c1-a499-852096525cf3",
 		"name": "Seismic DMS V3 -> V4 tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -82,7 +82,13 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
+							}
+						],
 						"url": {
 							"raw": "{{SVC_URL_V3}}/svcstatus",
 							"host": [
@@ -297,6 +303,11 @@
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
 							}
 						],
 						"url": {
@@ -786,6 +797,11 @@
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
 							}
 						],
 						"url": {
@@ -1270,6 +1286,11 @@
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
 							}
 						],
 						"url": {
@@ -1756,6 +1777,11 @@
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
 							}
 						],
 						"url": {
@@ -2241,6 +2267,11 @@
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
 							}
 						],
 						"url": {
@@ -2292,6 +2323,11 @@
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
 							}
 						],
 						"url": {
@@ -2408,6 +2444,11 @@
 								"key": "Accept",
 								"value": "application/json",
 								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{Token}}",
+								"type": "default"
 							}
 						],
 						"url": {
