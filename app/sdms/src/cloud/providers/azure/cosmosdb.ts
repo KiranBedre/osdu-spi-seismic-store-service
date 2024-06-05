@@ -236,7 +236,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async pathExists(subproject: string, path: string) : Promise<boolean> {
-        const query = 'select top 1 * from c where c.data.subproject = @subproject and c.data.path = @path';
+        const query = 'select top 1 * from c where c.data.subproject = @subproject and STARTSWITH(c.data.path, @path)';
         const parameters = [
             {name: '@subproject', value: subproject},
             {name: '@path', value: path}
