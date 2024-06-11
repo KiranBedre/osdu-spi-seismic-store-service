@@ -30,8 +30,6 @@ public class Cosmos : IDataAccess
     private const int MAX_ITEM_COUNT = 1000;
     private const int MAX_CONCURRENCY = 32;
 
-    // private static readonly Dictionary<string, CosmosClient> _cosmosClients = new();
-
     private static readonly ConcurrentDictionary<string, CosmosClient> _cosmosClients = new();
     private readonly ILogger<Cosmos> _logger;
 
@@ -54,8 +52,8 @@ public class Cosmos : IDataAccess
 
     public async Task<IPaginatedRecords> GetRecordsAsync(string cs, string sql, string? jsonParameters, string? ctoken, int? limit)
     {
-        initCosmosClient(cs);
-        var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);
+        var client = getCosmosClient(cs);
+        var database = client.GetDatabase(DATABASE_ID);
         var container = database.GetContainer(CONTAINER_ID);
         var records = new List<object>();
         var paginatedRecords = new PaginatedRecords();
@@ -140,8 +138,8 @@ public class Cosmos : IDataAccess
 
     public async Task<bool> DeleteMetadataAsync(string cs, string id)
     {
-        initCosmosClient(cs);
-        var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);
+        var client = getCosmosClient(cs);
+        var database = client.GetDatabase(DATABASE_ID);
         var container = database.GetContainer(CONTAINER_ID);
         var itemResponse = await container.DeleteItemAsync<object>(id, new PartitionKey(id));
         return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
@@ -149,8 +147,8 @@ public class Cosmos : IDataAccess
 
     public async Task<bool> UpdateMetadataAsync(string cs, string id, Dictionary<string, object> updates)
     {
-        initCosmosClient(cs);
-        var database = _cosmosClients[cs].GetDatabase(DATABASE_ID);
+        var client = getCosmosClient(cs);
+        var database = client.GetDatabase(DATABASE_ID);
         var container = database.GetContainer(CONTAINER_ID);
         var patchOperations = new List<PatchOperation>();
         foreach (var pair in updates)
@@ -176,9 +174,11 @@ public class Cosmos : IDataAccess
 
     private int GetItemLimit(int? limit) => limit is null or < 0 ? MAX_ITEM_COUNT : limit.Value;
 
-    private static void initCosmosClient(string cs)
+    public static CosmosClient getCosmosClient(string connectionString)
     {
-        _cosmosClients.TryAdd(cs, new CosmosClient(cs, new CosmosClientOptions()
+        try
+        {
+            return _cosmosClients.GetOrAdd(connectionString, connStr => new CosmosClient(connStr, new CosmosClientOptions()
             {
                 SerializerOptions = new CosmosSerializationOptions()
                 {
@@ -186,16 +186,14 @@ public class Cosmos : IDataAccess
                 },
                 ConnectionMode = ConnectionMode.Direct,
             }));
-        // if (!_cosmosClients.ContainsKey(cs))
-        // {
-        //     _cosmosClients.Add(cs, new CosmosClient(cs, new CosmosClientOptions()
-        //     {
-        //         SerializerOptions = new CosmosSerializationOptions()
-        //         {
-        //             IgnoreNullValues = true
-        //         },
-        //         ConnectionMode = ConnectionMode.Direct,
-        //     }));
-        // }
+        }
+        catch (CosmosException)
+        {
+            throw new InvalidOperationException("An error occurred while initializing the CosmosClient.", new Exception("CosmosDB error."));
+        }
+        catch (Exception)
+        {
+            throw new InvalidOperationException("An error occurred while initializing the CosmosClient.", new Exception("General error."));
+        }
     }
 }
