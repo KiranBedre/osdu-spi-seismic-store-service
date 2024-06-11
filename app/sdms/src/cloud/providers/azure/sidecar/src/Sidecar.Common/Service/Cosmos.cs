@@ -21,6 +21,7 @@ using Interface;
 using Model;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 public class Cosmos : IDataAccess
 {
@@ -29,7 +30,9 @@ public class Cosmos : IDataAccess
     private const int MAX_ITEM_COUNT = 1000;
     private const int MAX_CONCURRENCY = 32;
 
-    private static readonly Dictionary<string, CosmosClient> _cosmosClients = new();
+    // private static readonly Dictionary<string, CosmosClient> _cosmosClients = new();
+
+    private static readonly ConcurrentDictionary<string, CosmosClient> _cosmosClients = new();
     private readonly ILogger<Cosmos> _logger;
 
     public Cosmos(ILogger<Cosmos> logger)
@@ -175,9 +178,7 @@ public class Cosmos : IDataAccess
 
     private static void initCosmosClient(string cs)
     {
-        if (!_cosmosClients.ContainsKey(cs))
-        {
-            _cosmosClients.Add(cs, new CosmosClient(cs, new CosmosClientOptions()
+        _cosmosClients.TryAdd(cs, new CosmosClient(cs, new CosmosClientOptions()
             {
                 SerializerOptions = new CosmosSerializationOptions()
                 {
@@ -185,6 +186,16 @@ public class Cosmos : IDataAccess
                 },
                 ConnectionMode = ConnectionMode.Direct,
             }));
-        }
+        // if (!_cosmosClients.ContainsKey(cs))
+        // {
+        //     _cosmosClients.Add(cs, new CosmosClient(cs, new CosmosClientOptions()
+        //     {
+        //         SerializerOptions = new CosmosSerializationOptions()
+        //         {
+        //             IgnoreNullValues = true
+        //         },
+        //         ConnectionMode = ConnectionMode.Direct,
+        //     }));
+        // }
     }
 }
