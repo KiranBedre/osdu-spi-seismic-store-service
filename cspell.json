@@ -98,6 +98,7 @@
         "cobertura",
         "codeartifact",
         "CODEGEN",
+        "codelab",
         "COLDLINE",
         "COLORTERM",
         "commitlint",

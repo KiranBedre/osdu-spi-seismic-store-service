@@ -17,11 +17,11 @@
 import { CloudFactory } from './cloud';
 
 export interface ITrace {
-    start(): void;
+    start(app?: any): void;
 }
 
 export abstract class AbstractTrace implements ITrace {
-    public abstract start(): void;
+    public abstract start(app?: any): void;
 }
 
 export class TraceFactory extends CloudFactory {

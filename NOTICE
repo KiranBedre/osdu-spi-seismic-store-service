@@ -241,6 +241,7 @@ The following software have components provided under the terms of this license:
 - nano (from https://www.npmjs.com/package/nano)
 - oauth-sign (from https://www.npmjs.com/package/oauth-sign)
 - prisma (from https://www.npmjs.com/package/prisma)
+- prom-client (from https://www.npmjs.com/package/prom-client)
 - proto3-json-serializer (from https://www.npmjs.com/package/proto3-json-serializer)
 - protobufjs (from https://www.npmjs.com/package/protobufjs)
 - request (from https://www.npmjs.com/package/request)
@@ -596,6 +597,7 @@ The following software have components provided under the terms of this license:
 - balanced-match (from https://www.npmjs.com/package/balanced-match)
 - base64-js (from https://www.npmjs.com/package/base64-js)
 - bignumber.js (from https://www.npmjs.com/package/bignumber.js)
+- bintrees (from https://www.npmjs.com/package/bintrees)
 - bluebird (from https://www.npmjs.com/package/bluebird)
 - body-parser (from https://www.npmjs.com/package/body-parser)
 - bowser (from https://www.npmjs.com/package/bowser)
@@ -675,6 +677,7 @@ The following software have components provided under the terms of this license:
 - events (from https://www.npmjs.com/package/events)
 - expect (from https://www.npmjs.com/package/expect)
 - express (from https://www.npmjs.com/package/express)
+- express-prometheus-middleware (from https://www.npmjs.com/package/express-prometheus-middleware)
 - express-unless (from https://www.npmjs.com/package/express-unless)
 - extend (from https://www.npmjs.com/package/extend)
 - extsprintf (from https://www.npmjs.com/package/extsprintf)
@@ -837,8 +840,10 @@ The following software have components provided under the terms of this license:
 - object.assign (from https://www.npmjs.com/package/object.assign)
 - object.getownpropertydescriptors (from https://www.npmjs.com/package/object.getownpropertydescriptors)
 - on-finished (from https://www.npmjs.com/package/on-finished)
+- on-headers (from https://www.npmjs.com/package/on-headers)
 - one-time (from https://www.npmjs.com/package/one-time)
 - open (from https://www.npmjs.com/package/open)
+- optional (from https://www.npmjs.com/package/optional)
 - optionator (from https://www.npmjs.com/package/optionator)
 - os-tmpdir (from https://www.npmjs.com/package/os-tmpdir)
 - p-defer (from https://www.npmjs.com/package/p-defer)
@@ -860,6 +865,7 @@ The following software have components provided under the terms of this license:
 - prisma (from https://www.npmjs.com/package/prisma)
 - process (from https://www.npmjs.com/package/process)
 - process-nextick-args (from https://www.npmjs.com/package/process-nextick-args)
+- prometheus-gc-stats (from https://www.npmjs.com/package/prometheus-gc-stats)
 - promise.prototype.finally (from https://www.npmjs.com/package/promise.prototype.finally)
 - protobufjs (from https://www.npmjs.com/package/protobufjs)
 - protobufjs-cli (from https://www.npmjs.com/package/protobufjs-cli)
@@ -890,6 +896,7 @@ The following software have components provided under the terms of this license:
 - requires-port (from https://www.npmjs.com/package/requires-port)
 - requizzle (from https://www.npmjs.com/package/requizzle)
 - resolve (from https://www.npmjs.com/package/resolve)
+- response-time (from https://www.npmjs.com/package/response-time)
 - retry (from https://www.npmjs.com/package/retry)
 - retry-request (from https://www.npmjs.com/package/retry-request)
 - rfdc (from https://www.npmjs.com/package/rfdc)
@@ -932,6 +939,7 @@ The following software have components provided under the terms of this license:
 - supports-preserve-symlinks-flag (from https://www.npmjs.com/package/supports-preserve-symlinks-flag)
 - swagger-ui-dist (from https://www.npmjs.com/package/swagger-ui-dist)
 - swagger-ui-express (from https://www.npmjs.com/package/swagger-ui-express)
+- tdigest (from https://www.npmjs.com/package/tdigest)
 - text-hex (from https://www.npmjs.com/package/text-hex)
 - through2 (from https://www.npmjs.com/package/through2)
 - tmp (from https://www.npmjs.com/package/tmp)
@@ -1021,6 +1029,9 @@ The following software have components provided under the terms of this license:
 ========================================================================
 Unlicense
 ========================================================================
+The following software have components provided under the terms of this license:
+
+- gc-stats (from https://www.npmjs.com/package/gc-stats)
 - markdown-it-anchor (from https://www.npmjs.com/package/markdown-it-anchor)
 - tweetnacl (from https://www.npmjs.com/package/tweetnacl)
 
@@ -1042,6 +1053,13 @@ bsd-2-clause-views
 The following software have components provided under the terms of this license:
 
 - uri-js (from https://www.npmjs.com/package/uri-js)
+
+========================================================================
+mit-0
+========================================================================
+The following software have components provided under the terms of this license:
+
+- url-value-parser (from https://www.npmjs.com/package/url-value-parser)
 
 ========================================================================
 mit-addition
