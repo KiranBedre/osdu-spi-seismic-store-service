@@ -1,0 +1,33 @@
+groups:
+  - name: seismic_ddms_rules
+    interval: 20s
+    rules:
+    # HTTP request rate (number of requests per time unit)
+    - record: number_of_requests_per_time
+      expr: increase(http_requests_total{group="seismic_ddms"}[30s])
+    # HTTP response times (average)
+    - record: avg_request_response_time
+      expr: rate(http_request_duration_seconds_sum{group="seismic_ddms"}[30s]) / rate(http_request_duration_seconds_count{group="seismic_ddms"}[30s])
+    # HTTP response times (peak)
+    - record: highest_request_response_time
+      expr: histogram_quantile(1, increase(http_request_duration_seconds_bucket{group="seismic_ddms"}[5m]))
+    # HTTP status codes distribution across different endpoints
+    - record: status_code_distribution
+      expr: http_requests_total
+    # CPU percentage usage
+    - record: cpu_percentage_usage_estimation
+      expr: (avg by (instance) (irate(process_cpu_seconds_total{job="sdms"}[1m])) * 100)
+    - record: cpu_percentage_usage_suggested_by_AI
+      expr: 100 - (avg by (instance) (rate(process_cpu_seconds_total{job="sdms"}[1m])) * 100)
+    - record: total_system_CPU_time_spent_in_seconds
+      expr: rate(process_cpu_system_seconds_total{group="seismic_ddms"}[5m])
+    - record: Total_user_CPU_time_spent_in_seconds
+      expr: rate(process_cpu_user_seconds_total{group="seismic_ddms"}[5m])
+    # Memory percentage usage
+    - record: memory_percentage_usage_suggested_by_AI
+      expr: (avg by (instance) (irate(process_resident_memory_bytes{group="seismic_ddms"}[1m])) * 100)
+    - record: process_heap_size_from_nodejs_in_bytes
+      expr: nodejs_heap_size_total_bytes{group="seismic_ddms"}
+    - record: process_heap_size_used_from_nodejs_in_bytes
+      expr: nodejs_heap_size_used_bytes{group="seismic_ddms"}
+

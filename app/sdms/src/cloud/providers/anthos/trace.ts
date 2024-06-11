@@ -15,11 +15,30 @@
 // ============================================================================
 
 import { AbstractTrace, TraceFactory } from '../../trace';
+import express from 'express'
+import promMid from 'express-prometheus-middleware'
+import { Config } from '../../config';
 
 @TraceFactory.register('anthos')
 export class AnthosTrace extends AbstractTrace {
 
-    // [TODO] this method should start a call tracer using CSP SDK
-    public start() { return; }
-
+    public start(app: express.Express) {
+        /**
+         * A metrics endpoint is set to be consumed from Prometheus
+         */
+        const metricsMiddleware = promMid({
+            metricsPath: `${Config.API_BASE_PATH}/metrics`,
+            collectDefaultMetrics: true,
+            requestDurationBuckets: [0.1, 0.5, 1, 1.5],
+            requestLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
+            responseLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
+            transformLabels: (labels, req) => {
+                if(labels.route.startsWith('/api/seismic-store/v3')) {
+                    labels.route = labels.route.replace('/api/seismic-store/v3', '');
+                }
+                return labels;
+            }
+        });
+        app.use(metricsMiddleware)
+    }
 }
