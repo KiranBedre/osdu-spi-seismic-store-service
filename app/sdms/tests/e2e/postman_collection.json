@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "53a8fb62-31c9-4c4b-a4cb-afd9985c1cd7",
+		"_postman_id": "9fd56164-a943-4da2-93d6-1e7070f289b4",
 		"name": "SDMS-E2E ver.M24 - Release 0.27",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -43,6 +43,11 @@
 									"// Test Compute Size feature flag",
 									"if ( !pm.environment.get('testComputeSize') ) {",
 									"    pm.environment.set('testComputeSize', 'false');",
+									"};",
+									"",
+									"// Test job schedule feature flag",
+									"if ( !pm.environment.get('testJobSchedule') ) {",
+									"    pm.environment.set('testJobSchedule', 'true');",
 									"};"
 								],
 								"type": "text/javascript"
@@ -31770,6 +31775,1401 @@
 			]
 		},
 		{
+			"name": "job schedule",
+			"item": [
+				{
+					"name": "JOB SCHEDULE: Create test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('Variables are initialized for job schedule folder');",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"console.log('feature flag testJobSchedule is : ' + pm.environment.get('testJobSchedule'));",
+									"",
+									"if ( (pm.environment.get('serviceCloudProvider') !== 'azure') || (pm.environment.get('testJobSchedule') === 'false') ) {",
+									"",
+									"    console.log('Skip the job schedule folder');",
+									"    postman.setNextRequest(\"JOB SCHEDULE CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dsx01\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"postman.setEnvironmentVariable(\"dsx02\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));\r",
+									"\r",
+									"const OriginalFiles = [\"randomfile1.txt\", \"randomfile2.txt\", \"randomfile3.txt\"];\r",
+									"postman.setEnvironmentVariable(\"OriginalFiles\", OriginalFiles);\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForComputedSize\", 10);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: Register testing subproject",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"subprojectJobSchedule\", makeID_dataset(16));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    ",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "ltag",
+								"value": "{{legaltag01}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"storage_class\": \"REGIONAL\",\n  \"storage_location\": \"US-CENTRAL1\"\n} \n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subprojectJobSchedule}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subprojectJobSchedule}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: Create job schedule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code !== 200) {",
+									"    console.log(pm.response.text());",
+									"",
+									"    if (pm.response.code === 400 && pm.response.text().includes('analytics endpoints not available')) {",
+									"",
+									"        // Skip the end-to-end test for job schedule",
+									"        postman.setNextRequest(\"JOB SCHEDULE: Delete testing subproject\");",
+									"        console.warn('Skipping job schedule end-to-end tests because analytics endpoints are not available.');",
+									"    } else {",
+									"",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    }",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Get the request body and response body",
+									"    const requestBody = pm.request.body.raw;",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    // Parse the request body",
+									"    const requestBodyJson = JSON.parse(requestBody);",
+									"",
+									"    // Function to validate the parameters and their values",
+									"    function validateParameters(requestParams, responseParams) {",
+									"        for (let i = 0; i < requestParams.length; i++) {",
+									"            for (const key in requestParams[i]) {",
+									"                if (requestParams[i].hasOwnProperty(key)) {",
+									"                    pm.test(`Response should contain parameter: ${key}`, function () {",
+									"                        pm.expect(responseParams[i]).to.have.property(key);",
+									"                    });",
+									"                    if (key !== \"first_execution\") {",
+									"                        pm.test(`Response value for ${key} should be the same as in request`, function () {",
+									"                            pm.expect(responseParams[i][key]).to.eql(requestParams[i][key]);",
+									"                        });",
+									"                    }",
+									"                }",
+									"            }",
+									"        }",
+									"    }",
+									"",
+									"    // Validate the parameters in the response",
+									"    validateParameters(requestBodyJson, jsonData);",
+									"",
+									"    // Validate first_execution is a number",
+									"    pm.test(\"first_execution should be a number\", function () {",
+									"        pm.expect(jsonData[0].first_execution).to.be.a('number');",
+									"    });",
+									"",
+									"    // Validate freq_execution is a number",
+									"    pm.test(\"freq_execution should be a number\", function () {",
+									"        pm.expect(jsonData[0].freq_execution).to.be.a('number');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"name\": \"{{subprojectJobSchedule}}\",\r\n    \"statistics\": \"stat1,stat2\",\r\n    \"first_execution\": 2,\r\n    \"freq_execution\": 5\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: Create job schedule with default parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"    ",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Get the request body and response body",
+									"    const requestBody = pm.request.body.raw;",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    // Parse the request body",
+									"    const requestBodyJson = JSON.parse(requestBody);",
+									"",
+									"    // Function to validate the parameters and their values",
+									"    function validateParameters(requestParams, responseParams) {",
+									"        for (let i = 0; i < requestParams.length; i++) {",
+									"            for (const key in requestParams[i]) {",
+									"                if (requestParams[i].hasOwnProperty(key)) {",
+									"                    pm.test(`Response should contain parameter: ${key}`, function () {",
+									"                        pm.expect(responseParams[i]).to.have.property(key);",
+									"                    });",
+									"                    if (key !== \"first_execution\") {",
+									"                        pm.test(`Response value for ${key} should be the same as in request`, function () {",
+									"                            pm.expect(responseParams[i][key]).to.eql(requestParams[i][key]);",
+									"                        });",
+									"                    }",
+									"                }",
+									"            }",
+									"        }",
+									"    }",
+									"",
+									"    // Validate the parameters in the response",
+									"    validateParameters(requestBodyJson, jsonData);",
+									"",
+									"    // Validate first_execution is a number",
+									"    pm.test(\"first_execution should be a number\", function () {",
+									"        pm.expect(jsonData[0].first_execution).to.be.a('number');",
+									"    });",
+									"",
+									"    // Validate freq_execution is a number",
+									"    pm.test(\"freq_execution should be a number\", function () {",
+									"        pm.expect(jsonData[0].freq_execution).to.be.a('number');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"name\": \"{{subprojectJobSchedule}}\",\r\n    \"statistics\": \"stat1,stat2,stat3\"\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: Update existing job schedule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"    ",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Get the request body and response body",
+									"    const requestBody = pm.request.body.raw;",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    // Parse the request body",
+									"    const requestBodyJson = JSON.parse(requestBody);",
+									"",
+									"    // Function to validate the parameters and their values",
+									"    function validateParameters(requestParams, responseParams) {",
+									"        for (let i = 0; i < requestParams.length; i++) {",
+									"            for (const key in requestParams[i]) {",
+									"                if (requestParams[i].hasOwnProperty(key)) {",
+									"                    pm.test(`Response should contain parameter: ${key}`, function () {",
+									"                        pm.expect(responseParams[i]).to.have.property(key);",
+									"                    });",
+									"                    if (key !== \"first_execution\") {",
+									"                        pm.test(`Response value for ${key} should be the same as in request`, function () {",
+									"                            pm.expect(responseParams[i][key]).to.eql(requestParams[i][key]);",
+									"                        });",
+									"                    }",
+									"                }",
+									"            }",
+									"        }",
+									"    }",
+									"",
+									"    // Validate the parameters in the response",
+									"    validateParameters(requestBodyJson, jsonData);",
+									"",
+									"    // Validate first_execution is a number",
+									"    pm.test(\"first_execution should be a number\", function () {",
+									"        pm.expect(jsonData[0].first_execution).to.be.a('number');",
+									"    });",
+									"",
+									"    // Validate freq_execution is a number",
+									"    pm.test(\"freq_execution should be a number\", function () {",
+									"        pm.expect(jsonData[0].freq_execution).to.be.a('number');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"name\": \"{{subprojectJobSchedule}}\",\r\n    \"statistics\": \"stat1,stat2\",\r\n    \"first_execution\": 2,\r\n    \"freq_execution\": 6\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: NEGATIVE Create job schedule without statistics key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response message for NEGATIVE Create job schedule without statistics key\", function () {",
+									"        pm.expect(pm.response.text()).to.include(\"[seismic-store-service] The 'statistics' parameter has not been specified.\");",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"name\": \"{{subprojectJobSchedule}}\"\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: NEGATIVE Create job schedule with invalid freq_execution",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response message for NEGATIVE Create job schedule with invalid freq_execution\", function () {",
+									"        pm.expect(pm.response.text()).to.include(\"[seismic-store-service] 'freq_execution' parameter must be greater than 0\");",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n  \"name\": \"{{subprojectJobSchedule}}\",\r\n  \"statistics\": \"stat7\",\r\n  \"freq_execution\": -1\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: NEGATIVE Create job schedule with invalid first_execution",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response message for NEGATIVE Create job schedule with invalid first_execution\", function () {",
+									"        pm.expect(pm.response.text()).to.include(\"[seismic-store-service] 'first_execution' parameter must be between 1 - 7\");",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n  \"name\": \"{{subprojectJobSchedule}}\",\r\n  \"statistics\": \"stat6\",\r\n  \"first_execution\": 8\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: NEGATIVE Create job schedule with empty request body",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response message for NEGATIVE Create job schedule with empty request body\", function () {",
+									"        pm.expect(pm.response.text()).to.include(\"[seismic-store-service] The 'body' parameter is in a wrong format.\");",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: NEGATIVE Create job schedule with missing data-partition-id header",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response message for NEGATIVE Create job schedule with missing data-partition-id header\", function () {",
+									"        pm.expect(pm.response.text()).to.include('[seismic-store-service] missing \"data-partition-id\" in header');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[{\r\n    \"name\": \"{{subprojectJobSchedule}}\",\r\n    \"statistics\": \"stat1,stat2\",\r\n    \"first_execution\": 3,\r\n    \"freq_execution\": 5\r\n}]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: List all job schedule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    // Function to validate each job schedule",
+									"    function validateResponseItem(responseItem) {",
+									"        ",
+									"        // Validate name is a string",
+									"        pm.test(\"name should be a string\", function () {",
+									"            pm.expect(responseItem.name).to.be.a('string');",
+									"        });",
+									"",
+									"        // Validate statistics is a string",
+									"        pm.test(\"statistics should be a string\", function () {",
+									"            pm.expect(responseItem.statistics).to.be.a('string');",
+									"        });",
+									"",
+									"        // Validate first_execution is a number",
+									"        pm.test(\"first_execution should be a number\", function () {",
+									"            pm.expect(responseItem.first_execution).to.be.a('number');",
+									"        });",
+									"",
+									"        // Validate freq_execution is a number",
+									"        pm.test(\"freq_execution should be a number\", function () {",
+									"            pm.expect(responseItem.freq_execution).to.be.a('number');",
+									"        });",
+									"    }",
+									"",
+									"    // Validate each job schedule in the response",
+									"    for (let i = 0; i < jsonData.length; i++) {",
+									"        validateResponseItem(jsonData[i]);",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: NEGATIVE List all job schedule with missing data-partition-id header",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response message for NEGATIVE List all job schedule with missing data-partition-id header\", function () {",
+									"        pm.expect(pm.response.text()).to.include('[seismic-store-service] missing \"data-partition-id\" in header');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: Delete job schedule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    ",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job/{{subprojectJobSchedule}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job",
+								"{{subprojectJobSchedule}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: List all after delete job schedule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text());",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"    ",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    // Validate that the job schedule is deleted and not present in the job schedule list",
+									"    pm.test(`No job schedule should have name equal to ${pm.environment.get(\"subprojectJobSchedule\")}`, function () {",
+									"        jsonData.forEach(item => {",
+									"            pm.expect(item.name).to.not.equal(pm.environment.get(\"subprojectJobSchedule\"));",
+									"        });",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: NEGATIVE Delete job schedule with missing data-partition-id header",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response message for NEGATIVE Delete job schedule with missing data-partition-id header\", function () {",
+									"        pm.expect(pm.response.text()).to.include('[seismic-store-service] missing \"data-partition-id\" in header');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/analytics/job/{{subprojectJobSchedule}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"analytics",
+								"job",
+								"{{subprojectJobSchedule}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE: Delete testing subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{subprojectJobSchedule}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subprojectJobSchedule}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JOB SCHEDULE CLEANUP STATUS UNSET: Cleanup test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Reset environment variables if _.retryOnFailure function was used before",
+									"var key = request.name + '_counter';",
+									"pm.environment.unset(key);",
+									"pm.environment.unset(\"subprojectJobSchedule\");",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"console.log('Postman environment was cleaned up for job schedule tests');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "cleanup",
 			"item": [
 				{
@@ -31896,6 +33296,9 @@
 									"pm.environment.unset('appAdminEmail');",
 									"pm.environment.unset('maxAmountOfRetries');",
 									"pm.environment.unset('subprojectLongName');",
+									"pm.environment.unset('testComputeSize');",
+									"pm.environment.unset('testJobSchedule');",
+									"pm.environment.unset('testBulkDelete');",
 									"pm.environment.unset('execCounter');",
 									"// if subproject name was not provided remove subproject",
 									"if (pm.environment.get(\"hold_subproject\" !== true)) {",
