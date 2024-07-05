@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ export enum Feature {
     CCM_INTERACTION,
     POLICY_SERVICE_INTERACTION,
     POST_PROCESS_ON_DATASET_CLOSE,
-    BULK_DELETE
+    BULK_DELETE,
+    ANALYTICS
 }
 
 export class FeatureFlags {
@@ -38,7 +39,8 @@ export class FeatureFlags {
             flag === Feature.CCM_INTERACTION && Config.FEATURE_FLAG_CCM_INTERACTION ||
             flag === Feature.POLICY_SERVICE_INTERACTION && Config.FEATURE_FLAG_POLICY_SVC_INTERACTION ||
             flag === Feature.POST_PROCESS_ON_DATASET_CLOSE && Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE ||
-            flag === Feature.BULK_DELETE && Config.FEATURE_FLAG_ENABLE_BULK_DELETE;
+            flag === Feature.BULK_DELETE && Config.FEATURE_FLAG_ENABLE_BULK_DELETE ||
+            flag === Feature.ANALYTICS && Config.FEATURE_FLAG_ENABLE_ANALYTICS;
 
     }
 }
