@@ -30,6 +30,7 @@ export interface IStorage {
     randomBucketName(): Promise<string>;
     getStorageTiers(): string[];
     getObjectSize(bucketName: string, prefix?: string): Promise<number>;
+    listBlobs(prefix: string): Promise<string[]>;
 }
 
 export abstract class AbstractStorage implements IStorage {
@@ -48,6 +49,10 @@ export abstract class AbstractStorage implements IStorage {
     public getObjectSize(bucketName: string, prefix?: string): Promise<number> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     };
+    public listBlobs(prefix: string): Promise<string[]> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    };
+
 }
 
 export class StorageFactory extends CloudFactory {
