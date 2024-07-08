@@ -450,3 +450,4 @@ sdms_azure_publish:
   #  - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_COMPUTESIZE_SERVICE_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_COMPUTESIZE_SERVICE_NAME}:${AZ_VER}
    - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
 
+
