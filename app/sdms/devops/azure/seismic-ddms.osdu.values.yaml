@@ -161,6 +161,25 @@ configuration:
       SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
       SDMS_REDIS_QUEUE_PORT: "6380"
       SDMS_REDIS_LOCKS_PORT: "6380"
+  # #####################################
+  # # Job statistics #
+  # #####################################
+  - service: seismic-ddms-statistics-job
+    container:
+      image: seismic-ddms-statistics-job
+      containerPort: 8080
+    path: "/"
+    pathRewrite: "/"
+    cronjobEnabled: true
+    schedule: "0 0 * * *"
+    backOffLimit: "0"
+    activeDeadlineSeconds: "3600"
+    successfulJobsHistoryLimit: "3"
+    startingDeadlineSeconds: "500"
+    failedJobsHistoryLimit: "5"
+    config:
+      KEYVAULT_URL: "{{ .Values.azure.keyvault.name }}"
+      OSDU_SERVICES_HOST_URL: "https://{{ .Values.ingress.dns }}"
     request:
       cpu: 0.1
       memory: 1Gi

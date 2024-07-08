@@ -285,7 +285,8 @@ export class TestSubProjectSVC {
                 getStorageTiers() { return ['tier-a', 'tier-b', 'tier-c']; },
                 async getObjectSize() { return 1; },
                 async getStorageAccountRedundancy() { return ''; },
-                async checkSupportedTier() { return; }
+                async checkSupportedTier() { return; },
+                async listBlobs() { return ['']; }
             };
             this.sandbox.stub(StorageFactory, 'build').returns(storage);
             this.sandbox.stub(SubprojectGroups, 'serviceAdminGroup').returns('adminGroup');

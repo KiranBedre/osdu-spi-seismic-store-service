@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -112,7 +112,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 id: entity.key.partitionKey,
                 data: entity.data
             }
-            item.data[this.KEY.toString()] = entity.key;
+            if(!item.id.startsWith('job-collection')) {
+                item.data[this.KEY.toString()] = entity.key;}
             await (await this.getCosmoContainer()).items.upsert(item);
         }
     }
@@ -236,7 +237,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async pathExists(subproject: string, path: string) : Promise<boolean> {
-        const query = 'select top 1 * from c where c.data.subproject = @subproject and c.data.path = @path';
+        const query = 'select top 1 * from c where c.data.subproject = @subproject and STARTSWITH(c.data.path, @path)';
         const parameters = [
             {name: '@subproject', value: subproject},
             {name: '@path', value: path}
@@ -469,6 +470,11 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             response = await (await this.getCosmoContainer()).items.query(sqlQuery).fetchAll();
         }
 
+        if (cosmosQuery.kind === Config.ANALYTIC_KIND) {
+            sqlQuery = 'SELECT * FROM c WHERE c.id LIKE "job-collection-%"';
+            response = await (await this.getCosmoContainer()).items.query(sqlQuery).fetchAll();
+        }
+
         const results = response.resources.map(result => {
             if (!result.data) {
                 return result;
@@ -510,6 +516,11 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         if (kind === AzureConfig.APPS_KIND) {
             name = specs.path[1];
             partitionKey = 'ap-' + name;
+        }
+
+        if (kind === AzureConfig.ANALYTIC_KIND) {
+            name = specs.path[1];
+            partitionKey = 'job-collection-' + name;
         }
 
         return { partitionKey, name };

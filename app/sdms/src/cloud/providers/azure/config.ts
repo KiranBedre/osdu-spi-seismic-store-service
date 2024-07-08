@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -204,6 +204,7 @@ export class AzureConfig extends Config {
                     process.env.POST_PROCESS_ON_DATASET_CLOSE === 'true' || false,
                 FEATURE_FLAG_ENABLE_BULK_DELETE: process.env.FEATURE_FLAG_ENABLE_BULK_DELETE === 'true' || false,
                 FEATURE_FLAG_ENABLE_CHANGE_TIER: process.env.FEATURE_FLAG_ENABLE_CHANGE_TIER === 'true' || false,
+                FEATURE_FLAG_ENABLE_ANALYTICS: process.env.FEATURE_FLAG_ENABLE_ANALYTICS === 'true',
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,
                 CCM_TOKEN_SCOPE: AzureConfig.CCM_TOKEN_SCOPE,
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?

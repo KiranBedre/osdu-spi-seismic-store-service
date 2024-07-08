@@ -31,3 +31,6 @@ image:
 sidecarImage:
   repository: #{CONTAINER_SIDECAR_REGISTRY_NAME}#
   tag: #{IMAGE_SIDECAR_TAG}#
+
+jobStatistics:
+  repository: #{CONTAINER_REGISTRY_NAME}#

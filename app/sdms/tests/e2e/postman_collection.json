@@ -6936,7 +6936,7 @@
 									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
 									"    });",
 									"    ",
-									"    var ctagValue = jsonData[0].ctag.substring(0, jsonData[0].ctag.length - 15);",
+									"    var ctagValue = jsonData[0].ctag.split(pm.environment.get('tenant'))[0];",
 									"",
 									"    // Test to compare with the expected ctag value",
 									"    pm.test(\"Validate ctag\", function () {",
@@ -6957,6 +6957,7 @@
 									"    var key = request.name + '_counter';",
 									"    pm.environment.unset(key);",
 									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"",
 									"}"
 								],
 								"type": "text/javascript"

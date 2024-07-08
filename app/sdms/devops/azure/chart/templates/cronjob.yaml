@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}jobstatistics
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ .Release.Name }}
+            aadpodidbinding: {{ .Values.global.podidentity }}
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                {{- range $.Values.global.node_selector_labels }}
+                - matchExpressions:
+                  - key: {{ . }}
+                    operator: In
+                    values:
+                    - {{ $.Values.aks_node_pool_services }}
+                {{- end }}
+          containers:
+          - name: statistics
+            image: {{ .Values.jobStatistics.repository }}:{{ .Values.image.tag }}
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: OSDU_SERVICES_HOST_URL
+              value: https://{{ .Values.configEnv.desServiceHost }}
+            - name: KEYVAULT_URL
+              value: {{ .Values.configEnv.keyvaultUrl }}
+          restartPolicy: OnFailure

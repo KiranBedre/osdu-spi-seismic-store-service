@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,4 @@
 // limitations under the License.
 // ============================================================================
 
-import { CloudFactory } from './cloud';
-
-export interface ITrace {
-    start(app?: any): void;
-}
-
-export abstract class AbstractTrace implements ITrace {
-    public abstract start(app?: any): void;
-}
-
-export class TraceFactory extends CloudFactory {
-    public static build(providerLabel: string): ITrace {
-        return CloudFactory.build(providerLabel, AbstractTrace) as ITrace;
-    }
-}
+export enum AnalyticsOP { CREATE, DELETE, LIST_SCHEDULES, LIST_REPORTS, DOWNLOAD_CONNECTION_STRING }

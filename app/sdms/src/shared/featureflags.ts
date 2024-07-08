@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ export enum Feature {
     POLICY_SERVICE_INTERACTION,
     POST_PROCESS_ON_DATASET_CLOSE,
     BULK_DELETE,
-    CHANGE_TIER
+    CHANGE_TIER,
+    ANALYTICS
 }
 
 export class FeatureFlags {
@@ -41,6 +42,7 @@ export class FeatureFlags {
             flag === Feature.POST_PROCESS_ON_DATASET_CLOSE && Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE ||
             flag === Feature.BULK_DELETE && Config.FEATURE_FLAG_ENABLE_BULK_DELETE ||
             flag === Feature.CHANGE_TIER && Config.FEATURE_FLAG_ENABLE_CHANGE_TIER;
+            flag === Feature.ANALYTICS && Config.FEATURE_FLAG_ENABLE_ANALYTICS;
 
     }
 }

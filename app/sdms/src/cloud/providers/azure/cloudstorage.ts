@@ -252,4 +252,16 @@ export class AzureCloudStorage extends AbstractStorage {
         }
     }
 
+    // list blobs from a container
+    public async listBlobs(prefix: string): Promise<string[]> {
+        const container = (await this.getBlobServiceClient()).getContainerClient(Config.SDMS_ANALYTICS_CONTAINER_NAME);
+        const blobList = [];
+
+        for await (const blob of container.listBlobsFlat({ prefix: prefix + '/' })) {
+            const report = blob.name.split('/').slice(1).join('/');
+            blobList.push(report);
+        }
+
+        return blobList;
+    }
 }
