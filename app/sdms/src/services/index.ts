@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import { TenantRouter } from './tenant/service';
 import { UserRouter } from './user/service';
 import { UtilityRouter } from './utility/service';
 import { OperationRouter } from './operation/service';
+import { AnalyticsRouter } from './analytics/service';
 
 const router = Router();
 
@@ -63,5 +64,8 @@ router.use(Config.API_BASE_PATH + '/utility', UtilityRouter);
 
 // operation
 router.use(Config.API_BASE_PATH + '/operation', OperationRouter);
+
+// analytics
+router.use(Config.API_BASE_PATH + '/analytics', AnalyticsRouter);
 
 export { router as ServiceRouter };
