@@ -212,6 +212,7 @@ sdms_azure_containerize:
       if [ ! -z "$CI_COMMIT_TAG" ]; then
         docker tag $CI_REGISTRY_IMAGE/$SHA_CHANGETIER_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_CHANGETIER_SERVICE_IMAGE
         docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_CHANGETIER_SERVICE_IMAGE
+      fi
     # Statistics job image
     - az acr login -n $AZURE_REGISTRY
     - docker tag $SDMS_STATISTICS_JOB_IMAGE ${AZURE_REGISTRY}.azurecr.io/$SHA_STATISTICS_JOB_IMAGE
@@ -223,7 +224,6 @@ sdms_azure_containerize:
         docker tag $CI_REGISTRY_IMAGE/$SHA_STATISTICS_JOB_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_STATISTICS_JOB_IMAGE
         docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_STATISTICS_JOB_IMAGE
       fi
-
   only:
     changes:
       - devops/**/*
