@@ -3316,3 +3316,44 @@ components:
         dataset_cnt: 1000
         completed_cnt: 997
         failed_cnt: 3
+
+/change-tier:
+    PUT:
+      summary: Bulk Change Tier
+      description: "<ul><li>Bulk change storage tier in bulk.</li><li>Required roles: none</li></ul>"
+      security:
+        - bearer: []
+      operationId: service-status
+      tags:
+        - Change tier
+      parameters:
+        - description: "Tier value"
+          in: header
+          name: tier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bulk Change tier.
+          content:
+            application/json:
+              schema:
+                type: string
+
+/change-tier/:operationid:
+    GET:
+      summary: Get status of Bulk Change Tier
+      description: "<ul><li>Bulk change storage tier in bulk.</li><li>Required roles: none</li></ul>"
+      security:
+        - bearer: []
+      operationId: Change tier status
+      tags:
+        - Check status of change tier
+      responses:
+        "200":
+          description: Bulk change tier status.
+          content:
+            application/json:
+              schema:
+                type: string
