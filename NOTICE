@@ -423,6 +423,7 @@ The following software have components provided under the terms of this license:
 - nopt (from https://www.npmjs.com/package/nopt)
 - npmlog (from https://www.npmjs.com/package/npmlog)
 - once (from https://www.npmjs.com/package/once)
+- picocolors (from https://www.npmjs.com/package/picocolors)
 - protobufjs (from https://www.npmjs.com/package/protobufjs)
 - pseudomap (from https://www.npmjs.com/package/pseudomap)
 - request-promise (from https://www.npmjs.com/package/request-promise)
