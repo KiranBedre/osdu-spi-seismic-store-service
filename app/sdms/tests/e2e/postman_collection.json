@@ -27405,7 +27405,7 @@
 									"    pm.test(\"Status code is 202\", function () {",
 									"        pm.response.to.have.status(202);",
 									"    });",
-									"    setTimeout(function () { }, 5000);",
+									"    setTimeout(function () { }, 7000);",
 									"",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
