@@ -65,12 +65,6 @@ async function ServerStart() {
             DISABLE_TLS: Config.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE
         });
 
-        if (FeatureFlags.isEnabled(Feature.TRACE)) {
-            // tslint:disable-next-line
-            console.log('- Initializing cloud tracer');
-            TraceFactory.build(Config.CLOUDPROVIDER).start();
-        }
-
         console.log('- Initializing schema managers');
         await SchemaManagerFactory.initialize();
 
@@ -87,7 +81,20 @@ async function ServerStart() {
             headersToPropagate: callerHeadersToForward
         });
 
-        await new (await import('./server')).Server().start();
+        const serverInstance = new (await import('./server')).Server();
+        await serverInstance.start();
+
+        // Initialize the tracer after the application as it may require the instance.
+        if (FeatureFlags.isEnabled(Feature.TRACE)) {
+            // tslint:disable-next-line
+            console.log('- Initializing cloud tracer');
+            const app = serverInstance.getApp()
+            TraceFactory.build(Config.CLOUDPROVIDER).start(app);
+        }
+
+        // The router is registered after initializing the tracer,
+        // as it can act on the routes that are registered afterwards.
+        await serverInstance.registerRouter()
 
     } catch (error) {
         // tslint:disable-next-line

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -739,8 +739,7 @@ export class TestAzureCosmosDbDAO {
 
         Tx.sectionInit('pathExists');
 
-        let query =  'select top 1 * from c where c.data.subproject = @subproject ' +
-            'and c.data.path = @path'
+        const query = 'select top 1 * from c where c.data.subproject = @subproject and STARTSWITH(c.data.path, @path)';
         let queryIterator: QueryIterator<any> = CosmosDbTestHelper.getQueryIterator() as any;
 
         Tx.test(async () => {

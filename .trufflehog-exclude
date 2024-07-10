@@ -1,4 +1,5 @@
 .*\/package-lock\.json
+.*/npm-shrinkwrap\.json
 devops\/scripts\/azure_jwt_client\.py
 devops\/scripts\/aws_jwt_client\.py
 devops\/scripts\/gc_jwt_client\.py

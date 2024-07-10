@@ -65,11 +65,11 @@ export class AzureCredentials extends AbstractCredentials {
     // if the virtual folder name is needed, it should be added to the sas token separately.
     public async getStorageCredentials(
         tenant: string, subproject: string,
-        bucket: string,readonly: boolean,partition: string): Promise<IAccessTokenModel> {
+        bucket: string,readonly: boolean,partition: string,objectPrefix?: string): Promise<IAccessTokenModel> {
         const accountName = await AzureDataEcosystemServices.getStorageResourceName(partition);
         const now = new Date();
         const expiration = this.addMinutes(now, SasExpirationInMinutes);
-        const sasToken = await this.generateSASToken(accountName, bucket, expiration, readonly);
+        const sasToken = await this.generateSASToken(accountName, bucket, expiration, readonly, objectPrefix);
         const result = {
             access_token: sasToken,
             expires_in: 3599,
@@ -79,7 +79,9 @@ export class AzureCredentials extends AbstractCredentials {
     }
 
     private async generateSASToken(
-        accountName: string, containerName: string, expiration: Date, readOnly: boolean): Promise<string> {
+        accountName: string, containerName: string, expiration: Date,
+        readOnly: boolean, objectPrefix?: string
+    ): Promise<string> {
 
         const blobServiceClient = new BlobServiceClient(
             `https://${accountName}.blob.core.windows.net`,
@@ -102,7 +104,10 @@ export class AzureCredentials extends AbstractCredentials {
             expiresOn: expiration
         }, userDelegationKey, // UserDelegationKey
             accountName);
-        return `https://${accountName}.blob.core.windows.net/${containerName}?${containerSAS.toString()}`;
+        if (!objectPrefix) {
+            return `https://${accountName}.blob.core.windows.net/${containerName}?${containerSAS.toString()}`;
+        }
+        return `https://${accountName}.blob.core.windows.net/${containerName}/${objectPrefix}?${containerSAS.toString()}`;
     }
 
     private async getDelegationKey(blobServiceClient: BlobServiceClient): Promise<UserDelegationKey> {

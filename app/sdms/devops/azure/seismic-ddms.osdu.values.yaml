@@ -64,6 +64,8 @@ configuration:
       KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
       SIDECAR_URL: "https://localhost:7138"
       SIDECAR_ENABLE_QUERY: "true"
+      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
+      FEATURE_FLAG_ENABLE_CHANGE_TIER: "true"
     # Use only for secret rotation
     secrets:
       - name: AZ_REDIS_PASSWORD
@@ -141,3 +143,46 @@ configuration:
   #   limit:
   #     cpu: 1
   #     memory: 4Gi
+  #####################################
+  # Seismic change tier Service #
+  #####################################
+  - service: seismic-ddms-changetier-service
+    container:
+      image: seismic-ddms-changetier-service
+      tag: latest
+      containerPort: 8003
+    probe:
+      liveness:
+        path: /healthz
+    config:
+      HOST_PORT: "8003"
+      DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+      SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
+      SDMS_REDIS_QUEUE_PORT: "6380"
+      SDMS_REDIS_LOCKS_PORT: "6380"
+  # #####################################
+  # # Job statistics #
+  # #####################################
+  - service: seismic-ddms-statistics-job
+    container:
+      image: seismic-ddms-statistics-job
+      containerPort: 8080
+    path: "/"
+    pathRewrite: "/"
+    cronjobEnabled: true
+    schedule: "0 0 * * *"
+    backOffLimit: "0"
+    activeDeadlineSeconds: "3600"
+    successfulJobsHistoryLimit: "3"
+    startingDeadlineSeconds: "500"
+    failedJobsHistoryLimit: "5"
+    config:
+      KEYVAULT_URL: "{{ .Values.azure.keyvault.name }}"
+      OSDU_SERVICES_HOST_URL: "https://{{ .Values.ingress.dns }}"
+    request:
+      cpu: 0.1
+      memory: 1Gi
+    limit:
+      cpu: 1
+      memory: 4Gi

@@ -152,7 +152,8 @@ export class Server {
                     const statusCall = req.url.endsWith('svcstatus');
                     const readinessCall = req.url.endsWith('readiness');
                     const infoCall = req.url.endsWith('info');
-                    if (!(imptokenCall || statusCall || readinessCall || infoCall)) {
+                    const metrics = req.url.endsWith('metrics');
+                    if (!(imptokenCall || statusCall || readinessCall || infoCall || metrics)) {
                         Response.writeError(res, Error.make(
                             Error.Status.UNAUTHENTICATED,
                             'Unauthenticated Access. Authorizations not found in the request.'));
@@ -194,6 +195,7 @@ export class Server {
             }
         });
 
+        // adding middleware to intercept and validate jwt
         const jwtValidateOptions: JwtProxyOptions = {
             disable: !Config.JWT_ENABLE_FEATURE,
             excluded: Config.JWT_EXCLUDE_PATHS ? Config.JWT_EXCLUDE_PATHS.split(';') : [],
@@ -201,11 +203,15 @@ export class Server {
             algorithms: ['RS256'],
             audience: Config.JWT_AUDIENCE
         };
-
-        // adding middleware to intercept and validate jwt
         this.app.use(jwtProxy(jwtValidateOptions));
+    }
 
+    public async registerRouter() {
         this.app.use(ServiceRouter);
+    }
+
+    public getApp(): express.Express {
+        return this.app;
     }
 
     public async start(port = Config.SERVICE_PORT) {

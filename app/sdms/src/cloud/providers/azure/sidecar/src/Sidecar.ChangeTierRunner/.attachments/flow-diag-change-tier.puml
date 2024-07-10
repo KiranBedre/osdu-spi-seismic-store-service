@@ -1,0 +1,30 @@
+@startuml 
+title Change Tier Process Flow
+
+participant "Client" as client
+participant "SDMS API" as sdms
+database "Azure Storage Queue" as storageQueue
+participant "Change tier Operation Service" as service
+database "Cosmos DB" as cosmos
+database "Azure Storage" as blobs
+database "Redis Storage" as storage
+database "Redis Locks" as locks
+participant "Azure Log Analytics" as logs
+
+client -> sdms: Trigger change tier operation
+sdms --> storageQueue: Create a new `Operation id`\nand push new message on the queue
+sdms -> client: Return Operation id
+storageQueue --> service: Get the new message from the queue\nand start a new change tier operation
+service -> cosmos: Retrieve items\nmatching tenant, subproject, and path
+service -> locks: Attempt to lock all datasets for tier-changing opeartion with a `Write` lock
+service -> logs: Log all dataset ids that cannot be locked with the exception details
+service -> storage: Store the operation id, creation time, the number of datasets to be processed.
+
+loop Every Batch for Datasets to change tier
+  service  -> blobs: Retrieve blobs
+  service  -> blobs: Update blobs' tier
+  service  -> cosmos: Update metadata for blobs that the tier were successfuly changed
+  service  -> storage: Update progress after each dataset
+  service -> logs: Log all blobs/dataset ids that cannot be processed with the error details
+end loop
+@enduml

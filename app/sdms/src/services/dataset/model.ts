@@ -67,6 +67,12 @@ export interface IDatasetPatchRequest {
     applyChangeTier: string
 }
 
+export interface IBulkChangeTier {
+    sdPath: ISDPathModel,
+    tier: string,
+    filter?: QueryFilter,
+}
+
 export interface IPaginationModel {
     limit: number;
     cursor: string;
