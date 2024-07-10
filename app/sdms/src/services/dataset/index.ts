@@ -20,6 +20,7 @@ export {
   IDatasetModel as DatasetModel,
   IPaginationModel as PaginationModel,
   IDatasetListRequest as DatasetListRequest,
+  IDatasetPatchRequest as DatasetPatchRequest,
   SchemaTransformModel,
   ListDatasetsParams,
   QueryFilter,

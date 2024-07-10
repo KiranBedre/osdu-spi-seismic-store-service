@@ -284,6 +284,7 @@ export class TestSubProjectSVC {
                 async randomBucketName() { return ''; },
                 getStorageTiers() { return ['tier-a', 'tier-b', 'tier-c']; },
                 async getObjectSize() { return 1; },
+                async setStorageTiers() {return; },
                 async getStorageAccountRedundancy() { return ''; },
                 async checkSupportedTier() { return; },
                 async listBlobs() { return ['']; }
