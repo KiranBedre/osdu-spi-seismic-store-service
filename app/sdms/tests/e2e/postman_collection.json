@@ -27817,7 +27817,7 @@
 							"script": {
 								"exec": [
 									"setTimeout(function(){}, 120000);\r",
-									"pm.variables.set(\"acsSasX2Url\", pm.variables.get(\"gcsAccessToken\").replace('?', '/' + pm.variables.get(\"gcsObjectPrefix\") + '/o?'));"
+									"pm.variables.set(\"acsSasX2Url\", pm.variables.get(\"gcsAccessToken\").replace('undefined?', pm.variables.get(\"gcsObjectPrefix\") + '/o?'));"
 								],
 								"type": "text/javascript"
 							}
