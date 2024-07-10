@@ -14,26 +14,4 @@
 // limitations under the License.
 // ============================================================================
 
-import { IOperationQueueTask } from '../../shared/model';
-
-export interface IOperationStatusRequest {
-    dataPartitionId: string;
-    operationId: string;
-}
-
-export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
-    createdBy: string;
-    tenant: string;
-    subproject: string;
-    query: string;
-    parameters: string;
-}
-
-export interface IBulkChangeTierOperationQueueTask extends IOperationQueueTask {
-    createdBy: string;
-    tenant: string;
-    subproject: string;
-    query: string;
-    tier: string;
-    parameters: string;
-}
+export enum Tier { Hot, Cool, Cold, Archive }

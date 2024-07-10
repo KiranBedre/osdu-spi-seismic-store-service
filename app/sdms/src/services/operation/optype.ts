@@ -14,4 +14,4 @@
 // limitations under the License.
 // ============================================================================
 
-export enum Operation { BulkDeletePush, BulkDeleteStatus }
+export enum Operation { BulkDeletePush, BulkDeleteStatus, BulkChangeTierPush, BulkChangeTierStatus }

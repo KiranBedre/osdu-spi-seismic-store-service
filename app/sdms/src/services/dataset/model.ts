@@ -60,6 +60,12 @@ export interface IBulkDeleteRequest {
     filter?: QueryFilter,
 }
 
+export interface IBulkChangeTier {
+    sdPath: ISDPathModel,
+    tier: string,
+    filter?: QueryFilter,
+}
+
 export interface IPaginationModel {
     limit: number;
     cursor: string;

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,26 +14,9 @@
 // limitations under the License.
 // ============================================================================
 
-import { IOperationQueueTask } from '../../shared/model';
+namespace Sidecar.Common.Interface;
 
-export interface IOperationStatusRequest {
-    dataPartitionId: string;
-    operationId: string;
-}
-
-export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
-    createdBy: string;
-    tenant: string;
-    subproject: string;
-    query: string;
-    parameters: string;
-}
-
-export interface IBulkChangeTierOperationQueueTask extends IOperationQueueTask {
-    createdBy: string;
-    tenant: string;
-    subproject: string;
-    query: string;
-    tier: string;
-    parameters: string;
+public interface IMetadataTierUpdater
+{
+    Task UpdateTier(string dataPartitionId, string id, string tier);
 }

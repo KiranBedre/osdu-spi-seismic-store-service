@@ -16,6 +16,7 @@
 
 import { CloudFactory } from './cloud';
 import { Error } from '../shared';
+import { Config } from './config';
 
 export interface IStorage {
     createBucket(
@@ -30,6 +31,8 @@ export interface IStorage {
     randomBucketName(): Promise<string>;
     getStorageTiers(): string[];
     getObjectSize(bucketName: string, prefix?: string): Promise<number>;
+    getStorageAccountRedundancy(): Promise<string>;
+    checkSupportedTier(tierId: string): Promise<void>;
     listBlobs(prefix: string): Promise<string[]>;
 }
 
@@ -49,6 +52,12 @@ export abstract class AbstractStorage implements IStorage {
     public getObjectSize(bucketName: string, prefix?: string): Promise<number> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     };
+    getStorageAccountRedundancy(): Promise<string> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    };
+    public checkSupportedTier(tierId: string): Promise<void> {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented. Storage Tier change is not supported in ' + Config.CLOUDPROVIDER));
+    }
     public listBlobs(prefix: string): Promise<string[]> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     };

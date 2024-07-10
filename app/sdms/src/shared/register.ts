@@ -19,6 +19,7 @@ import { Config } from '../cloud';
 export enum OperationType {
     BULK_DELETE = 'BULK_DELETE',
     COMPUTE_SIZE = 'COMPUTE_SIZE',
+    BULK_CHANGE_TIER = 'BULK_CHANGE_TIER'
 }
 
 export const operations = { } as { [key in OperationType]: {
@@ -34,5 +35,11 @@ operations.BULK_DELETE = {
 operations.COMPUTE_SIZE = {
     getQueueName(): string {
         return Config.SDMS_COMPUTE_SIZE_QUEUE;
+    },
+}
+
+operations.BULK_CHANGE_TIER = {
+    getQueueName(): string {
+        return Config.SDMS_CHANGE_TIER_QUEUE;
     },
 }

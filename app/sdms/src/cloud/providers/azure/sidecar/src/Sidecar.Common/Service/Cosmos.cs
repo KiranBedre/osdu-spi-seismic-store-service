@@ -29,6 +29,7 @@ public class Cosmos : IDataAccess
     private const string CONTAINER_ID = "data";
     private const int MAX_ITEM_COUNT = 1000;
     private const int MAX_CONCURRENCY = 32;
+
     private static readonly ConcurrentDictionary<string, CosmosClient> _cosmosClients = new();
     private readonly ILogger<Cosmos> _logger;
 

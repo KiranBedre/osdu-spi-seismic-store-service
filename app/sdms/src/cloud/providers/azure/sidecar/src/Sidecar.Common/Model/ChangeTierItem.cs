@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,26 +14,21 @@
 // limitations under the License.
 // ============================================================================
 
-import { IOperationQueueTask } from '../../shared/model';
+namespace Sidecar.Common.Model;
 
-export interface IOperationStatusRequest {
-    dataPartitionId: string;
-    operationId: string;
-}
+using System.Text.Json.Serialization;
 
-export interface IBulkDeleteOperationQueueTask extends IOperationQueueTask {
-    createdBy: string;
-    tenant: string;
-    subproject: string;
-    query: string;
-    parameters: string;
-}
+public class ChangeTierItem
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = "";
 
-export interface IBulkChangeTierOperationQueueTask extends IOperationQueueTask {
-    createdBy: string;
-    tenant: string;
-    subproject: string;
-    query: string;
-    tier: string;
-    parameters: string;
+    [JsonPropertyName("gcsurl")]
+    public string? Gcsurl { get; set; }
+
+    [JsonPropertyName("path")]
+    public string Path { get; set; } = "";
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 }
