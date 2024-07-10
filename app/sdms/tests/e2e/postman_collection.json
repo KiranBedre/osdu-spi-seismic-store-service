@@ -27816,7 +27816,7 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"setTimeout(function(){}, 120000);\r",
+									"setTimeout(function(){}, 5000);\r",
 									"pm.variables.set(\"acsSasX2Url\", pm.variables.get(\"gcsAccessToken\").replace('undefined?', pm.variables.get(\"gcsObjectPrefix\") + '/o?'));"
 								],
 								"type": "text/javascript"
