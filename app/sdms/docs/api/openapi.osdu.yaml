@@ -315,7 +315,7 @@ paths:
         </li>
         <li>Patchable fields: <ul>
         <li><b>dataset_new_name:</b> new name to use for the dataset (rename).</li>
-        <li><b>filemetadata:</b> This is a seismic store specific field and describes how the physical data is stored in the cloud storage system (GCS/AzureContainer etc.). This metadata is mainly used by client libraries to correctly reconstruct the dataset. For example you can store a dataset as truncated in multiple objects of 64MB each, name them from 0 to N and save the filemetadata = “{nObject: N, totalSize: 1024, objsize: 64, sizeUnit: MB}”.</li>
+        <li><b>filemetadata:</b> This is a seismic store specific field and describes how the physical data is stored in the cloud storage system (GCS/AzureContainer etc.). This metadata is mainly used by client libraries to correctly reconstruct the dataset. For example you can store a dataset as truncated in multiple objects of 64MB each, name them from 0 to N and save the filemetadata = “{nObject: N, totalSize: 1024, objsize: 64, sizeUnit: MB}”.</li>																																					 
         <li><b>gtags:</b> Upsert tags to an existing dataset metadata. If the dataset metadata already has gtags, then new gtags are appended to this list.</li>
         <li><b>ltag:</b> Update the existing legalTag value.</b></li>
         <li><b>readonly:</b> Update the dataset mode to readonly (true) or to read/write (false).</li>
@@ -2415,6 +2415,93 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
+
+  /operation/change-tier:
+    put:
+      summary: change all datasets' tier in a subproject path.
+      description: "<ul>
+                      <li>Description: change all datasets' tier in the specified sdms subproject path.</li>
+                      <li>Roles: subproject.admin</li></ul>"
+      operationId: operation-change-tier-push
+      tags:
+        - Operations
+      parameters:
+        - description: "The sdms subproject path as sd://tenant/subproject/(path)
+                        <ul>
+                          <li>The sdms subproject path must end with '/' as sd://tenant/subproject/a/b/c/</li>
+                          <li>The dataset must end with dataset name as sd://tenant/subproject/a/b/c/dataset</li></ul>"
+          in: query
+          name: path
+          required: true
+          schema:
+            type: string
+            default: "/a/b/c/"
+        - description: "The target storage tier class: Hot, Cool, Cold, Archive"
+          in: query
+          name: tier
+          required: true
+          schema:
+            type: string
+            default: "Hot"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DatasetChangeTierBody"
+        required: false
+      responses:
+        "202":
+          description: Change tier operation initiated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Operation"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+
+  /operation/change-tier/{operation-id}:
+    get:
+      summary: get the change tier operation status.
+      description: "<ul>
+                      <li>Description: get the change tier operation status.</li>
+                      <li>Roles: any (registered user in partition)</li></ul>"
+      operationId: operation-change-tier-get
+      tags:
+        - Operations
+      parameters:
+        - description: "The change tier operation id"
+          in: path
+          name: operation-id
+          required: true
+          schema:
+            type: string
+        - description: "Data partition id"
+          in: header
+          name: data-partition-id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retrieved the change tier operation successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationStatus"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
   
 # ===========================================================================
 # Endpoints Models Section
@@ -2696,6 +2783,9 @@ components:
         filemetadata:
           type: object
           description: Number of objects and the size in bytes of the dataset.
+					
+					  
+												 
         last_modified_date:
           type: string
           description: Date when the dataset was last modified.
@@ -2750,6 +2840,7 @@ components:
           f1: v1
           f2: v2
           f3: v3
+						  
         last_modified_date: Thu Jul 16 2020 04:37:41 GMT+0000 (Coordinated Universal Time)
         gtags:
           - tag01
@@ -2837,6 +2928,14 @@ components:
           description: Optional structured query filter to restrict the datasets to be deleted.
       example:
         filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}
+    DatasetChangeTierBody:
+      type: object
+      properties:
+        filter:
+          type: object
+          description: Optional structured query filter to restrict the datasets to change its tier.
+      example:
+        filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}					  
     AccessToken:
       required:
         - access_token
@@ -3316,44 +3415,3 @@ components:
         dataset_cnt: 1000
         completed_cnt: 997
         failed_cnt: 3
-
-/change-tier:
-    PUT:
-      summary: Bulk Change Tier
-      description: "<ul><li>Bulk change storage tier in bulk.</li><li>Required roles: none</li></ul>"
-      security:
-        - bearer: []
-      operationId: service-status
-      tags:
-        - Change tier
-      parameters:
-        - description: "Tier value"
-          in: header
-          name: tier
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Bulk Change tier.
-          content:
-            application/json:
-              schema:
-                type: string
-
-/change-tier/:operationid:
-    GET:
-      summary: Get status of Bulk Change Tier
-      description: "<ul><li>Bulk change storage tier in bulk.</li><li>Required roles: none</li></ul>"
-      security:
-        - bearer: []
-      operationId: Change tier status
-      tags:
-        - Check status of change tier
-      responses:
-        "200":
-          description: Bulk change tier status.
-          content:
-            application/json:
-              schema:
-                type: string
