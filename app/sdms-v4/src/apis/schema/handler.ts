@@ -25,7 +25,7 @@ import { StorageCoreService } from '../../services';
 export class SchemaHandler {
     public static async handler(req: expRequest, res: expResponse, op: Operation) {
         try {
-            const dataPartition = req.headers[Config.DATA_PARTITION_ID] as string
+            const dataPartition = req.headers[Config.DATA_PARTITION_ID] as string;
             if (op === Operation.RegisterPatch) {
                 Response.writeOK(res, await this.register(req, dataPartition));
             } else if (op === Operation.Get) {
@@ -56,9 +56,12 @@ export class SchemaHandler {
         const recordIds = await StorageCoreService.insertRecords(req.headers.authorization!, records, dataPartition);
         if (Context.schemaEndpoint.hasBulks) {
             for (let ii = 0; ii < records.length; ii++) {
-                const bucketId = Utils.constructBucketID(recordIds[ii].substring(0, recordIds[ii].lastIndexOf(':')));
+                const recordId = recordIds[ii].substring(0, recordIds[ii].lastIndexOf(':'));
+                const bucketId = Utils.constructBucketID(recordId);
                 if (!(await StorageFactory.build(Config.CLOUD_PROVIDER, { dataPartition }).bucketExists(bucketId))) {
-                    await StorageFactory.build(Config.CLOUD_PROVIDER, { dataPartition }).createBucket(bucketId);
+                    await StorageFactory.build(Config.CLOUD_PROVIDER, { dataPartition }).createBucket(bucketId, {
+                        record_id: recordId,
+                    });
                 }
             }
         }
