@@ -265,7 +265,7 @@ export class AzureCloudStorage extends AbstractStorage {
         // check storage account is support archive tier
         const replication = await this.getStorageAccountRedundancy();
 
-        if (Tier[supportedTiers[index]] === Tier.Archive && !(replication in Sku)) {
+        if (Tier[supportedTiers[index]] === Tier.Archive && !(Object as any).values(Sku).includes(replication)) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The current storage account does not support moving datasets to the Archive tier.'
             ));
