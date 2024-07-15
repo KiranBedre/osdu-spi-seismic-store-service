@@ -16,6 +16,7 @@
 
 export interface IAnalyticsRequest {
     subproject: string,
+    containerName: string,
     year?: string,
     month?: string,
     day?: string

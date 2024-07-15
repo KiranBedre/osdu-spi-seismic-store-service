@@ -74,7 +74,7 @@ export class AnalyticsParser {
         } as IAnalyticsRequest
 
         this.checkFilterDate(req.query['filter-date'] as string, args);
-        this.checkExtension(req.query.extension as string);
+        this.checkExtension(req.query.extension as string, args);
         return args;
     }
 
@@ -93,7 +93,7 @@ export class AnalyticsParser {
         } as IAnalyticsRequest
 
         this.checkFilterDate(req.query['filter-date'] as string, args);
-        this.checkExtension(req.query.extension as string);
+        this.checkExtension(req.query.extension as string, args);
         return args;
     }
 
@@ -109,9 +109,10 @@ export class AnalyticsParser {
         return nextDate.getTime();
     }
 
-    private static checkExtension(extension: string = null) {
+    private static checkExtension(extension: string = null, args: IAnalyticsRequest) {
+        args.containerName = Config.SDMS_ANALYTICS_CONTAINER_NAME
         if (extension !== null) {
-            Config.SDMS_ANALYTICS_CONTAINER_NAME += '-' + extension;
+            args.containerName += '-' + extension;
         }
     }
 
