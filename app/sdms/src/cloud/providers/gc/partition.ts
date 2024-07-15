@@ -1,5 +1,4 @@
 import axios from 'axios';
-import http from 'http';
 import url from 'url';
 import { join as path_join } from 'path';
 import { ConfigGoogle } from './config';
@@ -9,11 +8,22 @@ export class DataPartitionInfo {
     public dataPartitionId: string
     public gcProjectId: string
     public bucket: string
+    public policyServiceEnabled: boolean | null
 
-    constructor(dataPartitionId: string, gcProjectId: string, bucket: string) {
+    constructor(dataPartitionId: string, gcProjectId: string, bucket: string, policyServiceEnabled: boolean | null) {
         this.dataPartitionId = dataPartitionId;
         this.bucket = bucket;
         this.gcProjectId = gcProjectId;
+        this.policyServiceEnabled = policyServiceEnabled;
+    }
+
+    private static isPolicyEnabled(dataPartitionId: string, partitionData: object): boolean {
+        const policyEnabled = partitionData[`${dataPartitionId}.feature.policy.enabled`]
+        if (policyEnabled === undefined) {
+            return false
+        } else {
+            return policyEnabled['value'] === 'true'
+        }
     }
 
     public static async fromDataPartitionId(dataPartitionId: string): Promise<DataPartitionInfo> {
@@ -29,10 +39,12 @@ export class DataPartitionInfo {
         const gcProjectId = partitionData['projectId']['value']
         dataPartitionId = partitionData['dataPartitionId']['value']
         const bucket = partitionData['seismicBucket']['value']
+        const policyEnabled = this.isPolicyEnabled(dataPartitionId, partitionData)
         return new DataPartitionInfo(
             dataPartitionId,
             gcProjectId,
-            bucket
+            bucket,
+            policyEnabled
         );
     }
 }
