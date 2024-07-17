@@ -5676,6 +5676,1539 @@
 			"description": "These tests start by registering two datasets and then perform various actions on them. These actions include using endpoints like REGISTER, GET, LIST, PATCH, DELETE, CTAG CHECK, EXIST, SIZES, READDIR, and PERMISSIONS. These endpoints allow us to retrieve metadata, update information, delete datasets, and perform other functions related to dataset management. By utilizing these different endpoints, we can effectively manage and manipulate our datasets"
 		},
 		{
+			"name": "change tier",
+			"item": [
+				{
+					"name": "CHANGE TIER STATUS SET: Create test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('Dataset variables are initialized for datasets folder');",
+									"if ( (pm.environment.get('serviceCloudProvider') !== 'azure') ) {",
+									"    console.log('Skip the Change tier folder');",
+									"    postman.setNextRequest(\"CHANGE-TIER CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"}",
+									"",
+									"postman.setEnvironmentVariable('execCounter', 1)"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dsx01\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER REGISTER: Register a new dataset dsx01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER GET: Retrieve the dataset dsx01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get('legaltag01'));",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"sbit\", function () {",
+									"        postman.setEnvironmentVariable(\"sbit\", jsonData.sbit);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset filemetadata with tier_class HOT",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Hot');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Hot\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset filemetadata tier_class from HOT to COOL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Cool');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Cool\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset filemetadata tier_class from COOL to COLD",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Cold');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Cold\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset filemetadata tier_class from COLD to ARCHIVE",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Archive');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Archive\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset filemetadata tier_class from ARCHIVE to HOT",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Hot');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Hot\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER NEGATIVE: Patch a dataset filemetadata with tier_class FAKE_TIER",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response body\", function () {",
+									"    var responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('[seismic-store-service] The storage Tier option \"Fake-tier\" is not supported by this API. Your available options are Hot, Cool, Cold, Archive');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Fake-tier\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER NEGATIVE: Patch a dataset with different tier_class and change_tier",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response body\", function () {",
+									"    var responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('[seismic-store-service] You have set tier_class \"Hot\" and set change_tier \"Cool\" and they do NOT match');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Hot\"\n    },\n    \"change_tier\":\"Cool\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER NEGATIVE: Patch a dataset with different tier_class and change_tier 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 400) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 400\", function () {",
+									"        pm.response.to.have.status(400);",
+									"    });",
+									"",
+									"    pm.test(\"Check response body\", function () {",
+									"    var responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('[seismic-store-service] You have set tier_class \"Cool\" and set change_tier \"Hot\" and they do NOT match');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Cool\"\n    },\n    \"change_tier\":\"Hot\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset with tier_class and change_tier as HOT",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Hot');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Hot\"\n    },\n    \"change_tier\": \"Hot\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset with tier_class and change_tier as COOL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Cool');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Cool\"\n    },\n    \"change_tier\": \"Cool\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset with tier_class and change_tier as COLD",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Cold');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Cold\"\n    },\n    \"change_tier\": \"Cold\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER PATCH: Patch a dataset with tier_class and change_tier as ARCHIVE",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(0);",
+									"    });",
+									"",
+									"    pm.test(\"Filemetadata is added\", function () {",
+									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Archive');",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Archive\"\n    },\n    \"change_tier\": \"Archive\"\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER DELETE: Delete a dataset dsx01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE TIER STATUS UNSET: Cleanup test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.unset('dsx01')",
+									"pm.environment.unset('testPath')",
+									"pm.environment.unset('testPathEncoded')",
+									"pm.environment.unset('sbit')",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"console.log('Change tier variables were removed for change tier folder');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "dataset search",
 			"item": [
 				{
@@ -27410,7 +28943,6 @@
 									"    pm.test(\"Status code is 202\", function () {",
 									"        pm.response.to.have.status(202);",
 									"    });",
-									"    setTimeout(function () { }, 5000);",
 									"",
 									"    // Reset environment variables if _.retryOnFailure function was used before",
 									"    var key = request.name + '_counter';",
@@ -31728,6 +33260,1160 @@
 				},
 				{
 					"name": "COMPUTE-SIZE CLEANUP STATUS UNSET: Cleanup test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Reset environment variables if _.retryOnFailure function was used before",
+									"var key = request.name + '_counter';",
+									"pm.environment.unset(key);",
+									"postman.setEnvironmentVariable('execCounter', 1)",
+									"",
+									"console.log('Postman environment was cleaned up');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "change tier",
+			"item": [
+				{
+					"name": "CHANGE-TIER Create test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('Dataset variables are initialized for datasets folder');",
+									"if ( (pm.environment.get('serviceCloudProvider') !== 'azure') ) {",
+									"    console.log('Skip the Change tier folder');",
+									"    postman.setNextRequest(\"CHANGE-TIER CLEANUP STATUS UNSET: Cleanup test environment\");",
+									"}",
+									"",
+									"postman.setEnvironmentVariable('execCounter', 1);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dataset(length) {\r",
+									"   var result           = '';\r",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\r",
+									"   var charactersLength = characters.length;\r",
+									"   for ( var i = 0; i < length - 1; i++ ) {\r",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));\r",
+									"   }\r",
+									"   return 'W' + result;\r",
+									"}\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"dsx01\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"postman.setEnvironmentVariable(\"dsx02\", makeID_dataset(16) + \"_.ds-x\");\r",
+									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"\r",
+									"postman.setEnvironmentVariable(\"testPath\", path);\r",
+									"postman.setEnvironmentVariable(\"testPathEncoded\", encodeURIComponent(path));\r",
+									"\r",
+									"const OriginalFiles = [\"randomfile1.txt\", \"randomfile2.txt\", \"randomfile3.txt\"];\r",
+									"postman.setEnvironmentVariable(\"OriginalFiles\", OriginalFiles);\r",
+									"\r",
+									"postman.setEnvironmentVariable(\"maxAmountOfRetriesForStatus\", 10);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX01 REGISTER: Register a new dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    ",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX01 GET: Retrieve the dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"sbit\", function () {",
+									"        postman.setEnvironmentVariable(\"sbit\", jsonData.sbit);",
+									"    });",
+									"",
+									"    pm.test(\"gcsurl\", () => {",
+									"        if (pm.environment.get('serviceCloudProvider') === 'gc') {",
+									"            postman.setEnvironmentVariable(\"gcsBucketName\", jsonData.gcsurl.split('$$')[0]);",
+									"            postman.setEnvironmentVariable(\"gcsObjectPrefix\", encodeURIComponent(jsonData.gcsurl.split('$$')[1]));",
+									"        } else {",
+									"            postman.setEnvironmentVariable(\"gcsBucketName\", jsonData.gcsurl.split('/')[0]);",
+									"            postman.setEnvironmentVariable(\"gcsObjectPrefix\", jsonData.gcsurl.split('/')[1]);",
+									"        }",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    });",
+									"",
+									"    pm.test(\"ctag\", function () {",
+									"        postman.setEnvironmentVariable(\"ctag\", jsonData.ctag);",
+									"    });",
+									"",
+									"    postman.setEnvironmentVariable('virtual_folder1', jsonData.gcsurl.split('/')[1]);",
+									"    console.log('virtual_folder1', pm.environment.get('virtual_folder1'));",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY UPLOAD DSX01 CONNECTION STRING: Generate upload connection credentials for dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log(pm.environment.get('serviceCloudProvider'));",
+									"",
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Credential Details\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"        pm.expect(jsonData.token_type).to.exist;",
+									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
+									"    });",
+									"",
+									"    if  (pm.environment.get(\"virtual_folder1\") != undefined) {",
+									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?',  '/'+pm.environment.get(\"virtual_folder1\")+'/blob1?'));",
+									"    }",
+									"    else {",
+									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?', '/blob1?'));",
+									"    }",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}&x-ms-access-tier=Hot",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"upload-connection-string"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx01}}"
+								},
+								{
+									"key": "x-ms-access-tier",
+									"value": "Hot"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY UPLOAD DSX01 NEW TO ACS - CONNECTION STRING: Upload blob for dataset dsx01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 201) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 201\", function () {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"",
+									"    pm.test(\"Check content length\", function () {",
+									"        pm.response.to.be.header(\"Content-Length\", \"0\");",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "hello world from e2e"
+						},
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX01 CLOSE: Close dataset using sbit for DSX01",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}&x-ms-access-tier=Hot",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								},
+								{
+									"key": "x-ms-access-tier",
+									"value": "Hot"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY DOWNLOAD DSX01 FROM ACS - check the blob tier equals to hot",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Hot\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Hot\";",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);    ",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// if  (pm.environment.get(\"virtual_folder\") != undefined) {",
+									"//         pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob1?'));",
+									"// }",
+									"// else {",
+									"//         pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob1?'));",
+									"// }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER change tier to Cool of datasets in a subproject (with locked datasets)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 202) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 202\", function () {\r",
+									"        pm.response.to.have.status(202);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Validate Operation Id\", function () {\r",
+									"        pm.expect(jsonData.operation_id).to.exist;\r",
+									"        console.log(\"Operation ID: \" + jsonData.operation_id);\r",
+									"    });\r",
+									"\r",
+									"    let operation_id = jsonData.operation_id;\r",
+									"    pm.collectionVariables.set('operationId', operation_id)\r",
+									"    \r",
+									"    var sleepDuration = 10;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    console.log(pm.response.text())\r",
+									"    console.log('Wait ' + sleepDuration + ' sec');\r",
+									"    while (new Date().getTime() < waitUntilTime) {\r",
+									"        // Do Nothing -> Wait\r",
+									"    }\r",
+									"    \r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier?path=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}&tier=Cool",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}"
+								},
+								{
+									"key": "tier",
+									"value": "Cool"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER STATUS: Get status of the change-tier operation after first request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"} else {\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
+									"        });\r",
+									"\r",
+									"        while (jsonData.status === 'Started' || jsonData.status === 'InProgress') {\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"        }\r",
+									"\r",
+									"        if (jsonData.status === 'Completed') {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('Completed');\r",
+									"            });\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);\r",
+									"            });\r",
+									"        \r",
+									"        } else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('CompletedWithErrors');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(0);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(1);\r",
+									"            });\r",
+									"\r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
+									"    }\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier/{{operationId}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier",
+								"{{operationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY Check Tiers to Cool - check the blob's tier has changed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Cool\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Cool\";",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);    ",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER change tier to Cold of datasets in a subproject (with locked datasets)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 202) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"\r",
+									"} else {\r",
+									"    var jsonData = pm.response.json();\r",
+									"\r",
+									"    pm.test(\"Status code is 202\", function () {\r",
+									"        pm.response.to.have.status(202);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Validate Operation Id\", function () {\r",
+									"        pm.expect(jsonData.operation_id).to.exist;\r",
+									"        console.log(\"Operation ID: \" + jsonData.operation_id);\r",
+									"    });\r",
+									"\r",
+									"    let operation_id = jsonData.operation_id;\r",
+									"    pm.collectionVariables.set('operationId', operation_id)\r",
+									"\r",
+									"    var sleepDuration = 10;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    console.log(pm.response.text())\r",
+									"    console.log('Wait ' + sleepDuration + ' sec');\r",
+									"    while (new Date().getTime() < waitUntilTime) {\r",
+									"        // Do Nothing -> Wait\r",
+									"    }\r",
+									"    \r",
+									"    // Reset environment variables if _.retryOnFailure function was used before\r",
+									"    var key = request.name + '_counter';\r",
+									"    pm.environment.unset(key);\r",
+									"    postman.setEnvironmentVariable('execCounter', 1)\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier?path=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}&tier=Cold",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}"
+								},
+								{
+									"key": "tier",
+									"value": "Cold"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER STATUS: Get status of the bulk-delete operation after second deletion",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log(request.name)\r",
+									"if ( (responseCode.code != 200) && (responseCode.code != 404) ) {\r",
+									"    console.log(pm.response.text())\r",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));\r",
+									"} else {\r",
+									"    var sleepDuration = 5;\r",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;\r",
+									"    if (responseCode.code == 404) {\r",
+									"        console.log(pm.response.text())\r",
+									"        console.log('Wait ' + sleepDuration + ' sec');\r",
+									"        while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"        }\r",
+									"        _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));      \r",
+									"    } else {\r",
+									"        var jsonData = pm.response.json();\r",
+									"\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
+									"        });\r",
+									"\r",
+									"        if (jsonData.status != 'Completed') {\r",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);\r",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');\r",
+									"            while (new Date().getTime() < waitUntilTime) {\r",
+									"            // Do Nothing -> Wait\r",
+									"            }\r",
+									"            _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));      \r",
+									"        } else {\r",
+									"            pm.test(\"Validate operation status\", function () {\r",
+									"                pm.expect(jsonData.status).to.eql('Completed');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Validate datasets count\", function () {\r",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.completed_cnt).to.eql(1);\r",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);\r",
+									"            });\r",
+									"            \r",
+									"            // Reset environment variables if _.retryOnFailure function was used before\r",
+									"            var key = request.name + '_counter';\r",
+									"            pm.environment.unset(key);\r",
+									"            postman.setEnvironmentVariable('execCounter', 1)\r",
+									"        }\r",
+									"    }\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier/{{operationId}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier",
+								"{{operationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY Check Tiers to Cold - check the blob's tier has changed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Cold\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Cold\";",
+									"    });",
+									"",
+									"    // Reset environment variables if _.retryOnFailure function was used before",
+									"    var key = request.name + '_counter';",
+									"    pm.environment.unset(key);",
+									"    postman.setEnvironmentVariable('execCounter', 1);    ",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl1}}",
+							"host": [
+								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER CLEANUP STATUS UNSET: Cleanup test environment",
 					"event": [
 						{
 							"listen": "test",

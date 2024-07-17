@@ -16,7 +16,7 @@
 
 import { Request as expRequest } from 'express';
 import { Error, Params, SDPath } from '../../shared';
-import { IBulkDeleteRequest } from '../dataset/model';
+import { IBulkChangeTier, IBulkDeleteRequest } from '../dataset/model';
 import { Config } from '../../cloud';
 import { DatasetFilterParser } from '../dataset/filter-parser';
 import { IOperationStatusRequest } from './model';
@@ -38,6 +38,34 @@ export class Parser {
     }
 
     public static bulkDeleteStatus(req: expRequest): IOperationStatusRequest {
+
+        const args = {
+            dataPartitionId: req.headers['data-partition-id'] as string,
+            operationId: req.params.operationid
+        } as IOperationStatusRequest
+
+        this.checkDataPartitionId(args);
+
+        return args;
+    }
+
+    public static bulkChangeTier(req: expRequest): IBulkChangeTier {
+        Params.checkString(req.query.path, 'path');
+        Params.checkString(req.query.tier, 'tier');
+
+        const fullPath = !(req.query.path as string).endsWith('/');
+
+        const input = {
+            sdPath: SDPath.getFromString(req.query.path as string, fullPath),
+            tier: req.query.tier as string
+        } as IBulkChangeTier;
+
+        this.checkFilter(req, input);
+
+        return input;
+    }
+
+    public static bulkChangeTierStatus(req: expRequest): IOperationStatusRequest {
 
         const args = {
             dataPartitionId: req.headers['data-partition-id'] as string,

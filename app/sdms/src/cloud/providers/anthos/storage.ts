@@ -118,10 +118,6 @@ export class MinIOStorage extends AbstractStorage {
         return str;
     }
 
-    public getStorageTiers(): string[] {
-        throw new Error('Method not implemented.');
-    }
-
     // Create a new bucket, for minIO, create a folder with folderName
     public async createBucket(
         folderName: string,

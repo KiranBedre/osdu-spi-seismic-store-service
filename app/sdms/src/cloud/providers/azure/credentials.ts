@@ -104,7 +104,10 @@ export class AzureCredentials extends AbstractCredentials {
             expiresOn: expiration
         }, userDelegationKey, // UserDelegationKey
             accountName);
-            return `https://${accountName}.blob.core.windows.net/${containerName}/${objectPrefix}?${containerSAS.toString()}`;
+        if (!objectPrefix) {
+            return `https://${accountName}.blob.core.windows.net/${containerName}?${containerSAS.toString()}`;
+        }
+        return `https://${accountName}.blob.core.windows.net/${containerName}/${objectPrefix}?${containerSAS.toString()}`;
     }
 
     private async getDelegationKey(blobServiceClient: BlobServiceClient): Promise<UserDelegationKey> {

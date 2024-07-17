@@ -15,16 +15,19 @@
 // ============================================================================
 
 import { TokenCredential } from '@azure/identity';
-import { BlobBatchClient, BlobItem, BlobServiceClient } from '@azure/storage-blob';
+import { AccessTier, BlobBatchClient, BlobItem, BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { BlockBlobTier } from '@azure/storage-blob';
 import { Readable } from 'stream';
 import { AzureInsightsLogger } from '.';
 
+import { Error } from '../../../shared';
 import { TenantModel } from '../../../services/tenant';
 import { Config } from '../../config';
 import { AbstractStorage, StorageFactory } from '../../storage';
 import { AzureCredentials } from './credentials';
 import { AzureDataEcosystemServices } from './dataecosystem';
+import { Tier } from './tiertype';
+import { Sku } from './sku';
 
 @StorageFactory.register('azure')
 export class AzureCloudStorage extends AbstractStorage {
@@ -215,9 +218,63 @@ export class AzureCloudStorage extends AbstractStorage {
         return totalSize;
     }
 
+    // change tier of multiple objects in a container
+    public async setStorageTiers(bucketName: string, prefix: string, tierId: AccessTier): Promise<void> {
+        const blobUrlsAsOne = await this.generateBlobUrls(bucketName, prefix);
+        const batchSize = 256; // MAX size set by Azure SDK is 256 changes per request
+        const blobUrlsSplit = [];
+        while (blobUrlsAsOne.length) {
+            blobUrlsSplit.push(
+                blobUrlsAsOne.splice(0, batchSize)
+            )
+          }
+        if (blobUrlsSplit.length) {
+            const batchClient = await this.getBlobBatchClient();
+            for (const chunk of blobUrlsSplit) {
+                batchClient.setBlobsAccessTier(chunk, this.defaultAzureCredential, tierId).catch((error) => {
+                    console.error(error)
+                })
+            };
+        }
+    }
+
+    public async getStorageAccountRedundancy(): Promise<string> {
+        const accountName = await AzureDataEcosystemServices.getStorageResourceName(this.dataPartition);
+        const accountKey = await AzureDataEcosystemServices.getStorageResourceKey(this.dataPartition);
+        const key = new StorageSharedKeyCredential(
+            accountName,
+            accountKey
+        );
+        const client = new BlobServiceClient(
+            `https://${accountName}.blob.core.windows.net`,
+            key
+        );
+        const info = await client.getAccountInfo();
+        return info.skuName;
+    }
+
+    public async checkSupportedTier(tierId: AccessTier): Promise<void> {
+        // check if provided tier class is supported
+        const supportedTiers = this.getStorageTiers();
+        const index = supportedTiers.findIndex(item => tierId === item.toLowerCase());
+        if (index === -1) {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The storage Tier option ' + '"' + tierId + '"' + ' is not supported by this API. ' +
+                'Your available options are ' + supportedTiers.join(', ')));
+        }
+        // check storage account is support archive tier
+        const replication = await this.getStorageAccountRedundancy();
+
+        if (Tier[supportedTiers[index]] === Tier.Archive && !(Object as any).values(Sku).includes(replication)) {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The current storage account does not support moving datasets to the Archive tier.'
+            ));
+        }
+    }
+
     // list blobs from a container
-    public async listBlobs(prefix: string): Promise<string[]> {
-        const container = (await this.getBlobServiceClient()).getContainerClient(Config.SDMS_ANALYTICS_CONTAINER_NAME);
+    public async listBlobs(prefix: string, bucketName: string): Promise<string[]> {
+        const container = (await this.getBlobServiceClient()).getContainerClient(bucketName);
         const blobList = [];
 
         for await (const blob of container.listBlobsFlat({ prefix: prefix + '/' })) {
@@ -227,5 +284,4 @@ export class AzureCloudStorage extends AbstractStorage {
 
         return blobList;
     }
-
 }

@@ -26,6 +26,7 @@ export enum Feature {
     POLICY_SERVICE_INTERACTION,
     POST_PROCESS_ON_DATASET_CLOSE,
     BULK_DELETE,
+    CHANGE_TIER,
     ANALYTICS
 }
 
@@ -40,7 +41,7 @@ export class FeatureFlags {
             flag === Feature.POLICY_SERVICE_INTERACTION && Config.FEATURE_FLAG_POLICY_SVC_INTERACTION ||
             flag === Feature.POST_PROCESS_ON_DATASET_CLOSE && Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE ||
             flag === Feature.BULK_DELETE && Config.FEATURE_FLAG_ENABLE_BULK_DELETE ||
+            flag === Feature.CHANGE_TIER && Config.FEATURE_FLAG_ENABLE_CHANGE_TIER ||
             flag === Feature.ANALYTICS && Config.FEATURE_FLAG_ENABLE_ANALYTICS;
-
     }
 }

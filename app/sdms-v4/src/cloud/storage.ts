@@ -17,13 +17,13 @@
 import { CloudFactory } from './cloud';
 
 export interface IStorage {
-    createBucket(bucketName: string): Promise<void>;
+    createBucket(bucketName: string, metadata?: { [key: string]: string }): Promise<void>;
     bucketExists(bucketName: string): Promise<boolean>;
     deleteBucket(bucketName: string): Promise<void>;
 }
 
 export abstract class AbstractStorage implements IStorage {
-    public abstract createBucket(bucketName: string): Promise<void>;
+    public abstract createBucket(bucketName: string, metadata?: { [key: string]: string }): Promise<void>;
     public abstract bucketExists(bucketName: string): Promise<boolean>;
     public abstract deleteBucket(bucketName: string): Promise<void>;
 }

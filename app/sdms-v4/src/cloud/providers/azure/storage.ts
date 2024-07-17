@@ -41,9 +41,9 @@ export class AzureCloudStorage extends AbstractStorage {
         return this.blobServiceClient;
     }
 
-    public async createBucket(bucketName: string): Promise<void> {
+    public async createBucket(bucketName: string, metadata: { [key: string]: string }): Promise<void> {
         const container = (await this.getBlobServiceClient()).getContainerClient(bucketName);
-        await container.create();
+        await container.create({ metadata });
     }
 
     public async bucketExists(bucketName: string): Promise<boolean> {

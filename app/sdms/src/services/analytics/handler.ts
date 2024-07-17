@@ -134,7 +134,7 @@ export class AnalyticsHandler {
         if (args.day) {
             prefix += '/' + args.day;
         }
-        const reports = await storage.listBlobs(prefix);
+        const reports = await storage.listBlobs(prefix, args.containerName);
         return reports;
     }
 
@@ -244,7 +244,7 @@ export class AnalyticsHandler {
         return await CredentialsFactory.build(Config.CLOUDPROVIDER).getStorageCredentials(
             tenant.name,
             args.subproject,
-            Config.SDMS_ANALYTICS_CONTAINER_NAME,
+            args.containerName,
             true,
             tenant.name,
             virtualFolder);

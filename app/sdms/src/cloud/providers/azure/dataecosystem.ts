@@ -85,6 +85,24 @@ export class AzureDataEcosystemServices extends AbstractDataEcosystemCore {
         return storageConfigs.value;
     }
 
+    public static async getStorageResourceKey(dataPartitionID: string): Promise<string> {
+
+        const cache = getInMemoryCacheInstance();
+        const cacheKey = 'azure-storage-resource-key-' + dataPartitionID;
+        const res = cache.get<string>(cacheKey);
+        if (res !== undefined) { return res; };
+
+        const dataPartitionConfigurations = await AzureDataEcosystemServices.getPartitionConfiguration(dataPartitionID);
+        const storageConfigs = (dataPartitionConfigurations[KeyVault.DATA_PARTITION_STORAGE_ACCOUNT_KEY] as {
+            sensitive: boolean, value: string;
+        });
+        if (storageConfigs.sensitive) {
+            storageConfigs.value = (await KeyVault.CreateSecretClient().getSecret(storageConfigs.value)).value;
+        }
+        cache.set<string>(cacheKey, storageConfigs.value, 3600);
+        return storageConfigs.value;
+    }
+
     public static async getCosmosConnectionParams(
         dataPartitionID: string): Promise<{ endpoint: string, key: string; }> {
 
