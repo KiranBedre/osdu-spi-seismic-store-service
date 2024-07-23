@@ -112,7 +112,7 @@ sdms_azure_containerize:
     # Sidecar image
     - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_SIDECAR_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.QueryRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
     # Deletion service image
-    # - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_DELETION_SERVICE_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.DeleteOperationRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
+    - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_DELETION_SERVICE_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.DeleteOperationRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
     # Compute-size service image
     # - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_COMPUTESIZE_SERVICE_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.ComputeSizeRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
     # Change-tier service image
@@ -134,10 +134,10 @@ sdms_azure_containerize:
     - docker tag $CI_REGISTRY_IMAGE/$SHA_SIDECAR_IMAGE $CI_REGISTRY_IMAGE/$LATEST_SIDECAR_IMAGE
     - docker push ${CI_REGISTRY_IMAGE}/$LATEST_SIDECAR_IMAGE
     # Deletion service image
-    # - docker tag $SDMS_DELETION_SERVICE_IMAGE $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE
-    # - docker push ${CI_REGISTRY_IMAGE}/$SHA_DELETION_SERVICE_IMAGE
-    # - docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE $CI_REGISTRY_IMAGE/$LATEST_DELETION_SERVICE_IMAGE
-    # - docker push ${CI_REGISTRY_IMAGE}/$LATEST_DELETION_SERVICE_IMAGE
+    - docker tag $SDMS_DELETION_SERVICE_IMAGE $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE
+    - docker push ${CI_REGISTRY_IMAGE}/$SHA_DELETION_SERVICE_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE $CI_REGISTRY_IMAGE/$LATEST_DELETION_SERVICE_IMAGE
+    - docker push ${CI_REGISTRY_IMAGE}/$LATEST_DELETION_SERVICE_IMAGE
     # Compute-size service image
     # - docker tag $SDMS_COMPUTESIZE_SERVICE_IMAGE $CI_REGISTRY_IMAGE/$SHA_COMPUTESIZE_SERVICE_IMAGE
     # - docker push ${CI_REGISTRY_IMAGE}/$SHA_COMPUTESIZE_SERVICE_IMAGE
@@ -178,16 +178,16 @@ sdms_azure_containerize:
         docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_SIDECAR_IMAGE
       fi
     # Deletion service image
-    # - az acr login -n $AZURE_REGISTRY
-    # - docker tag $SDMS_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE
-    # - docker push ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE
-    # - docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$LATEST_DELETION_SERVICE_IMAGE
-    # - docker push ${AZURE_REGISTRY}.azurecr.io/$LATEST_DELETION_SERVICE_IMAGE
-    # - |
-    #   if [ ! -z "$CI_COMMIT_TAG" ]; then
-    #     docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_DELETION_SERVICE_IMAGE
-    #     docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_DELETION_SERVICE_IMAGE
-    #   fi
+    - az acr login -n $AZURE_REGISTRY
+    - docker tag $SDMS_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE
+    - docker push ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$LATEST_DELETION_SERVICE_IMAGE
+    - docker push ${AZURE_REGISTRY}.azurecr.io/$LATEST_DELETION_SERVICE_IMAGE
+    - |
+      if [ ! -z "$CI_COMMIT_TAG" ]; then
+        docker tag $CI_REGISTRY_IMAGE/$SHA_DELETION_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_DELETION_SERVICE_IMAGE
+        docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_DELETION_SERVICE_IMAGE
+      fi
     # Compute-size service image
     # - az acr login -n $AZURE_REGISTRY
     # - docker tag $SDMS_COMPUTESIZE_SERVICE_IMAGE ${AZURE_REGISTRY}.azurecr.io/$SHA_COMPUTESIZE_SERVICE_IMAGE
@@ -323,10 +323,12 @@ sdms_azure_deploy:
       --set configuration[0].container.tag=${CI_COMMIT_SHA}
       --set configuration[0].sidecar.container.image=${SDMS_SIDECAR_NAME}
       --set configuration[0].sidecar.container.tag=${CI_COMMIT_SHA}
-      --set configuration[1].container.image=${SDMS_CHANGETIER_SERVICE_NAME}
+      --set configuration[1].container.image=${SDMS_DELETION_SERVICE_NAME}
       --set configuration[1].container.tag=${CI_COMMIT_SHA}
-      --set configuration[2].container.image=${SDMS_STATISTICS_JOB_NAME}
+      --set configuration[2].container.image=${SDMS_CHANGETIER_SERVICE_NAME}
       --set configuration[2].container.tag=${CI_COMMIT_SHA}
+      --set configuration[3].container.image=${SDMS_STATISTICS_JOB_NAME}
+      --set configuration[3].container.tag=${CI_COMMIT_SHA}
       --create-namespace
       -n ${NAMESPACE} -f app/sdms/devops/azure/${SDMS_SERVICE_NAME}.osdu.values.yaml --wait --timeout 10m
     # Wait for service to be running to start
@@ -377,7 +379,7 @@ sdms_azure_test:
     AZURE_AD_TENANT_ID: $AZURE_TENANT_ID
     AZURE_TESTER_SERVICEPRINCIPAL_SECRET: $AZURE_PRINCIPAL_SECRET
     INTEGRATION_TESTER: $AZURE_PRINCIPAL_ID
-    TEST_BULK_DELETE: 'false'
+    TEST_BULK_DELETE: 'true'
     TEST_COMPUTE_SIZE: 'false'
   script:
     - apt-get update
@@ -444,7 +446,7 @@ sdms_azure_publish:
   script:
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/$SDMS_SERVICE:${AZ_VER}
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_SIDECAR_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_SIDECAR_NAME}:${AZ_VER}
-  #  - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_DELETION_SERVICE_NAME}:${AZ_VER}
+   - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_DELETION_SERVICE_NAME}:${AZ_VER}
   #  - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_COMPUTESIZE_SERVICE_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_COMPUTESIZE_SERVICE_NAME}:${AZ_VER}
    - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
 

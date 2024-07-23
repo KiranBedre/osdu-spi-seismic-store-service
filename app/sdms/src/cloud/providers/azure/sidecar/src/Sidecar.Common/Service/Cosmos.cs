@@ -172,7 +172,7 @@ public class Cosmos : IDataAccess
             MaxConcurrency = MAX_CONCURRENCY
         };
 
-    private int GetItemLimit(int? limit) => limit is null or < 0 ? MAX_ITEM_COUNT : limit.Value;
+    private int GetItemLimit(int? limit) => limit is null or < 0 ? MAX_ITEM_COUNT : limit > MAX_ITEM_COUNT ? MAX_ITEM_COUNT : limit.Value;
 
     public static CosmosClient getCosmosClient(string connectionString)
     {
