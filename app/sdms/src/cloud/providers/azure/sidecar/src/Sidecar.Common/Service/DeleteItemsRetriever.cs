@@ -36,13 +36,13 @@ public class DeleteItemsRetriever : IItemsRetriever
         _cosmosClientFactory = cosmosClientFactory;
     }
 
-    public async Task<List<DeleteItem>?> GetItemsAsync(string dataPartitionId, string query, string? parameters, CancellationToken ct = default)
+    public async Task<(List<DeleteItem>?, string?)> GetItemsAsync(string dataPartitionId, string query, string? parameters, string? continuationToken, CancellationToken ct = default)
     {
         var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId, ct);
 
-        var paginatedRecords = await _dataAccess.GetRecordsAsync(cs, query, parameters, null, null);
+        var paginatedRecords = await _dataAccess.GetRecordsAsync(cs, query, parameters, continuationToken, -1);
 
-        return paginatedRecords.records.Select(item =>
+        var items = paginatedRecords.records.Select(item =>
         {
             try
             {
@@ -54,5 +54,6 @@ public class DeleteItemsRetriever : IItemsRetriever
             }
         }).Where(deserializedObject => deserializedObject != null) // Filter out failed deserialization
         .ToList();
+        return (items, paginatedRecords.continuationToken);
     }
 }

@@ -45,7 +45,7 @@ public class BulkDeletionWorker : IBulkDeletionWorker
         _blobClientFactory = blobClientFactory;
     }
 
-    public async Task<bool> RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> itemsToDelete, CancellationToken ct)
+    public async Task<bool> RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> itemsToDelete, bool deletionErrors, CancellationToken ct)
     {
         var blobClient = await _blobClientFactory.GetBlobClientAsync(dataPartitionId, ct);
 
@@ -59,6 +59,12 @@ public class BulkDeletionWorker : IBulkDeletionWorker
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
             async (item, innerCt) => await ProcessItemDeletionAsync(dataPartitionId, blobClient, operationId, item, innerCt)
             );
+
+        // if error was found in previous iteration
+        if (deletionErrors)
+        {
+            return true;
+        }
 
         return _foundErrors;
     }

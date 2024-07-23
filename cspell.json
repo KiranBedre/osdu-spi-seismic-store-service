@@ -437,6 +437,7 @@
         "setuptools",
         "setvariable",
         "Shotpoint",
+        "sidecardelete",
         "SIGNATUREVERSION",
         "sitespeedio",
         "skipdupes",

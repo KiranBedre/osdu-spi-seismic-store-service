@@ -82,8 +82,10 @@ public class BulkDeletionWorkerTests
         };
         var itemsToDelete = new List<DeleteItem> { item };
 
+        var deletionErrors = false;
+
         // Act
-        var foundErrors = await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        var foundErrors = await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
 
         // Assert
         Assert.True(foundErrors);
@@ -115,11 +117,13 @@ public class BulkDeletionWorkerTests
 
         var itemsToDelete = new List<DeleteItem> { };
 
+        var deletionErrors = false;
+
         var tenant = "opendes";
         var operationId = "123";
 
         // Act
-        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
 
         // Assert
         Assert.False(foundErrors);
@@ -169,6 +173,8 @@ public class BulkDeletionWorkerTests
                 }
         };
 
+        var deletionErrors = false;
+
         _ = blobClientMock
             .Setup(client => client.GetContainerClient(It.IsAny<string>()))
             .Returns(blobContainerClientMock.Object);
@@ -201,7 +207,7 @@ public class BulkDeletionWorkerTests
             .Returns(mockedBlobsPages);
 
         // Act
-        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
 
         // Assert
         Assert.False(foundErrors);
@@ -250,6 +256,8 @@ public class BulkDeletionWorkerTests
                 }
         };
 
+        var deletionErrors = false;
+
         _ = blobClientMock
             .Setup(client => client.GetContainerClient(It.IsAny<string>()))
             .Returns(blobContainerClientMock.Object);
@@ -285,7 +293,7 @@ public class BulkDeletionWorkerTests
               .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act
-        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, CancellationToken.None);
+        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
 
         //Assert
         Assert.True(foundErrors);
