@@ -40,6 +40,7 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
         var changeTierErrors = true;
         var lockErrors = true;
         var unlockErrors = false;
+        var errorFlag = false;
         var lockSessionList = new List<WriteLockSession>();
         var successfullyLocked = new List<ChangeTierItem>();
         string? continuationToken = null;
@@ -63,9 +64,9 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
                     Constants.ChangeTierOperationStatus.DATASETS_CNT,
                     totalDatasetCount.ToString(),
                     ct);
-
-                lockSessionList = await LockDatasetsAsync(status, itemsToChangeTier, successfullyLocked, ct);
-                lockErrors = CheckLockError(lockSessionList);
+                var result = await LockDatasetsAsync(status, itemsToChangeTier, successfullyLocked, ct);
+                lockSessionList = result.Item2;
+                lockErrors = result.Item1;
                 changeTierErrors = await _bulkChangeTierWorker.RunBulkChangeTierAsync(op.Tenant, op.OperationId, op.TierToChange, successfullyLocked, ct);
 
             }
@@ -80,15 +81,23 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
             }
             if (lockErrors || changeTierErrors || unlockErrors)
             {
-                await UpdateStatusAndChangeTierOperationAsync(op.OperationId, Status.CompletedWithErrors, ct);
+                errorFlag = true;
                 _logger.LogError("Change tier operation {op}, on page {pn} with errors", op.OperationId, i);
             }
             else
             {
-                await UpdateStatusAndChangeTierOperationAsync(op.OperationId, Status.Completed, ct);
                 _logger.LogInformation("Change tier operation {op}, on page {pn} successfully", op.OperationId, i);
             }
         } while (continuationToken != null);
+
+        if (errorFlag)
+        {
+            await UpdateStatusAndChangeTierOperationAsync(op.OperationId, Status.CompletedWithErrors, ct);
+        }
+        else
+        {
+            await UpdateStatusAndChangeTierOperationAsync(op.OperationId, Status.Completed, ct);
+        }
     }
 
     private async Task UpdateStatusAndChangeTierOperationAsync(string operationId, Status status, CancellationToken ct)
@@ -131,13 +140,13 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
         return unlockErrors;
     }
 
-    private async Task<List<WriteLockSession>> LockDatasetsAsync(
+    private async Task<(bool, List<WriteLockSession>)> LockDatasetsAsync(
         IChangeTierOperationMessage op,
         List<ChangeTierItem> itemsToChange,
         List<ChangeTierItem> successfullyLocked,
         CancellationToken ct)
     {
-        // var foundLockErrors = false;
+        var foundLockErrors = false;
         var lockSession = new WriteLockSession();
         var lockSessionList = new List<WriteLockSession>();
         foreach (var item in itemsToChange)
@@ -169,11 +178,11 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
             {
                 await _changeTierTaskStatusStorage.IncrementCountAsync(
                     op.OperationId, Constants.ChangeTierOperationStatus.FAILED_CNT, ct);
-                // foundLockErrors = true;
+                foundLockErrors = true;
             }
         }
 
-        return lockSessionList;
+        return (foundLockErrors, lockSessionList);
     }
 
     private static string GetDatasetName(ChangeTierItem item)
@@ -184,20 +193,5 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
         }
 
         return item.Path + "/" + item.Name;
-    }
-
-    private static bool CheckLockError(List<WriteLockSession> lockSessionList)
-    {
-        var lockError = false;
-
-        foreach (var lockSession in lockSessionList)
-        {
-            if (!lockSession.Locked)
-            {
-                return true;
-            }
-        }
-
-        return lockError;
     }
 }

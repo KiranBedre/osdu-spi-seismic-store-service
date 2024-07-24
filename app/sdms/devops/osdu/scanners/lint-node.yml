@@ -1,12 +1,12 @@
 sdms_lint:
-  image: node
+  image: community.opengroup.org:5555/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-service/seismic-store-service-builder:14
   tags: ["osdu-small"]
   stage: scan
   needs: ['sdms_compile-and-unit-test']
   script:
     - cd app/$SDMS_SERVICE
     - npm install -g typescript
-    - npm install -g  tslint
+    - npm install -g tslint
     - npm run lint
   only:
     changes:
