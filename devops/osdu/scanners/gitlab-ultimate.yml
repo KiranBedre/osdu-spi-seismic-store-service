@@ -2,5 +2,6 @@ include:
   # gitlab-ultimate
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/gitlab-ultimate.yml"
+    ref: release/0.27
 
   - local: "devops/osdu/scanners/gitlab-ultimate-common.yml"
