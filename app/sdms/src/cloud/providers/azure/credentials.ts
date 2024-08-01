@@ -171,8 +171,6 @@ class RetriableAzureCredential extends DefaultAzureCredential {
         maxRetryDelayInMs: RetriableAzureCredential.DefaultMaxRetryInterval // Not supported yet
     };
 
-    private credentials: DefaultAzureCredential;
-
     private defaultRequestOptions = {
         requestOptions: {
             timeout: RetriableAzureCredential.DefaultRequestTimeout
@@ -183,21 +181,17 @@ class RetriableAzureCredential extends DefaultAzureCredential {
         super(tokenCredentialOptions);
         const retryOptions = tokenCredentialOptions?.retryOptions;
         this.options = {...this.options, ...retryOptions}
-        this.credentials = new DefaultAzureCredential();
     }
 
-    public getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken | null> {
-        let token;
+    public async getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken | null> {
         if (cacheShared.isInitialized()) {
-            token = this.getCachedToken(scopes, options);
+            return await this.getCachedToken(scopes, options);
+        } else {
+            return await this.createNewToken(scopes, options);
         }
-        else {
-            token = this.createNewToken(scopes, options);
-        }
-        return token;
     }
 
-    public async getCachedToken(scopes: string | string[], options?: GetTokenOptions):Promise<AccessToken> {
+    public async getCachedToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken> {
         let expireIn = 0;
         const cacheKey = 'mi-token-' + (typeof scopes === 'string' ? scopes : scopes.join('-'));
         const inMemoryCache = getInMemoryCacheInstance();
@@ -226,9 +220,9 @@ class RetriableAzureCredential extends DefaultAzureCredential {
             Utils.getExpTimeFromPayload(credentialToken.token) - Date.now()/1000);
         return credentialToken;
     }
-    public createNewToken(scopes: string | string[], options?: GetTokenOptions):Promise<AccessToken> {
-        const requestOptions = {...options, ...this.defaultRequestOptions};
-        return this.retry(() => this.credentials.getToken(scopes, requestOptions));
+    public async createNewToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken> {
+        const requestOptions = { ...options, ...this.defaultRequestOptions };
+        return await this.retry(() => super.getToken(scopes, requestOptions));
     }
 
     private async retry <T> (fn: () => Promise<T>, retries: number = this.options.maxRetries): Promise<T> {
@@ -236,9 +230,10 @@ class RetriableAzureCredential extends DefaultAzureCredential {
             return Promise.reject('Failed after several attempts');
         }
 
-        const prom = fn();
-        return prom
-            .then(res => prom)
-            .catch(err => this.retry(fn, retries - 1))
+        try {
+            return await fn();
+        } catch (err) {
+            return this.retry(fn, retries - 1);
+        }
     }
 }
