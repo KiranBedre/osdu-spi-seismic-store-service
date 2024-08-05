@@ -22,7 +22,7 @@ import { AzureConfig } from '../../../../src/cloud/providers/azure/config';
 import { Tx } from '../../utils';
 import { KeyVaultSecret } from '@azure/keyvault-secrets';
 
-const mockAIInstrumentationKey = 'mockAIInstrumentationKey';
+const mockAIConnectionString = 'mockAIConnectionString';
 const mockRedisKey = 'mockRedisKey';
 const mockRedisHost= 'mockRedisHost';
 const mockRedisQueueKey = 'mockRedisQueueKey';
@@ -37,9 +37,9 @@ const mockSauthProvider = 'mockSauthProvider';
 const mockSecretClient = {
     getSecret:  (secretName: string) => {
         return new Promise<KeyVaultSecret>((resolve, _reject) => {
-            if (secretName === KeyVault.AI_INSTRUMENTATION_KEY) {
+            if (secretName === KeyVault.AI_CONNECTION_STRING) {
                 resolve({
-                    value: mockAIInstrumentationKey,
+                    value: mockAIConnectionString,
                 } as any)
             }
             if (secretName === KeyVault.REDIS_KEY) {
@@ -92,7 +92,7 @@ export class TestAzureKeyVault {
             afterEach(() => {
                 this.sandbox.restore();
 
-                delete AzureConfig.AI_INSTRUMENTATION_KEY;
+                delete AzureConfig.AI_CONNECTION_STRING;
                 delete AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY;
                 delete AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS;
                 delete AzureConfig.REDIS_SHARED_INSTANCE_KEY;
@@ -111,7 +111,7 @@ export class TestAzureKeyVault {
         Tx.sectionInit('TestGetSecrets');
         Tx.test(async () => {
             await KeyVault.loadSecrets(mockSecretClient);
-            assert.equal(AzureConfig.AI_INSTRUMENTATION_KEY, mockAIInstrumentationKey);
+            assert.equal(AzureConfig.AI_CONNECTION_STRING, mockAIConnectionString);
             assert.equal(AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY, mockRedisQueueKey);
             assert.equal(AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS, mockRedisQueueHost);
             assert.equal(AzureConfig.REDIS_SHARED_INSTANCE_KEY, mockRedisKey);
