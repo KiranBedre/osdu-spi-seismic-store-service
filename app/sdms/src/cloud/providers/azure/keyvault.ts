@@ -19,7 +19,7 @@ import { AzureConfig } from './config';
 import { AzureCredentials } from './credentials';
 
 export class KeyVault {
-    public static AI_INSTRUMENTATION_KEY = 'appinsights-key';
+    public static AI_CONNECTION_STRING = 'appinsights-connection-string';
     public static REDIS_QUEUE_HOST = 'redis-queue-hostname';
     public static REDIS_QUEUE_KEY = 'redis-queue-password';
     public static REDIS_HOST = 'redis-hostname';
@@ -52,8 +52,8 @@ export class KeyVault {
         // - AZURE_CLIENT_ID: The application (client) ID registered in the AAD tenant
         // - AZURE_CLIENT_SECRET: The client secret for the registered application
 
-        // insight instrumentation key
-        AzureConfig.AI_INSTRUMENTATION_KEY = (await client.getSecret(this.AI_INSTRUMENTATION_KEY)).value;
+        // insight connection string
+        AzureConfig.AI_CONNECTION_STRING = (await client.getSecret(this.AI_CONNECTION_STRING)).value;
 
         // Storage Queue endpoint
         try {

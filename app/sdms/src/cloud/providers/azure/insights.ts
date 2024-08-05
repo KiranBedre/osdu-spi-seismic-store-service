@@ -102,9 +102,9 @@ export class AzureInsightsLogger extends AbstractLogger {
 
     public static initialize() {
 
-        if (!Config.UTEST && AzureConfig.AI_INSTRUMENTATION_KEY) {
+        if (!Config.UTEST && AzureConfig.AI_CONNECTION_STRING) {
 
-            appinsights.setup(AzureConfig.AI_INSTRUMENTATION_KEY)
+            appinsights.setup(AzureConfig.AI_CONNECTION_STRING)
                 .setAutoDependencyCorrelation(true)
                 .setAutoCollectRequests(true)
                 .setAutoCollectPerformance(true, true)
@@ -126,7 +126,7 @@ export class AzureInsightsLogger extends AbstractLogger {
 
     public info(data: any): void {
         if (!Config.UTEST && AzureConfig.ENABLE_LOGGING_INFO) {
-            if (AzureConfig.AI_INSTRUMENTATION_KEY) {
+            if (AzureConfig.AI_CONNECTION_STRING) {
                 appinsights.defaultClient.trackTrace(data);
             }
             // tslint:disable-next-line
@@ -136,7 +136,7 @@ export class AzureInsightsLogger extends AbstractLogger {
 
     public error(data: any): void {
         if (!Config.UTEST && AzureConfig.ENABLE_LOGGING_ERROR) {
-            if (AzureConfig.AI_INSTRUMENTATION_KEY) {
+            if (AzureConfig.AI_CONNECTION_STRING) {
                 appinsights.defaultClient.trackException({ exception: data });
             }
             // tslint:disable-next-line
@@ -146,7 +146,7 @@ export class AzureInsightsLogger extends AbstractLogger {
 
     public metric(key: string, data: any) {
         if (!Config.UTEST && AzureConfig.ENABLE_LOGGING_METRIC) {
-            if (AzureConfig.AI_INSTRUMENTATION_KEY) {
+            if (AzureConfig.AI_CONNECTION_STRING) {
                 appinsights.defaultClient.trackMetric({ name: key, value: data });
             }
             // tslint:disable-next-line
