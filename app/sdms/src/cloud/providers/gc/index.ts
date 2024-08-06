@@ -62,7 +62,7 @@ if (process.env.CLOUDPROVIDER === 'gc') {
         appkey: string
     ): Promise<boolean> => {
         const entitlementTenant = DESUtils.getDataPartitionID(esd);
-        if (isPolicyEnabled(entitlementTenant)) {
+        if (await isPolicyEnabled(entitlementTenant)) {
             userToken = userToken.startsWith('Bearer') ? userToken.split(/[ ,]+/)[1] : userToken;
             const result = await PolicyService.evaluatePolicy(entitlementTenant, userToken, groupEmails);
             if (result.error.length > 0) {
