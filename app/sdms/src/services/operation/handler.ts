@@ -213,7 +213,8 @@ export class Handler {
         }
 
         // get user id
-        const user = req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization);
+        const user = await Utils.getUserId(
+            req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
         if (!user) {
             throw (Error.make(Error.Status.BAD_REQUEST, 'User not found'));
         }
