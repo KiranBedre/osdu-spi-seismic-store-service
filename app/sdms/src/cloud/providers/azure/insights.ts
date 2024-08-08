@@ -59,8 +59,8 @@ export class AzureInsightsLogger extends AbstractLogger {
             // Log the caller's id
             if ('authorization' in httpRequest.headers) {
                 try {
-                    envelope.data.baseData.properties['user-id'] = httpRequest.get(Config.USER_ID_HEADER_KEY_NAME) ||
-                    Utils.getUserId(httpRequest.headers.authorization);
+                    envelope.data.baseData.properties['user-id'] = Utils.getUserId(
+                        httpRequest.headers.authorization, httpRequest.get(Config.USER_ID_HEADER_KEY_NAME));
                 } catch (e) {
                     console.error('Telemetry process error - unrecognized header format');
                     console.error(httpRequest.headers);

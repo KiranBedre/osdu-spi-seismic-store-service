@@ -80,6 +80,7 @@ export interface ConfigModel {
     CCM_TOKEN_SCOPE: string;
     CALLER_FORWARD_HEADERS: string;
     USER_ID_CLAIM_FOR_SDMS: string;
+    GDPR_COMPLIANT_USER_ID_KEY?: string;
     USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC: string;
     USER_ASSOCIATION_SVC_PROVIDER: string;
     SDMS_PREFIX: string;
@@ -259,6 +260,9 @@ export abstract class Config implements IConfig {
     // OSDU x-user-id header
     public static USER_ID_HEADER_KEY_NAME: string;
 
+    // GDPR compliant key
+    public static GDPR_COMPLIANT_USER_ID_KEY: string;
+
     public static USER_ID_FROM_PROVIDER_API: boolean;
 
     // ImpersonationToken cache expire margin
@@ -430,6 +434,9 @@ export abstract class Config implements IConfig {
 
         // OSDU x-user-id header
         Config.USER_ID_HEADER_KEY_NAME = process.env.USER_ID_HEADER_KEY_NAME || 'x-user-id';
+
+        // setting GDPR compliant user id key
+        Config.GDPR_COMPLIANT_USER_ID_KEY = model.GDPR_COMPLIANT_USER_ID_KEY || process.env.GDPR_COMPLIANT_USER_ID_KEY;
 
         // ImpersonationToken cache expire margin
         Config.IMPERSONATION_TOKEN_CACHE_EXPIRE_MARGIN = +(
