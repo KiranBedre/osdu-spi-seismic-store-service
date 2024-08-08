@@ -40,22 +40,39 @@ export class Utils {
     }
 
     public static getPropertyFromTokenPayload(base64JwtPayload: string, property: string): string {
-        if (Config.USER_ID_FROM_PROVIDER_API) {
-            return undefined;
-        }
         const payload = this.getPayloadFromStringToken(base64JwtPayload);
         return property in payload ? payload[property] : undefined;
     }
 
-    public static async getUserId(authorization: string): Promise<string> {
-        if (Config.USER_ID_FROM_PROVIDER_API) {
+    public static async getUserId(authorization: string, forwardedUserIdByProxy: string): Promise<string> {
+
+        // try to get the user id from GDPR compliant key
+        let userId = Utils.getPropertyFromTokenPayload(authorization, Config.GDPR_COMPLIANT_USER_ID_KEY);
+
+        // try to use the forwarded user id by proxy if this is set
+        if(!userId) {
+            userId = forwardedUserIdByProxy;
+        }
+
+        // try to get the user id from provider specific rule
+        if (!userId && Config.USER_ID_FROM_PROVIDER_API) {
             const cloudProvider = Config.CLOUDPROVIDER;
             const credClient = CredentialsFactory.build(cloudProvider);
-            return await credClient.getUserId(authorization);
-        } else {
-            return Utils.getPropertyFromTokenPayload(
-                authorization, Config.USER_ID_CLAIM_FOR_SDMS) || Utils.getSubFromPayload(authorization);
+            userId = await credClient.getUserId(authorization);
         }
+
+        // try to get the user id from old sdms default settings (to keep backward compatibility)
+        if (!userId) {
+            userId = Utils.getPropertyFromTokenPayload(authorization, Config.USER_ID_CLAIM_FOR_SDMS);
+        }
+
+        // if not possible get the id with previous strategies by default just use the sub
+        if (!userId) {
+            userId = Utils.getSubFromPayload(authorization)
+        }
+
+        return userId;
+
     }
 
     // This method is temporary required by slb during the migration of sauth from v1 to v2

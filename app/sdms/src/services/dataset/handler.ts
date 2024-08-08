@@ -324,7 +324,8 @@ export class DatasetHandler {
             (storageSchemaRecord && (FeatureFlags.isEnabled(Feature.SEISMICMETA_STORAGE))) ?
                 DESStorage.insertRecord(req.headers.authorization,
                     [storageSchemaRecord], tenant.esd, req[Config.DE_FORWARD_APPKEY],
-                    req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization))
+                    await Utils.getUserId(
+                        req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME)))
                 : undefined,
         ]);
     }
@@ -820,7 +821,8 @@ export class DatasetHandler {
         if (datasetIN.storageSchemaRecord && (FeatureFlags.isEnabled(Feature.SEISMICMETA_STORAGE))) {
             await DESStorage.insertRecord(
                 req.headers.authorization, [datasetIN.storageSchemaRecord], tenant.esd, req[Config.DE_FORWARD_APPKEY],
-                req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization));
+                await Utils.getUserId(
+                    req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME)));
         }
 
         if (newName) {
