@@ -482,7 +482,7 @@ export class UtilityHandler {
                 (datasetTo.seismicmeta_guid && (FeatureFlags.isEnabled(Feature.SEISMICMETA_STORAGE))) ?
                     DESStorage.insertRecord(req.headers.authorization, [seismicmeta],
                         tenant.esd, req[Config.DE_FORWARD_APPKEY],
-                        req.get(Config.USER_ID_HEADER_KEY_NAME) || await Utils.getUserId(req.headers.authorization))
+                        await Utils.getUserId(req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME)))
                         : undefined,
             ]);
 

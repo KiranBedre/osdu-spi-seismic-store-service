@@ -46,12 +46,8 @@ export class SubProjectParser {
         Params.checkString(subproject.admin, 'admin', false);
         Params.checkString(subproject.ltag, 'ltag', false);
 
-        if (Config.USER_ID_HEADER_KEY_NAME) {
-            subproject.admin = req.get(Config.USER_ID_HEADER_KEY_NAME)
-        } else {
-            subproject.admin = await Utils.getUserId(
-                req.headers.authorization);
-        }
+        subproject.admin = await Utils.getUserId(
+            req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
 
         // This method is temporary required by slb during the migration of sauth from v1 to v2
         // The method replace slb.com domain name with delfiserviceaccount.com

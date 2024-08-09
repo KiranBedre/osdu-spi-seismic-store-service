@@ -211,6 +211,7 @@ export class AzureConfig extends Config {
                     process.env.CALLER_FORWARD_HEADERS + ',' + AzureConfig.CORRELATION_ID :
                     AzureConfig.CORRELATION_ID,
                 USER_ID_CLAIM_FOR_SDMS: process.env.USER_ID_CLAIM_FOR_SDMS || 'subid',
+                GDPR_COMPLIANT_USER_ID_KEY: process.env.GDPR_COMPLIANT_USER_ID_KEY || 'oid',
                 USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC: process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC || 'email',
                 USER_ASSOCIATION_SVC_PROVIDER: process.env.USER_ASSOCIATION_SVC_PROVIDER || 'ccm-internal',
                 SDMS_PREFIX: process.env.SDMS_PREFIX || AzureConfig.API_BASE_URL_PATH

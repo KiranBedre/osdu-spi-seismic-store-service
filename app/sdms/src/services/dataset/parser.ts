@@ -53,8 +53,8 @@ export class DatasetParser {
         if (Auth.isImpersonationToken(req.headers.authorization)) {
             const context = req.get('impersonation-token-context');
             if (context === undefined) {
-                dataset.created_by = req.get(Config.USER_ID_HEADER_KEY_NAME) ||
-                await Utils.getUserId(req.headers.authorization);
+                dataset.created_by = await Utils.getUserId(
+                    req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
 
                 /* FIXME: This is a workaround to use impersonation tokens without having to provide the context.
                 Should add back this "throw" code change once impersonation-Token-Context is properly enforced
@@ -68,8 +68,8 @@ export class DatasetParser {
             }
         }
         else {
-            dataset.created_by = req.get(Config.USER_ID_HEADER_KEY_NAME) ||
-            await Utils.getUserId(req.headers.authorization);
+            dataset.created_by = await Utils.getUserId(
+                req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
         }
 
         dataset.created_date = dataset.last_modified_date = new Date().toString();

@@ -66,7 +66,7 @@ export class ImpersonationTokenHandler {
         const tenant = await TenantDAO.get(tenantName);
         const subject = Utils.getSubFromPayload(req.headers.authorization);
         const user = await Utils.getUserId(
-            req.headers['user-token'] as string);
+            req.headers['user-token'] as string, req.get(Config.USER_ID_HEADER_KEY_NAME));
 
         // check if the caller is a trusted application (subject, email(obsolete), emailV2(obsolete))
         try {
@@ -129,7 +129,7 @@ export class ImpersonationTokenHandler {
         const userAzp = Utils.getAzpFromPayload(req.headers.authorization) || user;
         const impersonationToken = await this.getImpersonationToken();
         const impersonatedBy = await Utils.getUserId(
-            req.headers.authorization);
+            req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
 
         // Build and sign the impersonation token context
         const context = {
