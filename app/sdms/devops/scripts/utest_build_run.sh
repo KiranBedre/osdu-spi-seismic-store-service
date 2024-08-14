@@ -14,9 +14,6 @@ if [ ! -f "docs/api/openapi.yaml" ]; then
     exit 1
 fi
 
-npm install fs-jetpack
-npm install inline-css
-
 npm run test-automation
 if [ $? -ne 0 ]; then exit 1; fi
 node devops/scripts/cssfix.js
