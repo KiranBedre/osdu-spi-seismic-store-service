@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2022, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import { Config } from '../../config';
 import { AbstractStorage, StorageFactory } from '../../storage';
 import { AzureCredentials } from './credentials';
 import { AzureDataEcosystemServices } from './dataecosystem';
-import { Tier } from './tiertype';
 import { Sku } from './sku';
 
 @StorageFactory.register('azure')
@@ -253,10 +252,10 @@ export class AzureCloudStorage extends AbstractStorage {
         return info.skuName;
     }
 
-    public async checkSupportedTier(tierId: AccessTier): Promise<void> {
+    public async checkSupportedTier(tierId: string): Promise<void> {
         // check if provided tier class is supported
         const supportedTiers = this.getStorageTiers();
-        const index = supportedTiers.findIndex(item => tierId === item.toLowerCase());
+        const index = supportedTiers.findIndex(item => tierId.toLowerCase() === item.toLowerCase());
         if (index === -1) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The storage Tier option ' + '"' + tierId + '"' + ' is not supported by this API. ' +
@@ -265,7 +264,7 @@ export class AzureCloudStorage extends AbstractStorage {
         // check storage account is support archive tier
         const replication = await this.getStorageAccountRedundancy();
 
-        if (Tier[supportedTiers[index]] === Tier.Archive && !(Object as any).values(Sku).includes(replication)) {
+        if (supportedTiers[index] === BlockBlobTier.Archive && !(Object as any).values(Sku).includes(replication)) {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The current storage account does not support moving datasets to the Archive tier.'
             ));

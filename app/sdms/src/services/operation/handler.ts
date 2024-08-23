@@ -129,7 +129,7 @@ export class Handler {
         const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
 
         // check if incoming tier is supported by the cloud provider
-        await storage.checkSupportedTier(changeTier.toLowerCase());
+        await storage.checkSupportedTier(changeTier);
 
         // push the bulk change tier operation
         const operation = {

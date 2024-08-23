@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -790,8 +790,10 @@ export class DatasetHandler {
                 // Updates all blobs storage tiers (not wait for all objects to update)
                 const bucket = DatasetUtils.getBucketFromDatasetResourceUri(datasetOUT.gcsurl);
                 const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(datasetOUT.gcsurl);
+                const datasetOUTTier = supportedTiers[index];
+                await storage.checkSupportedTier(datasetOUTTier);
                 storage.setStorageTiers(
-                    bucket, virtualFolder, supportedTiers[index]).catch((error) => {
+                    bucket, virtualFolder, datasetOUTTier).catch((error) => {
                         LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
                     });
             }
