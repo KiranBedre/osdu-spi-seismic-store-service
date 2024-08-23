@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "9fd56164-a943-4da2-93d6-1e7070f289b4",
-		"name": "SDMS-E2E ver.M24 - Release 0.27",
+		"_postman_id": "505c9cd4-a1fb-48ef-8875-839196521a84",
+		"name": "SDMS-E2E ver.M25 - Release 0.28",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -6955,99 +6955,6 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Cold\"\n    },\n    \"change_tier\": \"Cold\"\n}"
-						},
-						"url": {
-							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
-							"host": [
-								"{{SVC_URL}}"
-							],
-							"path": [
-								"dataset",
-								"tenant",
-								"{{tenant}}",
-								"subproject",
-								"{{subproject}}",
-								"dataset",
-								"{{dsx01}}"
-							],
-							"query": [
-								{
-									"key": "path",
-									"value": "{{testPathEncoded}}"
-								},
-								{
-									"key": "close",
-									"value": "{{sbit}}"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "CHANGE TIER PATCH: Patch a dataset with tier_class and change_tier as ARCHIVE",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (responseCode.code != 200) {",
-									"    console.log(pm.response.text())",
-									"    _.retryOnFailure(postman, pm.response.code, request.name, pm.environment.get(\"maxAmountOfRetries\"));",
-									"",
-									"} else {",
-									"    var jsonData = pm.response.json();",
-									"",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
-									"    pm.test(\"sbit_count\", function () {",
-									"        pm.expect(jsonData.sbit_count).to.eql(0);",
-									"    });",
-									"",
-									"    pm.test(\"Filemetadata is added\", function () {",
-									"        pm.expect(jsonData.filemetadata['tier_class']).to.eql('Archive');",
-									"    });",
-									"",
-									"    // Reset environment variables if _.retryOnFailure function was used before",
-									"    var key = request.name + '_counter';",
-									"    pm.environment.unset(key);",
-									"    postman.setEnvironmentVariable('execCounter', 1)",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{STOKEN}}"
-							},
-							{
-								"key": "data-partition-id",
-								"value": "{{datapartition}}"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{SVC_API_KEY}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "appkey",
-								"value": "{{DE_APP_KEY}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"filemetadata\": {\n        \"tier_class\": \"Archive\"\n    },\n    \"change_tier\": \"Archive\"\n}"
 						},
 						"url": {
 							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx01}}?path={{testPathEncoded}}&close={{sbit}}",
