@@ -117,9 +117,6 @@ export class Locker {
                 });
             }
 
-            // tslint:disable-next-line:no-floating-promises
-            this.redisClient.config('SET', 'notify-keyspace-events', 'Ex');
-
             // This will automatically remove the wid entries from the main read lock
             this.redisSubscriptionClient.on('message', async (channel, key) => {
                 if (channel === '__keyevent@0__:expired') {
@@ -133,7 +130,6 @@ export class Locker {
             this.redisClient.on('error', (error) => {
                 LoggerFactory.build(Config.CLOUDPROVIDER).error(error);
             });
-
 
         }
 
