@@ -212,11 +212,12 @@ export class Utils {
         // remove spaces at the start and and the end of the string
         const sanitizedInput = userInput.replace(/^\s+|\s+$/g, '');
 
-        if (!/^[a-zA-Z0-9_\s]+$/.test(sanitizedInput)) {
-            throw new Error('`' +userInput + '` contains invalid characters. Only letters, numbers, space and _ are allowed.');
+        if (!/^[a-zA-Z0-9._\s]+$/.test(sanitizedInput)) {
+            throw new Error('`' +userInput + '` contains invalid characters. Only letters, numbers, space, dot and _ are allowed.');
         }
 
         return sanitizedInput;
+
     }
 
     static sanitizeOperator(operator: Operator): Operator {

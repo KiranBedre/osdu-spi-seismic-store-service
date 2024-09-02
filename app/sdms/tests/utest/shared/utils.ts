@@ -225,7 +225,7 @@ export class TestUtils {
          const unsupportedFieldNames: string[] = ['field@name', 'gtags FROM c--'];
          unsupportedFieldNames.forEach((fieldName) => {
             const expectError = expect(() => Utils.sanitizeFieldName(fieldName)).to.throw();
-            expectError.to.have.property('message').match(RegExp(`\`${fieldName}\` contains invalid characters. Only letters, numbers, space and _ are allowed.`));
+            expectError.to.have.property('message').match(RegExp(`\`${fieldName}\` contains invalid characters. Only letters, numbers, space, dot and _ are allowed.`));
          });
       });
    }
