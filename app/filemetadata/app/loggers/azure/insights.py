@@ -18,6 +18,7 @@ class AzureInsightsLogger():
             ENABLE_LOGGING = False
 
     CORRELATION_ID: str
+    OPERATION_ID: str
 
     @staticmethod
     def info(data: dict):
@@ -29,18 +30,33 @@ class AzureInsightsLogger():
         if AzureInsightsLogger.ENABLE_LOGGING:
             result = Log(request, response, time)
             AzureInsightsLogger.tc.context.operation.name = result.operation_Name
-            AzureInsightsLogger.tc.track_request(result.name, result.url, result.success, response_code=result.response_code, duration=result.duration, properties={'correlation-id': AzureInsightsLogger.CORRELATION_ID, 'data-partition-id': result.tenant, 'user-id': request.headers.get('x-user-id')})
+            AzureInsightsLogger.tc.context.operation.id = AzureInsightsLogger.OPERATION_ID
+            AzureInsightsLogger.tc.track_request(
+                                                result.name, 
+                                                result.url,
+                                                result.success,
+                                                response_code=result.response_code, 
+                                                duration=result.duration, 
+                                                properties={
+                                                    'correlation-id': request.headers.get('correlation-id'),
+                                                    'data-partition-id': result.tenant, 
+                                                    'user-id': request.headers.get('x-user-id')
+                                                    },
+                                                request_id=AzureInsightsLogger.OPERATION_ID
+                                                )
             AzureInsightsLogger.tc.flush()
     
     @staticmethod
     def error(exception):
         if AzureInsightsLogger.ENABLE_LOGGING:
+            AzureInsightsLogger.tc.context.operation.id = AzureInsightsLogger.OPERATION_ID
             AzureInsightsLogger.tc.track_exception(exception, properties={'correlation-id': AzureInsightsLogger.CORRELATION_ID})
         return exception
 
     @staticmethod
     def buildTraceInfo(request: Request):
         present = AzureInsightsLogger.isPresent(request.query_params.get('sdpath'))
+        if AzureInsightsLogger.ENABLE_LOGGING: AzureInsightsLogger.tc.context.operation.id = AzureInsightsLogger.OPERATION_ID
         telemetry = {
             "message": '[' + request.method + '] ' + str(request.url),
             "properties": {
