@@ -2,6 +2,7 @@ import segysdk
 from fastapi import Security
 from fastapi.security import HTTPBearer
 from fastapi.security.api_key import APIKeyHeader
+from loggers.azure.insights import AzureInsightsLogger
 
 from core.config import settings
 
@@ -24,4 +25,11 @@ async def get_api_key(
 
 
 def configure_remote_access(sdms_bearer_token, sdms_app_key):
-    segysdk.segy_configure_remote_access(settings.SDMS_URL, sdms_app_key, sdms_bearer_token)
+    segysdk.segy_configure_remote_access(
+        settings.SDMS_URL,
+        sdms_app_key,
+        sdms_bearer_token,
+        {
+            "correlation-id": AzureInsightsLogger.CORRELATION_ID
+        }
+    )

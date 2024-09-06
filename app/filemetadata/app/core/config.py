@@ -10,7 +10,7 @@ class Settings:
     PROJECT_VERSION: str = "0.0.1"
     API_PATH: str = "/seismic-file-metadata/api/"
 
-    # TThis is required for insights logging
+    # This is required for insights logging
     FEATURE_FLAG_LOGGING: str = os.getenv('FEATURE_FLAG_LOGGING')
     KEYVAULT_URL: str = os.getenv('KEYVAULT_URL')
 

@@ -1,6 +1,5 @@
 import uvicorn
 import uuid
-import os
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -52,7 +51,8 @@ async def custom_swagger_ui_html():
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     st = time.time()
-    AzureInsightsLogger.CORRELATION_ID = uuid.uuid4().hex
+    AzureInsightsLogger.CORRELATION_ID = request.headers.get('correlation-id') if None != request.headers.get('correlation-id') else str(uuid.uuid4())
+    AzureInsightsLogger.OPERATION_ID = str(uuid.uuid4().hex)
     response = await call_next(request)
     et = time.time()
 
