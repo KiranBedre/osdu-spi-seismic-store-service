@@ -50,6 +50,7 @@ It is possible to modify the default values specified in the **values.yaml** fil
 ### Globals
 
 Global Helm values apply to all services within the parent chart deployment. Global values will not override service defaults or locally set values.
+
 | Name | Example Value | Description | Type | Required |
 | ---  | ------------- | ----------- | ---- | -------- |
 | `global.allowOrigins` | `{http://localhost,https://www.osdu.aws}` | A list of domains that are permitted by CORS policy. An empty list permits all origins. | array[str] | no |
@@ -61,6 +62,7 @@ Global Helm values apply to all services within the parent chart deployment. Glo
 ### Local
 
 Local Helm values apply to specific services. Local Helm values will override global values and default presets.
+
 | Name | Example Value | Description | Type | Required |
 | ---  | ------------- | ----------- | ---- | -------- |
 | `image` | `registry.repo.osdu.aws/service:0.21.0` | The custom image of the service deployment. | str | no |

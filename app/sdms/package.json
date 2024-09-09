@@ -79,7 +79,7 @@
     "applicationinsights": "^2.7.3",
     "applicationinsights-native-metrics": "^0.0.6",
     "aws-sdk": "^2.1024.0",
-    "axios": "^1.6.4",
+    "axios": "^1.7.4",
     "bull": "^4.12.2",
     "colors": "^1.4.0",
     "copyfiles": "^2.4.1",
@@ -155,6 +155,7 @@
     "@ibm-cloud/cloudant": {
       "qs": "$qs",
       "ibm-cloud-sdk-core": {
+        "axios": "1.7.4",
         "expect": {
           "jest-message-util": {
             "micromatch": "^4.0.6"
@@ -173,14 +174,14 @@
       "semver": "7.5.2"
     },
     "jwks-rsa": {
-      "axios": "1.6.4"
+      "axios": "1.7.4"
     },
     "newman": {
       "qs": "$qs",
       "semver": "7.5.2"
     },
     "keycloak-admin": {
-      "axios": "1.6.4"
+      "axios": "1.7.4"
     }
   },
   "config": {
