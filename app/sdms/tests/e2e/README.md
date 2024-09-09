@@ -18,7 +18,6 @@ Postman collection with API requests that check the basic functionality of the s
 | VCS_Provider | possible values are `true` for script or `gitlab` for Newman. It is needed to skip USER and IMPTOKEN API endpoints test | Required if `newuser` and/or `newusergroup` is not set |
 | SVC_API_KEY | historical variables and could be any string | Optional |
 | DE_APP_KEY | historical variables and could be any string | Optional |
----
 
 ## How to run the tests
 
