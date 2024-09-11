@@ -142,6 +142,8 @@
     "tslint": "^6.1.3"
   },
   "overrides": {
+    "degenerator": "^5.0.1",
+    "ip": "2.0.1",
     "@azure/identity": {
       "@azure/msal-node": {
         "jsonwebtoken": "$jsonwebtoken",
@@ -193,3 +195,4 @@
     "schema": "src/cloud/providers/anthos/schema.prisma"
   }
 }
+
