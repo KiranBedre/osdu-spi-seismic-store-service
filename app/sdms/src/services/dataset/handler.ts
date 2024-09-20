@@ -165,7 +165,7 @@ export class DatasetHandler {
         tenant: TenantModel, dataset: DatasetModel) {
         await Promise.all([
             Auth.isWriteAuthorized(req.headers.authorization,
-                SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
+                SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin, tenant.esd),
                 tenant, dataset.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string),
 
@@ -449,7 +449,7 @@ export class DatasetHandler {
     private static async fetchGroupForReadAuth(req: expRequest, subproject: SubProjectModel,
         datasetOUT: DatasetModel, tenant: TenantModel, datasetIN: DatasetModel) {
         await Auth.isReadAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.viewer),
+            DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.viewer, tenant.esd),
             tenant, datasetIN.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
     }
@@ -462,7 +462,7 @@ export class DatasetHandler {
         if (!datasetOUT) {
             if (subproject.access_policy === Config.UNIFORM_ACCESS_POLICY) {
                 await Auth.isUserAuthorized(req.get('authorization'),
-                    SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+                    SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
                     tenant.esd, req[Config.DE_FORWARD_APPKEY]);
             } else {
                 await Auth.isUserAuthorized(req.get('authorization'),
@@ -495,7 +495,7 @@ export class DatasetHandler {
 
         // Check authorizations
         await Auth.isReadAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
             tenant, dataset.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -586,7 +586,7 @@ export class DatasetHandler {
 
         // check authorization (write)
         await Auth.isWriteAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin),
+            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin, tenant.esd),
             tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -681,7 +681,7 @@ export class DatasetHandler {
 
         // If the input request has dataset ACLs then the subproject access policy is always dataset
         await Auth.isWriteAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.admin),
+            DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.admin, tenant.esd),
             tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -954,12 +954,12 @@ export class DatasetHandler {
         dataset: DatasetModel, tenant: TenantModel) {
         if (wid.startsWith('W')) {
             await Auth.isWriteAuthorized(req.headers.authorization,
-                DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin),
+                DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin, tenant.esd),
                 tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
         } else {
             await Auth.isReadAuthorized(req.headers.authorization,
-                DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer),
+                DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer, tenant.esd),
                 tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
         }
@@ -1001,12 +1001,12 @@ export class DatasetHandler {
         // Use the access policy to determine which groups to fetch for read authorization
         if (open4write) {
             await Auth.isWriteAuthorized(req.headers.authorization,
-                DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.admin),
+                DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.admin, tenant.esd),
                 tenant, datasetIN.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
         } else {
             await Auth.isReadAuthorized(req.headers.authorization,
-                DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.viewer),
+                DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.viewer, tenant.esd),
                 tenant, datasetIN.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
         }
@@ -1079,7 +1079,7 @@ export class DatasetHandler {
 
         // check if the user is authorized
         await Auth.isWriteAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin),
+            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin, tenant.esd),
             tenant, dataset.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -1100,7 +1100,7 @@ export class DatasetHandler {
 
         // check if the caller is authorized
         await Auth.isReadAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
             tenant, datasets[0].subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -1139,7 +1139,7 @@ export class DatasetHandler {
 
         // check if the caller is authorized
         await Auth.isReadAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
             tenant, datasets[0].subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -1194,7 +1194,7 @@ export class DatasetHandler {
 
         // check if the caller is authorized
         await Auth.isReadAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
             tenant, dataset.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -1245,7 +1245,7 @@ export class DatasetHandler {
 
         // check if the user is write authorized
         await Auth.isWriteAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin),
+            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin, tenant.esd),
             tenant, dataset.subproject,
             req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
@@ -1303,7 +1303,7 @@ export class DatasetHandler {
 
         // Check authorizations
         await Auth.isReadAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
             tenant, dataset.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -1373,7 +1373,7 @@ export class DatasetHandler {
         }
 
         await Auth.isWriteAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.admin),
+            DatasetAuth.getAuthGroups(subproject, datasetOUT, AuthRoles.admin, tenant.esd),
             tenant, datasetIN.subproject,
             req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
@@ -1407,13 +1407,13 @@ export class DatasetHandler {
 
         // Check write authorization
         res.write = await Auth.isWriteAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin),
+            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin, tenant.esd),
             tenant, dataset.subproject,
             req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string, false);
         // Check read authorization
         res.read = await Auth.isReadAuthorized(req.headers.authorization,
-            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer),
+            DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer, tenant.esd),
             tenant, dataset.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string, false);
 

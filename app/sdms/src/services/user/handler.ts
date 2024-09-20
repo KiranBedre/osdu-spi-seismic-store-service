@@ -243,7 +243,9 @@ export class UserHandler {
         const subproject = await SubProjectDAO.get(journalClient, tenant.name, sdPath.subproject);
 
         await Auth.isUserAuthorized(req.headers.authorization,
-                SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin), tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+                SubprojectAuth.getAuthGroups(
+                    subproject, AuthRoles.admin, tenant.esd),
+                    tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
         if (sdPath.dataset) {
             const datasetModel: DatasetModel = {

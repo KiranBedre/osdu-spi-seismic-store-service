@@ -196,7 +196,8 @@ export class SubProjectHandler {
 
         // Check if user is member of any of the subproject acl admin groups
         await Auth.isUserAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin), tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+            SubprojectAuth.getAuthGroups(
+                subproject, AuthRoles.admin, tenant.esd), tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
 
 
@@ -280,7 +281,8 @@ export class SubProjectHandler {
 
         // Check if user is a subproject admin
         await Auth.isUserAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin), tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+            SubprojectAuth.getAuthGroups(
+                subproject, AuthRoles.admin, tenant.esd), tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
         // Updated the access policy
         if (parsedUserInput.access_policy) {

@@ -102,7 +102,7 @@ export class ImpersonationTokenHandler {
                         requestBody.userToken.startsWith('Bearer') ?
                             requestBody.userToken :
                             'Bearer ' + requestBody.userToken,
-                        SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+                        SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
                         tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                         req.headers['impersonation-token-context'] as string, false));
             } else {
@@ -111,7 +111,7 @@ export class ImpersonationTokenHandler {
                         requestBody.userToken.startsWith('Bearer') ?
                             requestBody.userToken :
                             'Bearer ' + requestBody.userToken,
-                        SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
+                        SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin, tenant.esd),
                         tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                         req.headers['impersonation-token-context'] as string, false));
             }
