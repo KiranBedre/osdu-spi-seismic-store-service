@@ -33,10 +33,7 @@ env:
 
 phases:
   install:
-    runtime-versions:
-      java: corretto8
     commands:
-      - n 20
       # fix error noted here: https://github.com/yarnpkg/yarn/issues/7866
       - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
       - apt-get update -y
