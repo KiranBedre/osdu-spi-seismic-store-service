@@ -1,0 +1,78 @@
+sdms_compile-and-unit-test:
+  tags: ['osdu-medium']
+  image: node
+  stage: build
+  before_script:
+    - cd app/$SDMS_SERVICE
+  script:
+    - chmod +x devops/scripts/utest_build_run.sh
+    - devops/scripts/utest_build_run.sh
+  coverage: '/Lines        : \d+.\d+%/'  # regular expression to parse coverage from the script's stdout
+  artifacts:
+    when: always
+    reports:
+      junit: app/$SDMS_SERVICE/test-results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: app/$SDMS_SERVICE/coverage/cobertura-coverage.xml
+    paths:
+      - app/$SDMS_SERVICE/coverage/
+    expire_in: 15 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: always
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: always
+
+
+sdms_sidecar_compile-and-unit-test:
+  needs: ['sdms_compile-and-unit-test']
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  stage: build
+  before_script:
+    - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar
+  script:
+    - dotnet format --version
+    - dotnet format --severity warn --verify-no-changes
+    - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=${CI_PROJECT_DIR}/junit/{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+    # generate coverage summary and print to stdout:
+    - dotnet tool install dotnet-reportgenerator-globaltool --version 5.1.25 --tool-path ./tools
+    - ./tools/reportgenerator "-reports:${CI_PROJECT_DIR}/cobertura/**/coverage.cobertura.xml" "-targetdir:${CI_PROJECT_DIR}/cobertura" -reporttypes:TextSummary
+    - cat "${CI_PROJECT_DIR}/cobertura/Summary.txt"
+  coverage: '/  Line coverage: \d+.\d+%/'  # regular expression to parse coverage from the script's stdout
+  artifacts:
+    when: always
+    reports:
+      junit: ${CI_PROJECT_DIR}/junit/*-test-result.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
+    paths:
+      - ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
+      - ${CI_PROJECT_DIR}/cobertura/*
+      - ${CI_PROJECT_DIR}/junit/*-test-result.xml
+    expire_in: 15 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: always
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - devops/**/*
+        - app/sdms/devops/**/*
+        - app/sdms/src/cloud/providers/azure/sidecar/**/*
+      when: always

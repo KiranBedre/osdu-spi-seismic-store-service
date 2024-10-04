@@ -14,19 +14,26 @@
 #  limitations under the License.
 #  ***************************************************************************
 
-sdms_v4_prettier:
+sdms-v4_prettier:
   image: node
-  tags: ["osdu-small"]
   stage: scan
-  needs: ['sdms_v4_push_runtime_image']
-  script:
+  needs: ['sdms-v4_containerize']
+  before_script:
     - cd app/$SDMS_V4_SERVICE
+  script:
     - npm install
     - npm run prettier
-  only:
-    changes:
-      - devops/**/*
-      - app/sdms-v4/**/*
-    refs:
-      - branches
-      - merge_requests
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - devops/**/*
+        - app/sdms-v4/**/*
+      when: always

@@ -19,46 +19,40 @@ variables:
   E2E_HOSTNAME: https://$AZURE_DNS_NAME
   E2E_ENTITLEMENTS_USER: $INTEGRATION_TESTER
 
-sdms_azure_dotnet_ci:
-  image: mcr.microsoft.com/dotnet/sdk:6.0
-  stage: build
-  needs: []
-  coverage: '/  Line coverage: \d+.\d+%/'  # regular expression to parse coverage from the script's stdout
-  artifacts:
-    paths:
-      - ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
-      - ${CI_PROJECT_DIR}/cobertura/*
-      - ${CI_PROJECT_DIR}/junit/*-test-result.xml
-    reports:
-      junit: ${CI_PROJECT_DIR}/junit/*-test-result.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: ${CI_PROJECT_DIR}/cobertura/*/coverage.cobertura.xml
-  script:
-    - cd app/${SDMS_SERVICE}/src/cloud/providers/azure/sidecar
-    - dotnet format --version
-    - dotnet format --severity warn --verify-no-changes
-    - dotnet test -c Debug --results-directory="${CI_PROJECT_DIR}/cobertura/" --collect:"XPlat Code Coverage" --test-adapter-path:. --logger:"junit;LogFilePath=${CI_PROJECT_DIR}/junit/{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
-    # generate coverage summary and print to stdout:
-    - dotnet tool install dotnet-reportgenerator-globaltool --version 5.1.25 --tool-path ./tools
-    - ./tools/reportgenerator "-reports:${CI_PROJECT_DIR}/cobertura/**/coverage.cobertura.xml" "-targetdir:${CI_PROJECT_DIR}/cobertura" -reporttypes:TextSummary
-    - cat "${CI_PROJECT_DIR}/cobertura/Summary.txt"
-  only:
-    changes:
-      - app/sdms/src/cloud/providers/azure/sidecar/**/*
-      - app/sdms/devops/osdu/cloud-providers/azure.yml
-    refs:
-      - branches
-      - merge_requests
-      - tags
+.azure_clean_code:
+  before_script:
+    - cd app/$SDMS_SERVICE
+    - sed -i "/anthos/d" src/cloud/providers/index.ts
+    - rm -Rf src/cloud/providers/anthos
+    - sed -i "/google/d" src/cloud/providers/index.ts
+    - rm -Rf src/cloud/providers/aws
+    - sed -i "/aws/d" src/cloud/providers/index.ts
+    - rm -Rf src/cloud/providers/google
+    - sed -i "/ibm/d" src/cloud/providers/index.ts
+    - rm -Rf src/cloud/providers/ibm
+    - sed -i "/TestGoogle/d" tests/utest/cloud/test.ts
+    - sed -i "/TestGCS/d" tests/utest/cloud/test.ts
+    - rm -Rf tests/utest/cloud/google
+    - rm -Rf tests/utest/dao
+    - rm -Rf tests/utest/services
+    - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
+    - jq "del(.prisma)" package.json > cleaned_package.json
+    - mv cleaned_package.json package.json
+    - export directoryToScan=$PWD
+    - export currentDirectory=$PWD
+    - chmod +x devops/scripts/detect_unused_packages.sh
+    - devops/scripts/detect_unused_packages.sh
+    - chmod +x devops/scripts/clean_package_json.sh
+    - devops/scripts/clean_package_json.sh
 
 sdms_azure_containerize:
-  extends: .azure_containerize
-  environment: $DEPLOY_ENVIRONMENT_AZURE
+  extends:
+    - .azure_clean_code
+    - azure_containerize
   needs:
-    - job: sdms_azure_dotnet_ci
-      optional: true
     - job: sdms_compile-and-unit-test
+    - job: sdms_sidecar_compile-and-unit-test
+      optional: true
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
     SHA_SIDECAR_IMAGE: ${SDMS_SIDECAR_NAME}:${CI_COMMIT_SHA}
@@ -83,30 +77,10 @@ sdms_azure_containerize:
     RELEASE_COMPUTESIZE_SERVICE_IMAGE: release-${CI_COMMIT_TAG}:${SDMS_COMPUTESIZE_SERVICE_NAME}-${CI_COMMIT_TAG}
     RELEASE_CHANGETIER_SERVICE_IMAGE: release-${CI_COMMIT_TAG}:${SDMS_CHANGETIER_SERVICE_NAME}-${CI_COMMIT_TAG}
     RELEASE_STATISTICS_JOB_IMAGE: release-${CI_COMMIT_TAG}:${SDMS_STATISTICS_JOB_NAME}-${CI_COMMIT_TAG}
+  before_script:
+    - !reference [.azure_clean_code, before_script]
+    - !reference [azure_containerize, before_script]
   script:
-    - cd app/$SDMS_SERVICE
-    - sed -i "/anthos/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/anthos
-    - sed -i "/google/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/aws
-    - sed -i "/aws/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/google
-    - sed -i "/ibm/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/ibm
-    - sed -i "/TestGoogle/d" tests/utest/cloud/test.ts
-    - sed -i "/TestGCS/d" tests/utest/cloud/test.ts
-    - rm -Rf tests/utest/cloud/google
-    - rm -Rf tests/utest/dao
-    - rm -Rf tests/utest/services
-    - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
-    - jq "del(.prisma)" package.json > cleaned_package.json
-    - mv cleaned_package.json package.json
-    - export directoryToScan=$PWD
-    - export currentDirectory=$PWD
-    - chmod +x devops/scripts/detect_unused_packages.sh
-    - devops/scripts/detect_unused_packages.sh
-    - chmod +x devops/scripts/clean_package_json.sh
-    - devops/scripts/clean_package_json.sh
     # Runtime image
     - docker build -t $SDMS_UTEST_RUNTIME_IMAGE --file devops/azure/runtime.Dockerfile .
     # Sidecar image
@@ -119,7 +93,6 @@ sdms_azure_containerize:
     - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_CHANGETIER_SERVICE_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.ChangeTierRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
     # Statistics job
     - docker build -t $SDMS_STATISTICS_JOB_IMAGE -f ./programs/azure/collector/Dockerfile ./programs/azure/collector
-
     # Gitlab Container Registry
     # Runtime image
     - docker tag $SDMS_UTEST_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE
@@ -153,7 +126,6 @@ sdms_azure_containerize:
     - docker push ${CI_REGISTRY_IMAGE}/$SHA_STATISTICS_JOB_IMAGE
     - docker tag $CI_REGISTRY_IMAGE/$SHA_STATISTICS_JOB_IMAGE $CI_REGISTRY_IMAGE/$LATEST_STATISTICS_JOB_IMAGE
     - docker push ${CI_REGISTRY_IMAGE}/$LATEST_STATISTICS_JOB_IMAGE
-
     # Azure Container Registry
     # Runtime image
     - az acr login -n $AZURE_REGISTRY
@@ -221,86 +193,92 @@ sdms_azure_containerize:
         docker tag $CI_REGISTRY_IMAGE/$SHA_STATISTICS_JOB_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_STATISTICS_JOB_IMAGE
         docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_STATISTICS_JOB_IMAGE
       fi
-  only:
-    changes:
-      - devops/**/*
-      - app/sdms/devops/**/*
-      - app/sdms/docker/**/*
-      - app/sdms/docs/**/*
-      - app/sdms/tests/**/*
-      - app/sdms/src/auth/**/*
-      - app/sdms/src/dataecosystem/**/*
-      - app/sdms/src/server/**/*
-      - app/sdms/src/services/**/*
-      - app/sdms/src/shared/**/*
-      - app/sdms/src/cloud/*.ts
-      - app/sdms/src/cloud/shared/**/*
-      - app/sdms/src/cloud/providers/*.ts
-      - app/sdms/src/cloud/providers/azure/**/*
-      - app/sdms/**/*.json
-      - app/sdms/**/*.yml
-      - app/sdms/**/*.md
-    refs:
-      - branches
-      - merge_requests
-      - tags
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
 
-sdms_azure_container_scanning:
-  extends: .azure_container_scanning
-  environment: $DEPLOY_ENVIRONMENT_AZURE
+sdms_azure_containerize_helm:
+  extends:
+    - azure_containerize_helm
   needs:
-    - sdms_azure_containerize
+    - job: sdms_compile-and-unit-test
+      artifacts: false
+      optional: true
+  variables:
+    AZURE_HELM_SUBDIR: osdu-ddms/standard-ddms
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
+
+sdms_container_scanning:
+  extends:
+    - container_scanning
+  needs: ['sdms_azure_containerize']
   variables:
     DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/${SDMS_PROJECT_NAME}azure:${CI_COMMIT_SHA}
   rules:
-    - if: $AZURE == '1' && $ENFORCE_CONTAINER_SCANNING == 'true'
-      allow_failure: false
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
       changes:
         - devops/**/*
-        - app/sdms/devops/**/*
-        - app/sdms/docker/**/*
-        - app/sdms/docs/**/*
-        - app/sdms/tests/**/*
-        - app/sdms/src/auth/**/*
-        - app/sdms/src/dataecosystem/**/*
-        - app/sdms/src/server/**/*
-        - app/sdms/src/services/**/*
-        - app/sdms/src/shared/**/*
-        - app/sdms/src/cloud/*.ts
-        - app/sdms/src/cloud/shared/**/*
-        - app/sdms/src/cloud/providers/*.ts
-        - app/sdms/src/cloud/providers/azure/**/*
-        - app/sdms/**/*.json
-        - app/sdms/**/*.yml
-        - app/sdms/**/*.md
-    - if: $AZURE == '1'
+        - app/sdms/**/*
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
       changes:
         - devops/**/*
-        - app/sdms/devops/**/*
-        - app/sdms/docker/**/*
-        - app/sdms/docs/**/*
-        - app/sdms/tests/**/*
-        - app/sdms/src/auth/**/*
-        - app/sdms/src/dataecosystem/**/*
-        - app/sdms/src/server/**/*
-        - app/sdms/src/services/**/*
-        - app/sdms/src/shared/**/*
-        - app/sdms/src/cloud/*.ts
-        - app/sdms/src/cloud/shared/**/*
-        - app/sdms/src/cloud/providers/*.ts
-        - app/sdms/src/cloud/providers/azure/**/*
-        - app/sdms/**/*.json
-        - app/sdms/**/*.yml
-        - app/sdms/**/*.md
+        - app/sdms/**/*
+      when: on_success
 
 sdms_azure_deploy:
-  extends: .azure_deploy
-  environment: $DEPLOY_ENVIRONMENT_AZURE
+  extends: azure_deploy
   needs:
     - sdms_azure_containerize
-    - azure_containerize_helm
+    - sdms_azure_containerize_helm
   script:
-    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash -s -- --version v3.9.1
     - helm show chart $HELM_CHART_OCI --version $HELM_CHART_OCI_VERSION
     # Uninstall if found in default namespace
     - helm uninstall seismic-store-service -n default --wait || echo [INFO] No seismic-store-service in default
@@ -344,36 +322,31 @@ sdms_azure_deploy:
     - pod=$(kubectl -n ddms-seismic get po -l app=${SDMS_SERVICE_NAME} --no-headers=true -o custom-columns=":metadata.name" | tail -1)
     - status=$(kubectl wait -n ${NAMESPACE} --for=condition=Ready pod/$pod --timeout=600s)
     - if [[ "$status" != *"met"* ]]; then echo "${SDMS_SERVICE_NAME} pod didn't start correctly" ; exit 1 ; fi
-  only:
-    changes:
-      - devops/**/*
-      - app/sdms/devops/**/*
-      - app/sdms/docker/**/*
-      - app/sdms/docs/**/*
-      - app/sdms/tests/**/*
-      - app/sdms/src/auth/**/*
-      - app/sdms/src/dataecosystem/**/*
-      - app/sdms/src/server/**/*
-      - app/sdms/src/services/**/*
-      - app/sdms/src/shared/**/*
-      - app/sdms/src/cloud/*.ts
-      - app/sdms/src/cloud/shared/**/*
-      - app/sdms/src/cloud/providers/*.ts
-      - app/sdms/src/cloud/providers/azure/**/*
-      - app/sdms/**/*.json
-      - app/sdms/**/*.yml
-      - app/sdms/**/*.md
-    refs:
-      - branches
-      - merge_requests
-      - tags
+  artifacts: null
+  only: null
+  except: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
 
 sdms_azure_test:
-  image: node:18
-  extends: .azure_test
-  environment: $DEPLOY_ENVIRONMENT_AZURE
-  needs:
-    - sdms_azure_deploy
+  image: node
+  extends:
+    - .azure_clean_code
+    - azure_test
+    - .azure_variables
+  needs: ['sdms_azure_deploy']
   variables:
     AZURE_AD_APP_RESOURCE_ID: $AZURE_APP_ID
     AZURE_AD_TENANT_ID: $AZURE_TENANT_ID
@@ -381,63 +354,44 @@ sdms_azure_test:
     INTEGRATION_TESTER: $AZURE_PRINCIPAL_ID
     TEST_BULK_DELETE: 'true'
     TEST_COMPUTE_SIZE: 'false'
-  script:
+  before_script:
     - apt-get update
     - apt-get install -y jq
-    - cd app/$SDMS_SERVICE
-    - sed -i "/anthos/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/anthos
-    - sed -i "/google/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/aws
-    - sed -i "/aws/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/google
-    - sed -i "/ibm/d" src/cloud/providers/index.ts
-    - rm -Rf src/cloud/providers/ibm
-    - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
-    - jq "del(.prisma)" package.json > cleaned_package.json
-    - mv cleaned_package.json package.json
-    - export directoryToScan=$PWD
-    - export currentDirectory=$PWD
-    - chmod +x devops/scripts/detect_unused_packages.sh
-    - devops/scripts/detect_unused_packages.sh
-    - chmod +x devops/scripts/clean_package_json.sh
-    - devops/scripts/clean_package_json.sh
+    - !reference [.azure_clean_code, before_script]
+    - apt-get install -y python3
+    - apt-get install -y python3-pip
+    - pip3 install --break-system-packages msal
+    - export svctoken=$(python3 ${CI_PROJECT_DIR}/devops/scripts/azure_jwt_client.py)
+  script:
     - echo $svctoken > /dev/null
     - npm install -g husky
     - npm ci
     - chmod +x ./tests/e2e/run_e2e_tests.sh
     - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url="https://${AZURE_DNS_NAME}${AZURE_SDMS_PREFIX}" --seistore-svc-api-key="NA" --user-idtoken="$svctoken" --tenant="${E2E_TENANT}" --admin-email="${E2E_ADMIN_EMAIL}" --datapartition="${E2E_DATA_PARTITION}" --legaltag01="${E2E_LEGALTAG01}" --legaltag02="${E2E_LEGALTAG02}" --VCS-Provider="${ISGITLAB}"  --subproject="${E2E_SUBPROJECT}" --domain_name="${E2E_DOMAINANAME}" --hostname="${E2E_HOSTNAME}" --entitlements_user="${E2E_ENTITLEMENTS_USER}" --testBulkDelete="${TEST_BULK_DELETE}" --testComputeSize="${TEST_COMPUTE_SIZE}"
-  only:
-    changes:
-      - devops/**/*
-      - app/sdms/devops/**/*
-      - app/sdms/docker/**/*
-      - app/sdms/docs/**/*
-      - app/sdms/tests/**/*
-      - app/sdms/src/auth/**/*
-      - app/sdms/src/dataecosystem/**/*
-      - app/sdms/src/server/**/*
-      - app/sdms/src/services/**/*
-      - app/sdms/src/shared/**/*
-      - app/sdms/src/cloud/*.ts
-      - app/sdms/src/cloud/shared/**/*
-      - app/sdms/src/cloud/providers/*.ts
-      - app/sdms/src/cloud/providers/azure/**/*
-      - app/sdms/**/*.json
-      - app/sdms/**/*.yml
-      - app/sdms/**/*.md
-    refs:
-      - branches
-      - merge_requests
-      - tags
+  only: null
+  except: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
 
-sdms_azure_publish:
+sdms_azure-publish:
   needs:
     - sdms_azure_deploy
     - sdms_azure_containerize
-    - azure_containerize_helm
-  extends: .azure_publish
-  environment: $DEPLOY_ENVIRONMENT_AZURE
+    - sdms_azure_containerize_helm
+  extends:
+    - azure-publish
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
     SHA_SIDECAR_IMAGE: ${SDMS_SIDECAR_NAME}:${CI_COMMIT_SHA}
@@ -449,5 +403,8 @@ sdms_azure_publish:
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_DELETION_SERVICE_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_DELETION_SERVICE_NAME}:${AZ_VER}
   #  - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_COMPUTESIZE_SERVICE_IMAGE ${DST_REGISTRY}.azurecr.io/${SDMS_COMPUTESIZE_SERVICE_NAME}:${AZ_VER}
    - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
-
-
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success

@@ -3,80 +3,65 @@ variables:
   SEISMIC_HOST: $IBM_SEISMIC_HOST
 
 sdms_ibm-deploy:
-  extends: .ibm-deploy
+  extends:
+    - ibm-deploy
   needs: ['sdms_compile-and-unit-test']
-  allow_failure: true
-  script:
+  before_script:
     - cd app/$SDMS_SERVICE
-    - echo "In IBM deploy"
+    - !reference [.ibm, before_script]
+  script:
+    - cd "$IBM_DEPLOY_DIR"
     - oc project $IBM_OPENSHIFT_PROJECT
     - oc get bc/$SDMS_PROJECT_NAME 2> /dev/null || oc new-build --name $SDMS_PROJECT_NAME --binary --strategy source --image-stream openshift/ubi8-nodejs-14
     - oc start-build $SDMS_PROJECT_NAME --commit=$CI_COMMIT_SHA  --follow
     - oc get service $SDMS_PROJECT_NAME 2> /dev/null || oc new-app $SDMS_PROJECT_NAME
-  only:
-    changes:
-      - devops/**/*
-      - app/sdms/devops/**/*
-      - app/sdms/docker/**/*
-      - app/sdms/docs/**/*
-      - app/sdms/tests/**/*
-      - app/sdms/src/auth/**/*
-      - app/sdms/src/dataecosystem/**/*
-      - app/sdms/src/server/**/*
-      - app/sdms/src/services/**/*
-      - app/sdms/src/shared/**/*
-      - app/sdms/src/cloud/*.ts
-      - app/sdms/src/cloud/shared/**/*
-      - app/sdms/src/cloud/providers/*.ts
-      - app/sdms/src/cloud/providers/ibm/**/*
-      - app/sdms/**/*.json
-      - app/sdms/**/*.yml
-      - app/sdms/**/*.md
-    refs:
-      - branches
-      - merge_requests
-      - tags
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_TAG && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
 
 sdms_ibm-deploy-devpri:
-  extends: .ibm-deploy-devpri
+  extends:
+    - ibm-deploy-devpri
   needs: ['sdms_compile-and-unit-test']
   allow_failure: true
-  script:
+  before_script:
     - cd app/$SDMS_SERVICE
-    - echo "In IBM deploy"
+    - !reference [.ibm, before_script]
+  script:
+    - cd "$IBM_DEPLOY_DIR"
     - oc login --token=$IBM_PRIMARY_DEV_TOKEN --server=$IBM_PRIMARY_DEV_URL
     - oc project $IBM_OPENSHIFT_DEVPRI_PROJECT
     - oc get bc/$SDMS_PROJECT_NAME 2> /dev/null || oc new-build --name $SDMS_PROJECT_NAME --binary --strategy source --image-stream openshift/ubi8-nodejs-14
     - oc start-build $SDMS_PROJECT_NAME --from-dir=. --follow
     - oc get service $SDMS_PROJECT_NAME 2> /dev/null || oc new-app $SDMS_PROJECT_NAME
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-      changes:
-        - devops/**/*
-        - app/sdms/devops/**/*
-        - app/sdms/docker/**/*
-        - app/sdms/docs/**/*
-        - app/sdms/tests/**/*
-        - app/sdms/src/auth/**/*
-        - app/sdms/src/dataecosystem/**/*
-        - app/sdms/src/server/**/*
-        - app/sdms/src/services/**/*
-        - app/sdms/src/shared/**/*
-        - app/sdms/src/cloud/*.ts
-        - app/sdms/src/cloud/shared/**/*
-        - app/sdms/src/cloud/providers/*.ts
-        - app/sdms/src/cloud/providers/ibm/**/*
-        - app/sdms/**/*.json
-        - app/sdms/**/*.yml
-        - app/sdms/**/*.md
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $IBM == '1' && $IBM_OPENSHIFT_DEV_URL && $IBM_OPENSHIFT_DEV_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_TAG && $IBM == '1' && $IBM_OPENSHIFT_DEV_URL && $IBM_OPENSHIFT_DEV_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $IBM == '1' && $IBM_OPENSHIFT_DEV_URL && $IBM_OPENSHIFT_DEV_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $IBM == '1' && $IBM_OPENSHIFT_DEV_URL && $IBM_OPENSHIFT_DEV_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $IBM == '1' && $IBM_OPENSHIFT_DEV_URL && $IBM_OPENSHIFT_DEV_TOKEN
+      when: never
 
 sdms_ibm-test-py:
-  image: node:18
-  stage: integration
-  allow_failure: true
   extends:
-    - .ibm-test-py
-  needs: ["sdms_ibm-deploy"]
+    - ibm-test-py
+  image: node
+  needs: ['sdms_ibm-deploy']
   script:
     - cd app/$SDMS_SERVICE
     - apt-get update
@@ -91,85 +76,46 @@ sdms_ibm-test-py:
     - npm install
     - chmod +x ./tests/e2e/run_e2e_tests.sh
     - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url="https://${SEISMIC_HOST}/api/v3" --seistore-svc-api-key="NA" --user-idtoken="$svctoken" --tenant="${IBM_SEISMIC_E2E_TENANT}" --admin-email="${IBM_SEISMIC_E2E_ADMIN_EMAIL}" --datapartition="${IBM_SEISMIC_E2E_DATA_PARTITION}" --legaltag01="${IBM_SEISMIC_E2E_LEGALTAG01}" --legaltag02="${IBM_SEISMIC_E2E_LEGALTAG02}" --newuser="${IBM_SEISMIC_E2E_NEWUSER}" --VCS-Provider="gitlab"  --subproject="${IBM_SEISMIC_E2E_SUBPROJECT}"
-  only:
-    changes:
-      - devops/**/*
-      - app/sdms/devops/**/*
-      - app/sdms/docker/**/*
-      - app/sdms/docs/**/*
-      - app/sdms/tests/**/*
-      - app/sdms/src/auth/**/*
-      - app/sdms/src/dataecosystem/**/*
-      - app/sdms/src/server/**/*
-      - app/sdms/src/services/**/*
-      - app/sdms/src/shared/**/*
-      - app/sdms/src/cloud/*.ts
-      - app/sdms/src/cloud/shared/**/*
-      - app/sdms/src/cloud/providers/*.ts
-      - app/sdms/src/cloud/providers/ibm/**/*
-      - app/sdms/**/*.json
-      - app/sdms/**/*.yml
-      - app/sdms/**/*.md
-    refs:
-      - branches
-      - merge_requests
-      - tags
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_TAG && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $IBM == '1' && $IBM_OPENSHIFT_URL && $IBM_OPENSHIFT_TOKEN
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
 
 sdms_ibm-preship-promote:
-  extends: .ibm-preship-promote
+  extends:
+    - ibm-preship-promote
   needs: ['sdms_ibm-test-py']
-  script:
+  before_script:
     - cd app/$SDMS_SERVICE
+    - !reference [.ibm, before_script]
+  script:
     - oc login --token=$IBM_PRESHIP_OPENSHIFT_TOKEN --server=$IBM_PRESHIP_OPENSHIFT_URL
     - oc project $IBM_OPENSHIFT_PRESHIP_PROJECT
     - oc start-build og-$SDMS_PROJECT_NAME-ibm
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-      changes:
-        - devops/**/*
-        - app/sdms/devops/**/*
-        - app/sdms/docker/**/*
-        - app/sdms/docs/**/*
-        - app/sdms/tests/**/*
-        - app/sdms/src/auth/**/*
-        - app/sdms/src/dataecosystem/**/*
-        - app/sdms/src/server/**/*
-        - app/sdms/src/services/**/*
-        - app/sdms/src/shared/**/*
-        - app/sdms/src/cloud/*.ts
-        - app/sdms/src/cloud/shared/**/*
-        - app/sdms/src/cloud/providers/*.ts
-        - app/sdms/src/cloud/providers/ibm/**/*
-        - app/sdms/**/*.json
-        - app/sdms/**/*.yml
-        - app/sdms/**/*.md
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
 
 sdms_ibm-preship-promote-release:
-  extends: .ibm-preship-promote-release
-  stage: publish
+  extends: ibm-preship-promote-release
   needs: ['sdms_ibm-test-py']
-  script:
+  before_script:
     - cd app/$SDMS_SERVICE
+    - !reference [.ibm, before_script]
+  script:
     - oc login --token=$IBM_PRESHIP_OPENSHIFT_TOKEN --server=$IBM_PRESHIP_OPENSHIFT_URL
     - oc project $IBM_OPENSHIFT_PRESHIP_PROJECT
     - oc start-build og-$SDMS_PROJECT_NAME-monthly-ibm --commit=$CI_COMMIT_SHA --follow
   rules:
-    - if: '$CI_COMMIT_BRANCH == $IBM_PRESHIP_RELEASE_BRANCH'
-      changes:
-        - devops/**/*
-        - app/sdms/devops/**/*
-        - app/sdms/docker/**/*
-        - app/sdms/docs/**/*
-        - app/sdms/tests/**/*
-        - app/sdms/src/auth/**/*
-        - app/sdms/src/dataecosystem/**/*
-        - app/sdms/src/server/**/*
-        - app/sdms/src/services/**/*
-        - app/sdms/src/shared/**/*
-        - app/sdms/src/cloud/*.ts
-        - app/sdms/src/cloud/shared/**/*
-        - app/sdms/src/cloud/providers/*.ts
-        - app/sdms/src/cloud/providers/ibm/**/*
-        - app/sdms/**/*.json
-        - app/sdms/**/*.yml
-        - app/sdms/**/*.md
+    - if: $CI_COMMIT_BRANCH == $IBM_PRESHIP_RELEASE_BRANCH
+      when: on_success

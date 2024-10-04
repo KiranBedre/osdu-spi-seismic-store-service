@@ -1,0 +1,21 @@
+gc-deploy:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+gc-test:
+  extends:
+    - .gc-variables
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+gc-osdutest:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+gc-test-python:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

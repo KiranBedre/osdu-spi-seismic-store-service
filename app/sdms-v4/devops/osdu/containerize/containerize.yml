@@ -1,5 +1,5 @@
 #  ***************************************************************************
-#  Copyright 2017 - 2023, Schlumberger
+#  Copyright 2017 - 2024, Schlumberger
 #
 #  Licensed under the Apache License, Version 2.0(the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,28 +14,31 @@
 #  limitations under the License.
 #  ***************************************************************************
 
-sdms-v4_cspell:
-  image: node
-  stage: scan
-  needs: ['sdms-v4_containerize']
+sdms-v4_containerize:
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  tags: ["osdu-medium"]
+  stage: containerize
+  variables:
+    SHA_IMAGE: ${SDMS_V4_PROJECT_NAME}:${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHA}
+    LATEST_IMAGE: ${SDMS_V4_PROJECT_NAME}:latest
   before_script:
     - cd app/$SDMS_V4_SERVICE
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - npm install -g typescript
-    - npm install -g cspell
-    - cspell "**" --quiet --gitignore --show-suggestions --config=../../cspell.json --reporter default  > sdms-v4_cspell_report.txt
-  artifacts:
-    paths:
-      - app/$SDMS_V4_SERVICE/cspell_report.txt
-    when: always
-    expire_in: 2 days
+    - docker build -t $SDMS_V4_UTEST_RUNTIME_IMAGE --file docker/runtime.Dockerfile  .
+    - docker tag $SDMS_V4_UTEST_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE
+    - docker push $CI_REGISTRY_IMAGE/$SHA_IMAGE
+    - docker tag $SDMS_V4_UTEST_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$LATEST_IMAGE
+    - docker push $CI_REGISTRY_IMAGE/$LATEST_IMAGE
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: never
+      when: always
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: $CI_COMMIT_BRANCH =~ '/^release/'
-      when: never
+      when: always
     - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
       when: always
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH

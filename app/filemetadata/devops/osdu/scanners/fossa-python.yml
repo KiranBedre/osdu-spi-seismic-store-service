@@ -1,0 +1,88 @@
+.filemetadata_prepare_fossa:
+  before_script:
+    - cp -Rf app/${FILEMETADATA_SERVICE}/*.* .
+    - cp -Rf app/${FILEMETADATA_SERVICE}/* .
+    - rm -Rf app/sdms
+    - rm -Rf app/sdms-v4
+    - rm -Rf app/${FILEMETADATA_SERVICE}/*.*
+    - rm -Rf app/${FILEMETADATA_SERVICE}/*
+
+filemetadata_fossa-analyze:
+  extends:
+    - .filemetadata_prepare_fossa
+    - fossa-analyze
+  variables:
+    FOSSA_OUTPUT_DIR: "app/${FILEMETADATA_SERVICE}/fossa-output"
+    ALLOW_FOSSA_CACHE: 'false'
+  allow_failure: true
+  needs: 
+    - 'filemetadata_containerize'
+    - 'filemetadata_prepare_fossa'
+  dependencies:
+    - 'filemetadata_prepare_fossa'
+  tags: ['osdu-medium']
+  artifacts:
+    paths:
+      - app/${FILEMETADATA_SERVICE}/fossa-output
+    when: always
+    expire_in: 2 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_TAG && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ 'trusted-.+' && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_REF_PROTECTED && $FOSSA_API_KEY
+      changes:
+        - app/filemetadata/**/*
+      when: on_success
+    - if: $FOSSA_API_KEY
+      changes:
+        - app/filemetadata/**/*
+      when: on_success
+
+filemetadata_fossa-check-notice:
+  extends:
+    - .filemetadata_prepare_fossa
+    - fossa-check-notice
+    - .fossa-check-notice
+  variables:
+    NOTICE_PATH_OUTPUT: app/${FILEMETADATA_SERVICE}/fossa-output
+  allow_failure: true
+  needs: ['filemetadata_fossa-analyze']
+  tags: ['osdu-medium']
+  script:
+    - !reference [.fossa-check-notice, script]
+  artifacts:
+    when: on_failure
+    paths:
+      - app/${FILEMETADATA_SERVICE}/fossa-output/cached-NOTICE
+      - app/${FILEMETADATA_SERVICE}/fossa-output/generated-clean-NOTICE
+    expire_in: 2 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_TAG && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ 'trusted-.+' && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_REF_PROTECTED && $FOSSA_API_KEY
+      changes:
+        - app/filemetadata/**/*
+      when: on_success
+    - if: $FOSSA_API_KEY
+      changes:
+        - app/filemetadata/**/*
+      when: on_success
+
+fossa-analyze:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+fossa-check-notice:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
