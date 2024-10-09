@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import { Error, Utils, cacheShared, getInMemoryCacheInstance } from '../../../shared';
+import { Error } from '../../../shared';
 import { AbstractCredentials, CredentialsFactory, IAccessTokenModel } from '../../credentials';
 import {
     ContainerSASPermissions,
@@ -23,12 +23,9 @@ import {
     SASProtocol,
     UserDelegationKey
 } from '@azure/storage-blob';
-import { DefaultAzureCredential, TokenCredential, DefaultAzureCredentialOptions } from '@azure/identity';
+import { DefaultAzureCredential } from '@azure/identity';
 import { AzureDataEcosystemServices } from './dataecosystem';
-import {ExponentialRetryPolicyOptions} from '@azure/core-rest-pipeline'
-import { AccessToken, GetTokenOptions } from '@azure/core-auth';
 
-const KExpiresMargin = 300; // 5 minutes
 const UserDelegationKeyValidityInMinutes = 3599; // expires at the same time as the sas token
 const ExpirationLeadInMinutes = 15; // expire 15 minutes before actual date
 const SasExpirationInMinutes = 3599; // shortly under 2.5 days
@@ -41,24 +38,11 @@ interface ICachedUserDelegationKey {
 @CredentialsFactory.register('azure')
 export class AzureCredentials extends AbstractCredentials {
     private delegationKeyMap: Map<string, ICachedUserDelegationKey>;
-    private defaultAzureCredential: TokenCredential;
+    public static defaultAzureCredential = new DefaultAzureCredential();
 
     public constructor() {
         super();
         this.delegationKeyMap = new Map<string, ICachedUserDelegationKey>();
-        this.defaultAzureCredential = AzureCredentials.getCredential();
-    }
-
-    public static getCredential(): TokenCredential {
-
-        // To leverage managed identity when running locally,
-        // the local environment expects the following three environment variables:
-        // - AZURE_TENANT_ID: The tenant ID in Azure Active Directory
-        // - AZURE_CLIENT_ID: The application (client) ID registered in the AAD tenant
-        // - AZURE_CLIENT_SECRET: The client secret for the registered application
-        // https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
-
-        return new RetriableAzureCredential();
     }
 
     // the sas token does not contain the virtual folder name for performance reasons.
@@ -85,7 +69,7 @@ export class AzureCredentials extends AbstractCredentials {
 
         const blobServiceClient = new BlobServiceClient(
             `https://${accountName}.blob.core.windows.net`,
-            this.defaultAzureCredential
+            AzureCredentials.defaultAzureCredential
         );
 
         const userDelegationKey = await this.getDelegationKey(blobServiceClient);
@@ -156,84 +140,4 @@ export class AzureCredentials extends AbstractCredentials {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
 
-}
-
-class RetriableAzureCredential extends DefaultAzureCredential {
-
-    private static DefaultRetryCount = 10;
-    private static DefaultRetryInterval = 1000;
-    private static DefaultMaxRetryInterval = 64 * 1000;
-    private static DefaultRequestTimeout = 5 * 1000;
-
-    private options:ExponentialRetryPolicyOptions  = {
-        maxRetries: RetriableAzureCredential.DefaultRetryCount,
-        retryDelayInMs: RetriableAzureCredential.DefaultRetryInterval, // Not supported yet
-        maxRetryDelayInMs: RetriableAzureCredential.DefaultMaxRetryInterval // Not supported yet
-    };
-
-    private defaultRequestOptions = {
-        requestOptions: {
-            timeout: RetriableAzureCredential.DefaultRequestTimeout
-        }
-    };
-
-    public constructor(tokenCredentialOptions?: DefaultAzureCredentialOptions) {
-        super(tokenCredentialOptions);
-        const retryOptions = tokenCredentialOptions?.retryOptions;
-        this.options = {...this.options, ...retryOptions}
-    }
-
-    public async getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken | null> {
-        if (cacheShared.isInitialized()) {
-            return await this.getCachedToken(scopes, options);
-        } else {
-            return await this.createNewToken(scopes, options);
-        }
-    }
-
-    public async getCachedToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken> {
-        let expireIn = 0;
-        const cacheKey = 'mi-token-' + (typeof scopes === 'string' ? scopes : scopes.join('-'));
-        const inMemoryCache = getInMemoryCacheInstance();
-        let credentialToken = inMemoryCache.get<AccessToken>(cacheKey);
-        let cacheTTL = inMemoryCache.getTtl(cacheKey);
-        if (cacheTTL <= 0 || !cacheTTL) {
-            credentialToken = await cacheShared.get(cacheKey) as AccessToken;
-            cacheTTL = await cacheShared.getTTL(cacheKey);
-            if (cacheTTL <= 0 || !cacheTTL) {
-                credentialToken = await this.createNewToken(scopes, options) as AccessToken;
-                expireIn = Math.floor(Utils.getExpTimeFromPayload(credentialToken.token) - Date.now()/1000);
-                cacheTTL = expireIn - KExpiresMargin;
-                if(cacheTTL <= 0 || !cacheTTL) {
-                    throw Error.make(Error.Status.UNKNOWN,
-                        'An error occurred while generating the auth credential. ' +
-                        'The credential expiration time is ' + expireIn + ' seconds. ' +
-                        'The minimum acceptable expiration time by the service is ' +
-                        KExpiresMargin + ' seconds.');
-                }
-                await cacheShared.set(cacheKey, credentialToken, cacheTTL);
-            }
-            cacheTTL = cacheTTL + Math.floor(Math.random() * (120 - 30 + 1)) + 30;
-            inMemoryCache.set<AccessToken>(cacheKey, credentialToken, cacheTTL);
-        }
-        credentialToken.expiresOnTimestamp = expireIn || Math.floor(
-            Utils.getExpTimeFromPayload(credentialToken.token) - Date.now()/1000);
-        return credentialToken;
-    }
-    public async createNewToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken> {
-        const requestOptions = { ...options, ...this.defaultRequestOptions };
-        return await this.retry(() => super.getToken(scopes, requestOptions));
-    }
-
-    private async retry <T> (fn: () => Promise<T>, retries: number = this.options.maxRetries): Promise<T> {
-        if(retries <= 0) {
-            return Promise.reject('Failed after several attempts');
-        }
-
-        try {
-            return await fn();
-        } catch (err) {
-            return this.retry(fn, retries - 1);
-        }
-    }
 }
