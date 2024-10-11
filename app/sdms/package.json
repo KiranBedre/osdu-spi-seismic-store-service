@@ -20,7 +20,7 @@
     "test-lcov-coverage-aws": "env UTEST=true nyc --reporter=lcovonly --check-coverage --lines 0 --functions 0 --branches 0 --statements 0 mocha -r ts-node/register tests/utest/test.ts",
     "test-lcov-coverage": "env UTEST=true nyc mocha -r ts-node/register -r source-map-support/register --recursive -R mocha-bamboo-reporter tests/utest/test.ts",
     "test-e2e-parallel": "node ./tests/e2e/parallel/run_e2e_tests_parallel.js",
-    "copy-static-files": "copyfiles --error --up 1 ./docs/api/openapi.osdu.yaml ./dist/docs",
+    "copy-static-files": "copyfiles --error --up 1 ./docs/api/openapi.yaml ./dist/docs",
     "copy-schemas": "copyfiles --up 1 ./docs/schemas/**/*.json ./dist/docs",
     "copy-rego-policies": "copyfiles --up 1 ./docs/policies/*.rego ./dist/docs",
     "postbuild": "npm run copy-static-files && npm run copy-schemas && npm run copy-rego-policies"

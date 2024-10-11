@@ -35,7 +35,7 @@ variables:
     - rm -Rf tests/utest/cloud/google
     - rm -Rf tests/utest/dao
     - rm -Rf tests/utest/services
-    - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
+    - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.yaml
     - jq "del(.prisma)" package.json > cleaned_package.json
     - mv cleaned_package.json package.json
     - export directoryToScan=$PWD

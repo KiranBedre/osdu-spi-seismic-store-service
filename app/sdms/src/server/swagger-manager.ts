@@ -39,7 +39,7 @@ export class SwaggerManager {
         replaceInFile.sync(this.optionsDivClear);
         replaceInFile.sync(this.optionsDivHide);
 
-        const swaggerFilePath = path.join(__dirname, '..', 'docs', 'api', 'openapi.osdu.yaml');
+        const swaggerFilePath = path.join(__dirname, '..', 'docs', 'api', 'openapi.yaml');
         this.swaggerDocument = await Utils.resolveJsonRefs(swaggerFilePath);
 
     }
