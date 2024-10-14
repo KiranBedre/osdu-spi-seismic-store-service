@@ -18,7 +18,6 @@ import cors from 'cors';
 import express from 'express';
 import fs from 'fs';
 import https from 'https';
-import jwtProxy, { JwtProxyOptions } from 'jwtproxy';
 import swaggerUi from 'swagger-ui-express';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthProviderFactory } from '../auth';
@@ -194,16 +193,6 @@ export class Server {
                 Response.writeError(res, error);
             }
         });
-
-        // adding middleware to intercept and validate jwt
-        const jwtValidateOptions: JwtProxyOptions = {
-            disable: !Config.JWT_ENABLE_FEATURE,
-            excluded: Config.JWT_EXCLUDE_PATHS ? Config.JWT_EXCLUDE_PATHS.split(';') : [],
-            jwksUrl: Config.JWKS_URL,
-            algorithms: ['RS256'],
-            audience: Config.JWT_AUDIENCE
-        };
-        this.app.use(jwtProxy(jwtValidateOptions));
     }
 
     public async registerRouter() {

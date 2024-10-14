@@ -47,10 +47,6 @@ export interface ConfigModel {
     DES_ENTITLEMENT_DELETE_ENDPOINT_PATH?: string;
     DES_SERVICE_APPKEY: string;
     DES_GROUP_CHAR_LIMIT: number;
-    JWKS_URL: string;
-    JWT_EXCLUDE_PATHS: string;
-    JWT_AUDIENCE: string;
-    JWT_ENABLE_FEATURE: boolean;
     API_BASE_PATH: string;
     TENANT_JOURNAL_ON_DATA_PARTITION: boolean;
     SSL_ENABLED?: boolean;
@@ -156,12 +152,6 @@ export abstract class Config implements IConfig {
     public static DES_SERVICE_APPKEY: string;
     public static DES_GROUP_CHAR_LIMIT: number;
     public static DE_FORWARD_APPKEY = Symbol('seismic-dms-fw-caller-appkey');
-
-    // JWT Validation
-    public static JWKS_URL: string;
-    public static JWT_EXCLUDE_PATHS: string;
-    public static JWT_AUDIENCE: string;
-    public static JWT_ENABLE_FEATURE: boolean;
 
     // To set in the provider specific configurations based on implementation
     public static TENANT_JOURNAL_ON_DATA_PARTITION = false;
@@ -359,11 +349,6 @@ export abstract class Config implements IConfig {
         Config.DES_SERVICE_APPKEY = model.DES_SERVICE_APPKEY;
         Config.DES_GROUP_CHAR_LIMIT = model.DES_GROUP_CHAR_LIMIT;
 
-        Config.JWKS_URL = model.JWKS_URL;
-        Config.JWT_EXCLUDE_PATHS = model.JWT_EXCLUDE_PATHS;
-        Config.JWT_AUDIENCE = model.JWT_AUDIENCE;
-        Config.JWT_ENABLE_FEATURE = model.JWT_ENABLE_FEATURE;
-
         Config.API_BASE_PATH = model.API_BASE_PATH;
 
         Config.TENANT_JOURNAL_ON_DATA_PARTITION = model.TENANT_JOURNAL_ON_DATA_PARTITION || false;
@@ -406,13 +391,6 @@ export abstract class Config implements IConfig {
 
         if (Config.FEATURE_FLAG_POLICY_SVC_INTERACTION) {
             Config.checkRequiredConfig(Config.DES_POLICY_SERVICE_HOST, 'DES_POLICY_SERVICE_HOST');
-        }
-
-        // JWT validation
-        if (Config.JWT_ENABLE_FEATURE) {
-            Config.checkRequiredConfig(Config.JWKS_URL, 'JWKS_URL');
-            Config.checkRequiredConfig(Config.JWT_EXCLUDE_PATHS, 'JWT_EXCLUDE_PATHS');
-            Config.checkRequiredConfig(Config.JWT_AUDIENCE, 'JWT_AUDIENCE');
         }
 
         // Subject identifiers for

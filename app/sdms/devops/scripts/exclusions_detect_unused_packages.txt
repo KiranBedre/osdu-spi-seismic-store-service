@@ -21,8 +21,6 @@ DEV DEPENDENCIES
 @types/sinon
 @types/swagger-ui-express
 @types/uuid
-@types/xss-filters
-istanbul
 mocha-bamboo-reporter
 mocha-junit-reporter
 newman

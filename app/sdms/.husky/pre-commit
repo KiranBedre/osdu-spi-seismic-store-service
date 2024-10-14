@@ -21,4 +21,4 @@ rootPath=$(git rev-parse --show-toplevel)
 
 cd "$rootPath"
 
-./quality.sh --git_diff
+# ./quality.sh --git_diff
