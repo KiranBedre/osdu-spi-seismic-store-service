@@ -218,7 +218,6 @@ export class Server {
             const certificate = fs.readFileSync(Config.SSL_CERT_PATH, 'utf8');
             const credentials = { key: privateKey, cert: certificate };
             this.httpsServer = https.createServer(credentials, this.app).listen(this.port, () => {
-                // tslint:disable-next-line
                 console.log(`- Server is listening on port ${this.port}...`);
             });
             this.httpsServer.setTimeout(610000);
@@ -226,7 +225,6 @@ export class Server {
             this.httpsServer.headersTimeout = 611 * 1000;
         } else {
             this.httpServer = this.app.listen(this.port, () => {
-                // tslint:disable-next-line
                 console.log(`- Server is listening on port ${this.port}...`);
             });
             this.httpServer.setTimeout(610000);

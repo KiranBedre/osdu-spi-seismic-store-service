@@ -168,8 +168,8 @@ export class Utils {
     }
 
     public static isEmail(input: string): boolean {
+        // eslint-disable-next-line @stylistic/max-len
         const regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-        /* tslint:enable: max-line-length */
         if (!regexp.test(input)) {
             return false;
         }
@@ -213,6 +213,7 @@ export class Utils {
         const sanitizedInput = userInput.replace(/^\s+|\s+$/g, '');
 
         if (!/^[a-zA-Z0-9._\s]+$/.test(sanitizedInput)) {
+            // eslint-disable-next-line @stylistic/max-len
             throw new Error('`' +userInput + '` contains invalid characters. Only letters, numbers, space, dot and _ are allowed.');
         }
 

@@ -17,13 +17,15 @@
 import path from 'path';
 import { Utils } from '../../../shared';
 import { SchemaTransformModel } from '../model';
-import { AbstractSchemaManager, SchemaManagerFactory, SchemaTransformFuncManager, SchemaValidationResult } from './schema-manager';
+import { AbstractSchemaManager, SchemaManagerFactory, SchemaTransformFuncManager,
+   SchemaValidationResult } from './schema-manager';
 
 @SchemaManagerFactory.register('openzgy_v1')
 export class OpenZgyV1SchemaManager extends AbstractSchemaManager {
 
    public schemaID: string = 'openzgy_v1';
-   public schemaFilePath: string = path.resolve(__dirname, '../../../docs/schemas/openzgy/FileCollection.Slb.OpenZGY.1.0.0.json');
+   public schemaFilePath: string =
+      path.resolve(__dirname, '../../../docs/schemas/openzgy/FileCollection.Slb.OpenZGY.1.0.0.json');
 
    public async addSchemas() {
       const resolvedSchema = await Utils.resolveJsonRefs(this.schemaFilePath);

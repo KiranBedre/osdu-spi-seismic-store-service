@@ -2,12 +2,17 @@ sdms_lint:
   image: node
   stage: scan
   needs: ['sdms_compile-and-unit-test']
-  allow_failure: true
+  tags: ['osdu-medium']
   before_script:
     - cd app/$SDMS_SERVICE
   script:
-    - npm install -g typescript
-    - npm install -g tslint
+    - >
+      npm install -g eslint
+      npm install -g @eslint/js
+      npm install -g @types/eslint__js
+      npm install -g typescript
+      npm install -g typescript-eslint
+    - npm install
     - npm run lint
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

@@ -23,7 +23,7 @@ sdms-v4_cspell:
   script:
     - npm install -g typescript
     - npm install -g cspell
-    - cspell "**" --quiet --gitignore --show-suggestions --config=../../cspell.json --reporter default  > sdms-v4_cspell_report.txt
+    - cspell "**" --quiet --gitignore --show-suggestions --config=../../cspell.json --reporter default  > cspell_report.txt
   artifacts:
     paths:
       - app/$SDMS_V4_SERVICE/cspell_report.txt

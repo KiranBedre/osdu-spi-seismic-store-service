@@ -146,6 +146,7 @@ export class UserHandler {
 
 
         if (subproject.access_policy !== Config.DATASET_ACCESS_POLICY) {
+            // eslint-disable-next-line @stylistic/max-len
             throw Error.make(Error.Status.BAD_REQUEST, 'User cannot be added to the dataset ACLs as the subproject access policy is not set to dataset ');
         }
 

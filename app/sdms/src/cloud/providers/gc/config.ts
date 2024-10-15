@@ -104,8 +104,10 @@ export class ConfigGoogle extends Config {
             }
 
             ConfigGoogle.ENTITLEMENT_BASE_URL_PATH = process.env.ENTITLEMENT_BASE_URL_PATH || '/entitlements/v2';
-            ConfigGoogle.DATA_PARTITION_REST_HEADER_KEY = process.env.DATA_PARTITION_REST_HEADER_KEY || 'data-partition-id'; // to-fix
-            ConfigGoogle.PUBSUBTOPIC = process.env.PUBSUBTOPIC !== undefined ? process.env.PUBSUBTOPIC : 'subproject-operations';
+            ConfigGoogle.DATA_PARTITION_REST_HEADER_KEY =
+                process.env.DATA_PARTITION_REST_HEADER_KEY || 'data-partition-id'; // to-fix
+            ConfigGoogle.PUBSUBTOPIC =
+                process.env.PUBSUBTOPIC !== undefined ? process.env.PUBSUBTOPIC : 'subproject-operations';
 
             // read the optional auth provider id and secret
             ConfigGoogle.SERVICE_AUTH_PROVIDER = process.env.SERVICE_AUTH_PROVIDER;
@@ -164,7 +166,8 @@ export class ConfigGoogle extends Config {
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?
                     process.env.CALLER_FORWARD_HEADERS + ',' + ConfigGoogle.CORRELATION_ID :
                     ConfigGoogle.CORRELATION_ID,
-                USER_ID_CLAIM_FOR_SDMS: process.env.USER_ID_CLAIM_FOR_SDMS ? process.env.USER_ID_CLAIM_FOR_SDMS : 'subid',
+                USER_ID_CLAIM_FOR_SDMS: process.env.USER_ID_CLAIM_FOR_SDMS ?
+                    process.env.USER_ID_CLAIM_FOR_SDMS : 'subid',
                 USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC: process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC ?
                     process.env.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC : 'email',
                 USER_ASSOCIATION_SVC_PROVIDER: process.env.USER_ASSOCIATION_SVC_PROVIDER ?
@@ -175,6 +178,7 @@ export class ConfigGoogle extends Config {
 
         }
         catch (error) {
+            // eslint-disable-next-line @stylistic/max-len
             LoggerFactory.build(Config.CLOUDPROVIDER).error('Unable to initialize configuration for Google Cloud provider');
             throw error;
         }

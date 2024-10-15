@@ -91,6 +91,7 @@ export class AzureCredentials extends AbstractCredentials {
         if (!objectPrefix) {
             return `https://${accountName}.blob.core.windows.net/${containerName}?${containerSAS.toString()}`;
         }
+        // eslint-disable-next-line @stylistic/max-len
         return `https://${accountName}.blob.core.windows.net/${containerName}/${objectPrefix}?${containerSAS.toString()}`;
     }
 

@@ -89,10 +89,8 @@ export class GCS extends AbstractStorage {
     // delete multiple objects
     public async deleteObjects(bucketName: string, prefix: string): Promise<void> {
         prefix = prefix ? (prefix + '/').replace('//', '/') : prefix;
-        // tslint:disable-next-line: no-floating-promises
         this.getStorageClient().bucket(bucketName).deleteFiles(
             { prefix, force: true }).catch(
-                // tslint:disable-next-line: no-console
                 (error) => { LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error)); });
     }
 

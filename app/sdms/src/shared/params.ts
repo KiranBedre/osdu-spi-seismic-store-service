@@ -76,9 +76,8 @@ export class Params {
 
         this.checkParam(email, fieldName, required, 'string');
 
-        /* tslint:disable: max-line-length */
+        // eslint-disable-next-line @stylistic/max-len
         const regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-        /* tslint:enable: max-line-length */
         if (!regexp.test(email)) {
             throw (Error.make(
                 Error.Status.BAD_REQUEST,

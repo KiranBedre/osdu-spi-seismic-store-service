@@ -61,8 +61,10 @@ export class AWSConfig extends Config {
             process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== 'false' : true;
         const featureFlagImptoken = process.env.FEATURE_FLAG_IMPTOKEN !== undefined ?
             process.env.FEATURE_FLAG_IMPTOKEN !== 'false' : true;
-        const featureFlagTrace = process.env.FEATURE_FLAG_TRACE !== undefined ? process.env.FEATURE_FLAG_TRACE !== 'false' : true;
-        const featureFlagLogging = process.env.FEATURE_FLAG_LOGGING !== undefined ? process.env.FEATURE_FLAG_LOGGING !== 'false' : true;
+        const featureFlagTrace = process.env.FEATURE_FLAG_TRACE !== undefined ?
+            process.env.FEATURE_FLAG_TRACE !== 'false' : true;
+        const featureFlagLogging = process.env.FEATURE_FLAG_LOGGING !== undefined ?
+            process.env.FEATURE_FLAG_LOGGING !== 'false' : true;
         const featureFlagStackdriverExporter = process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== undefined ?
             process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== 'false' : true;
         const featureFlagCcmIntegration = process.env.FEATURE_FLAG_CCM_INTERACTION ?

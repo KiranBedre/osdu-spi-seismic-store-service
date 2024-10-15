@@ -9,38 +9,17 @@ Apache-2.0
 The following software have components provided under the terms of this license:
 
 - @aws-sdk/client-s3 (from https://www.npmjs.com/package/@aws-sdk/client-s3)
+- @aws-sdk/client-secrets-manager (from https://www.npmjs.com/package/@aws-sdk/client-secrets-manager)
+- @aws-sdk/client-ssm (from https://www.npmjs.com/package/@aws-sdk/client-ssm)
 - @aws-sdk/client-sts (from https://www.npmjs.com/package/@aws-sdk/client-sts)
-- @google-cloud/datastore (from https://www.npmjs.com/package/@google-cloud/datastore)
-- @google-cloud/logging-winston (from https://www.npmjs.com/package/@google-cloud/logging-winston)
-- @google-cloud/pubsub (from https://www.npmjs.com/package/@google-cloud/pubsub)
-- @google-cloud/secret-manager (from https://www.npmjs.com/package/@google-cloud/secret-manager)
-- @google-cloud/storage (from https://www.npmjs.com/package/@google-cloud/storage)
-- @google-cloud/trace-agent (from https://www.npmjs.com/package/@google-cloud/trace-agent)
-- @ibm-cloud/cloudant (from https://www.npmjs.com/package/@ibm-cloud/cloudant)
-- @prisma/client (from https://www.npmjs.com/package/@prisma/client)
-- aws-sdk (from https://www.npmjs.com/package/aws-sdk)
-- boto3 (from https://github.com/boto/boto3)
-- google-auth-library (from https://www.npmjs.com/package/google-auth-library)
-- keycloak-admin (from https://www.npmjs.com/package/keycloak-admin)
 - log4js (from https://www.npmjs.com/package/log4js)
-- prisma (from https://www.npmjs.com/package/prisma)
-- prom-client (from https://www.npmjs.com/package/prom-client)
 - typescript (from https://www.npmjs.com/package/typescript)
-
-========================================================================
-BSD-2-Clause
-========================================================================
-The following software have components provided under the terms of this license:
-
-- aws-sdk (from https://www.npmjs.com/package/aws-sdk)
-- dotenv (from https://www.npmjs.com/package/dotenv)
 
 ========================================================================
 BSD-3-Clause
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- aws-sdk (from https://www.npmjs.com/package/aws-sdk)
 - json-refs (from https://www.npmjs.com/package/json-refs)
 - qs (from https://www.npmjs.com/package/qs)
 - xss-filters (from https://www.npmjs.com/package/xss-filters)
@@ -63,34 +42,20 @@ The following software have components provided under the terms of this license:
 - @azure/identity (from https://www.npmjs.com/package/@azure/identity)
 - @azure/keyvault-secrets (from https://www.npmjs.com/package/@azure/keyvault-secrets)
 - @azure/storage-blob (from https://www.npmjs.com/package/@azure/storage-blob)
-- @azure/storage-queue (from https://www.npmjs.com/package/@azure/storage-queue)
-- @prisma/client (from https://www.npmjs.com/package/@prisma/client)
-- PyJWT (from http://github.com/jpadilla/pyjwt, https://github.com/jpadilla/pyjwt)
-- ajv (from https://www.npmjs.com/package/ajv)
-- ajv-formats (from https://www.npmjs.com/package/ajv-formats)
+- @types/qs (from https://www.npmjs.com/package/@types/qs)
 - applicationinsights (from https://www.npmjs.com/package/applicationinsights)
-- applicationinsights-native-metrics (from https://www.npmjs.com/package/applicationinsights-native-metrics)
-- aws-sdk (from https://www.npmjs.com/package/aws-sdk)
 - axios (from https://www.npmjs.com/package/axios)
-- bull (from https://www.npmjs.com/package/bull)
-- colors (from https://www.npmjs.com/package/colors)
-- copyfiles (from https://www.npmjs.com/package/copyfiles)
 - cors (from https://www.npmjs.com/package/cors)
 - express (from https://www.npmjs.com/package/express)
-- express-prometheus-middleware (from https://www.npmjs.com/package/express-prometheus-middleware)
 - hpropagate (from https://www.npmjs.com/package/hpropagate)
 - ioredis (from https://www.npmjs.com/package/ioredis)
 - js-yaml (from https://www.npmjs.com/package/js-yaml)
 - json-refs (from https://www.npmjs.com/package/json-refs)
-- jsonwebtoken (from https://www.npmjs.com/package/jsonwebtoken)
+- jsonschema (from https://www.npmjs.com/package/jsonschema)
 - node-cache (from https://www.npmjs.com/package/node-cache)
-- prisma (from https://www.npmjs.com/package/prisma)
-- redlock (from https://www.npmjs.com/package/redlock)
-- replace-in-file (from https://www.npmjs.com/package/replace-in-file)
+- package (from https://www.npmjs.com/package/package)
 - swagger-ui-express (from https://www.npmjs.com/package/swagger-ui-express)
 - typescript (from https://www.npmjs.com/package/typescript)
-- uuid (from https://www.npmjs.com/package/uuid)
-- winston (from https://www.npmjs.com/package/winston)
 
 ========================================================================
 Unicode-DFS-2016

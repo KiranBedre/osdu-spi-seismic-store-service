@@ -7,7 +7,7 @@ sdms_cspell:
   script:
     - npm install -g typescript
     - npm install -g cspell
-    - cspell "**" --quiet --gitignore --config=../../cspell.json --show-suggestions --reporter default > sdms_cspell_report.txt
+    - cspell "**" --quiet --gitignore --config=../../cspell.json --show-suggestions --reporter default > cspell_report.txt
   artifacts:
     paths:
       - app/$SDMS_SERVICE/cspell_report.txt

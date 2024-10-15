@@ -14,7 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-// tslint:disable: no-console
 import { Config, ConfigFactory, LoggerFactory, TraceFactory } from '../cloud';
 import { StorageJobManager } from '../cloud/shared/queue';
 import { Locker } from '../services/dataset/locker';
@@ -86,7 +85,6 @@ async function ServerStart() {
 
         // Initialize the tracer after the application as it may require the instance.
         if (FeatureFlags.isEnabled(Feature.TRACE)) {
-            // tslint:disable-next-line
             console.log('- Initializing cloud tracer');
             const app = serverInstance.getApp()
             TraceFactory.build(Config.CLOUDPROVIDER).start(app);
@@ -97,12 +95,10 @@ async function ServerStart() {
         await serverInstance.registerRouter()
 
     } catch (error) {
-        // tslint:disable-next-line
         LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
         process.exit(1);
     }
 
 }
 
-// tslint:disable-next-line: no-floating-promises no-console
 ServerStart().catch((error) => { LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error)); });

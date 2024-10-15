@@ -56,12 +56,14 @@ export abstract class AbstractStorage implements IStorage {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     };
     public setStorageTiers(bucketName: string, prefix: string, tierId: string): Promise<void> {
+        // eslint-disable-next-line @stylistic/max-len
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented. Storage Tier change is not supported in ' + Config.CLOUDPROVIDER));
     };
     getStorageAccountRedundancy(): Promise<string> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     };
     public checkSupportedTier(tierId: string): Promise<void> {
+        // eslint-disable-next-line @stylistic/max-len
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented. Storage Tier change is not supported in ' + Config.CLOUDPROVIDER));
     }
     public listBlobs(prefix: string, bucketName: string): Promise<string[]> {
