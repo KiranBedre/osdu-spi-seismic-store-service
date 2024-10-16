@@ -2,6 +2,8 @@ global:
   domain: ""
   onPremEnabled: false
   limitsEnabled: true
+  tier: ""
+  autoscaling: true
 
 data:
   # Configmap
@@ -40,3 +42,20 @@ istio:
   proxyCPULimit: "500m"
   proxyMemory: "50Mi"
   proxyMemoryLimit: "512Mi"
+
+hpa:
+  minReplicas: 6
+  maxReplicas: 15
+  targetType: "AverageValue" #Could be AverageValue or Value
+  targetValue: 16 #8 rps
+  behaviorScaleUpStabilizationWindowSeconds: 10
+  behaviorScaleUpPoliciesValue: 50
+  behaviorScaleUpPoliciesPeriodSeconds: 15
+  behaviorScaleDownStabilizationWindowSeconds: 60
+  behaviorScaleDownPoliciesValue: 25
+  behaviorScaleDownPoliciesPeriodSeconds: 60
+
+limits:
+  maxTokens: 12
+  tokensPerFill: 12
+  fillInterval: "1s"
