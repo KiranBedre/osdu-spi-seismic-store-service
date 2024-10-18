@@ -1,6 +1,6 @@
 sdms_compile-and-unit-test:
   tags: ['osdu-medium']
-  image: node
+  image: node:${SDMS_NODE_VERSION}
   stage: build
   before_script:
     - cd app/$SDMS_SERVICE
