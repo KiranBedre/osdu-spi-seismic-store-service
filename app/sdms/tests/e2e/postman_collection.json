@@ -50,7 +50,7 @@
 									"",
 									"// Test job schedule feature flag",
 									"if ( !pm.environment.get('testJobSchedule') ) {",
-									"    pm.environment.set('testJobSchedule', 'true');",
+									"    pm.environment.set('testJobSchedule', 'false');",
 									"}; "
 								],
 								"type": "text/javascript"
