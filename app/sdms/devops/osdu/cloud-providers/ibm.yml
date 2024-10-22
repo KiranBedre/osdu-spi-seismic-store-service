@@ -60,7 +60,7 @@ sdms_ibm-deploy-devpri:
 sdms_ibm-test-py:
   extends:
     - ibm-test-py
-  image: node
+  image: node:${SDMS_NODE_VERSION}
   needs: ['sdms_ibm-deploy']
   script:
     - cd app/$SDMS_SERVICE

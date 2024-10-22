@@ -18,7 +18,6 @@ import cors from 'cors';
 import express from 'express';
 import fs from 'fs';
 import https from 'https';
-import jwtProxy, { JwtProxyOptions } from 'jwtproxy';
 import swaggerUi from 'swagger-ui-express';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthProviderFactory } from '../auth';
@@ -194,16 +193,6 @@ export class Server {
                 Response.writeError(res, error);
             }
         });
-
-        // adding middleware to intercept and validate jwt
-        const jwtValidateOptions: JwtProxyOptions = {
-            disable: !Config.JWT_ENABLE_FEATURE,
-            excluded: Config.JWT_EXCLUDE_PATHS ? Config.JWT_EXCLUDE_PATHS.split(';') : [],
-            jwksUrl: Config.JWKS_URL,
-            algorithms: ['RS256'],
-            audience: Config.JWT_AUDIENCE
-        };
-        this.app.use(jwtProxy(jwtValidateOptions));
     }
 
     public async registerRouter() {
@@ -229,7 +218,6 @@ export class Server {
             const certificate = fs.readFileSync(Config.SSL_CERT_PATH, 'utf8');
             const credentials = { key: privateKey, cert: certificate };
             this.httpsServer = https.createServer(credentials, this.app).listen(this.port, () => {
-                // tslint:disable-next-line
                 console.log(`- Server is listening on port ${this.port}...`);
             });
             this.httpsServer.setTimeout(610000);
@@ -237,7 +225,6 @@ export class Server {
             this.httpsServer.headersTimeout = 611 * 1000;
         } else {
             this.httpServer = this.app.listen(this.port, () => {
-                // tslint:disable-next-line
                 console.log(`- Server is listening on port ${this.port}...`);
             });
             this.httpServer.setTimeout(610000);

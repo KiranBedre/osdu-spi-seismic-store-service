@@ -377,6 +377,7 @@ export class DatasetParser {
         if (payloadStorageRecordSchemaTypes.length > 1) {
 
             const supportedSchemaTypesStr = supportedStorageRecordSchemaTypes.join(',');
+            // eslint-disable-next-line @stylistic/max-len
             throw Error.make(Error.Status.BAD_REQUEST, 'Only one of ' + supportedSchemaTypesStr + ' is allowed in the request payload body.');
         }
 

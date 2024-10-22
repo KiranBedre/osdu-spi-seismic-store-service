@@ -56,16 +56,15 @@ export class AWSConfig extends Config {
         const port = +process.env.PORT || 5000;
         const impServiceAccountSigner = process.env.IMP_SERVICE_ACCOUNT_SIGNER || '';
         const desServiceAppkey = process.env.DES_SERVICE_APPKEY || '';
-        const jwtExcludePaths = process.env.JWT_EXCLUDE_PATHS || '';
-        const jwtAudience = process.env.JWT_AUDIENCE || '';
-        const jwtEnableFeature = process.env.JWT_ENABLE_FEATURE ? process.env.JWT_ENABLE_FEATURE === 'true' : false;
         const sslEnabled = process.env.SSL_ENABLED === 'true';
         const featureFlagSeismicmetaStorage = process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== undefined ?
             process.env.FEATURE_FLAG_SEISMICMETA_STORAGE !== 'false' : true;
         const featureFlagImptoken = process.env.FEATURE_FLAG_IMPTOKEN !== undefined ?
             process.env.FEATURE_FLAG_IMPTOKEN !== 'false' : true;
-        const featureFlagTrace = process.env.FEATURE_FLAG_TRACE !== undefined ? process.env.FEATURE_FLAG_TRACE !== 'false' : true;
-        const featureFlagLogging = process.env.FEATURE_FLAG_LOGGING !== undefined ? process.env.FEATURE_FLAG_LOGGING !== 'false' : true;
+        const featureFlagTrace = process.env.FEATURE_FLAG_TRACE !== undefined ?
+            process.env.FEATURE_FLAG_TRACE !== 'false' : true;
+        const featureFlagLogging = process.env.FEATURE_FLAG_LOGGING !== undefined ?
+            process.env.FEATURE_FLAG_LOGGING !== 'false' : true;
         const featureFlagStackdriverExporter = process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== undefined ?
             process.env.FEATURE_FLAG_STACKDRIVER_EXPORTER !== 'false' : true;
         const featureFlagCcmIntegration = process.env.FEATURE_FLAG_CCM_INTERACTION ?
@@ -96,10 +95,6 @@ export class AWSConfig extends Config {
             DES_SERVICE_HOST_PARTITION: process.env.PARTITION_BASE_URL,
             DES_SERVICE_APPKEY: desServiceAppkey,
             DES_GROUP_CHAR_LIMIT: AWSConfig.DES_GROUP_CHAR_LIMIT,
-            JWKS_URL: process.env.JWKS_URL,
-            JWT_EXCLUDE_PATHS: jwtExcludePaths,
-            JWT_AUDIENCE: jwtAudience,
-            JWT_ENABLE_FEATURE: jwtEnableFeature,
             TENANT_JOURNAL_ON_DATA_PARTITION: true,
             SSL_ENABLED: sslEnabled,
             SSL_KEY_PATH: process.env.SSL_KEY_PATH,

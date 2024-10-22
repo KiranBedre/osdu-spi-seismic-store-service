@@ -5,19 +5,14 @@ version: 2
 cli:
   server: https://app.fossa.com
   fetcher: custom
-  project: seismic-store-service
+  project: seismic-store-service-filemetadata
 analyze:
   modules:
-  - name: .
-    type: npm
-    target: .
-    path: .
-  - name: .
-    type: npm
-    target: .
-    path: .
-  - name: aws
+  - name: app
     type: pip
-    target: devops/aws
-    path: devops/aws
-
+    target: app
+    path: app
+  - name: app
+    type: npm
+    target: app
+    path: app

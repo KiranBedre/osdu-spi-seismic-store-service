@@ -173,6 +173,7 @@ export class NotQueryFilter implements QueryFilter {
         visitor.visitNot(this);
     }
 }
+// eslint-disable-next-line @stylistic/max-len
 export type Operator = '!=' | '=' | '<' | '>' | '<=' | '>=' | 'HAS_ANCESTOR' | 'CONTAINS' | 'RegexMatch' | 'LIKE' | 'STARTSWITH';
 
 export class MatchQueryFilter implements QueryFilter {

@@ -129,7 +129,6 @@ export class AzureInsightsLogger extends AbstractLogger {
             if (AzureConfig.AI_CONNECTION_STRING) {
                 appinsights.defaultClient.trackTrace(data);
             }
-            // tslint:disable-next-line
             console.log(data);
         }
     }
@@ -139,7 +138,6 @@ export class AzureInsightsLogger extends AbstractLogger {
             if (AzureConfig.AI_CONNECTION_STRING) {
                 appinsights.defaultClient.trackException({ exception: data });
             }
-            // tslint:disable-next-line
             console.log(data);
         }
     }
@@ -149,7 +147,6 @@ export class AzureInsightsLogger extends AbstractLogger {
             if (AzureConfig.AI_CONNECTION_STRING) {
                 appinsights.defaultClient.trackMetric({ name: key, value: data });
             }
-            // tslint:disable-next-line
             console.log(data);
         }
     }

@@ -16,7 +16,8 @@
 
 import crypto from 'crypto';
 
-import { CosmosClient, Container, FeedResponse, ItemResponse, OperationInput, BulkOperationType, SqlParameter } from '@azure/cosmos';
+import { CosmosClient, Container, FeedResponse, ItemResponse, OperationInput, BulkOperationType,
+    SqlParameter } from '@azure/cosmos';
 import { AbstractJournal, AbstractJournalTransaction, IJournalExtendedQueryModel, IJournalQueryModel,
     IJournalTransaction, JournalFactory } from '../../journal';
 import { TenantModel } from '../../../services/tenant';
@@ -568,6 +569,7 @@ export class AzureCosmosDbQuery implements IJournalExtendedQueryModel {
 
     start(start: string | Buffer): IJournalQueryModel {
         if (start instanceof Buffer) {
+            // eslint-disable-next-line @stylistic/max-len
             throw (Error.make(Error.Status.UNKNOWN, 'Type \'Buffer\' is not supported for CosmosDB Continuation while paging.'));
         }
         this.pagingStart = start as string;

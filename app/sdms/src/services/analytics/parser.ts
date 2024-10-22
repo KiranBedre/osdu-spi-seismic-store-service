@@ -123,6 +123,7 @@ export class AnalyticsParser {
 
         const regex = /^(?:\d{4}|(?:\d{4}-\d{2})|(?:\d{4}-\d{2}-\d{2}))$/;
         if (!regex.test(filter)) {
+            // eslint-disable-next-line @stylistic/max-len
             throw Error.make(Error.Status.BAD_REQUEST, 'Invalid date format. The \'filter-date\' must be in the format YYYY or YYYY-MM or YYYY-MM-DD.');
         }
 

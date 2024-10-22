@@ -35,7 +35,7 @@ variables:
     - rm -Rf tests/utest/cloud/google
     - rm -Rf tests/utest/dao
     - rm -Rf tests/utest/services
-    - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
+    - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.yaml
     - jq "del(.prisma)" package.json > cleaned_package.json
     - mv cleaned_package.json package.json
     - export directoryToScan=$PWD
@@ -82,7 +82,7 @@ sdms_azure_containerize:
     - !reference [azure_containerize, before_script]
   script:
     # Runtime image
-    - docker build -t $SDMS_UTEST_RUNTIME_IMAGE --file devops/azure/runtime.Dockerfile .
+    - docker build --build-arg docker_node_image_version=${SDMS_RUNTIME_NODE_VERSION} -t $SDMS_UTEST_RUNTIME_IMAGE --file devops/azure/runtime.Dockerfile .
     # Sidecar image
     - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_SIDECAR_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.QueryRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
     # Deletion service image
@@ -341,7 +341,7 @@ sdms_azure_deploy:
       when: on_success
 
 sdms_azure_test:
-  image: node
+  image: node:${SDMS_NODE_VERSION}
   extends:
     - .azure_clean_code
     - azure_test

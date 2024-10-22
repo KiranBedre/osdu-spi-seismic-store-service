@@ -192,7 +192,6 @@ export class TestDataset {
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{
-					// tslint:disable-next-line: object-literal-sort-keys
 					created_by: 'user@email',
 					created_date: 'Wed Oct 09 2019 16:50:07 GMT+0000 (UTC)',
 					ctag: 'ctag',
@@ -273,7 +272,6 @@ export class TestDataset {
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{
-					// tslint:disable-next-line: object-literal-sort-keys
 					created_by: 'user@email',
 					created_date: 'Wed Oct 09 2019 16:50:07 GMT+0000 (UTC)',
 					ctag: 'ctag',
@@ -314,7 +312,6 @@ export class TestDataset {
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{
-					// tslint:disable-next-line: object-literal-sort-keys
 					created_by: 'user@email',
 					created_date: 'Wed Oct 09 2019 16:50:07 GMT+0000 (UTC)',
 					ctag: 'ctag',
@@ -355,7 +352,6 @@ export class TestDataset {
 			this.dataset.gtags = ['tagA', 'tagB'];
 			const expectedResult = [
 				{
-					// tslint:disable-next-line: object-literal-sort-keys
 					created_by: 'user@email',
 					created_date: 'Wed Oct 09 2019 16:50:07 GMT+0000 (UTC)',
 					ctag: 'ctag',

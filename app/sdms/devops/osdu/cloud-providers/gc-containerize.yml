@@ -8,7 +8,7 @@ sdms_gc-containerize-gitlab:
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
   before_script:
     - cd app/$SDMS_SERVICE
-    - sed -i 's|#{SDMS_PREFIX}#|'$GC_SDMS_PREFIX'|' ./docs/api/openapi.osdu.yaml
+    - sed -i 's|#{SDMS_PREFIX}#|'$GC_SDMS_PREFIX'|' ./docs/api/openapi.yaml
   rules:
     - if: $CI_COMMIT_BRANCH =~ '/^release/' && $GC == '1'
       when: on_success

@@ -75,7 +75,7 @@ phases:
       - GIT_SECRETS_SCAN_RESULT=$(git secrets --scan 2> ${OUTPUT_DIR}/git_secrets.out.txt && echo OK || echo FAILED)
       - if [ "$GIT_SECRETS_SCAN_RESULT" = "FAILED" ]; then echo "Secrets detected!" && exit 1; fi
 
-      - node_modules/.bin/tslint -c tslint.json 'src/cloud/providers/aws/**/*.ts'
+      - node_modules/.bin/eslint --quiet .
       - echo "Building seismic-store-service"
       - npm run test-lcov-automation-aws
       # copy to tests folder for generating token for integration tests

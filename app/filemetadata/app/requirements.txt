@@ -1,5 +1,5 @@
 #for fasapi and uvicorn
-fastapi==0.100.1
+fastapi==0.115.2
 uvicorn==0.23.2
 
 #for segy library
@@ -23,5 +23,9 @@ python-dotenv==1.0.0
 
 #for logging
 applicationinsights==0.11.10
-azure-keyvault-secrets==4.7.0
-azure-identity==1.14.0
+azure-keyvault-secrets==4.8.0
+azure-identity==1.19.0
+
+#forcing dependency version
+cryptography==43.0.1
+python-multipart==0.0.12

@@ -17,7 +17,8 @@
 import * as path from 'path';
 import { Utils } from '../../../shared/utils';
 import { SchemaTransformModel } from '../model';
-import { AbstractSchemaManager, SchemaManagerFactory, SchemaTransformFuncManager, SchemaValidationResult } from './schema-manager';
+import { AbstractSchemaManager, SchemaManagerFactory, SchemaTransformFuncManager,
+   SchemaValidationResult } from './schema-manager';
 
 @SchemaManagerFactory.register('segy_v1')
 export class SegyManager extends AbstractSchemaManager {

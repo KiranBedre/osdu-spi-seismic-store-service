@@ -2,21 +2,34 @@
   before_script:
     - cp -Rf app/${SDMS_V4_SERVICE}/*.* .
     - cp -Rf app/${SDMS_V4_SERVICE}/* .
+    - cp -Rf app/${SDMS_V4_SERVICE}/. .
+    - cp -Rf app/${SDMS_V4_SERVICE}/.fossa.yml .
     - rm -Rf app/filemetadata
     - rm -Rf app/sdms
     - rm -Rf app/${SDMS_V4_SERVICE}/*.*
     - rm -Rf app/${SDMS_V4_SERVICE}/*
+
+.sdms-v4_prepare_fossa_check_notice:
+  before_script:
+    - mkdir -p app/${SDMS_V4_SERVICE}/fossa-output
+    - cp -Rf fossa-output/. app/${SDMS_V4_SERVICE}/fossa-output/.
 
 sdms-v4_fossa-analyze:
   extends:
     - .sdms-v4_prepare_fossa
     - fossa-analyze
   variables:
-    FOSSA_OUTPUT_DIR: "app/${SDMS_V4_SERVICE}/fossa-output"
     ALLOW_FOSSA_CACHE: 'false'
-  allow_failure: true
+    FOSSA_OUTPUT_DIR: "app/${SDMS_V4_SERVICE}/fossa-output"
   needs: ['sdms-v4_containerize']
   tags: ['osdu-medium']
+  script:
+    # fossa-with-cache needs a CI_COMMIT_BRANCH defined to know how to parse the FOSSA API results
+    # When building tags, this isn't defined by GitLab. In that case, we use the tag name instead. If that's not defined
+    # then things will fail and we'll have to make this smarter
+    - test -z "$CI_COMMIT_BRANCH" && export CI_COMMIT_BRANCH="$CI_COMMIT_TAG"
+    - npm ci
+    - fossa-with-cache
   artifacts:
     paths:
       - app/${SDMS_V4_SERVICE}/fossa-output
@@ -41,15 +54,13 @@ sdms-v4_fossa-analyze:
 sdms-v4_fossa-check-notice:
   extends:
     - .sdms-v4_prepare_fossa
+    - .sdms-v4_prepare_fossa_check_notice
     - fossa-check-notice
-    - .fossa-check-notice
-  variables:
-    NOTICE_PATH_OUTPUT: app/${SDMS_V4_SERVICE}/fossa-output
-  allow_failure: true
   needs: ['sdms-v4_fossa-analyze']
   tags: ['osdu-medium']
-  script:
-    - !reference [.fossa-check-notice, script]
+  before_script:
+    - !reference [.sdms-v4_prepare_fossa, before_script]
+    - !reference [.sdms-v4_prepare_fossa_check_notice, before_script]
   artifacts:
     when: on_failure
     paths:

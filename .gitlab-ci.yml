@@ -4,9 +4,6 @@ include:
     file: "standard-setup.yml"
 
   # SCANNERS
-  # fossa
-  - local: devops/osdu/scanners/fossa-global.yml
-
   # ultimate
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/gitlab-ultimate.yml"
