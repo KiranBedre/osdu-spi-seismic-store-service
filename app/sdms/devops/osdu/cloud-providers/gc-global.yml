@@ -1,6 +1,6 @@
 include:
-  - local: "app/sdms/devops/osdu/cloud-providers/gc-baremetal-gke.yml"
   - local: "app/sdms/devops/osdu/cloud-providers/gc-containerize.yml"
+  - local: devops/osdu/cloud-providers/gc-bootstrap.yml
   - local: "app/sdms/devops/osdu/cloud-providers/gc-com-gke.yml"
   - local: "app/sdms/devops/osdu/cloud-providers/gc-dev2-gke.yml"
   - local: "app/sdms/devops/osdu/cloud-providers/gc-helm.yml"

@@ -92,7 +92,6 @@ sdms-gc-helm-charts-release-gitlab:
 sdms-gc-helm-charts-release-gcr:
   extends:
     - .gc-helm-charts-release-gcr
-    - .gc-baremetal-variables
   needs: ["sdms-gc-containerize-gitlab"]
   variables:
     SEISMIC_GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"
@@ -368,43 +367,6 @@ sdms-gc-preship-deploy:
         - app/sdms/**/*.md
       allow_failure: true
 
-sdms-gc-baremetal-deploy:
-  extends: .gc-baremetal-deploy
-  needs: ["sdms-gc-helm-charts-gitlab"]
-  variables:
-    SEISMIC_GC_HELM_DEPLOYMENT_SERVICE: seismic-store-deploy
-    SEISMIC_GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"
-    SEISMIC_GC_SERVICE: seismic-store
-    GC_SA_EMAIL: $GC_SA_GKE_EMAIL
-  rules:
-    - if: "$CI_COMMIT_BRANCH =~ /^release/"
-      when: never
-    - if: "$CI_COMMIT_TAG"
-      when: never
-    - if: '$GC == "1"'
-      when: on_success
-      changes:
-        - devops/**/*
-        - app/sdms/devops/**/*
-        - app/sdms/docker/**/*
-        - app/sdms/docs/**/*
-        - app/sdms/tests/**/*
-        - app/sdms/provider/**/*
-        - app/sdms/src/auth/**/*
-        - app/sdms/src/dataecosystem/**/*
-        - app/sdms/src/server/**/*
-        - app/sdms/src/services/**/*
-        - app/sdms/src/shared/**/*
-        - app/sdms/src/cloud/*.ts
-        - app/sdms/src/cloud/shared/**/*
-        - app/sdms/src/cloud/providers/*.ts
-        - app/sdms/src/cloud/providers/anthos/**/*
-        - app/sdms/src/cloud/providers/gc/**/*
-        - app/sdms/src/cloud/providers/google/**/*
-        - app/sdms/**/*.json
-        - app/sdms/**/*.yml
-        - app/sdms/**/*.md
-
 sdms-gc-test-python:
   variables:
     GOOGLE_CREDENTIALS: $GC_R3_INTEGRATION_TESTER
@@ -509,66 +471,6 @@ sdms-gc-dev2-test-python:
         - app/sdms/**/*.yml
         - app/sdms/**/*.md
     - if: '$GC == "1" && $CI_COMMIT_TAG'
-      when: on_success
-      changes:
-        - devops/**/*
-        - app/sdms/devops/**/*
-        - app/sdms/docker/**/*
-        - app/sdms/docs/**/*
-        - app/sdms/tests/**/*
-        - app/sdms/provider/**/*
-        - app/sdms/src/auth/**/*
-        - app/sdms/src/dataecosystem/**/*
-        - app/sdms/src/server/**/*
-        - app/sdms/src/services/**/*
-        - app/sdms/src/shared/**/*
-        - app/sdms/src/cloud/*.ts
-        - app/sdms/src/cloud/shared/**/*
-        - app/sdms/src/cloud/providers/*.ts
-        - app/sdms/src/cloud/providers/anthos/**/*
-        - app/sdms/src/cloud/providers/gc/**/*
-        - app/sdms/src/cloud/providers/google/**/*
-        - app/sdms/**/*.json
-        - app/sdms/**/*.yml
-        - app/sdms/**/*.md
-
-sdms-gc-baremetal-test-python:
-  extends: .gc-baremetal-test-python
-  image: node
-  needs: ["sdms-gc-baremetal-deploy"]
-  allow_failure: true
-  before_script:
-    - cd app/$SDMS_SERVICE
-  script:
-    - apt-get update
-    - apt-get install -yq jq curl
-    - >
-      GC_ID_TOKEN=$(curl --location --silent --request POST "${TEST_OPENID_PROVIDER_URL}/protocol/openid-connect/token"
-      --header "data-partition-id: ${DATA_PARTITION_ID}"
-      --header 'Content-Type: application/x-www-form-urlencoded'
-      --data-urlencode grant_type=client_credentials
-      --data-urlencode scope=openid
-      --data-urlencode client_id=${TEST_OPENID_PROVIDER_CLIENT_ID}
-      --data-urlencode client_secret=${TEST_OPENID_PROVIDER_CLIENT_SECRET} | jq -r .id_token)
-    - npm install -g newman
-    - chmod +x ./tests/e2e/run_e2e_tests.sh
-    - >
-      ./tests/e2e/run_e2e_tests.sh
-      --seistore-svc-url="${GC_SDMS_HOST}${GC_SDMS_PREFIX}"
-      --seistore-svc-api-key="NA"
-      --user-idtoken="$GC_ID_TOKEN"
-      --tenant="${GC_SDMS_TENANT}"
-      --admin-email="${GC_SEISTORE_ADMIN_EMAIL}"
-      --datapartition="${DATA_PARTITION_ID}"
-      --legaltag01="${GC_SEISTORE_LEGALTAG01}"
-      --legaltag02="${GC_SEISTORE_LEGALTAG02}"
-      --VCS-Provider="${ISGITLAB}"
-  rules:
-    - if: "$CI_COMMIT_BRANCH =~ /^release/"
-      when: never
-    - if: "$CI_COMMIT_TAG"
-      when: never
-    - if: '$GC == "1"'
       when: on_success
       changes:
         - devops/**/*

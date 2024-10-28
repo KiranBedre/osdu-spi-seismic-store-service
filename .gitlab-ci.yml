@@ -31,7 +31,6 @@ include:
   - local: devops/osdu/cloud-providers/azure.yml
 
   # gc
-  # gc
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-global.yml"
 

@@ -1,6 +1,4 @@
 include:
-  - local: devops/osdu/cloud-providers/gc-baremetal-gke.yml
-  - local: devops/osdu/cloud-providers/gc-bootstrap.yml
   - local: devops/osdu/cloud-providers/gc-com-gke.yml
   - local: devops/osdu/cloud-providers/gc-containerize.yml
   - local: devops/osdu/cloud-providers/gc-dev2-gke.yml
