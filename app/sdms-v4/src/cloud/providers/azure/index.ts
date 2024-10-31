@@ -21,3 +21,4 @@ export { AzureReadiness } from './readiness';
 export { AzureCloudStorage } from './storage';
 export { AzureLogger } from './logger';
 export { AzureCosmosDb } from './database';
+export { AzureTaskQueue } from './queue';

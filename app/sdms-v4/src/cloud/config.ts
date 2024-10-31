@@ -84,6 +84,9 @@ export abstract class Config implements IConfig {
     public static VERSION: string;
     public static CONNECTED_OUTER_SERVICES: string[];
 
+    // Queue used for synchronizing v3 and v4 dataset
+    public static SDMS_V3_V4_SYNC_QUEUE: string;
+
     // Initialization methods
     public static setCloudProvider(cloudProvider: string | undefined) {
         if (!cloudProvider) {

@@ -17,10 +17,13 @@
 import { Config, StorageFactory } from '../../cloud';
 import { Context, Response, Utils } from '../../shared';
 import { Request as expRequest, Response as expResponse } from 'express';
+
 import { Operation } from './operations';
 import { Parser } from './parser';
+import { QueueFactory } from '../../cloud/queue';
 import { SearchService } from '../../services/search';
 import { StorageCoreService } from '../../services';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SchemaHandler {
     public static async handler(req: expRequest, res: expResponse, op: Operation) {
@@ -65,6 +68,17 @@ export class SchemaHandler {
                 }
             }
         }
+
+        const messages = Parser.getMessage(records, recordIds, dataPartition);
+        const operation = {
+            type: Operation.SyncV3V4,
+            operation_id: uuidv4(),
+            datasets: messages,
+        };
+
+        const taskQueue = QueueFactory.build(Config.CLOUD_PROVIDER);
+        await taskQueue.pushTask(operation);
+
         return recordIds;
     }
 

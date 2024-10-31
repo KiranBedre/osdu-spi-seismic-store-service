@@ -21,3 +21,4 @@ export { ReadinessFactory } from './readiness';
 export { StorageFactory } from './storage';
 export { LoggerFactory } from './logger';
 export { DatabaseFactory } from './database';
+export { QueueFactory } from './queue';

@@ -54,6 +54,7 @@
         "@azure/identity": "^3.2.4",
         "@azure/keyvault-secrets": "^4.7.0",
         "@azure/storage-blob": "^12.14.0",
+        "@azure/storage-queue": "^12.24.0",
         "@types/qs": "^6.9.7",
         "applicationinsights": "^2.7.0",
         "axios": "^1.7.4",

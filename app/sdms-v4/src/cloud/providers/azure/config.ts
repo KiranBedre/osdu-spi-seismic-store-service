@@ -15,8 +15,8 @@
 // ============================================================================
 
 import { Config, ConfigFactory } from '../../config';
-import { AzureInsights } from './insights';
 
+import { AzureInsights } from './insights';
 import { AzureSecrets } from './secrets';
 
 @ConfigFactory.register('azure')
@@ -30,11 +30,24 @@ export class AzureConfig extends Config {
     // KeyVault Url
     public static KEYVAULT_URL: string;
 
+    // Azure Storage Queue
+    public static AZURE_STORAGE_QUEUE_ENDPOINT: string;
+
     public async init(): Promise<void> {
         // Load secrets
         AzureConfig.KEYVAULT_URL = process.env.KEYVAULT_URL;
         Config.checkRequiredConfig(AzureConfig.KEYVAULT_URL, 'KEYVAULT_URL');
         await AzureSecrets.loadSecrets();
+
+        // storage queue endpoint
+        AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT =
+            process.env.AZURE_STORAGE_QUEUE_ENDPOINT || AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT;
+        Config.checkRequiredConfig(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, 'AZURE_STORAGE_QUEUE_ENDPOINT');
+
+        // v3&v4 sync queue
+        Config.SDMS_V3_V4_SYNC_QUEUE =
+            process.env.V3_V4_SYNC_QUEUE || Config.SDMS_V3_V4_SYNC_QUEUE || 'sdms-queue-v3v4sync';
+
         // Initialize insights
         AzureInsights.initialize();
     }

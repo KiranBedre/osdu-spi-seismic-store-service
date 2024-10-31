@@ -35,6 +35,9 @@ export class AzureSecrets {
     public static REDIS_HOST = 'redis-hostname';
     public static REDIS_KEY = 'redis-password';
 
+    // Storage queue
+    public static STORAGE_QUEUE_ENDPOINT = 'queue-storage-endpoint';
+
     public static CreateSecretClient(): SecretClient {
         const credential = AzureCredentials.getCredential();
         const vaultName = AzureConfig.KEYVAULT_URL!;
@@ -46,6 +49,7 @@ export class AzureSecrets {
         const client = AzureSecrets.CreateSecretClient();
         AzureConfig.APP_RESOURCE_ID = (await client.getSecret(this.APP_RESOURCE_ID_KEY)).value!;
         AzureConfig.AI_INSTRUMENTATION_KEY = (await client.getSecret(this.AI_INSTRUMENTATION_KEY)).value!;
+        AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = (await client.getSecret(this.STORAGE_QUEUE_ENDPOINT)).value!;
         Config.REDIS_KEY = (Config.REDIS_KEY || (await client.getSecret(this.REDIS_KEY)).value)!;
         Config.REDIS_HOST = (Config.REDIS_HOST || (await client.getSecret(this.REDIS_HOST)).value)!;
     }

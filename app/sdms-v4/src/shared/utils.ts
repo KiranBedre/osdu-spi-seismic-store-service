@@ -40,4 +40,13 @@ export class Utils {
     public static constructBucketID(recordID: string) {
         return crypto.createHash('sha256').update(recordID).digest('hex').slice(0, -1);
     }
+
+    public static generateRandomData(len: number): string {
+        let id = '';
+        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for (let i = 0; i < len; i++) {
+            id += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        return id;
+    }
 }

@@ -14,6 +14,8 @@
 // Limitations under the License.
 // ============================================================================
 
+import { Config } from '../../cloud';
+
 export enum Operation {
     RegisterPatch,
     Get,
@@ -21,4 +23,17 @@ export enum Operation {
     DeleteSchema,
     GetAllVersionIDsOfSchema,
     ListSchemas,
+    SyncV3V4,
 }
+
+export const operations = {} as {
+    [key in Operation]: {
+        getQueueName(): string;
+    };
+};
+
+operations[Operation.SyncV3V4] = {
+    getQueueName(): string {
+        return Config.SDMS_V3_V4_SYNC_QUEUE;
+    },
+};
