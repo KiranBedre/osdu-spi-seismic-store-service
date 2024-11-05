@@ -88,7 +88,7 @@ export abstract class Config implements IConfig {
     public static SDMS_V3_V4_SYNC_QUEUE: string;
 
     // Default subproject for dataset
-    public static DEFAULT_SUBPROJECT: string = 'syncv4';
+    public static SDMS_V3_V4_SYNC_SUBPROJECT: string = 'syncv4';
 
     // Feature flag for v3 v4 synchronization
     public static FEATURE_FLAG_OPERATIONS_SYNC_V3_V4: boolean;
