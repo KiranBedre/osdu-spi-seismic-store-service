@@ -557,6 +557,7 @@
         "zunitdim",
         "zunitfactor",
         "zunitname",
-        "zxvf"
+        "zxvf",
+        "syncv4"
     ]
 }
