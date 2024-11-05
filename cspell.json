@@ -479,6 +479,7 @@
         "svcstatus",
         "svctoken",
         "Swashbuckle",
+        "syncv4",
         "targetaudience",
         "targetdir",
         "targetprojid",
@@ -557,7 +558,6 @@
         "zunitdim",
         "zunitfactor",
         "zunitname",
-        "zxvf",
-        "syncv4"
+        "zxvf"
     ]
 }
