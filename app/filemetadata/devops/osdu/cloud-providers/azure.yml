@@ -1,13 +1,17 @@
 filemetadata_azure_containerize:
-  extends: .azure_containerize
-  environment: $DEPLOY_ENVIRONMENT_AZURE
+  extends:
+    - azure_containerize
+  needs:
+    - job: filemetadata_containerize
   variables:
     SHA_IMAGE: ${FILEMETADATA_LOCAL_SERVICE_NAME}:${CI_COMMIT_SHA}
     LATEST_IMAGE: ${FILEMETADATA_LOCAL_SERVICE_NAME}:latest
     RELEASE_IMAGE: release-${CI_COMMIT_TAG}:${FILEMETADATA_LOCAL_SERVICE_NAME}-${CI_COMMIT_TAG}
-  script:
+  before_script:
+    - !reference [azure_containerize, before_script]
     - cd app/$FILEMETADATA_SERVICE
     - sed -i "s/SEGY_LIBRARY_PAT/$SEGY_LIBRARY_FEED_PAT/g" pip.conf
+  script:
     - docker build -t $FILEMETADATA_LOCAL_SERVICE_NAME --file Dockerfile .
     # Gitlab Container Registry
     - docker tag $FILEMETADATA_LOCAL_SERVICE_NAME $CI_REGISTRY_IMAGE/$SHA_IMAGE
@@ -25,23 +29,92 @@ filemetadata_azure_containerize:
         docker tag $CI_REGISTRY_IMAGE/$SHA_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_IMAGE
         docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_IMAGE
       fi
-  only:
-    changes:
-      - devops/**/*
-      - app/filemetadata/**/*
-    refs:
-      - branches
-      - merge_requests
-      - tags
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      when: on_success
+
+filemetadata_azure_containerize_helm:
+  extends:
+    - azure_containerize_helm
+  needs:
+    - job: filemetadata_containerize
+      artifacts: false
+      optional: true
+  variables:
+    AZURE_HELM_SUBDIR: osdu-ddms/standard-ddms
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      when: on_success
+
+filemetadata_container_scanning:
+  extends:
+    - container_scanning
+  needs: ['filemetadata_azure_containerize']
+  variables:
+    DOCKER_IMAGE: ${FILEMETADATA_LOCAL_SERVICE_NAME}:${CI_COMMIT_SHA}
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      when: on_success
 
 filemetadata_azure_deploy:
-  extends: .azure_deploy
-  environment: $DEPLOY_ENVIRONMENT_AZURE
+  extends: azure_deploy
   needs:
     - filemetadata_azure_containerize
-    - azure_containerize_helm
+    - filemetadata_azure_containerize_helm
   script:
-    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash -s -- --version v3.9.1
     - helm show chart $HELM_CHART_OCI --version $HELM_CHART_OCI_VERSION
     # Uninstall if found in default namespace
     - helm uninstall seismic-dms-file-metadata-service -n default --wait || echo [INFO] No seismic-dms-file-metadata-service in default
@@ -65,83 +138,78 @@ filemetadata_azure_deploy:
     - pod=$(kubectl -n ${NAMESPACE} get po -l app=${FILEMETADATA_LOCAL_SERVICE_NAME} --no-headers=true -o custom-columns=":metadata.name" | tail -1)
     - status=$(kubectl wait -n ${NAMESPACE} --for=condition=Ready pod/$pod --timeout=600s)
     - if [[ "$status" != *"met"* ]]; then echo "${FILEMETADATA_LOCAL_SERVICE_NAME} pod didn't start correctly" ; exit 1 ; fi
-  only:
-    changes:
-      - devops/**/*
-      - app/filemetadata/**/*
-    refs:
-      - branches
-      - merge_requests
-      - tags
+  artifacts: null
+  only: null
+  except: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1' && $AZURE_SKIP_DEPLOY != 'true'
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      when: on_success
 
-filemetadata_azure_unit_test:
-  image: node
-  environment: $DEPLOY_ENVIRONMENT_AZURE
-  extends: .azure_test
-  stage: integration
-  needs:
-    - filemetadata_azure_deploy
+filemetadata_azure_test:
+  image: python
+  extends:
+    - azure_test
+    - .azure_variables
+  needs: ['filemetadata_azure_deploy']
   variables:
     AZURE_AD_APP_RESOURCE_ID: $AZURE_APP_ID
     AZURE_AD_TENANT_ID: $AZURE_TENANT_ID
     AZURE_TESTER_SERVICEPRINCIPAL_SECRET: $AZURE_PRINCIPAL_SECRET
     INTEGRATION_TESTER: $AZURE_PRINCIPAL_ID
-    DNS: https://${AZURE_DNS_NAME}
-  script:
-    - apt-get install python3-venv -y
-    - python3 -m venv seimicenv
-    - source seimicenv/bin/activate
-    - pip3 install requests msal fastapi python-dotenv httpx applicationinsights azure-keyvault-secrets azure-identity
-    - cd app/$FILEMETADATA_SERVICE/app
-    - python3 -m unittest discover -s test -p test_* -v
-  only:
-    changes:
-      - devops/**/*
-      - app/filemetadata/**/*
-    refs:
-      - branches
-      - merge_requests
-      - tags
-
-filemetadata_azure_integration_test:
-  image: node
-  environment: $DEPLOY_ENVIRONMENT_AZURE
-  extends: .azure_test
-  stage: integration
-  needs:
-    - filemetadata_azure_deploy
-  variables:
-    AZURE_AD_APP_RESOURCE_ID: $AZURE_APP_ID
-    AZURE_AD_TENANT_ID: $AZURE_TENANT_ID
-    AZURE_TESTER_SERVICEPRINCIPAL_SECRET: $AZURE_PRINCIPAL_SECRET
-    INTEGRATION_TESTER: $AZURE_PRINCIPAL_ID
-    DNS: https://${AZURE_DNS_NAME}
+    DNS: "https://${AZURE_DNS_NAME}"
     SVC_API_KEY: $AZURE_SVC_API_KEY
+  before_script:
+    - cd app/${FILEMETADATA_SERVICE}/app/integration_test
+    - pip3 install --break-system-packages msal
+    - export svctoken=$(python3 ${CI_PROJECT_DIR}/devops/scripts/azure_jwt_client.py)
   script:
-    - apt-get install python3-venv -y
-    - python3 -m venv seismicenv
+    - python -m venv seismicenv
     - source seismicenv/bin/activate
-    - pip3 install -Iv pytest==6.2.4 jsonschema==3.2.0 requests~=2.26.0 requests-mock==1.7.0 behave==1.2.6 python-dotenv==0.19.0 charset_normalizer chardet
-    - cd app/$FILEMETADATA_SERVICE/app/integration_test
-    - python3 -m behave -v
-  only:
-    changes:
-      - devops/**/*
-      - app/filemetadata/**/*
-    refs:
-      - branches
-      - merge_requests
-      - tags
+    - pip install -Iv pytest==6.2.4 jsonschema==3.2.0 requests~=2.26.0 requests-mock==1.7.0 behave==1.2.6 python-dotenv==0.19.0 charset_normalizer chardet
+    - python -m behave -v
+  artifacts: null
+  only: null
+  except: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/filemetadata/**/*
+      when: on_success
 
 filemetadata_azure_publish:
   needs:
     - filemetadata_azure_deploy
     - filemetadata_azure_containerize
-    - azure_containerize_helm
-  extends: .azure_publish
-  environment: $DEPLOY_ENVIRONMENT_AZURE
+    - filemetadata_azure_containerize_helm
+  extends:
+    - azure-publish
   variables:
     SHA_IMAGE: ${FILEMETADATA_LOCAL_SERVICE_NAME}:${CI_COMMIT_SHA}
   script:
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/seismic-metadata:${AZ_VER}
    - crane copy ${HELM_CHART_OCI#"oci://"}:${HELM_CHART_OCI_VERSION} ${DST_REGISTRY}.azurecr.io/helm/${HELM_CHART_SUBDIR}:${HELM_CHART_OCI_VERSION} || echo "[WARN] Not able to publish helm chart"
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success

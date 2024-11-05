@@ -14,7 +14,8 @@
 // limitations under the License.
 
 import { TenantModel } from '../../../services/tenant';
-import { AbstractJournal, AbstractJournalTransaction, IJournalQueryModel, IJournalTransaction, JournalFactory } from '../../journal';
+import { AbstractJournal, AbstractJournalTransaction, IJournalQueryModel, IJournalTransaction,
+    JournalFactory } from '../../journal';
 import { AnthosConfig } from './config';
 
 import { Utils } from '../../../shared/utils'

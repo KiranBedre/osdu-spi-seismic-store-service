@@ -16,8 +16,8 @@
 
 import sinon from 'sinon';
 
-import { ContainerClient, BlobClient, BlockBlobClient, BlobBatchClient, BlobServiceClient } from '@azure/storage-blob';
-import { AzureCloudStorage, AzureCredentials } from '../../../../src/cloud/providers/azure';
+import { ContainerClient, BlockBlobClient, BlobBatchClient, BlobServiceClient } from '@azure/storage-blob';
+import { AzureCloudStorage } from '../../../../src/cloud/providers/azure';
 import { Config } from '../../../../src/cloud';
 import { Tx } from '../../utils';
 
@@ -30,7 +30,6 @@ export class TestAzureStorage {
         describe(Tx.testInit('azure cloud storage test'), () => {
             this.sandbox = sinon.createSandbox();
 
-            this.sandbox.stub(AzureCredentials, 'getCredential').resolves()
             this.storage = new AzureCloudStorage({ gcpid: 'gcpid', default_acls:'x', esd: 'gcpid@domain.com', name: 'gcpid'});
 
             beforeEach(()=> {

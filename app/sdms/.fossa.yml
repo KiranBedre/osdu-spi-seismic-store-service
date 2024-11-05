@@ -20,3 +20,4 @@ analyze:
     type: pip
     target: devops/aws
     path: devops/aws
+

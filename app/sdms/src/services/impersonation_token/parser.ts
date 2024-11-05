@@ -36,7 +36,8 @@ export class ImpersonationTokenParser {
         }
 
         // Ensure is not an expire token (validity will be checked on the handler)
-        impersonationTokenRequestBody.userToken = impersonationTokenRequestBody.userToken.replace('Bearer', '').replace(/\s/g, '');
+        impersonationTokenRequestBody.userToken =
+            impersonationTokenRequestBody.userToken.replace('Bearer', '').replace(/\s/g, '');
         const exp = Utils.getExpTimeFromPayload(impersonationTokenRequestBody.userToken);
         if (exp < Math.floor(Date.now() / 1000)) {
             throw (Error.make(Error.Status.BAD_REQUEST, 'The specified \'user-token\' expired.'));

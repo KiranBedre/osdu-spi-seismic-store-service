@@ -32,7 +32,7 @@ export class AnalyticsGroups {
     // Get the data.manager & tenants's authorization groups
     public static getTenantManagerAuthGroups(
         tenant: TenantModel): string[] {
-            return TenantAuth.getAuthGroups(tenant).concat(Config.FULL_DATA_ACCESS_GROUP);
+            return TenantAuth.getAuthGroups(tenant).concat(Config.FULL_DATA_ACCESS_GROUP + '@' + tenant.esd);
     }
 
     // subproject's authorization groups

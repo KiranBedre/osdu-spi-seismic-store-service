@@ -1,7 +1,0 @@
-variables:
-  #seismic store service variables
-  SDMS_SERVICE: sdms
-  SDMS_PROJECT_TITLE: seismic-dms-service
-  SDMS_PROJECT_NAME: seismic-store-service
-  ISGITLAB: "true"
-  SDMS_UTEST_RUNTIME_IMAGE: seistore-svc-runtime

@@ -160,9 +160,7 @@ export class GCS extends AbstractStorage {
         const bucket = this.getStorageClient().bucket(subprojectPath.bucketname);
         const datasetObjectsPath = path_join(subprojectPath.subprojectFolder, datasetFolder, '/');
         const deleteQuery = { prefix: datasetObjectsPath, force: true };
-        // tslint:disable-next-line: no-floating-promises
         await bucket.deleteFiles(deleteQuery).catch(
-            // tslint:disable-next-line: no-console
             (error) => { LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error)); });
     }
 

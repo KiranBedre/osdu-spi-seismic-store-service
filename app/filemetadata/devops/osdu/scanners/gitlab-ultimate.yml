@@ -1,15 +1,14 @@
-filemetadata_gemnasium-python-dependency_scanning:
+filemetadata_gemnasium-dependency_scanning:
   extends:
-    - .ds-analyzer
-    - .cyclonedx-reports
+    - gemnasium-dependency_scanning
   variables:
-    PIP_REQUIREMENTS_FILE: requirements.txt
-    DS_ANALYZER_NAME: "gemnasium-python"
+    DS_ANALYZER_NAME: "gemnasium"
+    GEMNASIUM_LIBRARY_SCAN_ENABLED: "true"
     ANALYZER_TARGET_DIR: "$CI_PROJECT_DIR/app/$FILEMETADATA_SERVICE"
   rules:
     - if: $DEPENDENCY_SCANNING_DISABLED
       when: never
-    - if: $DS_EXCLUDED_ANALYZERS =~ /gemnasium-python/
+    - if: $DS_EXCLUDED_ANALYZERS =~ /gemnasium([^-]|$)/
       when: never
     - if: $CI_COMMIT_BRANCH &&
           $GITLAB_FEATURES =~ /\bdependency_scanning\b/ &&
@@ -17,32 +16,13 @@ filemetadata_gemnasium-python-dependency_scanning:
       changes:
         - devops/**/*
         - app/filemetadata/**/*
-      exists: !reference [.gemnasium-python-shared-rule, exists]
+      exists: !reference [.gemnasium-shared-rule, exists]
       variables:
         DS_IMAGE_SUFFIX: "-fips"
+        DS_REMEDIATE: "false"
     - if: $CI_COMMIT_BRANCH &&
           $GITLAB_FEATURES =~ /\bdependency_scanning\b/
       changes:
         - devops/**/*
         - app/filemetadata/**/*
-      exists: !reference [.gemnasium-python-shared-rule, exists]
-    # Support passing of $PIP_REQUIREMENTS_FILE
-    # See https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#configuring-specific-analyzers-used-by-dependency-scanning
-    - if: $CI_COMMIT_BRANCH &&
-          $GITLAB_FEATURES =~ /\bdependency_scanning\b/ &&
-          $PIP_REQUIREMENTS_FILE &&
-          $CI_GITLAB_FIPS_MODE == "true"
-      changes:
-        - devops/**/*
-        - app/filemetadata/**/*
-      variables:
-        DS_IMAGE_SUFFIX: "-fips"
-    - if: $CI_COMMIT_BRANCH &&
-          $GITLAB_FEATURES =~ /\bdependency_scanning\b/ &&
-          $PIP_REQUIREMENTS_FILE
-      changes:
-        - devops/**/*
-        - app/filemetadata/**/*
-  before_script:
-    - cd app/filemetadata
-    - cp pip.conf /etc
+      exists: !reference [.gemnasium-shared-rule, exists]

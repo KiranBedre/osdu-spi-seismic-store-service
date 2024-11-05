@@ -14,12 +14,12 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=16-alpine
+ARG docker_node_image_version=lts-alpine
 
 # -------------------------------
 # Compilation stage
 # -------------------------------
-FROM mcr.microsoft.com/mirror/docker/library/node:${docker_node_image_version} as runtime-builder
+FROM node:${docker_node_image_version} as runtime-builder
 
 ADD ./ /service
 WORKDIR /service
@@ -35,7 +35,7 @@ RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-head
 # -------------------------------
 # Package stage
 # -------------------------------
-FROM mcr.microsoft.com/mirror/docker/library/node:${docker_node_image_version} as release
+FROM node:${docker_node_image_version} as release
 
 COPY --from=runtime-builder /service/artifact /seistore-service
 WORKDIR /seistore-service

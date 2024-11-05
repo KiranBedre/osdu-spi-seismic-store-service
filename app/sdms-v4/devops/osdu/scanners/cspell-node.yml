@@ -14,25 +14,32 @@
 #  limitations under the License.
 #  ***************************************************************************
 
-sdms_v4_cspell:
+sdms-v4_cspell:
   image: node
-  tags: ["osdu-small"]
   stage: scan
-  needs: ['sdms_v4_push_runtime_image']
-  script:
+  needs: ['sdms-v4_containerize']
+  before_script:
     - cd app/$SDMS_V4_SERVICE
+  script:
     - npm install -g typescript
     - npm install -g cspell
-    - cspell "**" --quiet --gitignore --show-suggestions --config=../../cspell.json --reporter default  > ../../cspell_report.txt
+    - cspell "**" --quiet --gitignore --show-suggestions --config=../../cspell.json --reporter default  > cspell_report.txt
   artifacts:
     paths:
-      - cspell_report.txt
+      - app/$SDMS_V4_SERVICE/cspell_report.txt
     when: always
     expire_in: 2 days
-  only:
-    changes:
-      - devops/**/*
-      - app/sdms-v4/**/*
-    refs:
-      - branches
-      - merge_requests
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - devops/**/*
+        - app/sdms-v4/**/*
+      when: always

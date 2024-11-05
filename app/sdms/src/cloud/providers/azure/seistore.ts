@@ -83,7 +83,7 @@ export class AzureSeistore extends AbstractSeistore {
 
     public async handleReadinessCheck(): Promise<boolean> {
         try {
-            const credentials = AzureCredentials.getCredential();
+            const credentials = AzureCredentials.defaultAzureCredential;
             const scope = AzureConfig.APP_RESOURCE_ID;
             await credentials.getToken(`${scope}/.default`);
             return true;

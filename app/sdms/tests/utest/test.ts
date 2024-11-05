@@ -15,7 +15,6 @@
 // ============================================================================
 
 import { Locker } from '../../src/services/dataset/locker'
-// tslint:disable-next-line: no-floating-promises no-console
 Locker.init().catch((error)=>{ console.log(error);});
 
 import { TestAuthorization } from './auth/test';

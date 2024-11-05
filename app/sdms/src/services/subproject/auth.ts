@@ -22,10 +22,10 @@ export class SubprojectAuth {
 
     // Return the subproject's authorization groups
     public static getAuthGroups(
-        subproject: SubProjectModel, role: AuthRoles): string[] {
+        subproject: SubProjectModel, role: AuthRoles, esd: string): string[] {
         return role === AuthRoles.viewer ? subproject.acls.viewers.concat(
-            subproject.acls.admins.concat(Config.FULL_DATA_ACCESS_GROUP)) : subproject.acls.admins.concat(
-                Config.FULL_DATA_ACCESS_GROUP);
+            subproject.acls.admins.concat(Config.FULL_DATA_ACCESS_GROUP + '@' + esd)) : subproject.acls.admins.concat(
+                Config.FULL_DATA_ACCESS_GROUP + '@' + esd);
     }
 
 }

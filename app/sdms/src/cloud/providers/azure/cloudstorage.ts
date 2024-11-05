@@ -15,7 +15,8 @@
 // ============================================================================
 
 import { TokenCredential } from '@azure/identity';
-import { AccessTier, BlobBatchClient, BlobItem, BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
+import { AccessTier, BlobBatchClient, BlobItem, BlobServiceClient,
+    StorageSharedKeyCredential } from '@azure/storage-blob';
 import { BlockBlobTier } from '@azure/storage-blob';
 import { Readable } from 'stream';
 import { AzureInsightsLogger } from '.';
@@ -58,9 +59,8 @@ export class AzureCloudStorage extends AbstractStorage {
 
     public constructor(tenant: TenantModel) {
         super();
-        this.defaultAzureCredential = AzureCredentials.getCredential();
+        this.defaultAzureCredential = AzureCredentials.defaultAzureCredential;
         this.dataPartition = tenant?.esd.indexOf('.') !== -1 ? tenant?.esd.split('.')[0] : tenant.esd;
-
     }
 
     // generate a random container name

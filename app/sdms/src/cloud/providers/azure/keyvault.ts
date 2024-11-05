@@ -38,7 +38,7 @@ export class KeyVault {
     // public static IMP_SERVICE_ACCOUNT_SIGNER = 'imp-service-account-signer';
 
     public static CreateSecretClient(): SecretClient {
-        const credential = AzureCredentials.getCredential();
+        const credential = AzureCredentials.defaultAzureCredential;
         const vaultName = AzureConfig.KEYVAULT_URL;
         const url = vaultName.startsWith('https') ? vaultName : `https://${vaultName}.vault.azure.net`;
         const client = new SecretClient(url, credential);

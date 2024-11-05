@@ -216,6 +216,7 @@ npm ci
 rm -f ./tests/e2e/results/e2e_tests_*.html
 
 if [ -f "./node_modules/newman/bin/newman.js" ]; then
+   cp -r ./node_modules/newman-reporter-htmlextra ./node_modules/newman/
    runTests() {
       ./node_modules/newman/bin/newman.js run ./tests/e2e/postman_collection.json \
          -e ./tests/e2e/postman_env.json \

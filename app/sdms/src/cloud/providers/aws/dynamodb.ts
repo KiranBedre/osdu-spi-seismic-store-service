@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { TenantModel } from '../../../services/tenant';
-import { AbstractJournal, AbstractJournalTransaction, IJournalQueryModel, IJournalTransaction, JournalFactory } from '../../journal';
+import { AbstractJournal, AbstractJournalTransaction, IJournalQueryModel, IJournalTransaction,
+    JournalFactory } from '../../journal';
 import { AWSConfig } from './config';
 
 import AWS from 'aws-sdk/global';
@@ -65,7 +66,7 @@ export class AWSDynamoDbDAO extends AbstractJournal {
             const item  = entity.data;
             // The following is required due to the possibility that subprojects may have the `-` character.
             // We need to disallow it.
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line @stylistic/max-len
             // https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-sdutil/-/issues/10
             const tableKind = entity.key.tableKind;
             const mustMatchRegex = AWSDynamoDbDAO.ALLOWED_NAMES_REGEX.get(tableKind);
@@ -94,7 +95,6 @@ export class AWSDynamoDbDAO extends AbstractJournal {
 
             const tenantTable = await this.getTableName(entity.key.tableName);
             const itemMarshall = converter.marshall(item);
-            // tslint:disable-next-line:no-console
             console.log('from table ' + tenantTable + ' save ' + JSON.stringify(itemMarshall));
             const para = {
                 TableName: tenantTable,
@@ -108,7 +108,6 @@ export class AWSDynamoDbDAO extends AbstractJournal {
         const tenantTable = await this.getTableName(key.tableName);
         const item = { 'id': key.partitionKey };
         const itemMarshall = converter.marshall(item);
-        // tslint:disable-next-line:no-console
         console.log('from table ' + tenantTable + ' get ' + JSON.stringify(itemMarshall));
         const params = {
             TableName: tenantTable,
@@ -131,7 +130,6 @@ export class AWSDynamoDbDAO extends AbstractJournal {
         const tenantTable = await this.getTableName(key.tableName);
         const item = { 'id': key.partitionKey };
         const itemMarshall = converter.marshall(item);
-        // tslint:disable-next-line:no-console
         console.log('from table ' + tenantTable + ' delete ' + JSON.stringify(itemMarshall));
         const params = {
             TableName: tenantTable,
@@ -150,7 +148,6 @@ export class AWSDynamoDbDAO extends AbstractJournal {
         const dbQuery = (query as AWSDynamoDbQuery);
         const statement = dbQuery.getQueryStatement(dbQuery.kind, this.tenantTablePrefix);
 
-        // tslint:disable-next-line:no-console
         console.log('query ' + JSON.stringify(statement));
         const db = new DynamoDB.DocumentClient();
         let scanResults = [];
@@ -226,39 +223,33 @@ export class AWSDynamoDbTransactionDAO extends AbstractJournalTransaction {
     }
 
     public async save(entity: any): Promise<void> {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction Save ' + JSON.stringify(entity));
         this.queuedOperations.push(new AWSDynamoDbTransactionOperation('save', entity));
         await Promise.resolve();
     }
 
     public async get(key: any): Promise<[any | any[]]> {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction get ' + JSON.stringify(key));
         return this.owner.get(key);
     }
 
     public async delete(key: any): Promise<void> {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction delete ' + JSON.stringify(key));
         this.queuedOperations.push(new AWSDynamoDbTransactionOperation('delete', key));
         await Promise.resolve();
     }
 
     public createQuery(namespace: string, kind: string): IJournalQueryModel {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction createQuery ' + namespace + kind);
         return this.owner.createQuery(namespace, kind);
     }
 
     public async runQuery(query: IJournalQueryModel): Promise<[any[], { endCursor?: string }]> {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction runQuery ' + JSON.stringify(query));
         return this.owner.runQuery(query);
     }
 
     public async run(): Promise<void> {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction run ');
         if (this.queuedOperations.length) {
             await Promise.reject('Transaction is already in use.');
@@ -270,14 +261,12 @@ export class AWSDynamoDbTransactionDAO extends AbstractJournalTransaction {
     }
 
     public async rollback(): Promise<void> {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction rollback ');
         this.queuedOperations = [];
         return Promise.resolve();
     }
 
     public async commit(): Promise<void> {
-        // tslint:disable-next-line:no-console
         console.log('aws Transaction commit ');
         for (const operation of this.queuedOperations) {
             if (operation.type === 'save') {
@@ -372,7 +361,6 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
         if (start instanceof Buffer) {
             throw new Error('Type \'Buffer\' is not supported for DynamoDB Continuation while paging.');
         }
-        // tslint:disable-next-line:no-console
         console.log('NOT SUPPORT aws start createQuery ' + start);
         return this;
     }
@@ -383,7 +371,6 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
     }
 
     groupBy(fieldNames: string | string[]): IJournalQueryModel {
-        // tslint:disable-next-line:no-console
         console.log('NOT SUPPORT aws groupBy createQuery ' + fieldNames);
         return this;
     }

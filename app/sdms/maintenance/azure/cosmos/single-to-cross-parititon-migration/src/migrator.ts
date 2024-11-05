@@ -4,7 +4,8 @@ import { CosmosClient, OperationInput, JSONObject } from '@azure/cosmos';
 
 class Migration {
 
-    public static usageHelp = 'Usage: ts-node single-to-cross-partition.ts --cosmos-endpoint=... --cosmos-key=... --partition=... (--status)'
+    public static usageHelp =
+        'Usage: ts-node single-to-cross-partition.ts --cosmos-endpoint=... --cosmos-key=... --partition=... (--status)'
 
     private static getArg(args: any, key: string): any {
         if (!(key in args)) {
@@ -44,11 +45,11 @@ class Migration {
 
 
 
-        // cases: 
+        // cases:
         // single no - cross no -> sdms not initialized in the partition
         // single no - cross yes -> newly created partition - no migration required
         // single yes - cross no -> migration required
-        // single yes - cross yes - key yes -> migration completed 
+        // single yes - cross yes - key yes -> migration completed
         // single yes - cross yes - key no --> migration in progress
 
         if (!singleExist && !crossExist) {
@@ -57,19 +58,23 @@ class Migration {
         }
 
         if (!singleExist && crossExist) {
+            // eslint-disable-next-line @stylistic/max-len
             console.log('\nSDMS has already been initialized with the cross partitions model in ' + partition + '. Migration is not required.');
             return;
         }
 
         if (singleExist && !crossExist) {
+            // eslint-disable-next-line @stylistic/max-len
             console.log('\nSDMS has been initialized with the single partition model in ' + partition + '. Migration is required.');
             return;
         }
 
         if (singleExist && crossExist) {
             if (crossKey) {
+                // eslint-disable-next-line @stylistic/max-len
                 console.log('\nSDMS has already been migrated to the cross partition model in ' + partition + '. Migration is not required.');
             } else {
+                // eslint-disable-next-line @stylistic/max-len
                 console.log('\nSDMS migration is in progress in ' + partition + '. Migration is required to be completed.');
             }
         }

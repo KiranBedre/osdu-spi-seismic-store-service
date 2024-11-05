@@ -162,7 +162,8 @@ export class Locker {
 
     private static getLockMessage(lockKey: string, lockValue: string[] | string): string {
         if (this.isWriteLock(lockValue)) {
-            const operationType = typeof (lockValue) === 'string' && lockValue.startsWith('WDELETE') ? 'deletion' : 'write';
+            const operationType =
+                typeof (lockValue) === 'string' && lockValue.startsWith('WDELETE') ? 'deletion' : 'write';
             return lockKey + ' is locked for ' + operationType + ' with different id ' + Error.get423WriteLockReason();
         } else {
             return lockKey + ' is locked for read with different id ' + Error.get423ReadLockReason();

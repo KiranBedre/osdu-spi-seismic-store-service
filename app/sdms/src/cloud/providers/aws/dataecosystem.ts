@@ -77,7 +77,6 @@ export class AWSDataEcosystemServices extends AbstractDataEcosystemCore {
             return tenantInfo;
         }
         catch (err) {
-            // tslint:disable-next-line:no-console
             console.log(err.code + ': ' + err.message);
         }
     }

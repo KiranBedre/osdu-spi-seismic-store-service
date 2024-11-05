@@ -1,0 +1,11 @@
+gc-containerize-bootstrap-gitlab:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+gc-containerize-bootstrap-gcr:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

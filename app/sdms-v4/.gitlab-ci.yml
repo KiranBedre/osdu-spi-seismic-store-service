@@ -1,5 +1,5 @@
 #  ***************************************************************************
-#  Copyright 2017 - 2023, Schlumberger
+#  Copyright 2017 - 2024, Schlumberger
 #
 #  Licensed under the Apache License, Version 2.0(the "License");
 #  you may not use this file except in compliance with the License.
@@ -15,35 +15,55 @@
 #  ***************************************************************************
 
 include:
-  # global
-  - local: "app/sdms-v4/devops/osdu/global/gitlab.yml"
 
-  # containerize
-  # osdu
-  - local: "app/sdms-v4/devops/osdu/containerize/osdu.yml"
+  # VARIABLES
+  - local: "app/sdms-v4/devops/osdu/variables/variables.yml"
+
+  # CONTAINERIZE
+  - local: "app/sdms-v4/devops/osdu/containerize/containerize.yml"
   
-  # scanners
+  # SCANNERS
+  # fossa
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "scanners/fossa-npm.yml"
+    rules:
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FOSSA_API_KEY
+      - if: $CI_COMMIT_TAG && $FOSSA_API_KEY
+      - if: $CI_COMMIT_BRANCH =~ 'trusted-.+' && $FOSSA_API_KEY
+      - if: $CI_COMMIT_REF_PROTECTED && $FOSSA_API_KEY
+      - if: $FOSSA_API_KEY
+        changes:
+          - app/sdms-v4/**/*
+
+    # overwrite logic
+  - local: "app/sdms-v4/devops/osdu/scanners/fossa-npm.yml"
+    rules:
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FOSSA_API_KEY
+      - if: $CI_COMMIT_TAG && $FOSSA_API_KEY
+      - if: $CI_COMMIT_BRANCH =~ 'trusted-.+' && $FOSSA_API_KEY
+      - if: $CI_COMMIT_REF_PROTECTED && $FOSSA_API_KEY
+      - if: $FOSSA_API_KEY
+        changes:
+          - app/sdms-v4/**/*
+
   # cspell
   - local: "app/sdms-v4/devops/osdu/scanners/cspell-node.yml"
 
-  # markdownlint
-  - local: "app/sdms-v4/devops/osdu/scanners/markdownlint-node.yml"
-  
   # lint
   - local: "app/sdms-v4/devops/osdu/scanners/lint-node.yml"
-  
+
+  # markdownlint
+  - local: "app/sdms-v4/devops/osdu/scanners/markdownlint-node.yml"
+
   # prettier
   - local: "app/sdms-v4/devops/osdu/scanners/prettier-node.yml"
-  
-  # scan for secrets
-  - local: "app/sdms-v4/devops/osdu/scanners/scan-for-secrets-node.yml"
 
-  # vulnerability Scan
+  # ultimate
   - local: "app/sdms-v4/devops/osdu/scanners/gitlab-ultimate.yml"
 
-  # deploy
+  # CLOUD PROVIDERS
+  # aws
+  - local: "app/sdms-v4/devops/osdu/cloud-providers/aws-global.yml"
+
   # azure
   - local: "app/sdms-v4/devops/osdu/cloud-providers/azure.yml"
-  # deploy
-  # aws
-  - local: "app/sdms-v4/devops/osdu/cloud-providers/aws.yml"

@@ -1,7 +1,46 @@
-include:
+ibm-helm-charts-master:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
 
-  # ibm-global
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/ibm.yml"
+ibm-helm-charts-release:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
 
-  - local: "devops/osdu/cloud-providers/ibm-common-pipeline.yml"
+ibm-deploy:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+ibm-deploy-devpri:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+ibm-test:
+  extends: [.ibm_variables]
+  only: null
+  except: null
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+ibm-test-py:
+  only: null
+  except: null
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+ibm-preship-promote:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+ibm-preship-promote-release:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

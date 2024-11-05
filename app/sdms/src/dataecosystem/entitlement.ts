@@ -36,7 +36,8 @@ export class DESEntitlement {
                 'Content-Type': 'application/json',
             }
         };
-        let url = Config.DES_SERVICE_HOST_ENTITLEMENT + dataecosystem.getEntitlementBaseUrlPath() + '/groups/' + group + '/members';
+        let url = Config.DES_SERVICE_HOST_ENTITLEMENT + dataecosystem.getEntitlementBaseUrlPath() +
+            '/groups/' + group + '/members';
 
         if (prevCursor !== undefined) { url += ('?cursor=' + prevCursor); }
 

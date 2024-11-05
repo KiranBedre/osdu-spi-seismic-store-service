@@ -56,7 +56,8 @@ export class AzureDataEcosystemServices extends AbstractDataEcosystemCore {
             headers: {
                 'Accept': 'application/json',
                 'Authorization': 'Bearer ' + (
-                    await  AzureCredentials.getCredential().getToken(AzureConfig.APP_RESOURCE_ID + '/.default')).token,
+                    // eslint-disable-next-line @stylistic/max-len
+                    await  AzureCredentials.defaultAzureCredential.getToken(AzureConfig.APP_RESOURCE_ID + '/.default')).token,
                 'Content-Type': 'application/json'
             }
         };

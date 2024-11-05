@@ -1,6 +1,55 @@
-include:
-  # azure-global
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/azure.yml" 
+azure_containerize:
+  needs: []
+  only: null
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
 
-  - local: "devops/osdu/cloud-providers/azure-common-pipeline.yml"
+azure_containerize_helm:
+  only: null
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+container_scanning:
+  only: null
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+azure_deploy:
+  only:
+    variables:
+      - $DISABLED == 'true'
+
+azure_test:
+  extends:
+    - .azure_variables
+  only:
+    variables:
+      - $DISABLED == 'true'
+
+azure_code_coverage:
+  needs: []
+  extends: []
+  only: null
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+azure_test_py:
+  extends: []
+  only:
+    variables:
+      - $DISABLED == 'true'
+
+azure_swagger_test:
+  only:
+    variables:
+      - $DISABLED == 'true'
+
+azure-publish:
+  only: null
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

@@ -54,11 +54,9 @@ export class StorageJobManager {
       });
 
       // setup job processing callback
-      // tslint:disable-next-line: no-floating-promises
       StorageJobManager.copyJobsQueue.process(50, (input) => {
          return StorageJobManager.copy(input);
       }).catch(
-         // tslint:disable-next-line:  no-console
          (error) => { LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error)); });
 
       // setup  handlers for job events

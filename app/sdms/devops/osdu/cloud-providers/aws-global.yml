@@ -1,0 +1,152 @@
+variables:
+  AWS_RUNTIME_DOCKERFILE_PATH: src/cloud/providers/aws/build-aws/runtime.Dockerfile
+  AWS_BUILDER_DOCKERFILE_PATH: src/cloud/providers/aws/build-aws/builder.Dockerfile
+  AWS_DEPLOY_TARGET: TF
+  AWS_SDMS_PREFIX: /api/seismic-store/v3
+
+.aws_clean_code:
+  before_script:
+    - |
+      cd app/$SDMS_SERVICE
+      sed -i "/anthos/d" src/cloud/providers/index.ts
+      rm -Rf src/cloud/providers/anthos
+      sed -i "/google/d" src/cloud/providers/index.ts
+      rm -Rf src/cloud/providers/google
+      sed -i "/ibm/d" src/cloud/providers/index.ts
+      rm -Rf src/cloud/providers/ibm
+      jq "del(.prisma)" package.json > cleaned_package.json
+      mv cleaned_package.json package.json
+      export directoryToScan=$PWD
+      export currentDirectory=$PWD
+      chmod +x devops/scripts/detect_unused_packages.sh
+      devops/scripts/detect_unused_packages.sh
+      chmod +x devops/scripts/clean_package_json.sh
+      devops/scripts/clean_package_json.sh
+
+sdms_aws-containerize:
+  extends:
+    - .azure_clean_code
+    - aws-containerize
+  variables:
+    LOCAL_IMAGE_TAG: ${CI_REGISTRY_IMAGE}/os-seismic-store-aws:${CI_COMMIT_SHA}
+    AWS_IMAGE_TAG_BASE: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_ECR_REGION}.amazonaws.com/os-seismic-store
+  needs: ['sdms_compile-and-unit-test']
+  before_script:
+    - !reference [.aws_clean_code, before_script]
+    - !reference [.aws, before_script]
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AWS == '1'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
+
+sdms_aws-update-tf:
+  extends: 
+    - aws-update-tf
+  variables:
+    AWS_EKS_DEPLOYMENT_NAME: os-seismic-store
+    AWS_SERVICE_NAMESPACE_SUFFIX: seismic-store
+    AWS_IMAGE_TAG_BASE: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_ECR_REGION}.amazonaws.com/os-seismic-store
+  needs: ['sdms_aws-containerize']
+  before_script:
+    - !reference [.aws_variables, before_script]
+    - !reference [.aws, before_script]
+    - cd app/$SDMS_SERVICE
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AWS == '1' && $AWS_SKIP_DEPLOY != 'true' && $AWS_DEPLOY_TARGET == 'TF'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AWS == '1' && $AWS_SKIP_DEPLOY != 'true' && $AWS_DEPLOY_TARGET == 'TF'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AWS == '1' && $AWS_SKIP_DEPLOY != 'true' && $AWS_DEPLOY_TARGET == 'TF'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AWS == '1' && $AWS_SKIP_DEPLOY != 'true' && $AWS_DEPLOY_TARGET == 'TF'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
+
+sdms_aws-test-newman:
+  extends:
+    - .aws
+    - .aws_common_variables
+    - .aws_variables
+  stage: integration
+  image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-node/aws-node:v1.0-node18
+  needs: ['sdms_aws-update-tf']
+  before_script:
+    - !reference [.aws_variables, before_script]
+    - !reference [.aws, before_script]
+    - cd app/$SDMS_SERVICE
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - python3 -m pip install -r devops/aws/requirements.txt
+    - svctoken=$(python3 ../../devops/scripts/aws_jwt_client.py)
+  script:
+    - >
+      curl --insecure --location --request POST "$LEGAL_BASE_URL"'legaltags' \
+        --header 'accept: application/json' \
+        --header 'authorization: Bearer '"$svctoken" \
+        --header 'content-type: application/json' \
+        --header 'data-partition-id: opendes' \
+        --data '{
+          "name": "sdmstestlegaltag",
+          "description": "test legal for Seismic DMS test",
+          "properties": {
+            "countryOfOrigin":["US"],
+            "contractId":"A1234",
+            "expirationDate":"2099-01-25",
+            "dataType":"Public Domain Data",
+            "originator":"MyCompany",
+            "securityClassification":"Public",
+            "exportClassification":"EAR99",
+            "personalData":"No Personal Data"
+          }
+        }'
+    - echo 'Register SeismicStore.tenants before Integration Tests ...'
+    - >
+      curl --insecure --location --request POST "$SEISMICSTORE_SVC_URL"'/tenant/opendes' \
+        --header 'accept: application/json' \
+        --header 'authorization: Bearer '"$svctoken" \
+        --header 'content-type: application/json' \
+        --header 'data-partition-id: opendes' \
+        --data '{
+          "default_acls": "users.datalake.admins@opendes.example.com",
+          "esd": "opendes.example.com",
+          "gcpid": "aws_project_id"
+        }'
+    - npm install -g newman
+    - chmod +x ./tests/e2e/run_e2e_tests.sh
+    - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url=${AWS_BASE_URL}${AWS_SDMS_PREFIX} --seistore-svc-api-key="NA" --user-idtoken="$svctoken" --user-idtoken="$svctoken" --tenant=opendes --admin-email="${AWS_COGNITO_AUTH_PARAMS_USER}" --datapartition=opendes --legaltag01=opendes-sdmstestlegaltag --legaltag02=opendes-sdmstestlegaltag --VCS-Provider="${ISGITLAB}" --subproject=awsdemosubproject
+  artifacts:
+    when: always
+    paths:
+      - app/$SDMS_SERVICE/$INTEGRATION_TEST_DIR
+    expire_in: 14 days
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AWS == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AWS == '1'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success

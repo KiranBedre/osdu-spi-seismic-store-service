@@ -38,7 +38,6 @@ export class DESStorage {
 
         const url = Config.DES_SERVICE_HOST_STORAGE + dataecosystem.getStorageBaseUrlPath() + '/records';
 
-        // tslint:disable-next-line: no-string-literal
         options.headers['Authorization'] = await dataecosystem.getAuthorizationHeader(userToken);
         options.headers[dataecosystem.getDataPartitionIDRestHeaderName()] = DESUtils.getDataPartitionID(esd);
 
@@ -67,9 +66,9 @@ export class DESStorage {
                 'Content-Type': 'application/json',
             }
         };
-        const url = Config.DES_SERVICE_HOST_STORAGE + dataecosystem.getStorageBaseUrlPath() + '/records/' + seismicUid + ':delete';
+        const url = Config.DES_SERVICE_HOST_STORAGE + dataecosystem.getStorageBaseUrlPath() +
+            '/records/' + seismicUid + ':delete';
 
-        // tslint:disable-next-line: no-string-literal
         options.headers['Authorization'] = await dataecosystem.getAuthorizationHeader(userToken);
         options.headers[dataecosystem.getDataPartitionIDRestHeaderName()] = DESUtils.getDataPartitionID(esd);
 
@@ -95,7 +94,6 @@ export class DESStorage {
         };
         const url = recordVersion ? httpUrl + '/' + recordVersion : httpUrl;
 
-        // tslint:disable-next-line: no-string-literal
         options.headers['Authorization'] = await dataecosystem.getAuthorizationHeader(userToken);
         options.headers[dataecosystem.getDataPartitionIDRestHeaderName()] = DESUtils.getDataPartitionID(esd);
 

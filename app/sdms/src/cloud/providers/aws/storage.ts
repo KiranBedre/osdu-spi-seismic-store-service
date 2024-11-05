@@ -84,7 +84,6 @@ export class AWSStorage extends AbstractStorage {
         try {
             await this.s3.putObject(params).promise();
         } catch (err) {
-            // tslint:disable-next-line:no-console
             console.log(err.code + ': ' + err.message);
         }
     }
@@ -104,7 +103,6 @@ export class AWSStorage extends AbstractStorage {
         try {
             await this.s3.deleteObject(params).promise();
         } catch (err) {
-            // tslint:disable-next-line:no-console
             console.log(err.code + ': ' + err.message);
         }
     }
@@ -148,7 +146,6 @@ export class AWSStorage extends AbstractStorage {
         try {
             await this.s3.putObject(params).promise();
         } catch (err) {
-            // tslint:disable-next-line:no-console
             console.log(err.code + ': ' + err.message);
         }
     }
@@ -164,7 +161,6 @@ export class AWSStorage extends AbstractStorage {
         try {
             await this.s3.deleteObject(params).promise();
         } catch (err) {
-            // tslint:disable-next-line:no-console
             console.log(err.code + ': ' + err.message);
         }
     }

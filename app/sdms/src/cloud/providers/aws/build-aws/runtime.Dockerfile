@@ -22,7 +22,7 @@ ARG docker_node_image_version=16-alpine
 FROM node:${docker_node_image_version} as runtime-builder
 
 # RUN apt-get install -yqq --no-install-recommends openssl
-
+RUN npm update -g
 ADD ./ /service
 WORKDIR /service
 RUN apk --no-cache upgrade \
@@ -48,6 +48,7 @@ ENV SSL_ENABLED "true"
 COPY --from=runtime-builder /service/artifact /seistore-service
 WORKDIR /seistore-service
 
+RUN npm update -g
 RUN apk --no-cache upgrade \
     && apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && addgroup appgroup \

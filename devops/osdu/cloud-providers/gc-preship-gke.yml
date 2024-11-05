@@ -1,0 +1,4 @@
+gc-preship-deploy:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

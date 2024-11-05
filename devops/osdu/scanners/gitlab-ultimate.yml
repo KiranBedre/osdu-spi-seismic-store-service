@@ -1,6 +1,11 @@
-include:
-  # gitlab-ultimate
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "scanners/gitlab-ultimate.yml"
+dependency_scanning:
+  needs: []
 
-  - local: "devops/osdu/scanners/gitlab-ultimate-common.yml"
+gemnasium-python-dependency_scanning:
+  dependencies: []
+
+sast:
+  needs: []
+
+secret_detection:
+  needs: []

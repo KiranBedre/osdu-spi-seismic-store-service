@@ -126,6 +126,7 @@ export class DatastoreDAO extends AbstractJournal {
                 customizedOb[self.KEY.toString()] = entity.key;
                 for (const element in entity.data) {
                     if (!((entity.key.kind === 'datasets' || entity.key.kind === 'seismicmeta') && element === '_id'))
+                        // eslint-disable-next-line @stylistic/max-len
                         if (!((entity.key.kind === 'datasets' || entity.key.kind === 'seismicmeta') && element === '_rev'))
                                     customizedOb[element] = entity.data[element];
                 };

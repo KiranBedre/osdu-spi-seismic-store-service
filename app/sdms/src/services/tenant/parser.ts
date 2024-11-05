@@ -44,7 +44,8 @@ export class TenantParser {
         if(DataEcosystemCoreFactory.build(Config.CLOUDPROVIDER).tenantNameAndDataPartitionIDShouldMatch() &&
             tenant.name !== DESUtils.getDataPartitionID(tenant.esd)) {
                 throw (Error.make(Error.Status.ALREADY_EXISTS,
-                    'The tenant name must match the data partition ID \'' + DESUtils.getDataPartitionID(tenant.esd) + '\''));
+                    'The tenant name must match the data partition ID \''
+                    + DESUtils.getDataPartitionID(tenant.esd) + '\''));
             }
         return tenant;
     }

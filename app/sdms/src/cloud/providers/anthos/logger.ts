@@ -20,17 +20,14 @@ import { AbstractLogger, LoggerFactory } from '../../logger';
 export class AnthosLogger extends AbstractLogger {
 
     public info(data: any): void {
-        // tslint:disable-next-line:no-console
         console.log(data);
     }
 
     public debug(data: any): void {
-        // tslint:disable-next-line:no-console
         console.debug(data);
     }
 
     public error(data: any): void {
-        // tslint:disable-next-line:no-console
         console.error(data);
     }
 

@@ -110,7 +110,6 @@ export class AnthosCredentials extends AbstractCredentials {
         const S3bucket = splitPath[0];
         const subprojectFolder = splitPath[1];
 
-        // tslint:disable-next-line:triple-equals
         if (readonly) { // readOnly True
             flagUpload = false;
         } else   // readOnly False

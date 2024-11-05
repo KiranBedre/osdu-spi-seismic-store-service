@@ -1,0 +1,95 @@
+.sdms-v4_prepare_fossa:
+  before_script:
+    - cp -Rf app/${SDMS_V4_SERVICE}/*.* .
+    - cp -Rf app/${SDMS_V4_SERVICE}/* .
+    - cp -Rf app/${SDMS_V4_SERVICE}/. .
+    - cp -Rf app/${SDMS_V4_SERVICE}/.fossa.yml .
+    - rm -Rf app/filemetadata
+    - rm -Rf app/sdms
+    - rm -Rf app/${SDMS_V4_SERVICE}/*.*
+    - rm -Rf app/${SDMS_V4_SERVICE}/*
+
+.sdms-v4_prepare_fossa_check_notice:
+  before_script:
+    - mkdir -p app/${SDMS_V4_SERVICE}/fossa-output
+    - cp -Rf fossa-output/. app/${SDMS_V4_SERVICE}/fossa-output/.
+
+sdms-v4_fossa-analyze:
+  extends:
+    - .sdms-v4_prepare_fossa
+    - fossa-analyze
+  variables:
+    ALLOW_FOSSA_CACHE: 'false'
+    FOSSA_OUTPUT_DIR: "app/${SDMS_V4_SERVICE}/fossa-output"
+  needs: ['sdms-v4_containerize']
+  tags: ['osdu-medium']
+  script:
+    # fossa-with-cache needs a CI_COMMIT_BRANCH defined to know how to parse the FOSSA API results
+    # When building tags, this isn't defined by GitLab. In that case, we use the tag name instead. If that's not defined
+    # then things will fail and we'll have to make this smarter
+    - test -z "$CI_COMMIT_BRANCH" && export CI_COMMIT_BRANCH="$CI_COMMIT_TAG"
+    - npm ci
+    - fossa-with-cache
+  artifacts:
+    paths:
+      - app/${SDMS_V4_SERVICE}/fossa-output
+    when: always
+    expire_in: 2 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_TAG && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ 'trusted-.+' && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_REF_PROTECTED && $FOSSA_API_KEY
+      changes:
+        - app/sdms-v4/**/*
+      when: on_success
+    - if: $FOSSA_API_KEY
+      changes:
+        - app/sdms-v4/**/*
+      when: on_success
+
+sdms-v4_fossa-check-notice:
+  extends:
+    - .sdms-v4_prepare_fossa
+    - .sdms-v4_prepare_fossa_check_notice
+    - fossa-check-notice
+  needs: ['sdms-v4_fossa-analyze']
+  tags: ['osdu-medium']
+  before_script:
+    - !reference [.sdms-v4_prepare_fossa, before_script]
+    - !reference [.sdms-v4_prepare_fossa_check_notice, before_script]
+  artifacts:
+    when: on_failure
+    paths:
+      - app/${SDMS_V4_SERVICE}/fossa-output/cached-NOTICE
+      - app/${SDMS_V4_SERVICE}/fossa-output/generated-clean-NOTICE
+    expire_in: 2 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_TAG && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ 'trusted-.+' && $FOSSA_API_KEY
+      when: on_success
+    - if: $CI_COMMIT_REF_PROTECTED && $FOSSA_API_KEY
+      changes:
+        - app/sdms-v4/**/*
+      when: on_success
+    - if: $FOSSA_API_KEY
+      changes:
+        - app/sdms-v4/**/*
+      when: on_success
+
+fossa-analyze:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+fossa-check-notice:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

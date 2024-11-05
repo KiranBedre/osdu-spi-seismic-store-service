@@ -190,7 +190,7 @@ export class Handler {
 
         // check if the caller is write authorized (subproject admin)
         await Auth.isWriteAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin, tenant.esd),
             tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 

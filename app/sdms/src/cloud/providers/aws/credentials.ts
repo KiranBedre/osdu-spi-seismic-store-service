@@ -66,7 +66,6 @@ export class AWSCredentials extends AbstractCredentials {
         const data = await db.getItem(params).promise();
         const ret = aws.DynamoDB.Converter.unmarshall(data.Item);
         if (Object.keys(ret).length === 0){
-            // tslint:disable-next-line:no-console
             console.log('error to get Bucket folder: '+folder+'\n');
             return undefined;
         }
@@ -83,7 +82,9 @@ export class AWSCredentials extends AbstractCredentials {
             const tenantId = await AWSDataEcosystemServices.getTenantIdFromPartitionID(dataPartition);
 
             const tenantSsmPrefix = '/osdu/tenant-groups/' + AWSConfig.AWS_TENANT_GROUP_NAME + '/tenants/' + tenantId;
+            // eslint-disable-next-line @stylistic/max-len
             const s3bucket = await AWSCredentials.awsSSMHelper.getSSMParameter(tenantSsmPrefix+ '/seismic-ddms/SeismicDDMSBucket/name');
+            // eslint-disable-next-line @stylistic/max-len
             const expDuration = await AWSCredentials.awsSSMHelper.getSSMParameter(tenantSsmPrefix+'/seismic-ddms/temp-cred-expiration-duration')
             let roleArn='';
             let credentials='';
@@ -93,12 +94,13 @@ export class AWSCredentials extends AbstractCredentials {
             const keyPath =  await this.getBucketFolder(tenant+':'+subproject, tenantId);
 
             const osduTenantGroupSsmPrefix = '/osdu/tenant-groups/' + AWSConfig.AWS_TENANT_GROUP_NAME;
-            // tslint:disable-next-line:triple-equals
             if(readonly ) { // readOnly True
+                 // eslint-disable-next-line @stylistic/max-len
                  roleArn = await AWSCredentials.awsSSMHelper.getSSMParameter(osduTenantGroupSsmPrefix + '/seismic-ddms/iam/download-role-arn')
                 flagUpload = false;
             } else   // readOnly False
             {
+                // eslint-disable-next-line @stylistic/max-len
                 roleArn = await AWSCredentials.awsSSMHelper.getSSMParameter(osduTenantGroupSsmPrefix + '/seismic-ddms/iam/upload-role-arn')
             }
 
@@ -155,8 +157,10 @@ export class AWSCredentials extends AbstractCredentials {
         return (Promise.resolve(val.toString()));
     }
 
-    // tslint:disable-next-line: max-line-length
-    public static async getSecrets(clientSecretName: string, clientSecretDictKey: string, secretsManager:aws.SecretsManager = new aws.SecretsManager({region: AWSConfig.AWS_REGION})): Promise<string> {
+    public static async getSecrets(
+        clientSecretName: string,
+        clientSecretDictKey: string,
+        secretsManager:aws.SecretsManager = new aws.SecretsManager({region: AWSConfig.AWS_REGION})): Promise<string> {
         const params = {
             SecretId: clientSecretName
         };
@@ -167,13 +171,11 @@ export class AWSCredentials extends AbstractCredentials {
                 const val = Object.values(secretValue)[0];
                 return (Promise.resolve(val.toString()));
             }  else {
-                // tslint:disable-next-line:no-console
                 console.log('get binary');
                 const decodedBinarySecret = Buffer.from(data.SecretBinary.toString(), 'base64').toString('ascii');
                 return (Promise.resolve(decodedBinarySecret));
             }
         } catch (err) {
-            // tslint:disable-next-line:no-console
             console.log(err.code + ': ' + err.message);
         }
     }

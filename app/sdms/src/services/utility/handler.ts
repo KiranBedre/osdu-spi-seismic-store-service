@@ -101,13 +101,15 @@ export class UtilityHandler {
                 await DatasetDAO.getByKey(journalClient, requestDataset) :
                 (await DatasetDAO.get(journalClient, requestDataset))[0];
 
-            authGroups = DatasetAuth.getAuthGroups(subproject, dataset, readOnly ? AuthRoles.viewer : AuthRoles.admin);
+            authGroups = DatasetAuth.getAuthGroups(
+                subproject, dataset, readOnly ? AuthRoles.viewer : AuthRoles.admin, tenant.esd);
             bucket = DatasetUtils.getBucketFromDatasetResourceUri(dataset.gcsurl);
             virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
 
         } else { // subproject connection string
 
-            authGroups = SubprojectAuth.getAuthGroups(subproject, readOnly ? AuthRoles.viewer : AuthRoles.admin);
+            authGroups = SubprojectAuth.getAuthGroups(
+                subproject, readOnly ? AuthRoles.viewer : AuthRoles.admin, tenant.esd);
             bucket = subproject.gcs_bucket;
 
         }
@@ -155,11 +157,11 @@ export class UtilityHandler {
 
             readOnly ?
                 await Auth.isReadAuthorized(req.headers.authorization,
-                    SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+                    SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
                     tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                     req.headers['impersonation-token-context'] as string) :
                 await Auth.isWriteAuthorized(req.headers.authorization,
-                    SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
+                    SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin, tenant.esd),
                     tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                     req.headers['impersonation-token-context'] as string);
 
@@ -176,11 +178,11 @@ export class UtilityHandler {
 
             readOnly ?
                 await Auth.isReadAuthorized(req.headers.authorization,
-                    DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer),
+                    DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer, tenant.esd),
                     tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                     req.headers['impersonation-token-context'] as string) :
                 await Auth.isWriteAuthorized(req.headers.authorization,
-                    DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin),
+                    DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.admin, tenant.esd),
                     tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                     req.headers['impersonation-token-context'] as string);
 
@@ -272,7 +274,7 @@ export class UtilityHandler {
 
         //  Check if user is authorized
         await Auth.isReadAuthorized(req.headers.authorization,
-            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer),
+            SubprojectAuth.getAuthGroups(subproject, AuthRoles.viewer, tenant.esd),
             tenant, inputArgs.sdPath.subproject, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
@@ -343,11 +345,11 @@ export class UtilityHandler {
 
         await Promise.all([
             Auth.isReadAuthorized(req.headers.authorization,
-                DatasetAuth.getAuthGroups(subproject, datasetFrom, AuthRoles.viewer),
+                DatasetAuth.getAuthGroups(subproject, datasetFrom, AuthRoles.viewer, tenant.esd),
                 tenant, sdPathFrom.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string),
             await Auth.isWriteAuthorized(req.headers.authorization,
-                SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin),
+                SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin, tenant.esd),
                 tenant, sdPathTo.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string)]);
 

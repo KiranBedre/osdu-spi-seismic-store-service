@@ -41,9 +41,9 @@ export class DESCompliance {
         const data = {
             'names': [ltag]
         };
-        const url = Config.DES_SERVICE_HOST_COMPLIANCE + dataecosystem.getComplianceBaseUrlPath() + '/legaltags:validate';
+        const url = Config.DES_SERVICE_HOST_COMPLIANCE + dataecosystem.getComplianceBaseUrlPath() +
+            '/legaltags:validate';
 
-        // tslint:disable-next-line: no-string-literal
         options.headers['Authorization'] = await dataecosystem.getAuthorizationHeader(userToken);
         options.headers[dataecosystem.getDataPartitionIDRestHeaderName()] = dataPartitionID;
 

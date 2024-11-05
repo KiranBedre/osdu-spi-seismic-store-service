@@ -1,7 +1,6 @@
-sdms_v4-gemnasium-dependency_scanning:
+sdms-v4-gemnasium-dependency_scanning:
   extends:
-    - .ds-analyzer
-    - .cyclonedx-reports
+    - gemnasium-dependency_scanning
   variables:
     DS_ANALYZER_NAME: "gemnasium"
     GEMNASIUM_LIBRARY_SCAN_ENABLED: "true"
