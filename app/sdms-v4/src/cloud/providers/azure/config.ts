@@ -39,14 +39,9 @@ export class AzureConfig extends Config {
         Config.checkRequiredConfig(AzureConfig.KEYVAULT_URL, 'KEYVAULT_URL');
         await AzureSecrets.loadSecrets();
 
-        // storage queue endpoint
-        AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT =
-            process.env.AZURE_STORAGE_QUEUE_ENDPOINT || AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT;
-        Config.checkRequiredConfig(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, 'AZURE_STORAGE_QUEUE_ENDPOINT');
-
-        // v3&v4 sync queue
-        Config.SDMS_V3_V4_SYNC_QUEUE =
-            process.env.V3_V4_SYNC_QUEUE || Config.SDMS_V3_V4_SYNC_QUEUE || 'sdms-queue-v3v4sync';
+        if (Config.FEATURE_FLAG_OPERATIONS_SYNC_V3_V4) {
+            Config.checkRequiredConfig(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, 'AZURE_STORAGE_QUEUE_ENDPOINT');
+        }
 
         // Initialize insights
         AzureInsights.initialize();

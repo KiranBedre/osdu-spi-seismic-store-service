@@ -14,19 +14,5 @@
 // limitations under the License.
 // ============================================================================
 
-import { CloudFactory } from './cloud';
-import { IOperationQueueTask } from '../jobs';
-
-export interface IQueue {
-    pushTask(task: IOperationQueueTask): Promise<void>;
-}
-
-export abstract class AbstractQueue implements IQueue {
-    public abstract pushTask(task: IOperationQueueTask): Promise<void>;
-}
-
-export class QueueFactory extends CloudFactory {
-    public static build(providerLabel: string): IQueue {
-        return CloudFactory.build(providerLabel, AbstractQueue) as IQueue;
-    }
-}
+export { IOperationQueueTask } from './model';
+export { Operations } from './operations';

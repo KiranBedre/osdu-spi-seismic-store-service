@@ -19,15 +19,15 @@ import { QueueClient, QueueServiceClient } from '@azure/storage-queue';
 
 import { AzureConfig } from './config';
 import { DefaultAzureCredential } from '@azure/identity';
-import { IOperationQueueTask } from '../../../shared/model';
-import { operations } from '../../../apis/schema/operations';
+import { IOperationQueueTask } from '../../../jobs';
+import { jobTypes } from '../../../jobs/types';
 
 @QueueFactory.register('azure')
 export class AzureTaskQueue extends AbstractQueue {
     private queueClientFactory: CachingQueueClientFactory = new CachingQueueClientFactory();
 
     public async pushTask(task: IOperationQueueTask): Promise<void> {
-        const queueName = operations[task.type].getQueueName();
+        const queueName = jobTypes[task.type].getQueueName();
         delete task.type;
         const queueClient = await this.queueClientFactory.getCachedQueueClient(queueName);
 

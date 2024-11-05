@@ -14,11 +14,22 @@
 // Limitations under the License.
 // ============================================================================
 
-export enum Operation {
-    RegisterPatch,
-    Get,
-    GetVersionedSchema,
-    DeleteSchema,
-    GetAllVersionIDsOfSchema,
-    ListSchemas,
+import { Config, QueueFactory } from '../cloud';
+
+import { JobType } from './types';
+import { Parser } from './parser';
+import { v4 as uuidv4 } from 'uuid';
+
+export class Operations {
+    public static async pushSyncV3V4Msg(records, recordIds, dataPartition) {
+        const messages = Parser.generateSyncV3V4Msg(records, recordIds, dataPartition);
+        const operation = {
+            type: JobType.SyncV3V4,
+            operation_id: uuidv4(),
+            datasets: messages,
+        };
+
+        const taskQueue = QueueFactory.build(Config.CLOUD_PROVIDER);
+        await taskQueue.pushTask(operation);
+    }
 }

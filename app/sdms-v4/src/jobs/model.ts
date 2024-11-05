@@ -14,14 +14,14 @@
 // limitations under the License.
 // ============================================================================
 
-import { Operation } from '../apis/schema/operations';
+import { JobType } from './types';
 
 export interface IOperation {
     operation_id: string;
 }
 
 export interface IOperationQueueTask extends IOperation {
-    type: Operation;
+    type: JobType;
 }
 
 export interface IOperationSync extends IOperation {
@@ -35,7 +35,7 @@ export interface IDatasetV3 {
         tenant: string;
         subproject: string;
         path: string;
-        acls: {
+        acls?: {
             admins: string[];
             viewers: string[];
         };
@@ -43,50 +43,14 @@ export interface IDatasetV3 {
         created_by: string;
         created_date: string;
         last_modified_date: string;
+        filemetadata?: FileMetadata;
         gcsurl: string;
         ctag: string;
         readonly: boolean;
-        filemetadata: FileMetadata;
-        computed_size: number;
-        computed_size_date: string;
+        computed_size?: number;
+        computed_size_date?: string;
         seismicmeta_guid: string;
     };
-}
-
-export interface IDatasetV4 {
-    id: string;
-    kind: string;
-    acl: {
-        owners: string[];
-        viewers: string[];
-    };
-    legal: {
-        legaltags: string[];
-        otherRelevantDataCountries: string[];
-        status: string;
-    };
-    modifyUser: string;
-    modifyTime: string;
-    createUser: string;
-    createTime: string;
-    data: {
-        Name: string;
-        TotalSize: number;
-        Description: string;
-        DatasetProperties: DatasetProperty;
-    };
-}
-
-interface DatasetProperty {
-    FileCollectionPath: string;
-    FileSourceInfos: {
-        FileSource: string;
-        Name: string;
-        FileSize: number;
-        Checksum: string;
-        ChecksumAlgorithm: string;
-    };
-    Checksum: string;
 }
 
 export interface FileMetadata {
@@ -95,4 +59,42 @@ export interface FileMetadata {
     type: string;
     checksum: string;
     tier_class: string;
+}
+
+export interface IDatasetV4 {
+    id?: string;
+    kind: string;
+    acl: {
+        owners: string[];
+        viewers: string[];
+    };
+    legal: {
+        legaltags: string[];
+        otherRelevantDataCountries: string[];
+        status?: string;
+    };
+    modifyUser?: string;
+    modifyTime?: string;
+    createUser?: string;
+    createTime?: string;
+    data?: {
+        Name?: string;
+        TotalSize?: number;
+        Description?: string;
+        DatasetProperties: DatasetProperty;
+    };
+}
+
+interface DatasetProperty {
+    FileCollectionPath: string;
+    FileSourceInfos?: FileSource[];
+    Checksum?: string;
+}
+
+interface FileSource {
+    FileSource: string;
+    Name?: string;
+    FileSize?: number;
+    Checksum?: string;
+    ChecksumAlgorithm?: string;
 }

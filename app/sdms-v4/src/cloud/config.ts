@@ -87,6 +87,12 @@ export abstract class Config implements IConfig {
     // Queue used for synchronizing v3 and v4 dataset
     public static SDMS_V3_V4_SYNC_QUEUE: string;
 
+    // Default subproject for dataset
+    public static DEFAULT_SUBPROJECT: string = 'syncv4';
+
+    // Feature flag for v3 v4 synchronization
+    public static FEATURE_FLAG_OPERATIONS_SYNC_V3_V4: boolean;
+
     // Initialization methods
     public static setCloudProvider(cloudProvider: string | undefined) {
         if (!cloudProvider) {
@@ -158,6 +164,8 @@ export abstract class Config implements IConfig {
         Config.COMMIT_MESSAGE = this.getEnvString('COMMIT_MESSAGE');
         Config.VERSION = this.getEnvString('VERSION');
         Config.CONNECTED_OUTER_SERVICES = this.getEnvString('CONNECTED_OUTER_SERVICES')?.split(',') || [];
+        Config.SDMS_V3_V4_SYNC_QUEUE = this.getEnvString('V3_V4_SYNC_QUEUE', 'sdms-queue-v3v4sync');
+        Config.FEATURE_FLAG_OPERATIONS_SYNC_V3_V4 = this.getEnvBoolean('FEATURE_FLAG_OPERATIONS_SYNC_V3_V4', false);
     }
 
     protected static getEnvBoolean(key: string, defaultValue?: boolean): boolean {
