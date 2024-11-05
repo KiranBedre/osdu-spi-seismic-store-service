@@ -20,7 +20,7 @@ import { JobType } from './types';
 import { Parser } from './parser';
 import { v4 as uuidv4 } from 'uuid';
 
-export class Operations {
+export class Jobs {
     public static async pushSyncV3V4Msg(records, recordIds, dataPartition) {
         const messages = Parser.generateSyncV3V4Msg(records, recordIds, dataPartition);
         const operation = {

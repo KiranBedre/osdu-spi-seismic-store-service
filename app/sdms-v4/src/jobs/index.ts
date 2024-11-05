@@ -15,4 +15,4 @@
 // ============================================================================
 
 export { IOperationQueueTask } from './model';
-export { Operations } from './operations';
+export { Jobs } from './jobs';

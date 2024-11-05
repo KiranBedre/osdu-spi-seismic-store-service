@@ -18,8 +18,8 @@ import { Config, StorageFactory } from '../../cloud';
 import { Context, Response, Utils } from '../../shared';
 import { Request as expRequest, Response as expResponse } from 'express';
 
+import { Jobs } from '../../jobs';
 import { Operation } from './operations';
-import { Operations } from '../../jobs';
 import { Parser } from './parser';
 import { SearchService } from '../../services/search';
 import { StorageCoreService } from '../../services';
@@ -69,7 +69,7 @@ export class SchemaHandler {
         }
 
         if (Config.FEATURE_FLAG_OPERATIONS_SYNC_V3_V4) {
-            Operations.pushSyncV3V4Msg(records, recordIds, dataPartition);
+            Jobs.pushSyncV3V4Msg(records, recordIds, dataPartition);
         }
 
         return recordIds;
