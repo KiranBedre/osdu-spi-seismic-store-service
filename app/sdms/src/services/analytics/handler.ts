@@ -51,6 +51,9 @@ export class AnalyticsHandler {
                     case AnalyticsOP.LIST_REPORTS:
                         Response.writeOK(res, await this.listReports(req, tenant));
                         break;
+                    case AnalyticsOP.LIST_REPORTS_TENANT:
+                        Response.writeOK(res, await this.listReportsTenant(req, tenant));
+                        break;
                     case AnalyticsOP.LIST_SCHEDULES:
                         Response.writeOK(res, await this.listSchedules(req, tenant));
                         break;
@@ -82,16 +85,23 @@ export class AnalyticsHandler {
         // Parse input parameters
         const input = AnalyticsParser.create(req);
 
+        // check if create a subproject or tenant schedule
+        const bodyName = req.body[0].name;
+        const isTenant = !bodyName || bodyName.trim() === "" ? true : false;
+
         // init journalClient client
         const journalClient = JournalFactoryTenantClient.get(tenant);
 
-        const subproject: SubProjectModel = await SubProjectDAO.get(journalClient, tenant.name, input[0].name);
-
         // Check authorization
-        await AnalyticsHandler.authorizationCheck(req, tenant, subproject);
+        if (isTenant) {
+            await AnalyticsHandler.authorizationCheck(req, tenant);
+        } else {
+            const subproject: SubProjectModel = await SubProjectDAO.get(journalClient, tenant.name, input[0].name);
+            await AnalyticsHandler.authorizationCheck(req, tenant, subproject);
+        }
 
         // Register the job
-        await AnalyticsDAO.create(journalClient, tenant.name, input[0]);
+        await AnalyticsDAO.create(journalClient, tenant.name, input[0], isTenant);
 
         return input;
     }
@@ -135,6 +145,34 @@ export class AnalyticsHandler {
             prefix += '/' + args.day;
         }
         const reports = await storage.listBlobs(prefix, args.containerName);
+        return reports;
+    }
+
+    // list job reports
+    // Required role: tenant admin
+    //                data manager
+    private static async listReportsTenant(req: expRequest, tenant: TenantModel) {
+
+        const args = AnalyticsParser.list(req);
+
+        // Check authorization
+        await AnalyticsHandler.authorizationCheck(req, tenant);
+
+        // retrieve the sdms analytics reports
+        const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
+        let filter = '';
+
+        if (args.year) {
+            filter += '/' + args.year;
+        }
+        if (args.month) {
+            filter += '/' + args.month;
+        }
+        if (args.day) {
+            filter += '/' + args.day;
+        }
+        if (filter) {filter += '/';}
+        const reports = await storage.listBlobsFilter(args.containerName, filter);
         return reports;
     }
 
@@ -214,19 +252,20 @@ export class AnalyticsHandler {
         const journalClient = JournalFactoryTenantClient.get(tenant);
 
         // Check authorization
-        try {
-            // if subproject exist
-            const subproject: SubProjectModel = await SubProjectDAO.get(journalClient, tenant.name, args.subproject);
-            await AnalyticsHandler.authorizationCheck(req, tenant, subproject);
-        } catch (error) {
-            if (error.error.code === 404) {
-                // check if user is tenant admin or data manager
-                await AnalyticsHandler.authorizationCheck(req, tenant);
+            try {
+                // if subproject exist
+                const subproject: SubProjectModel = await SubProjectDAO.get(
+                    journalClient, tenant.name, args.subproject);
+                await AnalyticsHandler.authorizationCheck(req, tenant, subproject);
+            } catch (error) {
+                if (error.error.code === 404) {
+                    // check if user is tenant admin or data manager
+                    await AnalyticsHandler.authorizationCheck(req, tenant);
+                }
+                else {
+                    throw error;
+                }
             }
-            else {
-                throw error;
-            }
-        }
 
         // generate and return the connection credentials string
         // need to construct the virtualFolder base on filter-date

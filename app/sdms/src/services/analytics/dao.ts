@@ -20,21 +20,27 @@ import { JobModel } from '.';
 export class AnalyticsDAO {
 
     // register a new job under a given Tenant Project (existence check must be done externally)
-    public static async create(journalClient: IJournal, tenantId: string, job: JobModel) {
+    public static async create(journalClient: IJournal, tenantId: string, job: JobModel, isTenant: boolean = false) {
 
-        const entityKey = journalClient.createKey({
+        const entityKey = isTenant ? journalClient.createKey({
             namespace: Config.SEISMIC_STORE_NS + '-' + tenantId,
-            path: [Config.ANALYTIC_KIND, job.name],
+            path: [Config.ANALYTIC_TENANT_KIND, job.name],
+        }) : journalClient.createKey({
+            namespace: Config.SEISMIC_STORE_NS + '-' + tenantId,
+            path: [Config.ANALYTIC_SUBPROJECT_KIND, job.name],
         });
 
         await journalClient.save({ data: job, key: entityKey });
     }
 
     // get jobs metadata (throw if not exist)
-    public static async delete(journalClient: IJournal, tenantName: string, subprojectName: string) {
-        const entityKey = journalClient.createKey({
+    public static async delete(journalClient: IJournal, tenantName: string, subprojectName?: string) {
+        const entityKey = subprojectName == null ? journalClient.createKey({
             namespace: Config.SEISMIC_STORE_NS + '-' + tenantName,
-            path: [Config.ANALYTIC_KIND, subprojectName],
+            path: [Config.ANALYTIC_TENANT_KIND, tenantName],
+        }) : journalClient.createKey({
+            namespace: Config.SEISMIC_STORE_NS + '-' + tenantName,
+            path: [Config.ANALYTIC_SUBPROJECT_KIND, subprojectName],
         });
         await journalClient.delete(entityKey);
     }
@@ -42,7 +48,8 @@ export class AnalyticsDAO {
     // get all jobs metadata
     public static async list(journalClient: IJournal, tenantName: string): Promise<JobModel[]> {
 
-        const query = journalClient.createQuery(Config.SEISMIC_STORE_NS + '-' + tenantName, Config.ANALYTIC_KIND);
+        const query = journalClient.createQuery(
+            Config.SEISMIC_STORE_NS + '-' + tenantName, Config.ANALYTIC_KIND);
 
         const [entities] = await journalClient.runQuery(query);
         return entities;

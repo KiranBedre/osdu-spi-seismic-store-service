@@ -283,4 +283,30 @@ export class AzureCloudStorage extends AbstractStorage {
 
         return blobList;
     }
+
+    // list blobs from a container with filter
+    public async listBlobsFilter(bucketName: string, filter?: string): Promise<string[]> {
+        const container = (await this.getBlobServiceClient()).getContainerClient(bucketName);
+        let blobList = [];
+        if (!filter) {
+            // If no filter return only latest reports
+            const reports = new Map();
+            for await (const blob of container.listBlobsFlat()) {
+                const report = blob.name;
+                const subproject = report.split('/')[0]
+                reports.set(subproject, report)
+            }
+            blobList = Array.from(reports.values());
+        }
+        else {
+            for await (const blob of container.listBlobsFlat()) {
+                const report = blob.name;
+                if (report.includes(filter)) {
+                    blobList.push(report);
+                }
+            }
+        }
+
+        return blobList;
+    }
 }

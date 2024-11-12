@@ -199,9 +199,15 @@ def push_report(container):
     except Exception as e:
         print(f'Error: {e.status_code} - {e.message}')
 
-def collect_jobs():
+def collect_subproject_jobs():
     try:
-        return cosmos.get_jobs(cosmos_cs)
+        return cosmos.get_subproject_jobs(cosmos_cs)
+    except Exception as e:
+        print(f'Error: {e.message}')
+
+def collect_partition_jobs():
+    try:
+        return cosmos.get_partition_jobs(cosmos_cs)
     except Exception as e:
         print(f'Error: {e.message}')
 
@@ -252,11 +258,26 @@ if __name__ == "__main__":
             cosmos_cs = partition.get_cosmos_connection_string(partition_configurations)
             storage_cs = partition.get_storage_connection_string(partition_configurations)
 
-            jobs = collect_jobs()
+            # jobs = collect_jobs()
+            jobs = []
+            subproject_list = []
+            partition_jobs = []
+            partition_job = collect_partition_jobs()
+            exe_job = False
+            if partition_job:
+                if job_schedule_check(partition_job):
+                    exe_job = True
+                    subproject_list = cosmos.list_subproject(cosmos_cs)
+                    for subproject in subproject_list:
+                        jobs.append(
+                            cosmos.Job(
+                                subproject.name, partition_job.first_execution, partition_job.freq, partition_job.statistics))
+            else:
+                jobs = collect_subproject_jobs()
 
             for job in jobs:
                 try:
-                    if job_schedule_check(job):
+                    if exe_job or job_schedule_check(job):
                         subproject_start_time = time.time()
                         subproject_name = job.name
                         statistics = Statistics([s.upper() for s in job.statistics.split(',')] )
@@ -314,3 +335,4 @@ if __name__ == "__main__":
     execution_time = time.time() - start_time
     formatted_execution_time = utils.format_execution_time(execution_time)
     print(f"\n# script execution completed in {formatted_execution_time}")
+

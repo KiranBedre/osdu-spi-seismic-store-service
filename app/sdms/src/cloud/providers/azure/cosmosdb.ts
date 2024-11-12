@@ -113,7 +113,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 id: entity.key.partitionKey,
                 data: entity.data
             }
-            if(!item.id.startsWith('job-collection')) {
+            if(!(item.id.startsWith('job-collection') || item.id.startsWith('dp-job-collection'))) {
                 item.data[this.KEY.toString()] = entity.key;}
             await (await this.getCosmoContainer()).items.upsert(item);
         }
@@ -472,7 +472,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         }
 
         if (cosmosQuery.kind === Config.ANALYTIC_KIND) {
-            sqlQuery = 'SELECT * FROM c WHERE c.id LIKE "job-collection-%"';
+            sqlQuery = 'SELECT * FROM c WHERE c.id LIKE "job-collection-%" OR c.id LIKE "dp-job-collection"';
             response = await (await this.getCosmoContainer()).items.query(sqlQuery).fetchAll();
         }
 
@@ -519,9 +519,14 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             partitionKey = 'ap-' + name;
         }
 
-        if (kind === AzureConfig.ANALYTIC_KIND) {
+        if (kind === AzureConfig.ANALYTIC_SUBPROJECT_KIND) {
             name = specs.path[1];
             partitionKey = 'job-collection-' + name;
+        }
+
+        if (kind === AzureConfig.ANALYTIC_TENANT_KIND) {
+            name = specs.path[1];
+            partitionKey = 'dp-job-collection';
         }
 
         return { partitionKey, name };

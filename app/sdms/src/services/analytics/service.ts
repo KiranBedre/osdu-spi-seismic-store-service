@@ -34,6 +34,13 @@ router.get('/job/:subprojectid',
         await AnalyticsHandler.handler(req, res, AnalyticsOP.LIST_REPORTS);
     });
 
+// list available reports for a tenant
+router.get('/tenant/job',
+    async (req: expRequest, res: expResponse) => {
+        CallContext.endpointId = 'analytics-list-reports-tenant';
+        await AnalyticsHandler.handler(req, res, AnalyticsOP.LIST_REPORTS_TENANT);
+    });
+
 // list the analytics schedules
 router.get('/job', async (req: expRequest, res: expResponse) => {
     CallContext.endpointId = 'analytics-list-schedules';
@@ -46,10 +53,23 @@ router.delete('/job/:subprojectid', async (req: expRequest, res: expResponse) =>
     await AnalyticsHandler.handler(req, res, AnalyticsOP.DELETE);
 });
 
+// Delete a analytics schedule partition
+router.delete('/tenant/job', async (req: expRequest, res: expResponse) => {
+    CallContext.endpointId = 'analytics-delete-schedule-tenant';
+    await AnalyticsHandler.handler(req, res, AnalyticsOP.DELETE);
+});
+
 // generate connection string to download the report
 router.get('/job/:subprojectid/connection-string',
     async (req: expRequest, res: expResponse) => {
         CallContext.endpointId = 'analytics-report-download-connection-string';
+        await AnalyticsHandler.handler(req, res, AnalyticsOP.DOWNLOAD_CONNECTION_STRING);
+    });
+
+// generate connection string to download the report for tenant
+router.get('/tenant/job/connection-string',
+    async (req: expRequest, res: expResponse) => {
+        CallContext.endpointId = 'analytics-report-download-connection-string-tenant';
         await AnalyticsHandler.handler(req, res, AnalyticsOP.DOWNLOAD_CONNECTION_STRING);
     });
 

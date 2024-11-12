@@ -14,4 +14,11 @@
 // limitations under the License.
 // ============================================================================
 
-export enum AnalyticsOP { CREATE, DELETE, LIST_SCHEDULES, LIST_REPORTS, DOWNLOAD_CONNECTION_STRING }
+export enum AnalyticsOP {
+    CREATE,
+    DELETE,
+    LIST_SCHEDULES,
+    LIST_REPORTS,
+    LIST_REPORTS_TENANT,
+    DOWNLOAD_CONNECTION_STRING
+}

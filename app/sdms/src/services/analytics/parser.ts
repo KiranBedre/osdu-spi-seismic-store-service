@@ -47,8 +47,12 @@ export class AnalyticsParser {
             }
         }
 
+        const name = !body.name || body.name.trim() === "" ? req.get('data-partition-id') : body.name;
+        const type = !body.name || body.name.trim() === "" ? 'partition' : 'subproject'
+
         const job = {
-            name: body.name,
+            name: name,
+            type: type,
             statistics: body.statistics,
             first_execution: body.first_execution,
             freq_execution: body.freq_execution,
@@ -69,9 +73,11 @@ export class AnalyticsParser {
 
     public static list(req: expRequest): IAnalyticsRequest{
 
-        const args = {
-            subproject: req.params.subprojectid,
-        } as IAnalyticsRequest
+        const args = {} as IAnalyticsRequest
+
+        if (req.params?.subprojectid !== undefined) {
+            args.subproject = req.params.subprojectid;
+        }
 
         this.checkFilterDate(req.query['filter-date'] as string, args);
         this.checkExtension(req.query.extension as string, args);
@@ -82,7 +88,7 @@ export class AnalyticsParser {
 
         const subprojectid = req.params.subprojectid;
 
-        Params.checkString(subprojectid, 'subprojectid');
+        // Params.checkString(subprojectid, 'subprojectid');
 
         return subprojectid;
     }

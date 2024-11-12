@@ -107,6 +107,8 @@ export abstract class Config implements IConfig {
     public static SEISMICMETA_KIND = 'seismicmeta';
     public static APPS_KIND = 'apps';
     public static ANALYTIC_KIND = 'analytic';
+    public static ANALYTIC_SUBPROJECT_KIND = 'analytic-subproject';
+    public static ANALYTIC_TENANT_KIND = 'analytic-tenant';
     public static IMPERSONATION_TOKEN_SIGNATURE_KIND = 'imptoken_signatures';
 
     // Listing modes

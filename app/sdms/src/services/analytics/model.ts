@@ -24,6 +24,7 @@ export interface IAnalyticsRequest {
 
 export interface IJobModel {
     name: string;
+    type: string;
     statistics: string;
     first_execution: number;
     freq_execution: number;

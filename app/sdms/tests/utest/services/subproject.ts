@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2024, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the 'License');
 // you may not use this file except in compliance with the License.
@@ -287,7 +287,8 @@ export class TestSubProjectSVC {
                 async setStorageTiers() {return; },
                 async getStorageAccountRedundancy() { return ''; },
                 async checkSupportedTier() { return; },
-                async listBlobs() { return ['']; }
+                async listBlobs() { return ['']; },
+                async listBlobsFilter() { return ['']; }
             };
             this.sandbox.stub(StorageFactory, 'build').returns(storage);
             this.sandbox.stub(SubprojectGroups, 'serviceAdminGroup').returns('adminGroup');

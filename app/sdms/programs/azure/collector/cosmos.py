@@ -48,6 +48,30 @@ def get_subproject(subproject_name: str, cosmos_cs: str) -> Subproject:
     item = next(query_result)
     return Subproject(item['name'], item['access_policy'], item['gcs_bucket'])
 
+def list_subproject(cosmos_cs: str):
+    client = CosmosClient.from_connection_string(cosmos_cs)
+    database = client.get_database_client('sdms-db')
+    container_client = database.get_container_client('data')
+    # query = f'SELECT c.data.name, c.data.access_policy, c.data.gcs_bucket FROM c WHERE c.id = "sp-{subproject_name}"'
+    query = f'SELECT c.data.name, c.data.access_policy, c.data.gcs_bucket FROM c WHERE c.id LIKE "sp-%"'
+    query_iterable = container_client.query_items(
+        query=query,
+        max_item_count=-1,
+        enable_cross_partition_query=True
+    )
+    results: list[Subproject] = []
+    count = 0
+    start_time = time.time()
+    for page in query_iterable.by_page():
+        for item in page:
+            count = count + 1
+            results.append(
+                Subproject(item['name'], item['access_policy'], item['gcs_bucket']))
+        print(
+            f'> {count} subprojects retrieved in {(time.time() - start_time)} seconds')
+        sys.stdout.flush()
+    return results
+
 def list_datasets(subproject_name: str, cosmos_cs: str) -> list([Dataset]):
     client = CosmosClient.from_connection_string(cosmos_cs)
     database = client.get_database_client('sdms-db')
@@ -71,7 +95,7 @@ def list_datasets(subproject_name: str, cosmos_cs: str) -> list([Dataset]):
         sys.stdout.flush()
     return results
 
-def get_jobs(cosmos_cs: str) -> list([Job]):
+def get_subproject_jobs(cosmos_cs: str) -> list([Job]):
     client = CosmosClient.from_connection_string(cosmos_cs)
     database = client.get_database_client('sdms-db')
     container_client = database.get_container_client('data')
@@ -91,4 +115,27 @@ def get_jobs(cosmos_cs: str) -> list([Job]):
         print(
             f'> {count} jobs retrieved')
         sys.stdout.flush()
+    return results
+
+def get_partition_jobs(cosmos_cs: str) -> list([Job]):
+    client = CosmosClient.from_connection_string(cosmos_cs)
+    database = client.get_database_client('sdms-db')
+    container_client = database.get_container_client('data')
+    query = f'SELECT c.data.name, c.data.first_execution, c.data.freq_execution, c.data.statistics From c WHERE c.id = "dp-job-collection"'
+    query_iterable = container_client.query_items(
+        query=query,
+        max_item_count=-1,
+        enable_cross_partition_query=True
+    )
+    results = None
+    count = 0
+    for page in query_iterable.by_page():
+        for item in page:
+            count = count + 1
+            results = (
+                Job(item['name'], item['first_execution'], item['freq_execution'], item['statistics']))
+        print(
+            f'> {count} jobs retrieved')
+        sys.stdout.flush()
+
     return results
