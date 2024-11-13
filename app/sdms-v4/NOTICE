@@ -42,6 +42,7 @@ The following software have components provided under the terms of this license:
 - @azure/identity (from https://www.npmjs.com/package/@azure/identity)
 - @azure/keyvault-secrets (from https://www.npmjs.com/package/@azure/keyvault-secrets)
 - @azure/storage-blob (from https://www.npmjs.com/package/@azure/storage-blob)
+- @azure/storage-queue (from https://www.npmjs.com/package/@azure/storage-queue)
 - @types/qs (from https://www.npmjs.com/package/@types/qs)
 - applicationinsights (from https://www.npmjs.com/package/applicationinsights)
 - axios (from https://www.npmjs.com/package/axios)
