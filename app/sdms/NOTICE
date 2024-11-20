@@ -65,7 +65,7 @@ The following software have components provided under the terms of this license:
 - @azure/storage-blob (from https://www.npmjs.com/package/@azure/storage-blob)
 - @azure/storage-queue (from https://www.npmjs.com/package/@azure/storage-queue)
 - @prisma/client (from https://www.npmjs.com/package/@prisma/client)
-- PyJWT (from http://github.com/jpadilla/pyjwt, https://github.com/jpadilla/pyjwt)
+- PyJWT (from http://github.com/jpadilla/pyjwt, https://pypi.org/project/PyJWT/)
 - ajv (from https://www.npmjs.com/package/ajv)
 - ajv-formats (from https://www.npmjs.com/package/ajv-formats)
 - applicationinsights (from https://www.npmjs.com/package/applicationinsights)
