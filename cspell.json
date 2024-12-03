@@ -363,6 +363,7 @@
         "preship",
         "PRIMEM",
         "printenv",
+        "processinfo",
         "processingproject",
         "PROJCS",
         "projectid",

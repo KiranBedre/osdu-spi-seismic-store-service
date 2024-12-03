@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=16-alpine
+ARG docker_node_image_version=18-alpine
 
 # -------------------------------
 # Compilation stage
@@ -22,7 +22,6 @@ ARG docker_node_image_version=16-alpine
 FROM node:${docker_node_image_version} as runtime-builder
 
 # RUN apt-get install -yqq --no-install-recommends openssl
-RUN npm update -g
 ADD ./ /service
 WORKDIR /service
 RUN apk --no-cache upgrade \

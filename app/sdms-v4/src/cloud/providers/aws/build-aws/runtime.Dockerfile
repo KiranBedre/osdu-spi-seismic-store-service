@@ -22,6 +22,7 @@ FROM node:${docker_node_image_version} as runtime-builder
 
 ADD ./ /service
 WORKDIR /service
+RUN npm update -g
 RUN apk --no-cache add --virtual native-deps g++ openssl gcc libgcc libstdc++ linux-headers make python3 \
     && npm install --quiet node-gyp -g \
     && npm install --quiet husky -g \

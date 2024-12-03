@@ -37,6 +37,8 @@ RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-head
 # -------------------------------
 FROM node:${docker_node_image_version} as release
 
+RUN npm update -g
+
 COPY --from=runtime-builder /service/artifact /seistore-service
 WORKDIR /seistore-service
 
