@@ -17,7 +17,7 @@
         "@azure/keyvault-secrets": "^4.3.0",
         "@azure/storage-blob": "^12.10.0",
         "@azure/storage-queue": "^12.15.0",
-        "@google-cloud/datastore": "^8.4.0",
+        "@google-cloud/datastore": "^9.2.1",
         "@google-cloud/logging-winston": "^6.0.0",
         "@google-cloud/pubsub": "^4.1.1",
         "@google-cloud/secret-manager": "^5.0.1",
@@ -2149,12 +2149,14 @@
       }
     },
     "node_modules/@google-cloud/datastore": {
-      "version": "8.4.0",
-      "resolved": "https://registry.npmjs.org/@google-cloud/datastore/-/datastore-8.4.0.tgz",
-      "integrity": "sha512-zSU4R4LkVBTPdZJi8pK0QPe+3ZQL5+1mFXI7Yh5mdDcJhtX2Y5VD9wXsEJ0N48kpiA5V6+cxh4g0NB+mAyQbKg==",
+      "version": "9.2.1",
+      "resolved": "https://registry.npmjs.org/@google-cloud/datastore/-/datastore-9.2.1.tgz",
+      "integrity": "sha512-55sQB8AmVN+zzvKjexwma3azSoD+V0B46p4/iIZ6UpR7Me7IZd5pU25T3z7mW7lG1SYVX/kgImPnZJjj8Tc45Q==",
+      "license": "Apache-2.0",
       "dependencies": {
         "@google-cloud/promisify": "^4.0.0",
         "arrify": "^2.0.1",
+        "async-mutex": "^0.5.0",
         "concat-stream": "^2.0.0",
         "extend": "^3.0.2",
         "google-gax": "^4.0.5",
@@ -5249,6 +5251,15 @@
       "integrity": "sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==",
       "bin": {
         "semver": "bin/semver"
+      }
+    },
+    "node_modules/async-mutex": {
+      "version": "0.5.0",
+      "resolved": "https://registry.npmjs.org/async-mutex/-/async-mutex-0.5.0.tgz",
+      "integrity": "sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==",
+      "license": "MIT",
+      "dependencies": {
+        "tslib": "^2.4.0"
       }
     },
     "node_modules/async-retry": {

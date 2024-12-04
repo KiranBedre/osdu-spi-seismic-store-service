@@ -9,12 +9,20 @@ export class DataPartitionInfo {
     public gcProjectId: string
     public bucket: string
     public policyServiceEnabled: boolean | null
+    public datastoreDatabaseId?: string
 
-    constructor(dataPartitionId: string, gcProjectId: string, bucket: string, policyServiceEnabled: boolean | null) {
+    constructor(
+        dataPartitionId: string,
+        gcProjectId: string,
+        bucket: string,
+        policyServiceEnabled: boolean | null,
+        datastoreDatabaseId?: string
+    ) {
         this.dataPartitionId = dataPartitionId;
         this.bucket = bucket;
         this.gcProjectId = gcProjectId;
         this.policyServiceEnabled = policyServiceEnabled;
+        this.datastoreDatabaseId = datastoreDatabaseId;
     }
 
     private static isPolicyEnabled(dataPartitionId: string, partitionData: object): boolean {
@@ -39,12 +47,14 @@ export class DataPartitionInfo {
         const gcProjectId = partitionData['projectId']['value']
         dataPartitionId = partitionData['dataPartitionId']['value']
         const bucket = partitionData['seismicBucket']['value']
+        const datastoreDatabaseId = partitionData['osm.datastore.database.id']?.value;
         const policyEnabled = this.isPolicyEnabled(dataPartitionId, partitionData)
         return new DataPartitionInfo(
             dataPartitionId,
             gcProjectId,
             bucket,
-            policyEnabled
+            policyEnabled,
+            datastoreDatabaseId
         );
     }
 }

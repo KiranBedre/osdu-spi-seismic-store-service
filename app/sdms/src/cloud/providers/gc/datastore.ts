@@ -16,7 +16,7 @@
 // limitations under the License.
 // ============================================================================
 
-import { Datastore, DatastoreClient, Query, Transaction, Key} from '@google-cloud/datastore';
+import { Datastore, DatastoreOptions, Query, Transaction, Key} from '@google-cloud/datastore';
 import { TenantModel } from '../../../services/tenant';
 import {
     AbstractJournal, AbstractJournalTransaction,
@@ -45,8 +45,10 @@ export class DatastoreDAO extends AbstractJournal {
         } else {
             const dataPartitionInfo = await DataPartitionInfo.fromDataPartitionId(this.projectID);
             const projectId = dataPartitionInfo.gcProjectId;
+            const datastoreDatabaseId = dataPartitionInfo.datastoreDatabaseId;
             DatastoreDAO.clientsCache[this.projectID] = new Datastore({
-                projectId
+                projectId,
+                ...(datastoreDatabaseId ? {databaseId: datastoreDatabaseId} : {})
             });
             return DatastoreDAO.clientsCache[this.projectID];
         }
