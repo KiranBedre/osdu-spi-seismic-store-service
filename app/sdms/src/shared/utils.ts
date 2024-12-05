@@ -46,12 +46,12 @@ export class Utils {
 
     public static async getUserId(authorization: string, forwardedUserIdByProxy: string): Promise<string> {
 
-        // try to get the user id from GDPR compliant key
-        let userId = Utils.getPropertyFromTokenPayload(authorization, Config.GDPR_COMPLIANT_USER_ID_KEY);
-
         // try to use the forwarded user id by proxy if this is set
+        let userId = forwardedUserIdByProxy;
+
+        // try to get the user id from GDPR compliant key
         if(!userId) {
-            userId = forwardedUserIdByProxy;
+            userId = Utils.getPropertyFromTokenPayload(authorization, Config.GDPR_COMPLIANT_USER_ID_KEY);
         }
 
         // try to get the user id from provider specific rule
