@@ -423,25 +423,19 @@ paths:
       summary: Acquire a lock for a dataset id.
       description: |
         <ul>
-          <li>Update the dataset meta information in the seismic store or close (unlock) the dataset. If the endpoint is used without the close parameter, at least one body field is required or the endpoint will return an error.</li>
-          <li>Required roles:
+          <li>Open a dataset for read or write and lock its state.</li>
+          <li>Required roles open lock for write:
             <ul>
               <li>subproject.admin: if the applied subproject policy is 'uniform'</li>
               <li>dataset.admin: if the applied subproject policy is 'dataset'</li>
             </ul>
           </li>
-          <li>Patchable fields:
+          <li>Required roles open lock for read:
             <ul>
-              <li><b>dataset_new_name:</b> new name to use for the dataset (rename).</li>
-              <li><b>filemetadata:</b> This is a seismic store-specific field and describes how the physical data is stored in the cloud storage system (GCS/AzureContainer etc.). This metadata is mainly used by client libraries to correctly reconstruct the dataset. For example, you can store a dataset as truncated in multiple objects of 64MB each, name them from 0 to N and save the filemetadata as: <pre>{nObject: N, totalSize: 1024, objsize: 64, sizeUnit: MB}</pre></li>
-              <li><b>change_tier:</b> tier to update the storage tier of a dataset. If filemetadata.tier_class is also passed, filemetadata.tier_class must == change_tier.</li>
-              <li><b>gtags:</b> Upsert tags to an existing dataset metadata. If the dataset metadata already has gtags, then new gtags are appended to this list.</li>
-              <li><b>ltag:</b> Update the existing legalTag value.</li>
-              <li><b>readonly:</b> Update the dataset mode to readonly (true) or to read/write (false).</li>
-              <li><b>status:</b> Update the dataset status.</li>
+              <li>subproject.admin, subproject.viewer: if the applied subproject policy is 'uniform'</li>
+              <li>dataset.admin, dataset.viewer: if the applied subproject policy is 'dataset'</li>
             </ul>
           </li>
-          <li><b>NOTE:</b> last_modified_date is updated automatically with each metadata change through Patch endpoint calling.</li>
         </ul>
       operationId: dataset-lock
       tags:
