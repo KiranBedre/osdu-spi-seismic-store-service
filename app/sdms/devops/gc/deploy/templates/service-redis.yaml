@@ -7,6 +7,7 @@ metadata:
 spec:
   ports:
   - port: {{ .Values.data.redisSdmsPort }}
+    name: {{ printf "redis-%s-port" .Values.conf.appName | quote }}
     protocol: TCP
     targetPort: 6379
   selector:
