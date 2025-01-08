@@ -17,12 +17,15 @@ jsonschema==4.19.0
 requests==2.31.0
 requests-mock==1.11.0
 behave==1.2.6
+httpx
 
 #for .env
 python-dotenv==1.0.0
 
 #for logging
-applicationinsights==0.11.10
+azure-monitor-opentelemetry
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-logging
 azure-keyvault-secrets==4.8.0
 azure-identity==1.19.0
 

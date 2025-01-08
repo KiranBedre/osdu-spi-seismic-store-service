@@ -12,7 +12,6 @@
     - export PIP_CONFIG_FILE="${PWD}/pip.conf"
     - pip install -r app/requirements.txt
     - pip freeze > all-requirements.txt
-    - cp all-requirements.txt app/.
 
 .filemetadata_prepare_fossa_check_notice:
   before_script:

@@ -14,7 +14,7 @@ filemetadata_unit_test:
   script:
     - python -m venv seimicenv
     - source seimicenv/bin/activate
-    - pip install requests msal fastapi python-dotenv httpx applicationinsights azure-keyvault-secrets azure-identity
+    - pip install requests msal fastapi python-dotenv httpx azure-monitor-opentelemetry opentelemetry-instrumentation-fastapi opentelemetry-instrumentation-logging azure-keyvault-secrets azure-identity
     - python -m unittest discover -s test -p test_* -v
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

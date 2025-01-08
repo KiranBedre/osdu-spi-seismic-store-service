@@ -12,6 +12,7 @@ from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.routes.base import api_router
 from core.config import settings
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from loggers.azure.insights import AzureInsightsLogger
 import time
 
@@ -25,16 +26,20 @@ def start_application():
     application.include_router(api_router)
     application.mount(settings.API_PATH + "static", StaticFiles(directory="static"), name="static")
 
+    AzureInsightsLogger.init('seismic-filemetadata')
+
     application.add_middleware(
         CORSMiddleware,
         expose_headers=["Content-Security-Policy"]
     )
 
+    if AzureInsightsLogger.ENABLE_LOGGING:
+        FastAPIInstrumentor().instrument_app(application)
+
     return application
 
 
 app = start_application()
-
 
 @app.get(settings.API_PATH + "swagger-ui.html", include_in_schema=False)
 async def custom_swagger_ui_html():

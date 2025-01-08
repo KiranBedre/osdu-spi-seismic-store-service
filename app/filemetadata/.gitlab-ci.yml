@@ -52,6 +52,12 @@ include:
         changes:
           - app/filemetadata/**/*
 
+  # cspell
+  - local: "app/filemetadata/devops/osdu/scanners/cspell-python.yml"
+
+  # markdownlint
+  - local: "app/filemetadata/devops/osdu/scanners/markdownlint-python.yml"
+
   # ultimate
   - local: "app/filemetadata/devops/osdu/scanners/gitlab-ultimate.yml"
 
