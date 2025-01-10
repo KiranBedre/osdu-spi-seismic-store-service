@@ -1,3 +1,5 @@
+# cSpell:words buildx
+
 variables:
   #aws variables
   AWS_BUILD_SUBDIR: src/cloud/providers/aws/build-aws
@@ -21,17 +23,11 @@ sdms-v4_aws_containerize:
     - !reference [.aws, before_script]
     - cd app/$SDMS_V4_SERVICE
   script:    
-    # Push to the local container registry
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $SDMS_V4_UTEST_RUNTIME_IMAGE --file $AWS_RUNTIME_DOCKERFILE_PATH  .
-    - docker tag $SDMS_V4_UTEST_RUNTIME_IMAGE $LOCAL_IMAGE_TAG
-    - docker push $LOCAL_IMAGE_TAG
-    # Push to Amazon's container registry
     - $(aws ecr get-login --no-include-email --region $AWS_ECR_REGION)
-    - docker tag $LOCAL_IMAGE_TAG $AWS_IMAGE_TAG_BASE:$CI_COMMIT_SHA
-    - docker tag $LOCAL_IMAGE_TAG $AWS_IMAGE_TAG_BASE:latest
-    - docker push $AWS_IMAGE_TAG_BASE:$CI_COMMIT_SHA
-    - docker push $AWS_IMAGE_TAG_BASE:latest
+    - docker buildx create --driver docker-container --use
+    - docker buildx inspect --bootstrap
+    - docker buildx build --platform linux/arm64/v8,linux/amd64 --pull --push -f $AWS_RUNTIME_DOCKERFILE_PATH -t $LOCAL_IMAGE_TAG -t $AWS_IMAGE_TAG_BASE:$CI_COMMIT_SHA -t $AWS_IMAGE_TAG_BASE:latest .;
 
   only: null
   rules:

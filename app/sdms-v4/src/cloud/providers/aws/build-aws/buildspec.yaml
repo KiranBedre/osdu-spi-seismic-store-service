@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# cSpell:words buildx
+
 # https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html
 
 # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-env-vars.html
@@ -99,12 +101,10 @@ phases:
       - echo "Logging into Docker Hub..."
       - docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
 
-      - echo "Building docker image..."
-      - docker build -f src/cloud/providers/aws/build-aws/runtime.Dockerfile -t ${ECR_IMAGE_PROD} .
-      - docker tag  ${ECR_IMAGE_PROD} ${ECR_IMAGE_BRANCH_LATEST}
-      - echo "Pushing docker image..."
-      - docker push ${ECR_IMAGE_PROD}
-      - docker push ${ECR_IMAGE_BRANCH_LATEST}
+      - echo "Build and push docker image..."
+      - docker buildx create --driver docker-container --use
+      - docker buildx inspect --bootstrap
+      - docker buildx build --platform linux/arm64/v8,linux/amd64 --pull --push -f src/cloud/providers/aws/build-aws/runtime.Dockerfile -t ${ECR_IMAGE_PROD} -t ${ECR_IMAGE_BRANCH_LATEST} .
 
       - echo "Generate build-info.json"
       - |
