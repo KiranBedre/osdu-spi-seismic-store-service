@@ -88,10 +88,6 @@ phases:
       - chmod +x ./tests/aws-test/build-aws/prepare-dist.sh
       - ./tests/aws-test/build-aws/prepare-dist.sh
 
-      - sed -i "s|__CONTAINER__|$ECR_IMAGE_PROD|"  devops/aws/chart/values.yaml
-      - echo "--Copying Helm Charts to ${OUTPUT_DIR:-dist}--"
-      - rsync -r devops/aws/* "${OUTPUT_DIR:-dist}"
-
       # using jar instead of executable since exe requires 32 bit image and doesn't work on codebuild 4.0
       - |
         java -jar sonar-scanner-4.6.2.2472/lib/sonar-scanner-cli-4.6.2.2472.jar -Dsonar.projectKey=seismic-store-service -Dsonar.host.url=${SONAR_URL} \
