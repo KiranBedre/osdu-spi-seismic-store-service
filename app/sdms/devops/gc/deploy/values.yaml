@@ -46,8 +46,8 @@ istio:
 hpa:
   minReplicas: 6
   maxReplicas: 15
-  targetType: "AverageValue" #Could be AverageValue or Value
-  targetValue: 16 #8 rps
+  targetType: "AverageValue"
+  targetValue: 20
   behaviorScaleUpStabilizationWindowSeconds: 10
   behaviorScaleUpPoliciesValue: 50
   behaviorScaleUpPoliciesPeriodSeconds: 15
