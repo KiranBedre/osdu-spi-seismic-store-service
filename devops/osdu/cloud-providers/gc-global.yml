@@ -8,3 +8,4 @@ include:
 variables:
   GC_GCR_REGISTRY: "gcr.io/osdu-anthos"
   APP_VERSION: "$GC_HELM_PACKAGE_VERSION-SNAPSHOT"
+  GC_SUPPORTED_PLATFORM: "linux/amd64"
