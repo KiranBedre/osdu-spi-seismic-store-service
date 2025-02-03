@@ -63,9 +63,9 @@ public static class Constants
         public const string CENTRAL_STORAGE_QUEUE_ENDPOINT = "queue-storage-endpoint";
     }
 
-    public const int BLOB_BULK_DELETE_BATCH_SIZE = 1000;
+    public const int BLOB_BULK_DELETE_BATCH_SIZE = 256;
 
-    public const int BLOB_BULK_CHANGE_TIER_BATCH_SIZE = 1000;
+    public const int BLOB_BULK_CHANGE_TIER_BATCH_SIZE = 256;
 
     public const string DELETE_LOCK_PREFIX = "WDELETE";
 
