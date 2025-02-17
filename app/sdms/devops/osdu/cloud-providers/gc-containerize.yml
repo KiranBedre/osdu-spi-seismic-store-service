@@ -7,6 +7,8 @@ sdms_gc-containerize-gitlab:
     SEISMIC_GC_SERVICE: seismic-store
     IMAGE_NAME: gc-$SEISMIC_GC_SERVICE
   before_script:
+    - !reference [.gc_set_image_name, script]
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - cd app/$SDMS_SERVICE
     - sed -i 's|#{SDMS_PREFIX}#|'$GC_SDMS_PREFIX'|' ./docs/api/openapi.yaml
   rules:

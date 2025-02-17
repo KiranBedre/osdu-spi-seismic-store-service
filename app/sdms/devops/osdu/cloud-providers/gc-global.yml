@@ -8,5 +8,5 @@ include:
 
 variables:
   GC_SDMS_PREFIX: /api/seismic-store/v3
-  GC_GCR_REGISTRY: gcr.io/osdu-anthos
+  GC_GCR_REGISTRY: gcr.io/osdu-gcp
   BUILD_PATH: "devops/anthos/runtime.Dockerfile"
