@@ -1,0 +1,9 @@
+core-helm-charts-gitlab:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+core-helm-charts-release-gitlab:
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

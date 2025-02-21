@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: {{ .Values.conf.appName | quote }}
+  name: {{  printf "%s-config" .Values.conf.appName | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+data:
+  DES_SERVICE_HOST_COMPLIANCE: {{ .Values.data.legalHost | quote}}
+  DES_SERVICE_HOST_ENTITLEMENT: {{ .Values.data.entitlementsHost | quote}}
+  DES_SERVICE_HOST_STORAGE: {{ .Values.data.storageHost | quote}}
+  DES_SERVICE_HOST_PARTITION: {{ .Values.data.partitionHost | quote}}
+  ENTITLEMENT_BASE_URL_PATH: "/api/entitlements/v2"
+  PORT: {{ .Values.data.port | quote }}
+  LOG_LEVEL: {{ .Values.data.logLevel | quote }}
+  SERVICE_ENV: {{ .Values.data.serviceEnv | quote }}
+  DES_SERVICE_HOST: "http://des"
+  CLOUDPROVIDER: "anthos"
+  {{- if .Values.data.redisSdmsHost }}
+  LOCKSMAP_REDIS_INSTANCE_ADDRESS: {{ .Values.data.redisSdmsHost | quote }}
+  {{- else }}
+  LOCKSMAP_REDIS_INSTANCE_ADDRESS: {{ printf "redis-%s" .Values.conf.appName | quote }}
+  {{- end}}
+  LOCKSMAP_REDIS_INSTANCE_PORT: {{ .Values.data.redisSdmsPort | quote }}
+  LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE: {{ .Values.data.redisSdmsTlsDisabled | quote }}

@@ -3,7 +3,7 @@ sdms_gc-dev2-deploy:
     - gc-dev2-deploy
   needs: 
     - 'sdms_gc-containerize-gitlab'
-    - 'sdms_gc-helm-charts-gitlab'
+    - 'sdms_gc-helm-charts-release-gitlab'
   variables:
     GC_HELM_DEPLOYMENT_SERVICE: seismic-store-deploy
     GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"

@@ -1,0 +1,9 @@
+include:
+  - local: "app/sdms/devops/osdu/cloud-providers/core-containerize.yml"
+  - local: "app/sdms/devops/osdu/cloud-providers/core-gke.yml"
+  - local: "app/sdms/devops/osdu/cloud-providers/core-helm.yml"
+
+variables:
+  CORE_SDMS_PREFIX: /api/seismic-store/v3
+  CORE_BUILD_PATH: "devops/anthos/runtime.Dockerfile"
+  CORE_SUPPORTED_PLATFORM: "linux/amd64"

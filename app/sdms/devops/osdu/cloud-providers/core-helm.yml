@@ -1,0 +1,48 @@
+sdms_core-helm-charts-gitlab:
+  extends:
+    - core-helm-charts-gitlab
+  needs: ['sdms_core-containerize-gitlab']
+  stage: containerize
+  tags: ["osdu-small"]
+  variables:
+    CORE_HELM_DEPLOYMENT_DIR: "app/sdms/devops/core-plus/deploy"
+    CORE_SERVICE: seismic-store
+    CORE_IMAGE_NAME: core-plus-$CORE_SERVICE
+  before_script:
+    - helm registry login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - !reference [.core_set_image_name, script]
+    - !reference [.core_substitute_image_in_helm, script]
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CORE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $CORE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CORE == '1'
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: on_success
+
+sdms_core-helm-charts-release-gitlab:
+  extends:
+    - core-helm-charts-release-gitlab
+  needs: ['sdms_core-containerize-gitlab']
+  variables:
+    CORE_HELM_DEPLOYMENT_DIR: "app/sdms/devops/core-plus/deploy"
+    CORE_SERVICE: seismic-store
+    CORE_IMAGE_NAME: core-plus-$CORE_SERVICE
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: on_success
+    - if: $CI_COMMIT_TAG
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CORE == '1'
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $CORE == '1'
+      when: never
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CORE == '1'
+      when: never

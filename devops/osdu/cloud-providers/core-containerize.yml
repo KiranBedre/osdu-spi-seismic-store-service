@@ -1,0 +1,11 @@
+core-containerize-gitlab:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never
+
+core-containerize-bootstrap-gitlab:
+  needs: []
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

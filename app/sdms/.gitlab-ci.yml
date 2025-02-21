@@ -68,5 +68,8 @@ include:
   # gc
   - local: "app/sdms/devops/osdu/cloud-providers/gc-global.yml"
 
+  # core
+  - local: "app/sdms/devops/osdu/cloud-providers/core-global.yml"
+
   # ibm
   - local: "app/sdms/devops/osdu/cloud-providers/ibm.yml"
