@@ -138,7 +138,12 @@ filemetadata_azure_deploy:
     - pod=$(kubectl -n ${NAMESPACE} get po -l app=${FILEMETADATA_LOCAL_SERVICE_NAME} --no-headers=true -o custom-columns=":metadata.name" | tail -1)
     - status=$(kubectl wait -n ${NAMESPACE} --for=condition=Ready pod/$pod --timeout=600s)
     - if [[ "$status" != *"met"* ]]; then echo "${FILEMETADATA_LOCAL_SERVICE_NAME} pod didn't start correctly" ; exit 1 ; fi
-  artifacts: null
+    # add registry token to .env file and pass down to downstream jobs
+    - echo "AZURE_REGISTRY_TOKEN=$(az acr login -n $AZURE_REGISTRY --expose-token --query 'accessToken' -otsv)" >> ${CI_PROJECT_DIR}/acr_tokens.env
+    - echo "DST_REGISTRY_TOKEN=$(az acr login -n msosdu --expose-token --query 'accessToken' -otsv)" >> ${CI_PROJECT_DIR}/acr_tokens.env
+  artifacts:
+    reports:
+      dotenv: ${CI_PROJECT_DIR}/acr_tokens.env
   only: null
   except: null
   rules:
