@@ -322,7 +322,12 @@ sdms_azure_deploy:
     - pod=$(kubectl -n ddms-seismic get po -l app=${SDMS_SERVICE_NAME} --no-headers=true -o custom-columns=":metadata.name" | tail -1)
     - status=$(kubectl wait -n ${NAMESPACE} --for=condition=Ready pod/$pod --timeout=600s)
     - if [[ "$status" != *"met"* ]]; then echo "${SDMS_SERVICE_NAME} pod didn't start correctly" ; exit 1 ; fi
-  artifacts: null
+    # add registry token to .env file and pass down to downstream jobs
+    - echo "AZURE_REGISTRY_TOKEN=$(az acr login -n $AZURE_REGISTRY --expose-token --query 'accessToken' -otsv)" >> ${CI_PROJECT_DIR}/acr_tokens.env
+    - echo "DST_REGISTRY_TOKEN=$(az acr login -n msosdu --expose-token --query 'accessToken' -otsv)" >> ${CI_PROJECT_DIR}/acr_tokens.env
+  artifacts:
+    reports:
+      dotenv: ${CI_PROJECT_DIR}/acr_tokens.env
   only: null
   except: null
   rules:
@@ -395,7 +400,7 @@ sdms_azure-publish:
   variables:
     SHA_IMAGE: ${SDMS_SERVICE_NAME}:${CI_COMMIT_SHA}
     SHA_SIDECAR_IMAGE: ${SDMS_SIDECAR_NAME}:${CI_COMMIT_SHA}
-    SHA_DELETION_SERVICE_IMAGE: ${SDMS_DELETION_SERVICE_NAME}:${CI_COMMIT_SHA} 
+    SHA_DELETION_SERVICE_IMAGE: ${SDMS_DELETION_SERVICE_NAME}:${CI_COMMIT_SHA}
     SHA_COMPUTESIZE_SERVICE_IMAGE: ${SDMS_COMPUTESIZE_SERVICE_NAME}:${CI_COMMIT_SHA}
   script:
    - crane copy ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE ${DST_REGISTRY}.azurecr.io/$SDMS_SERVICE:${AZ_VER}
