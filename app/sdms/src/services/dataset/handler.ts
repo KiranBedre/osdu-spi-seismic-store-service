@@ -51,53 +51,53 @@ export class DatasetHandler {
                 throw error;
             }
 
-            switch (op){
-                case DatasetOP.CheckCTag :
+            switch (op) {
+                case DatasetOP.CheckCTag:
                     Response.writeOK(res, await this.checkCTag(req, subproject));
                     break;
-                case DatasetOP.Register :
+                case DatasetOP.Register:
                     Response.writeOK(res, await this.register(req, tenant, subproject));
                     break;
-                case DatasetOP.Get :
+                case DatasetOP.Get:
                     Response.writeOK(res, await this.get(req, tenant, subproject));
                     break;
-                case DatasetOP.List :
+                case DatasetOP.List:
                     Response.writeOK(res, await this.list(req, tenant, subproject));
                     break;
-                case DatasetOP.Delete :
+                case DatasetOP.Delete:
                     Response.writeOK(res, await this.delete(req, tenant, subproject));
                     break;
-                case DatasetOP.Patch :
+                case DatasetOP.Patch:
                     Response.writeOK(res, await this.patch(req, tenant, subproject));
                     break;
-                case DatasetOP.Lock :
+                case DatasetOP.Lock:
                     Response.writeOK(res, await this.lock(req, tenant, subproject));
                     break;
-                case DatasetOP.UnLock :
+                case DatasetOP.UnLock:
                     Response.writeOK(res, await this.unlock(req, tenant, subproject));
                     break;
-                case DatasetOP.Exists :
+                case DatasetOP.Exists:
                     Response.writeOK(res, await this.exists(req, tenant, subproject));
                     break;
-                case DatasetOP.Sizes :
+                case DatasetOP.Sizes:
                     Response.writeOK(res, await this.sizes(req, tenant, subproject));
                     break;
-                case DatasetOP.GetSize :
+                case DatasetOP.GetSize:
                     Response.writeOK(res, await this.getSize(req, tenant, subproject));
                     break;
-                case DatasetOP.ComputeSize :
+                case DatasetOP.ComputeSize:
                     Response.writeOK(res, await this.computeSize(req, tenant, subproject));
                     break;
-                case DatasetOP.Permission :
+                case DatasetOP.Permission:
                     Response.writeOK(res, await this.checkPermissions(req, tenant, subproject));
                     break;
-                case DatasetOP.ListContent :
+                case DatasetOP.ListContent:
                     Response.writeOK(res, await this.listContent(req, tenant, subproject));
                     break;
-                case DatasetOP.PutTags :
+                case DatasetOP.PutTags:
                     Response.writeOK(res, await this.putTags(req, tenant, subproject));
                     break;
-                default :
+                default:
                     throw (Error.make(Error.Status.UNKNOWN, 'Internal Server Error'));
             }
 
@@ -140,7 +140,7 @@ export class DatasetHandler {
     }
 
     private static async isIdempotent(writeLockSession: IWriteLockSession,
-        subproject: SubProjectModel, journalClient: IJournal, dataset: DatasetModel){
+        subproject: SubProjectModel, journalClient: IJournal, dataset: DatasetModel) {
 
         const alreadyRegisteredDataset = subproject.enforce_key ?
             await DatasetDAO.getByKey(journalClient, dataset) :
@@ -151,14 +151,14 @@ export class DatasetHandler {
         }
     }
 
-    private static async legalTagExists(dataset: DatasetModel, subproject: SubProjectModel){
+    private static async legalTagExists(dataset: DatasetModel, subproject: SubProjectModel) {
         dataset.ltag = dataset.ltag || subproject.ltag;
-            if (!dataset.ltag) {
-                throw Error.make(Error.Status.NOT_FOUND,
+        if (!dataset.ltag) {
+            throw Error.make(Error.Status.NOT_FOUND,
                 'No legal-tag has been found for the subproject resource ' +
                 Config.SDPATHPREFIX + dataset.tenant + '/' + dataset.subproject +
                 ' the storage metadata cannot be updated without a valid a legal-tag');
-            }
+        }
     }
 
     private static async checkReadAccess(req: expRequest, subproject: SubProjectModel,
@@ -181,7 +181,7 @@ export class DatasetHandler {
         Config.disableStrongConsistencyEmulation();
         const datasetAlreadyExist = await this.findDataset(subproject, journalClient, dataset);
 
-        if(strongEmulationFlag) {
+        if (strongEmulationFlag) {
             Config.enableStrongConsistencyEmulation();
         }
 
@@ -219,7 +219,7 @@ export class DatasetHandler {
             writeLockSession = await DatasetHandler.setLockOnDataset(dataset, writeLockSession, req);
 
             // if the call is idempotent return the dataset value
-            if (writeLockSession.idempotent){
+            if (writeLockSession.idempotent) {
                 return this.isIdempotent(writeLockSession, subproject, journalClient, dataset);
             }
 
@@ -455,7 +455,7 @@ export class DatasetHandler {
     }
 
     private static async datasetExistsForGet(subproject: SubProjectModel, journalClient:
-        IJournal, datasetIN: DatasetModel, req: expRequest, tenant: TenantModel): Promise<DatasetModel>{
+        IJournal, datasetIN: DatasetModel, req: expRequest, tenant: TenantModel): Promise<DatasetModel> {
         const datasetOUT = await this.findDataset(subproject, journalClient, datasetIN);
 
         // check if the dataset does not exist
@@ -501,12 +501,12 @@ export class DatasetHandler {
 
         // Retrieve the list of datasets metadata
         const output = (await DatasetDAO.list(
-          journalClient,
-          dataset,
-          pagination,
-          searchParam,
-          selectParam,
-          filterParam
+            journalClient,
+            dataset,
+            pagination,
+            searchParam,
+            selectParam,
+            filterParam
         )) as any;
 
         // attach the gcpid for fast check, access_policy and exchange user-info (if requested)
@@ -600,8 +600,8 @@ export class DatasetHandler {
             const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
             StorageFactory.build(Config.CLOUDPROVIDER, tenant).deleteObjects(
                 bucket, virtualFolder).catch((error) => {
-                LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
-            });
+                    LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error));
+                });
 
             // remove any remaining locks (this should be removed with SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS)
             const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
@@ -610,7 +610,7 @@ export class DatasetHandler {
         } else {
 
             // Set the delete status on metadata
-            if(dataset.status === undefined || !dataset.status.startsWith('DELETE:')) {
+            if (dataset.status === undefined || !dataset.status.startsWith('DELETE:')) {
                 dataset.status = 'DELETE:' + Date.now()
                 await DatasetDAO.update(journalClient, dataset, datasetKey);
             }
@@ -661,7 +661,7 @@ export class DatasetHandler {
         await DatasetHandler.accessPolicyNotUniform(datasetIN, journalClient, tenant, subproject);
 
         // unlock the dataset for close operation (and patch)
-        const lockres = wid ? await Locker.unlock(lockKey, wid) : {id: null, cnt: 0};
+        const lockres = wid ? await Locker.unlock(lockKey, wid) : { id: null, cnt: 0 };
 
         // ensure nobody got the lock between the close and the mutex acquisition
         await DatasetHandler.checkForWriteLock(lockKey, datasetIN);
@@ -689,22 +689,22 @@ export class DatasetHandler {
         // patch datasetOUT with datasetIN
         if (datasetIN.metadata) { datasetOUT.metadata = datasetIN.metadata; }
         if (datasetIN.filemetadata) {
-            if(datasetOUT.filemetadata === undefined) {
+            if (datasetOUT.filemetadata === undefined) {
                 datasetOUT.filemetadata = datasetIN.filemetadata
             }
             else {
                 // Will now only update or create new field in FileMetaData instead of overwriting all
                 for (const key of Object.keys(datasetIN.filemetadata)) {
-                    if(key === 'tier_class') {
+                    if (key === 'tier_class') {
                         const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
                         const supportedTiers = storage.getStorageTiers();
                         const index = supportedTiers.findIndex(
                             item => datasetIN.filemetadata[key].toLowerCase() === item.toLowerCase());
                         if (index === -1) {
-                        throw (Error.make(Error.Status.BAD_REQUEST,
-                            'The storage Tier option ' + '"' + datasetIN.filemetadata[key] +
-                            '"' + ' is not supported by this API. ' +
-                            'Your available options are ' + supportedTiers.join(', ')));
+                            throw (Error.make(Error.Status.BAD_REQUEST,
+                                'The storage Tier option ' + '"' + datasetIN.filemetadata[key] +
+                                '"' + ' is not supported by this API. ' +
+                                'Your available options are ' + supportedTiers.join(', ')));
                         }
                         datasetOUT.filemetadata[key] = supportedTiers[index];
                     }
@@ -723,7 +723,7 @@ export class DatasetHandler {
 
             datasetOUT.ltag = datasetIN.ltag;
         }
-        if(datasetIN.status) {
+        if (datasetIN.status) {
             datasetOUT.status = datasetIN.status;
         }
 
@@ -741,7 +741,7 @@ export class DatasetHandler {
             Config.disableStrongConsistencyEmulation();
             const datasetAlreadyExist = await this.findDataset(subproject, journalClient, datasetIN);
 
-            if(strongEmulationFlag) {
+            if (strongEmulationFlag) {
                 Config.enableStrongConsistencyEmulation();
             }
             // check if dataset already exist
@@ -751,7 +751,7 @@ export class DatasetHandler {
                     datasetIN.subproject + datasetIN.path + newName + ' already exists'));
             }
 
-            datasetOUTKey =  await this.findDatasetKey(subproject, journalClient, datasetIN);
+            datasetOUTKey = await this.findDatasetKey(subproject, journalClient, datasetIN);
             // if (subproject.enforce_key) {
             //     datasetOUTKey = journalClient.createKey({
             //         namespace: Config.SEISMIC_STORE_NS + '-' + datasetIN.tenant + '-' + datasetIN.subproject,
@@ -771,9 +771,9 @@ export class DatasetHandler {
             // Check if provided class change is supported
             const index = supportedTiers.findIndex(item => changeTier.toLowerCase() === item.toLowerCase());
             if (index === -1) {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'The storage Tier option ' + '"' + changeTier + '"' + ' is not supported by this API. ' +
-                'Your available options are ' + supportedTiers.join(', ')));
+                throw (Error.make(Error.Status.BAD_REQUEST,
+                    'The storage Tier option ' + '"' + changeTier + '"' + ' is not supported by this API. ' +
+                    'Your available options are ' + supportedTiers.join(', ')));
             }
 
             if (datasetIN.filemetadata?.tier_class !== undefined &&
@@ -782,7 +782,7 @@ export class DatasetHandler {
                     'You have set tier_class ' + '"' + datasetIN.filemetadata.tier_class + '"' +
                     ' and set change_tier ' + '"' + changeTier + '"' +
                     ' and they do NOT match'));
-                }
+            }
 
             // enable_storage_tier_change must be enabled to change tier
             if (changeTier) {
@@ -830,7 +830,7 @@ export class DatasetHandler {
         if (newName) {
             await Promise.all([
                 DatasetDAO.delete(journalClient, datasetOUT),
-                DatasetDAO.register(journalClient, {key: datasetOUTKey, data: datasetOUT})]);
+                DatasetDAO.register(journalClient, { key: datasetOUTKey, data: datasetOUT })]);
         } else {
             await DatasetDAO.update(journalClient, datasetOUT, datasetOUTKey);
         }
@@ -884,13 +884,13 @@ export class DatasetHandler {
     }
 
     private static async findDatasetKey(subproject: SubProjectModel,
-        journalClient: IJournal,  datasetIN: DatasetModel) {
+        journalClient: IJournal, datasetIN: DatasetModel) {
         return subproject.enforce_key ?
             (await journalClient.createKey({
-                        namespace: Config.SEISMIC_STORE_NS + '-' + datasetIN.tenant + '-' + datasetIN.subproject,
-                        path: [Config.DATASETS_KIND],
-                        enforcedKey: datasetIN.path.slice(0, -1) + '/' + datasetIN.name
-                    })) :
+                namespace: Config.SEISMIC_STORE_NS + '-' + datasetIN.tenant + '-' + datasetIN.subproject,
+                path: [Config.DATASETS_KIND],
+                enforcedKey: datasetIN.path.slice(0, -1) + '/' + datasetIN.name
+            })) :
             (await DatasetDAO.get(journalClient, datasetIN))[1];
     }
 
@@ -921,7 +921,7 @@ export class DatasetHandler {
 
     private static async returnDatasetWithoutPatch(subproject: SubProjectModel, journalClient:
         IJournal, datasetIN: DatasetModel, wid: string, req, tenant: TenantModel,
-        lockKey: string):Promise<DatasetModel> {
+        lockKey: string): Promise<DatasetModel> {
         const dataset = await DatasetHandler.findDataset(subproject, journalClient, datasetIN);
 
         // check if the dataset does not exist
@@ -969,8 +969,9 @@ export class DatasetHandler {
     // Required role:
     //  - write lock request: subproject.admin || dataset.admin (dependents on applied access policy)
     //  - read lock request: subproject.viewer || dataset.viewer (dependents on applied access policy)
-    private static async lock(req: expRequest, tenant: TenantModel, subproject: SubProjectModel):Promise<DatasetModel> {
-
+    private static async lock(
+        req: expRequest, tenant: TenantModel, subproject: SubProjectModel
+    ): Promise<DatasetModel> {
         // parse user request
         const userInput = DatasetParser.lock(req);
         const datasetIN = userInput.dataset;
@@ -1122,7 +1123,7 @@ export class DatasetHandler {
             }
         }
 
-        if(strongEmulationFlag) {
+        if (strongEmulationFlag) {
             Config.enableStrongConsistencyEmulation();
         }
         return results;
@@ -1174,7 +1175,7 @@ export class DatasetHandler {
             }
         }
 
-        if(strongEmulationFlag) {
+        if (strongEmulationFlag) {
             Config.enableStrongConsistencyEmulation();
         }
         return results;
@@ -1265,8 +1266,8 @@ export class DatasetHandler {
 
             // Get the size and date
             const size = await StorageFactory.build(
-            Config.CLOUDPROVIDER, tenant).getObjectSize(
-                bucket, accessPolicy === Config.UNIFORM_ACCESS_POLICY ? virtualFolder : undefined);
+                Config.CLOUDPROVIDER, tenant).getObjectSize(
+                    bucket, accessPolicy === Config.UNIFORM_ACCESS_POLICY ? virtualFolder : undefined);
             const now = new Date().toString();
 
             // Update dataset table
@@ -1359,17 +1360,16 @@ export class DatasetHandler {
         if (datasetOUT.gtags) {
             if (typeof datasetOUT.gtags === 'string') {
                 const originalGtags = datasetOUT.gtags;
-                datasetOUT.gtags = [];
-                datasetOUT.gtags.push(originalGtags);
+                datasetOUT.gtags = [originalGtags]; // Initialize as an array
             }
             if (typeof datasetIN.gtags === 'string') {
                 datasetOUT.gtags.push(datasetIN.gtags);
-            } else {
+            } else if (Array.isArray(datasetIN.gtags)) {
                 datasetOUT.gtags = datasetOUT.gtags.concat(datasetIN.gtags);
             }
             datasetOUT.gtags = datasetOUT.gtags.filter((item, index) => datasetOUT.gtags.indexOf(item) === index);
         } else {
-            datasetOUT.gtags = datasetIN.gtags;
+            datasetOUT.gtags = Array.isArray(datasetIN.gtags) ? datasetIN.gtags : [datasetIN.gtags];
         }
 
         await Auth.isWriteAuthorized(req.headers.authorization,

@@ -200,8 +200,8 @@ export class UserHandler {
         let adminGroups = subprojectAdminServiceGroups.concat(adminSubprojectDataGroups);
         let viewerGroups = subprojectViewerServiceGroups.concat(viewerSubprojectDataGroups);
 
-        adminGroups= adminGroups.length ? adminGroups : [subproject.acls.admins.sort()[0]];
-        viewerGroups = viewerGroups .length ? viewerGroups : [subproject.acls.viewers.sort()[0]];
+        adminGroups = adminGroups.length ? adminGroups : [subproject.acls.admins.sort()[0]];
+        viewerGroups = viewerGroups.length ? viewerGroups : [subproject.acls.viewers.sort()[0]];
 
         if (userGroupRole === AuthRoles.admin || userGroupRole === AuthRoles.editor) {
             await this.addUserAsAdmin(adminGroups, viewerGroups, tenant, req, userEmail);
@@ -221,6 +221,11 @@ export class UserHandler {
         const sdPath = userInput.sdPath;
         let userEmail = userInput.email;
 
+        // Validate the parsed user input to prevent type confusion
+        if (typeof userEmail !== 'string') {
+            throw (Error.make(Error.Status.BAD_REQUEST, 'Email should be of string type.'));
+        }
+
         // This method is temporary required by slb during the migration of sauth from v1 to v2
         // The method replace slb.com domain name with delfiserviceaccount.com.t
         // Temporary hardcoded can be removed on 01/22 when sauth v1 will be dismissed.
@@ -233,8 +238,8 @@ export class UserHandler {
             Config.USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC);
         if (payloadEntitlementClaim &&
             ((userEmail.includes('@') && payloadEntitlementClaim === userEmail) ||
-            payloadEntitlementClaim.split('@')[0] === userEmail)) {
-                throw (Error.make(Error.Status.BAD_REQUEST, 'A user cannot remove himself.'));
+                payloadEntitlementClaim.split('@')[0] === userEmail)) {
+            throw (Error.make(Error.Status.BAD_REQUEST, 'A user cannot remove himself.'));
         }
 
         // retrieve the tenant information
@@ -244,9 +249,9 @@ export class UserHandler {
         const subproject = await SubProjectDAO.get(journalClient, tenant.name, sdPath.subproject);
 
         await Auth.isUserAuthorized(req.headers.authorization,
-                SubprojectAuth.getAuthGroups(
-                    subproject, AuthRoles.admin, tenant.esd),
-                    tenant.esd, req[Config.DE_FORWARD_APPKEY]);
+            SubprojectAuth.getAuthGroups(
+                subproject, AuthRoles.admin, tenant.esd),
+            tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
         if (sdPath.dataset) {
             const datasetModel: DatasetModel = {
@@ -275,22 +280,22 @@ export class UserHandler {
 
             let userGroups = [];
 
-            if(adminGroups.length === 0) {
+            if (adminGroups.length === 0) {
                 userGroups = await AuthGroups.getUserGroups(req.headers.authorization,
                     tenant.esd, req[Config.DE_FORWARD_APPKEY]);
 
                 adminGroups.push(userGroups.filter(group => subproject.acls.admins.includes(group.email))
-                .map(group => group.email).sort()[0]);
+                    .map(group => group.email).sort()[0]);
             }
 
-            if(viewerGroups.length === 0) {
+            if (viewerGroups.length === 0) {
                 if (userGroups.length === 0) {
                     userGroups = await AuthGroups.getUserGroups(req.headers.authorization,
                         tenant.esd, req[Config.DE_FORWARD_APPKEY]);
                 }
 
                 viewerGroups.push(userGroups.filter(group => subproject.acls.viewers.includes(group.email))
-                .map(group => group.email).sort()[0]);
+                    .map(group => group.email).sort()[0]);
             }
 
             await UserHandler.removeUserFromAuthGroups(adminGroups, viewerGroups, tenant, req, userEmail);
@@ -403,7 +408,7 @@ export class UserHandler {
     }
 
     private static async listUsersInAuthGroups(admins: string[], viewers: string[],
-        req, tenant: ITenantModel,):Promise<string[]> {
+        req, tenant: ITenantModel,): Promise<string[]> {
 
         let users = [];
 
@@ -486,9 +491,9 @@ export class UserHandler {
             // find all subprojects in which the users is at least member of an ACL group
             let roles = [];
             const subprojects = (await SubProjectDAO.list(journalClient, sdPath.tenant));
-            for(const subproject of subprojects) {
+            for (const subproject of subprojects) {
                 if (subproject.acls?.admins) {
-                    for(const admin of subproject.acls?.admins) {
+                    for (const admin of subproject.acls?.admins) {
                         if (groupEmailsOfUser.includes(admin)) {
                             roles.push(['/' + subproject.name, 'admin']);
                             break;
@@ -496,7 +501,7 @@ export class UserHandler {
                     }
                 }
                 if (subproject.acls?.viewers) {
-                    for(const viewer of subproject.acls?.viewers) {
+                    for (const viewer of subproject.acls?.viewers) {
                         if (groupEmailsOfUser.includes(viewer)) {
                             roles.push(['/' + subproject.name, 'viewer']);
                             break;

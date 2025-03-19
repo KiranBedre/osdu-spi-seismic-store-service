@@ -157,9 +157,9 @@ export class TestDatasetSVC {
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.params.path = '/';
-            expReq.query.ctag = '000000000000000xxxxx';
+            expReq.query.ctag = '000000000000000xxx;xx';
             const dataset = {
-                ctag: '00000000000xxxxx',
+                ctag: '000000000000000xxx;xx',
             } as DatasetModel;
             this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.CheckCTag);
@@ -168,7 +168,7 @@ export class TestDatasetSVC {
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             expReq.params.path = '/';
-            expReq.query.ctag = '000000000000000xxxxx';
+            expReq.query.ctag = '000000000000000xxx;xx';
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
             await DatasetHandler.handler(expReq, expRes, DatasetOP.CheckCTag);
             Tx.check404(expRes.statusCode);
@@ -870,7 +870,7 @@ export class TestDatasetSVC {
             await DatasetHandler.handler(expReq, expRes, DatasetOP.PutTags);
 
             Tx.checkTrue(JSON.stringify(
-                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02', undefined]));
+                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02']));
         });
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
@@ -885,7 +885,7 @@ export class TestDatasetSVC {
             await DatasetHandler.handler(expReq, expRes, DatasetOP.PutTags);
 
             Tx.checkTrue(JSON.stringify(
-                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02', undefined]));
+                updateStub.getCall(0).args[1].gtags) === JSON.stringify(['tag01', 'tag02']));
         });
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {

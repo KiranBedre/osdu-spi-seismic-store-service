@@ -23,6 +23,7 @@ import { Operation } from './operations';
 import { Parser } from './parser';
 import { SearchService } from '../../services/search';
 import { StorageCoreService } from '../../services';
+import { Error } from '../../shared';
 
 export class SchemaHandler {
     public static async handler(req: expRequest, res: expResponse, op: Operation) {
@@ -54,8 +55,24 @@ export class SchemaHandler {
      * @returns list of storage service record identifiers
      */
     private static async register(req: expRequest, dataPartition: string): Promise<string[]> {
+        // Validate authorization header and dataPartition
+        const authorizationHeader = req.headers.authorization?.trim();
+
+        if (!authorizationHeader) {
+            throw Error.make(Error.Status.BAD_REQUEST, "'Authorization' header is missing or malformed.");
+        }
+        if (typeof dataPartition !== 'string' || !dataPartition.trim()) {
+            throw Error.make(Error.Status.BAD_REQUEST, "'dataPartition' must be a valid non-empty string.");
+        }
         const records = await Parser.register(req, dataPartition);
-        const recordIds = await StorageCoreService.insertRecords(req.headers.authorization!, records, dataPartition);
+        if (typeof records !== 'object' || records === null || records.length === 0) {
+            throw Error.make(Error.Status.BAD_REQUEST, "'records' should be a valid non-empty object.");
+        }
+        const recordIds = await StorageCoreService.insertRecords(authorizationHeader, records, dataPartition);
+        if (!Array.isArray(recordIds)) {
+            throw Error.make(Error.Status.BAD_REQUEST, "'recordIds' should be an array.");
+        }
+        // Bulk operation: check and create buckets if needed
         if (Context.schemaEndpoint.hasBulks) {
             for (let ii = 0; ii < records.length; ii++) {
                 const recordId = recordIds[ii].substring(0, recordIds[ii].lastIndexOf(':'));

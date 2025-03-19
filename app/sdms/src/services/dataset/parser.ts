@@ -28,18 +28,24 @@ export class DatasetParser {
     public static checkCTag(req: expRequest): { tenantID: string, dataPartitionID: string, dataset: DatasetModel; } {
 
         const dataset = this.createDatasetModelFromRequest(req);
-
         Params.checkString(req.query.ctag, 'ctag');
-
-        if ((req.query.ctag as string).length < 19) { // ctag (16) + project(3 at least)
-            throw (Error.make(Error.Status.BAD_REQUEST, 'The \'ctag\' query parameter is in a wrong format.'));
+        let ctag: string;
+        if (typeof req.query.ctag === 'string') {
+            ctag = req.query.ctag;
+        } else {
+            throw Error.make(Error.Status.BAD_REQUEST, 'The \'ctag\' query parameter is not a valid string.');
         }
-
-        dataset.ctag = (req.query.ctag as string).substr(0, 16);
-        const tmp = (req.query.ctag as string).substr(16) as string;
-        const tenantID = tmp.split(';')[0];
-        const dataPartitionID = tmp.split(';')[1];
-
+        // Check if 'ctag' has the correct length (at least 19 characters)
+        if (ctag.length < 19) { // ctag (16) + project (3 at least)
+            throw Error.make(Error.Status.BAD_REQUEST, "The 'ctag' query parameter is in a wrong format.");
+        }
+        // Process the 'ctag' value and extract necessary parts
+        dataset.ctag = ctag.substring(0, 16);  // First 16 characters for 'ctag'
+        const tmp = ctag.substring(16); // Extract the remaining part
+        const [tenantID, dataPartitionID] = tmp.split(';');
+        if (!tenantID || !dataPartitionID) {
+            throw Error.make(Error.Status.BAD_REQUEST, "Invalid 'ctag' format: missing tenantID or dataPartitionID.");
+        }
         return { tenantID, dataPartitionID, dataset };
 
     }
@@ -116,7 +122,7 @@ export class DatasetParser {
 
     public static get(req: expRequest): [DatasetModel, boolean, boolean, string] {
         let userInfo = true;
-        if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+        if (req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
             userInfo = false;
         }
         const seismicMetaRecordVersion = req.query['record-version'] ?
@@ -131,7 +137,7 @@ export class DatasetParser {
         const params = isPost ? req.body : req.query;
 
         let userInfo = true;
-        if(req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+        if (req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
             userInfo = false;
         }
 
@@ -162,7 +168,7 @@ export class DatasetParser {
         checkGtags(params.gtag);
 
         if (params.limit || params.cursor) {
-            if(isPost) {
+            if (isPost) {
                 Params.checkString(params.limit, 'limit', false);
                 input.pagination = { limit: +params.limit, cursor: params.cursor };
             }
@@ -183,7 +189,7 @@ export class DatasetParser {
         }
 
         if (params.search) {
-            if(!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
+            if (!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
                 throw (Error.make(Error.Status.NOT_IMPLEMENTED,
                     'The \'search\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
             }
@@ -191,21 +197,21 @@ export class DatasetParser {
         }
 
         if (params.select && typeof params.select === 'string') {
-            if(!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
+            if (!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
                 throw (Error.make(Error.Status.NOT_IMPLEMENTED,
                     'The \'select\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
             }
-            input.select = params.select.slice(1,-1).split(',');
+            input.select = params.select.slice(1, -1).split(',');
         }
 
         if (params.filter) {
-            if(!Config.ENABLE_ADVANCED_QUERY_FILTERS) {
+            if (!Config.ENABLE_ADVANCED_QUERY_FILTERS) {
                 throw (Error.make(Error.Status.NOT_IMPLEMENTED,
                     'The \'filter\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
             }
             try {
                 input.filter = DatasetFilterParser.parseFilter(params.filter);
-            } catch (error){
+            } catch (error) {
                 throw (Error.make(Error.Status.BAD_REQUEST, error.message));
             }
         }
