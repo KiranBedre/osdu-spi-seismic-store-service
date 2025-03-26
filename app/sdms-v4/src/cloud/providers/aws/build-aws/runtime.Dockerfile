@@ -16,7 +16,7 @@
 
 ARG docker_node_image_version=18-alpine
 
-FROM node:${docker_node_image_version} as runtime-builder
+FROM public.ecr.aws/docker/library/node:${docker_node_image_version} as runtime-builder
 
 # RUN apt-get install -yqq --no-install-recommends openssl
 
