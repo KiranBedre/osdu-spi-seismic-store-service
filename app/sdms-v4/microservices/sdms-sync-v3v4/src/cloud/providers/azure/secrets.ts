@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -15,12 +15,20 @@
 // ============================================================================
 
 import { AzureConfig } from './config';
+import { Config } from '../../config';
 import { DefaultAzureCredential } from '@azure/identity';
+import { PartitionService } from '../../../shared';
 import { SecretClient } from '@azure/keyvault-secrets';
 
 export class AzureSecrets {
     // Storage queue
     public static STORAGE_QUEUE_ENDPOINT = 'queue-storage-endpoint';
+
+    // Instrumentation key
+    private static AI_INSTRUMENTATION_KEY = 'appinsights-key';
+
+    public static DATA_PARTITION_COSMOS_ENDPOINT = 'cosmos-endpoint';
+    public static DATA_PARTITION_COSMOS_PRIMARY_KEY = 'cosmos-primary-key';
 
     public static CreateSecretClient(): SecretClient {
         const credential = new DefaultAzureCredential();
@@ -32,5 +40,29 @@ export class AzureSecrets {
     public static async loadSecrets() {
         const client = AzureSecrets.CreateSecretClient();
         AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = (await client.getSecret(this.STORAGE_QUEUE_ENDPOINT)).value!;
+        AzureConfig.APP_RESOURCE_ID = (await client.getSecret(Config.APP_RESOURCE_ID)).value;
+        AzureConfig.AZURE_CREDENTIAL = (
+            await new DefaultAzureCredential().getToken(AzureConfig.APP_RESOURCE_ID + '/.default')
+        ).token;
+        AzureConfig.AI_INSTRUMENTATION_KEY = (await client.getSecret(this.AI_INSTRUMENTATION_KEY)).value!;
+    }
+
+    public static async getSecret(key: string): Promise<string> {
+        return (await AzureSecrets.CreateSecretClient().getSecret(key)).value;
+    }
+
+    public static async getStorageResourceSecrets(dataPartition: string): Promise<string> {
+        const dataPartitionConfigurations = await PartitionService.getPartitionConfiguration(
+            dataPartition,
+            AzureConfig.AZURE_CREDENTIAL
+        );
+        const storageConfigs = dataPartitionConfigurations[Config.CORE_SERVICE_PARTITION_STORAGE_ACCOUNT_KEY] as {
+            sensitive: boolean;
+            value: string;
+        };
+        if (storageConfigs.sensitive) {
+            storageConfigs.value = await AzureSecrets.getSecret(storageConfigs.value);
+        }
+        return storageConfigs.value;
     }
 }

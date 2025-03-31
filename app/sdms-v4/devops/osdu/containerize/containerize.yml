@@ -46,3 +46,37 @@ sdms-v4_containerize:
         - devops/**/*
         - app/sdms-v4/**/*
       when: always
+
+sdms-v4_ms_sdms-sync-v3v4_containerize:
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  tags: ["osdu-medium"]
+  stage: containerize
+  variables:
+    SHA_IMAGE: ${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}:${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHA}
+    LATEST_IMAGE: ${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}:latest
+  before_script:
+    - cd app/$SDMS_V4_SERVICE/microservices
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd sdms-sync-v3v4
+    - docker build -t $SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE --file Dockerfile  .
+    - docker tag $SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE
+    - docker push $CI_REGISTRY_IMAGE/$SHA_IMAGE
+    - docker tag $SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$LATEST_IMAGE
+    - docker push $CI_REGISTRY_IMAGE/$LATEST_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: always
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - devops/**/*
+        - app/sdms-v4/**/*
+      when: always

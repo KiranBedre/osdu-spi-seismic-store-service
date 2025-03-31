@@ -21,3 +21,4 @@ variables:
   SDMS_V4_PROJECT_NAME: seismic-store-service-v4
   ISGITLAB_V4: "true"
   SDMS_V4_UTEST_RUNTIME_IMAGE: seistore-svc-runtime-v4
+  SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE: seistore-svc-runtime-ms-syncv3v4

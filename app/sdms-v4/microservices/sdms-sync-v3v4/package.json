@@ -13,6 +13,28 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@azure/storage-queue": "^12.24.0"
+        "@azure/storage-queue": "^12.24.0",
+        "@azure/cosmos": "4.2.0",
+        "@azure/identity": "^4.4.1",
+        "@azure/keyvault-secrets": "^4.7.0",
+        "@azure/storage-blob": "^12.14.0",
+        "applicationinsights": "^2.7.0",
+        "@azure/core-rest-pipeline": "^1.10.1",
+        "axios": "^1.7.4",
+        "@types/node": "^18.11.18"
+    },
+    "overrides": {
+        "@typescript-eslint/parser": {
+            "@typescript-eslint/typescript-estree": {
+                "semver": "7.5.2"
+            }
+        },
+        "applicationinsights": {
+            "@azure/opentelemetry-instrumentation-azure-sdk": {
+                "@opentelemetry/instrumentation": {
+                    "semver": "7.5.2"
+                }
+            }
+        }
     }
 }

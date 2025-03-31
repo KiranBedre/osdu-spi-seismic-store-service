@@ -83,11 +83,71 @@ sdms-v4_azure_containerize:
     paths:
       - app/$SDMS_V4_SERVICE/openapi.yaml
 
+sdms-v4_ms_sdms-sync-v3v4_azure_containerize:
+  extends:
+    - azure_containerize
+  needs:
+    - job: sdms-v4_ms_sdms-sync-v3v4_containerize
+  variables:
+    SHA_IMAGE: ${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}:${CI_COMMIT_SHA}
+    LATEST_IMAGE: ${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}:latest
+    RELEASE_IMAGE: release-${CI_COMMIT_TAG}:${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}-${CI_COMMIT_TAG}
+  before_script:
+    - !reference [azure_containerize, before_script]
+    - cd app/$SDMS_V4_SERVICE/microservices
+  script:
+    - cd sdms-sync-v3v4
+    # Runtime image
+    - docker build -t $SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE --file Dockerfile .
+    # Gitlab Container Registry
+    # Runtime Image
+    - docker tag $SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE $CI_REGISTRY_IMAGE/$SHA_IMAGE
+    - docker push ${CI_REGISTRY_IMAGE}/$SHA_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE/$SHA_IMAGE $CI_REGISTRY_IMAGE/$LATEST_IMAGE
+    - docker push ${CI_REGISTRY_IMAGE}/$LATEST_IMAGE
+    - docker tag ${CI_REGISTRY_IMAGE}/$LATEST_IMAGE $CI_REGISTRY_IMAGE/${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}azure:${CI_COMMIT_SHA}
+    - docker push $CI_REGISTRY_IMAGE/${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}azure:${CI_COMMIT_SHA}
+    # Azure Container Registry
+    # Runtime image
+    - az acr login -n $AZURE_REGISTRY
+    - docker tag $SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE
+    - docker push ${AZURE_REGISTRY}.azurecr.io/$SHA_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE/$SHA_IMAGE ${AZURE_REGISTRY}.azurecr.io/$LATEST_IMAGE
+    - docker push ${AZURE_REGISTRY}.azurecr.io/$LATEST_IMAGE
+    - |
+      if [ ! -z "$CI_COMMIT_TAG" ]; then
+        docker tag $CI_REGISTRY_IMAGE/$SHA_IMAGE ${AZURE_REGISTRY}.azurecr.io/$RELEASE_IMAGE
+        docker push ${AZURE_REGISTRY}.azurecr.io/$RELEASE_IMAGE
+      fi
+  only: null
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/sdms-v4/**/*
+      when: on_success
+  artifacts:
+    when: always
+    name: openapi.yaml
+    paths:
+      - app/$SDMS_V4_SERVICE/openapi.yaml
+
 sdms-v4_azure_containerize_helm:
   extends:
     - azure_containerize_helm
   needs:
     - job: sdms-v4_containerize
+      artifacts: false
+      optional: true
+    - job: sdms-v4_ms_sdms-sync-v3v4_containerize
       artifacts: false
       optional: true
   variables:
@@ -114,6 +174,45 @@ sdms-v4_azure_container_scanning:
   needs: ['sdms-v4_azure_containerize']
   variables:
     DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/${SDMS_V4_PROJECT_NAME}azure:${CI_COMMIT_SHA}
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
+      changes:
+        - devops/**/*
+        - app/sdms-v4/**/*
+      allow_failure: true
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_TAG && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AZURE == '1'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AZURE == '1'
+      changes:
+        - devops/**/*
+        - app/sdms-v4/**/*
+      when: on_success
+
+sdms-v4_ms_sdms-sync-v3v4_azure_container_scanning:
+  extends: 
+    - container_scanning
+  needs: ['sdms-v4_ms_sdms-sync-v3v4_azure_containerize']
+  variables:
+    DOCKER_IMAGE: ${CI_REGISTRY_IMAGE}/${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}azure:${CI_COMMIT_SHA}
   rules:
     - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AZURE == '1' && $IGNORE_CONTAINER_SCANNING == 'true'
       allow_failure: true
@@ -175,6 +274,8 @@ sdms-v4_azure_deploy:
       --set configEnv.desServiceHost="https://${AZURE_DNS_NAME}"
       --set configuration[0].container.image=${SDMS_V4_SERVICE_NAME}
       --set configuration[0].container.tag=${CI_COMMIT_SHA}
+      --set configuration[1].container.image=${SDMS_V4_MS_SDMS_SYNC_V3V4_RUNTIME_IMAGE}
+      --set configuration[1].container.tag=${CI_COMMIT_SHA}
       --set ingress.dns=${AZURE_DNS_NAME}
       --set istioDnsHost=${AZURE_DNS_NAME}
       --set global.namespace=${NAMESPACE}

@@ -14,24 +14,22 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Config } from './cloud';
-import { VersionSyncService } from './service';
+import { CloudFactory } from './cloud';
+import { Container } from '@azure/cosmos';
+import { Error } from '../shared';
 
-async function ServerStart() {
-    try {
-        console.log('- Initializing cloud provider');
-        Config.setCloudProvider(process.env.CLOUD_PROVIDER);
+export interface IDatabase {
+    getDBContainer(): Promise<Container>;
+}
 
-        console.log('- Initializing ' + Config.CLOUD_PROVIDER + ' Configurations');
-        await Config.initialize();
-
-        console.log('- Running ' + Config.CLOUD_PROVIDER + ' Message Queue Watcher');
-        const syncService = new VersionSyncService();
-        await syncService.syncService();
-    } catch (error) {
-        console.error(error);
-        process.exit(1);
+export abstract class AbstractDatabase implements IDatabase {
+    public getDBContainer(): Promise<Container> {
+        throw Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.');
     }
 }
 
-ServerStart();
+export class DatabaseFactory extends CloudFactory {
+    public static build(providerLabel: string, args: { [key: string]: any } = {}): IDatabase {
+        return CloudFactory.build(providerLabel, AbstractDatabase, args) as IDatabase;
+    }
+}

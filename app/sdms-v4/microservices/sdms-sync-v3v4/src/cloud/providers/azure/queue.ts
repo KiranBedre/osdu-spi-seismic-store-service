@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,6 +65,23 @@ export class AzureMessageQueue extends AbstractQueue {
 
     public async connectToQueueClient(queue: string) {
         this.queueClient = await this.queueClientFactory.getCachedQueueClient(queue);
+    }
+
+    public async updateMessage(
+        queue: string,
+        messageId: string,
+        popReceipt: string,
+        message: string,
+        visibilityTimeout: number
+    ) {
+        try {
+            if (!this.queueClient) {
+                await this.connectToQueueClient(queue);
+            }
+            return await this.queueClient.updateMessage(messageId, popReceipt, message, visibilityTimeout);
+        } catch (error) {
+            throw Error.makeForHTTPRequest(error);
+        }
     }
 }
 

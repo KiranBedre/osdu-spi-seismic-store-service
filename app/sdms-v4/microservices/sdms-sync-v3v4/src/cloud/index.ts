@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -17,3 +17,4 @@
 export * from './providers';
 export { Config, ConfigFactory } from './config';
 export { QueueFactory } from './queue';
+export { StorageFactory } from './storage';

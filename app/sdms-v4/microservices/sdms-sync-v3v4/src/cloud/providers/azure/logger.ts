@@ -14,24 +14,13 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Config } from './cloud';
-import { VersionSyncService } from './service';
+import { AbstractLogger, LoggerFactory } from '../../logger';
 
-async function ServerStart() {
-    try {
-        console.log('- Initializing cloud provider');
-        Config.setCloudProvider(process.env.CLOUD_PROVIDER);
+import { AzureInsights } from './insights';
 
-        console.log('- Initializing ' + Config.CLOUD_PROVIDER + ' Configurations');
-        await Config.initialize();
-
-        console.log('- Running ' + Config.CLOUD_PROVIDER + ' Message Queue Watcher');
-        const syncService = new VersionSyncService();
-        await syncService.syncService();
-    } catch (error) {
-        console.error(error);
-        process.exit(1);
+@LoggerFactory.register('azure')
+export class AzureLogger extends AbstractLogger {
+    public trackTrace(data): void {
+        AzureInsights.trackTrace({ message: data });
     }
 }
-
-ServerStart();

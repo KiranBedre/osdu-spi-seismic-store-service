@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -30,6 +30,14 @@ export abstract class Config implements IConfig {
     // Sleep time for the watcher
     public static SDMS_VERSION_SYNC_INTERVAL = 5000;
 
+    public static APP_RESOURCE_ID = 'aad-client-id';
+
+    public static CORE_SERVICE_HOST: string;
+    public static CORE_SERVICE_HOST_PARTITION: string;
+    public static CORE_SERVICE_PARTITION_BASE_PATH: string;
+
+    public static CORE_SERVICE_PARTITION_STORAGE_ACCOUNT_KEY: string;
+
     // Initialization methods
     public static setCloudProvider(cloudProvider: string | undefined) {
         if (!cloudProvider) {
@@ -48,6 +56,13 @@ export abstract class Config implements IConfig {
         await ConfigFactory.build(Config.CLOUD_PROVIDER).init();
 
         Config.SDMS_V3_V4_SYNC_QUEUE = this.getEnvString('V3_V4_SYNC_QUEUE', 'sdms-queue-v3v4sync');
+        Config.CORE_SERVICE_HOST = this.getEnvString('CORE_SERVICE_HOST');
+        Config.CORE_SERVICE_HOST_PARTITION = this.getEnvString('CORE_SERVICE_HOST_PARTITION', Config.CORE_SERVICE_HOST);
+        Config.CORE_SERVICE_PARTITION_BASE_PATH = this.getEnvString('PARTITION_SERVICE_BASE_PATH', '/api/partition/v1');
+        Config.CORE_SERVICE_PARTITION_STORAGE_ACCOUNT_KEY = this.getEnvString(
+            'PARTITION_SVC_STORAGE_ACCOUNT_KEY',
+            'sdms-storage-account-name'
+        );
     }
 
     protected static getEnvString(key: string, defaultValue?: string): string {

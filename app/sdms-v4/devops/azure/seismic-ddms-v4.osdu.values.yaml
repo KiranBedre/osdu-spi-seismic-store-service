@@ -49,3 +49,7 @@ configuration:
     limit:
       cpu: 1
       memory: 4Gi
+  - service: seismic-ddms-v4-ms-sync-v3v4
+    container:
+      image: seismic-ddms-v4-ms-sync-v3v4
+      containerPort: "5000"

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import { Config, ConfigFactory } from '../../config';
 
+import { AzureInsights } from './insights';
 import { AzureSecrets } from './secrets';
 
 @ConfigFactory.register('azure')
@@ -29,6 +30,13 @@ export class AzureConfig extends Config {
     // Azure Maximum Number of Messages Retrieve from Queue
     public static AZURE_MAX_MESSAGE_NUMBER = 32;
 
+    // Logs and Monitor
+    public static AI_INSTRUMENTATION_KEY: string;
+
+    public static APP_RESOURCE_ID: string;
+
+    public static AZURE_CREDENTIAL: string;
+
     public async init(): Promise<void> {
         // Load secrets
         AzureConfig.KEYVAULT_URL = process.env.KEYVAULT_URL;
@@ -36,5 +44,7 @@ export class AzureConfig extends Config {
         await AzureSecrets.loadSecrets();
 
         Config.checkRequiredConfig(AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT, 'AZURE_STORAGE_QUEUE_ENDPOINT');
+
+        AzureInsights.initialize();
     }
 }

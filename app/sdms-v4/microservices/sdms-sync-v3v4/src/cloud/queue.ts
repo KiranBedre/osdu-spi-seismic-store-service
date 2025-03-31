@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -14,13 +14,20 @@
 // Limitations under the License.
 // ============================================================================
 
-import { QueueDeleteMessageResponse, ReceivedMessageItem } from '@azure/storage-queue';
+import { QueueDeleteMessageResponse, QueueUpdateMessageResponse, ReceivedMessageItem } from '@azure/storage-queue';
 
 import { CloudFactory } from './cloud';
 
 export interface IQueue {
     fetchMessage(queue: string): Promise<ReceivedMessageItem[]>;
     deleteMessage(queue: string, messageId: string, popReceipt: string): Promise<QueueDeleteMessageResponse>;
+    updateMessage(
+        queue: string,
+        messageId: string,
+        popReceipt: string,
+        message: string,
+        visibilityTimeout: number
+    ): Promise<QueueUpdateMessageResponse>;
 }
 
 export abstract class AbstractQueue implements IQueue {
@@ -30,6 +37,13 @@ export abstract class AbstractQueue implements IQueue {
         messageId: string,
         popReceipt: string
     ): Promise<QueueDeleteMessageResponse>;
+    public abstract updateMessage(
+        queue: string,
+        messageId: string,
+        popReceipt: string,
+        message: string,
+        visibilityTimeout: number
+    ): Promise<QueueUpdateMessageResponse>;
 }
 
 export class QueueFactory extends CloudFactory {

@@ -14,24 +14,18 @@
 // Limitations under the License.
 // ============================================================================
 
-import { Config } from './cloud';
-import { VersionSyncService } from './service';
+import { CloudFactory } from './cloud';
 
-async function ServerStart() {
-    try {
-        console.log('- Initializing cloud provider');
-        Config.setCloudProvider(process.env.CLOUD_PROVIDER);
-
-        console.log('- Initializing ' + Config.CLOUD_PROVIDER + ' Configurations');
-        await Config.initialize();
-
-        console.log('- Running ' + Config.CLOUD_PROVIDER + ' Message Queue Watcher');
-        const syncService = new VersionSyncService();
-        await syncService.syncService();
-    } catch (error) {
-        console.error(error);
-        process.exit(1);
-    }
+export interface ILogger {
+    trackTrace(data: any): void;
 }
 
-ServerStart();
+export abstract class AbstractLogger implements ILogger {
+    public abstract trackTrace(data: any): void;
+}
+
+export class LoggerFactory extends CloudFactory {
+    public static build(providerLabel: string): ILogger {
+        return CloudFactory.build(providerLabel, AbstractLogger) as ILogger;
+    }
+}
