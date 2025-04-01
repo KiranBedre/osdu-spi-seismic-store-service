@@ -1,1 +1,1 @@
-FROM node
+FROM public.ecr.aws/docker/library/node

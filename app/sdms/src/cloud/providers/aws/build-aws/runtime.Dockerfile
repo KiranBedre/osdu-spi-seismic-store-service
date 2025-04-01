@@ -19,7 +19,7 @@ ARG docker_node_image_version=18-alpine
 # -------------------------------
 # Compilation stage
 # -------------------------------
-FROM node:${docker_node_image_version} as runtime-builder
+FROM public.ecr.aws/docker/library/node:${docker_node_image_version} as runtime-builder
 
 # RUN apt-get install -yqq --no-install-recommends openssl
 ADD ./ /service
@@ -36,7 +36,7 @@ RUN apk --no-cache upgrade \
 # -------------------------------
 # Package stage
 # -------------------------------
-FROM node:${docker_node_image_version} as release
+FROM public.ecr.aws/docker/library/node:${docker_node_image_version} as release
 
 #Default to using self signed generated TLS cert
 ENV USE_SELF_SIGNED_SSL_CERT true
