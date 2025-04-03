@@ -84,16 +84,18 @@ export class VersionSyncService {
         const msgContent = JSON.parse(Utils.decodeBase64(msg.messageText));
         this.logger.trackTrace(
             `Sync V3V4 - Successfully fetched message: ${msg.messageId}, content: ${JSON.stringify(
-                msgContent.datasets[0].data
+                msgContent.datasets[0]
             )}`
-        );
+        ); 
         if (!msgContent.datasets[0].data.filemetadata) {
             // Store initial 'empty' dataset
-            await this.storeMetadata(msgContent.datasets[0].data);
-            this.logger.trackTrace(
-                `Sync V3V4 - Stored an initial v3 record to cosmosDB, record id: ${msgContent.datasets[0].data.id}`
-            );
-            const containerId = Utils.getContainerIdFromGcsurl(msgContent.datasets[0].id);
+            const { path, name = '', tenant, subproject } = msgContent.datasets[0].data;
+            const v3RecordId = Utils.generateV3Id({ path, name, tenant, subproject });
+            const v3Record = { ...msgContent.datasets[0], id: v3RecordId };
+
+            await this.storeMetadata(v3Record);
+            this.logger.trackTrace(`Sync V3V4 - Stored an initial v3 record to cosmosDB, record id: ${v3RecordId}`);
+            const containerId = Utils.getContainerId(msgContent.datasets[0].id);
             const metadata = await this.computeFilemetadata(containerId);
             if (metadata) {
                 // Update the message with new timestamp and current file metadata
@@ -110,7 +112,7 @@ export class VersionSyncService {
             } else {
                 await this.queue.deleteMessage(Config.SDMS_V3_V4_SYNC_QUEUE, msg.messageId, msg.popReceipt);
                 this.logger.trackTrace(
-                    `Sync V3V4 - Failed to compute initial file metadata, deleting message ${msg.messageId}`
+                    `Sync V3V4 - Failed to compute initial file metadata, deleting message with id: ${msg.messageId}`
                 );
             }
         } else {
@@ -119,15 +121,24 @@ export class VersionSyncService {
                 return;
             }
 
-            const containerId = Utils.getContainerIdFromGcsurl(msgContent.datasets[0].id);
+            const containerId = Utils.getContainerId(msgContent.datasets[0].id);
             const newMetadata = await this.computeFilemetadata(containerId);
             if (newMetadata) {
                 if (JSON.stringify(newMetadata) === JSON.stringify(msgContent.datasets[0].data.filemetadata)) {
                     // Store the final dataset
-                    await this.storeMetadata(msgContent.datasets[0].data);
+                    const { path, name = '', tenant, subproject } = msgContent.datasets[0].data;
+                    const v3RecordId = Utils.generateV3Id({ path, name, tenant, subproject });
+                    const data = {
+                        ...msgContent.datasets[0].data,
+                        created_date: new Date().toISOString(),
+                        last_modified_date: new Date().toISOString(),
+                        gcsurl: containerId
+                    }
+                    const v3Record = { data, id: v3RecordId };
+                    await this.storeMetadata(v3Record);
                     await this.queue.deleteMessage(Config.SDMS_V3_V4_SYNC_QUEUE, msg.messageId, msg.popReceipt);
                     this.logger.trackTrace(
-                        `Sync V3V4 - Successfully stored a final v3 record, record id: ${msgContent.datasets[0].data.id}, deleting the message ${msg.messageId}`
+                        `Sync V3V4 - Successfully stored a final v3 record, record id: ${v3RecordId}, deleting message with id: ${msg.messageId}`
                     );
                 } else {
                     msgContent.datasets[0].data.filemetadata = newMetadata;
@@ -144,7 +155,7 @@ export class VersionSyncService {
             } else {
                 await this.queue.deleteMessage(Config.SDMS_V3_V4_SYNC_QUEUE, msg.messageId, msg.popReceipt);
                 this.logger.trackTrace(
-                    `Sync V3V4 - Failed to compute updated file metadata, deleting message ${msg.messageId}`
+                    `Sync V3V4 - Failed to compute updated file metadata, deleting message with id: ${msg.messageId}`
                 );
             }
         }
@@ -170,7 +181,7 @@ export class VersionSyncService {
 
         return {
             type: 'GENERIC',
-            nobject: objectNum,
+            nobjects: objectNum,
             size: size,
         };
     }

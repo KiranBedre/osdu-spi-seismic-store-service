@@ -311,6 +311,7 @@
     "nextline",
     "nlods",
     "nobjects",
+    "nodenext",
     "nodepool",
     "nodesecure",
     "nohup",

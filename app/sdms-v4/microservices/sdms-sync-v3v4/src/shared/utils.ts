@@ -29,11 +29,16 @@ export class Utils {
         return token.startsWith('Bearer') ? token : 'Bearer ' + token;
     }
 
-    public static getContainerIdFromGcsurl(gcsUrl: string): string {
-        const fileCollectionId = gcsUrl.split(':').slice(0, -1).join(':'); // remove the version
-        return Utils.constructBucketID(fileCollectionId);
+    public static getContainerId(fileCollectionId: string): string {
+        const idWithoutVersion = fileCollectionId.split(':').slice(0, -1).join(':');
+        return Utils.constructBucketID(idWithoutVersion);
     }
     public static constructBucketID(recordID: string) {
         return crypto.createHash('sha256').update(recordID).digest('hex').slice(0, -1);
+    }
+
+    public static generateV3Id({ path, name, tenant, subproject }): string {
+        const hashedValue = crypto.createHash('sha512').update(path + name).digest('hex');;
+        return 'ds-' + tenant + '-' + subproject + '-' + hashedValue;
     }
 }

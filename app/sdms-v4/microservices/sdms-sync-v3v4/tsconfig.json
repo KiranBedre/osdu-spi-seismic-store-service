@@ -2,12 +2,13 @@
     "compilerOptions": {
         "target": "ES2022",
         "experimentalDecorators": true,
-        "module": "commonjs",
+        "module": "NodeNext",
         "resolveJsonModule": true /* Enable importing .json files. */,
         "allowJs": true,
         "sourceMap": true,
         "outDir": "dist",
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "moduleResolution": "nodenext"
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules"]
