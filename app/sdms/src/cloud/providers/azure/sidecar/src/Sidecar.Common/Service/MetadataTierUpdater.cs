@@ -60,6 +60,23 @@ public class MetadataTierUpdater : IMetadataTierUpdater
             }
             catch (CosmosException ex)
             {
+                if (ex.Message.Contains("no path found beyond: 'filemetadata'"))
+                {
+                    try
+                    {
+                        var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId);
+                        var updates = new Dictionary<string, object> {
+                            {
+                                "/data/filemetadata", new {}
+                            }
+                        };
+                        var res = await _dataAccess.UpdateMetadataAsync(cs, id, updates);
+                    }
+                    catch (CosmosException exception)
+                    {
+                        _logger.LogWarning("Could not process metadata for dataset {id}, with exception {ex}", id, exception);
+                    }
+                }
                 _consecutiveFailures++;
                 _logger.LogWarning("Could not process metadata for dataset {id}, Attempt {a}", id, _consecutiveFailures / MAX_RETRIES);
                 if (_consecutiveFailures == MAX_RETRIES)
