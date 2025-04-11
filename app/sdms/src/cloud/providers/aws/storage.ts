@@ -59,7 +59,7 @@ export class AWSStorage extends AbstractStorage {
         await this.getBucket();
         let suffix = Math.random().toString(36).substring(2, 16);
         suffix = suffix + Math.random().toString(36).substring(2, 16);
-        suffix = suffix.substr(0, 16);
+        suffix = suffix.substring(0, 16);
         return this.awsBucket + '$$' + suffix;
     }
 
@@ -67,7 +67,7 @@ export class AWSStorage extends AbstractStorage {
     // this function return the real folderName by remove bucketName$$ at the front of folderName
     public getFolder(folderName: string): string {
         const start = this.awsBucket.length + 2;
-        return folderName.substr(start);
+        return folderName.substring(start);
     }
 
     // Create a new bucket, for aws, create a folder with folderName
