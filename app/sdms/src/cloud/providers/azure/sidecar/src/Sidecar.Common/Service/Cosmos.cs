@@ -153,7 +153,7 @@ public class Cosmos : IDataAccess
         var patchOperations = new List<PatchOperation>();
         foreach (var pair in updates)
         {
-            patchOperations.Add(PatchOperation.Replace(pair.Key, pair.Value));
+            patchOperations.Add(PatchOperation.Set(pair.Key, pair.Value));
         }
         var itemResponse = await container.PatchItemAsync<object>(
             id: id,
