@@ -154,7 +154,7 @@ export class AWSCredentials extends AbstractCredentials {
         AWSCredentials.servicePrincipalCredential.expires_in = Math.floor(Date.now() / 1000) +
             +AWSCredentials.servicePrincipalCredential.expires_in - KExpiresMargin;
         const val = response['access_token'];
-        return (Promise.resolve(val.toString()));
+        return Promise.resolve(typeof val === 'string' ? val : JSON.stringify(val));
     }
 
     public static async getSecrets(
@@ -169,11 +169,15 @@ export class AWSCredentials extends AbstractCredentials {
             if (data.SecretString) {
                 const secretValue = JSON.parse(data.SecretString);
                 const val = Object.values(secretValue)[0];
-                return (Promise.resolve(val.toString()));
-            }  else {
-                console.log('get binary');
-                const decodedBinarySecret = Buffer.from(data.SecretBinary.toString(), 'base64').toString('ascii');
-                return (Promise.resolve(decodedBinarySecret));
+                return Promise.resolve(typeof val === 'string' ? val : JSON.stringify(val));
+            }  else if (data.SecretBinary) {
+                const binaryString = Buffer.isBuffer(data.SecretBinary)
+                    ? data.SecretBinary.toString('base64')
+                    : String(data.SecretBinary);
+                const decodedBinarySecret = Buffer.from(binaryString, 'base64').toString('ascii');
+                return Promise.resolve(decodedBinarySecret);
+            } else {
+                return Promise.reject(new Error('Secret value contains neither string nor binary data'));
             }
         } catch (err) {
             console.log(err.code + ': ' + err.message);

@@ -123,7 +123,7 @@ export class AWSCredentials extends AbstractCredentials {
         AWSCredentials.servicePrincipalCredential.expires_in =
             Math.floor(Date.now() / 1000) + +AWSCredentials.servicePrincipalCredential.expires_in - KExpiresMargin;
         const val = response['access_token'];
-        return Promise.resolve(val.toString());
+        return Promise.resolve(typeof val === 'string' ? val : JSON.stringify(val));
     }
 
     public static async getSecrets(clientSecretName: string): Promise<string> {
@@ -136,7 +136,7 @@ export class AWSCredentials extends AbstractCredentials {
             if (data.SecretString) {
                 const secretValue = JSON.parse(data.SecretString);
                 const val = Object.values(secretValue)[0];
-                return Promise.resolve(val.toString());
+                return Promise.resolve(typeof val === 'string' ? val : JSON.stringify(val));
             } else {
                 // tslint:disable-next-line:no-console
                 console.log('get binary');
