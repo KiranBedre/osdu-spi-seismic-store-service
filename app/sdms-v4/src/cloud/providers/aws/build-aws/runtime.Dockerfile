@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=18-alpine
+ARG docker_node_image_version=22.14.0-alpine3.21
 
 FROM public.ecr.aws/docker/library/node:${docker_node_image_version} as runtime-builder
 
