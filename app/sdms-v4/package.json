@@ -57,7 +57,7 @@
         "@azure/storage-queue": "^12.24.0",
         "@types/qs": "^6.9.7",
         "applicationinsights": "^2.7.0",
-        "axios": "^1.7.4",
+        "axios": "^1.8.2",
         "cors": "^2.8.5",
         "express": "^4.20.0",
         "hpropagate": "^1.0.1",
@@ -127,6 +127,9 @@
         },
         "istanbul-lib-processinfo": {
             "cross-spawn": "7.0.5"
+        },
+        "express": {
+            "path-to-regexp": "0.1.12"
         }
     }
 }
