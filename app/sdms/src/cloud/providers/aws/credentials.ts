@@ -110,6 +110,7 @@ export class AWSCredentials extends AbstractCredentials {
                 access_token: credentials,
                 expires_in: +expDuration,
                 token_type: 'Bearer',
+                region: AWSConfig.AWS_REGION
             };
     }
 
