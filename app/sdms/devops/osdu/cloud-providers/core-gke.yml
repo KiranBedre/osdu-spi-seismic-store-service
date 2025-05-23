@@ -1,4 +1,5 @@
 sdms_core-deploy:
+  allow_failure: true
   extends:
     - core-deploy
   needs: 
