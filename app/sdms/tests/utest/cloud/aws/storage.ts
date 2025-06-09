@@ -1,7 +1,9 @@
 import sinon from 'sinon';
 import { Tx } from '../../utils';
-import { AWSStorage } from '../../../../src/cloud/providers/aws';
+import { AWSStorage, AWSConfig, AWSDataEcosystemServices } from '../../../../src/cloud/providers/aws';
+import { AWSSSMhelper } from '../../../../src/cloud/providers/aws/ssmhelper';
 import { Error } from "../../../../src/shared/error";
+import { Config } from '../../../../src/cloud';
 export class TestStorage {
     private static sandbox: sinon.SinonSandbox;
     private static storage: AWSStorage;
@@ -22,8 +24,12 @@ export class TestStorage {
 
             beforeEach(() => {
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.stub(AWSDataEcosystemServices, 'getTenantIdFromPartitionID').resolves('testTenantId');
+                this.sandbox.stub(AWSSSMhelper.prototype, 'getSSMParameter').resolves('testBucket');
+                this.sandbox.define(AWSConfig, 'AWS_REGION', 'us-west-2');
                 this.storage = new AWSStorage(this.testTenant);
-                this.getBucketSpy = this.storage['getBucket'] = this.sandbox.spy();
+                this.getBucketSpy = this.storage['getBucket'] = this.sandbox.stub().resolves();
+                this.storage['awsBucket'] = 'testBucket';
             });
 
             afterEach(() => {
@@ -61,7 +67,7 @@ export class TestStorage {
         Tx.test(() => {
             const folderName = 'testFolderName';
             const folder = this.storage.getFolder(folderName);
-            const expectedFolder = folderName.substr(''.length + 2);
+            const expectedFolder = folderName.substr('testBucket'.length + 2);
             Tx.checkTrue(expectedFolder === folder);
         });
     }
@@ -73,12 +79,10 @@ export class TestStorage {
         const storageClass = 'testStorageClass';
         Tx.test(async () => {
             
-            const putObjectStub = this.sandbox.stub((this.storage['s3'] as any), 'putObject').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({});
 
             await this.storage.createBucket(folderName, location, storageClass);
-            Tx.checkTrue(putObjectStub.calledOnce);
+            Tx.checkTrue(sendStub.calledOnce);
             Tx.checkTrue(this.getBucketSpy.calledOnce);
         });
 
@@ -99,12 +103,10 @@ export class TestStorage {
         const folderName = 'testFolderName';
         const force = false;
         Tx.test(async () => {
-            const deleteObjectStub = this.sandbox.stub((this.storage['s3'] as any), 'deleteObject').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({});
 
             await this.storage.deleteBucket(folderName, force);
-            Tx.checkTrue(deleteObjectStub.calledOnce);
+            Tx.checkTrue(sendStub.calledOnce);
             Tx.checkTrue(this.getBucketSpy.calledOnce);
         });
 
@@ -133,30 +135,20 @@ export class TestStorage {
         const folderName = 'testFolderName';
         // checks if listedObjects.Contents.length is 0
         Tx.test(async () => {
-            const listObjectsV2Stub = this.sandbox.stub((this.storage['s3'] as any), 'listObjectsV2').returns({
-                promise: this.sandbox.stub().resolves({Contents: []})
-            });
-
-            const deleteObjectsStub = this.sandbox.stub((this.storage['s3'] as any), 'deleteObjects').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({Contents: []});
 
             const result = await this.storage.deleteFiles(folderName);
-            Tx.checkTrue(listObjectsV2Stub.calledOnce);
+            Tx.checkTrue(sendStub.calledOnce);
             Tx.checkTrue(result === undefined)
         });
         // checks if listedObjects.Contents.length is > 0
         Tx.test(async () => {
-            this.sandbox.stub((this.storage['s3'] as any), 'listObjectsV2').returns({
-                promise: this.sandbox.stub().resolves({Contents: [{Key: 'testKey'}]})
-            });
-
-            const deleteObjectsStub = this.sandbox.stub((this.storage['s3'] as any), 'deleteObjects').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send');
+            sendStub.onFirstCall().resolves({Contents: [{Key: 'testKey'}]});
+            sendStub.onSecondCall().resolves({});
 
             await this.storage.deleteFiles(folderName);
-            Tx.checkTrue(deleteObjectsStub.calledOnce);
+            Tx.checkTrue(sendStub.calledTwice);
         }); 
     }
 
@@ -166,12 +158,10 @@ export class TestStorage {
         const fileName = 'testFileName';
         const fileContent = 'testFileContent';
         Tx.test(async () => {
-            const putObjectStub = this.sandbox.stub((this.storage['s3'] as any), 'putObject').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({});
 
             await this.storage.saveObject(folderName, fileName, fileContent);
-            Tx.checkTrue(putObjectStub.calledOnce);
+            Tx.checkTrue(sendStub.calledOnce);
         });
 
         Tx.test(async () => {
@@ -191,12 +181,10 @@ export class TestStorage {
         const folderName = 'testFolderName';
         const fileName = 'testFileName';
         Tx.test(async () => {
-            const deleteObjectStub = this.sandbox.stub((this.storage['s3'] as any), 'deleteObject').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({});
 
             await this.storage.deleteObject(folderName, fileName);
-            Tx.checkTrue(deleteObjectStub.calledOnce);
+            Tx.checkTrue(sendStub.calledOnce);
         });
 
         Tx.test(async () => {
@@ -216,21 +204,16 @@ export class TestStorage {
         const prefix = 'testPrefix';
         
         Tx.test(async () => {
-            const deleteObjectStub = this.sandbox.stub((this.storage['s3'] as any), 'deleteObjects').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
-            const listObjectsV2Stub = this.sandbox.stub((this.storage['s3'] as any), 'listObjectsV2').returns({
-                promise: this.sandbox.stub().resolves({Contents: [{Key: 'testKey'}]})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send');
+            sendStub.onFirstCall().resolves({Contents: [{Key: 'testKey'}]});
+            sendStub.onSecondCall().resolves({});
+            
             await this.storage.deleteObjects(folderName, prefix);
-            Tx.checkTrue(deleteObjectStub.calledOnce);
-            Tx.checkTrue(listObjectsV2Stub.calledOnce);
+            Tx.checkTrue(sendStub.calledTwice);
         });
 
         Tx.test(async () => {
-            this.sandbox.stub((this.storage['s3'] as any), 'listObjectsV2').returns({
-                promise: this.sandbox.stub().resolves({Contents: []})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({Contents: []});
         
             const result = await this.storage.deleteObjects(folderName, prefix);
             Tx.checkTrue(result === undefined);
@@ -256,16 +239,12 @@ export class TestStorage {
         const destinationFileName = 'testDestinationFileName';
         const ownerEmail = 'testOwnerEmail';
         Tx.test(async () => {
-            const copyObjectStub = this.sandbox.stub((this.storage['s3'] as any), 'copyObject').returns({
-                promise: this.sandbox.stub().resolves({})
-            });
-            const listObjectsStub = this.sandbox.stub((this.storage['s3'] as any), 'listObjects').returns({
-                promise: this.sandbox.stub().resolves({ Contents: [{ Key: 'testKey' }]})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send');
+            sendStub.onFirstCall().resolves({ Contents: [{ Key: 'testKey' }]});
+            sendStub.onSecondCall().resolves({});
 
             await this.storage.copy(sourceFolderName, sourceFileName, destinationFolderName, destinationFileName, ownerEmail);
-            Tx.checkTrue(listObjectsStub.calledOnce);
-            Tx.checkTrue(copyObjectStub.calledOnce);
+            Tx.checkTrue(sendStub.calledTwice);
         });
     }
 
@@ -274,17 +253,13 @@ export class TestStorage {
         const bucketName = 'testBucketName';
         
         Tx.test(async () => {
-            this.sandbox.stub((this.storage['s3'] as any), 'listObjectsV2').returns({
-                promise: this.sandbox.stub().resolves({Contents: []})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({Contents: []});
             const result = await this.storage.bucketExists(bucketName);
             Tx.checkFalse(result);
         });
 
         Tx.test(async () => {
-            this.sandbox.stub((this.storage['s3'] as any), 'listObjectsV2').returns({
-                promise: this.sandbox.stub().resolves({Contents: [{Key: 'testKey'}]})
-            });
+            const sendStub = this.sandbox.stub(this.storage['s3'], 'send').resolves({Contents: [{Key: 'testKey'}]});
             const result = await this.storage.bucketExists(bucketName);
             Tx.checkTrue(result);
         });

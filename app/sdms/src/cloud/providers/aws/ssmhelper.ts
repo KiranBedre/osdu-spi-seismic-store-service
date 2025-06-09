@@ -13,27 +13,23 @@
 // limitations under the License.
 
 import {AWSConfig} from './config';
-
-import AWS from 'aws-sdk/global';
-import SSM from 'aws-sdk/clients/ssm';
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 
 export class AWSSSMhelper {
 
-    private ssm: SSM;
+    private ssm: SSMClient;
 
     public constructor() {
-        AWS.config.update({ region: AWSConfig.AWS_REGION });
-        this.ssm = new SSM({apiVersion: '2014-11-06'});
+        this.ssm = new SSMClient({ region: AWSConfig.AWS_REGION });
     }
 
     public async getSSMParameter(paramName: string): Promise<string> {
-
         const options = {
             Name: paramName,
             WithDecryption: true
         };
         try {
-            const data = await this.ssm.getParameter(options).promise();
+            const data = await this.ssm.send(new GetParameterCommand(options));
             return data.Parameter.Value;
         } catch (err) {
             console.log(err.code + ': ' + err.message);

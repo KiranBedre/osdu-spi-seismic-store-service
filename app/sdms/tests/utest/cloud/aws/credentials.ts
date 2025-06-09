@@ -1,19 +1,20 @@
 import sinon from 'sinon';
 import {AWSCredentials, AWSDataEcosystemServices } from '../../../../src/cloud/providers/aws'; 
-import DynamoDB from 'aws-sdk/clients/dynamodb';
-import aws from 'aws-sdk';
+import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { SecretsManagerClient, GetSecretValueCommand, GetSecretValueCommandOutput } from "@aws-sdk/client-secrets-manager";
 import { Tx } from '../../utils'; 
 import { AWSSSMhelper } from '../../../../src/cloud/providers/aws/ssmhelper';
 import axios from 'axios';
 import { Config } from '../../../../src/cloud';
+import { AWSConfig } from '../../../../src/cloud/providers/aws';
 
 export class TestAWSCredentials {
 
     private static sandbox: sinon.SinonSandbox;
     private static awsCredentials: AWSCredentials;
     private static getItemStub;
-    private static mockDynamoDB: Partial<DynamoDB>;
-    private static mockSecretsManager: Partial<aws.SecretsManager>;
+    private static mockDynamoDB: DynamoDBClient;
+    private static mockSecretsManager: SecretsManagerClient;
     private static getSecretValueStub;
   
     public static run() {
@@ -22,22 +23,32 @@ export class TestAWSCredentials {
               beforeEach(() => {
                   this.sandbox = sinon.createSandbox();
                   this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
+                  this.sandbox.define(AWSConfig, 'AWS_REGION', 'us-west-2');
                   this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
                   this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
                   this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
 
-                  this.getItemStub = this.sandbox.stub().returns({
-                      promise: this.sandbox.stub().resolves({}),
+                  this.getItemStub = this.sandbox.stub().resolves({});
+                  this.getSecretValueStub = this.sandbox.stub().resolves({
+                    $metadata: {}
                   });
-                  this.getSecretValueStub = this.sandbox.stub().returns({
-                      promise: this.sandbox.stub().resolves({}),
-                  });
+
+                  // Creating mock DynamoDB client
                   this.mockDynamoDB = {
-                    getItem: this.getItemStub,
-                  };
+                    send: async (command) => {
+                      if (command instanceof GetItemCommand) return this.getItemStub();
+                      return {};
+                    }
+                  } as unknown as DynamoDBClient;
+
+                  // Creating mock SecretsManager client
                   this.mockSecretsManager = {
-                      getSecretValue: this.getSecretValueStub,
-                  };
+                    send: async (command) => {
+                      if (command instanceof GetSecretValueCommand) return this.getSecretValueStub();
+                      return {};
+                    }
+                  } as unknown as SecretsManagerClient;
+
                   this.awsCredentials = new AWSCredentials();
               });
 
@@ -86,8 +97,11 @@ export class TestAWSCredentials {
               gcs_bucket: { S: 'something$$expectedFolder' },
           },
         };
-        this.mockDynamoDB.getItem = this.sandbox.stub().returns({ promise: this.sandbox.stub().resolves(mockedReturnValue) });
-        const result = await this.awsCredentials.getBucketFolder(folder, tenantId, this.mockDynamoDB as DynamoDB);
+        this.mockDynamoDB.send = async (command) => {
+          if (command instanceof GetItemCommand) return mockedReturnValue;
+          return {};
+        };
+        const result = await this.awsCredentials.getBucketFolder(folder, tenantId, this.mockDynamoDB);
 
         Tx.checkTrue(result === 'expectedFolder');
   
@@ -97,8 +111,11 @@ export class TestAWSCredentials {
           const mockedReturnValue = {
             Item: {},
         };
-        this.mockDynamoDB.getItem = this.sandbox.stub().returns({ promise: this.sandbox.stub().resolves(mockedReturnValue) });
-        const result = await this.awsCredentials.getBucketFolder(folder, tenantId, this.mockDynamoDB as DynamoDB);
+        this.mockDynamoDB.send = async (command) => {
+          if (command instanceof GetItemCommand) return mockedReturnValue;
+          return {};
+        };
+        const result = await this.awsCredentials.getBucketFolder(folder, tenantId, this.mockDynamoDB);
         Tx.checkTrue(result === undefined);
       });
     }
@@ -126,6 +143,7 @@ export class TestAWSCredentials {
           access_token: 'testCredentials',
           expires_in: 123,
           token_type: 'Bearer',
+          region: 'us-west-2'
         }
         Tx.checkTrue(JSON.stringify(result) === JSON.stringify(expected));
 
@@ -156,7 +174,7 @@ export class TestAWSCredentials {
 
         const result = await AWSCredentials.getServiceCredentials();
         
-        (AWSCredentials as any).servicePrincipalCredential = mockResponse;
+        (AWSCredentials as any).servicePrincipalCredential = mockResponse.data;
         Tx.checkTrue(result === 'mockAccessToken');
       });
     }
@@ -168,40 +186,49 @@ export class TestAWSCredentials {
       const testKey = 'testClientSecretDictKey';
 
       Tx.test(async () => {
-        const mockVal = {
+        const mockVal: GetSecretValueCommandOutput = {
           SecretString: `{"${testKey}": "your_secret_value"}`,
-          // pragma: allowlist nextline secret
-          SecretBinary: 'base64_encoded_binary_secret_value'
-      };
-        
-        this.mockSecretsManager.getSecretValue = this.sandbox.stub().returns({ promise: this.sandbox.stub().resolves(mockVal) });
-        
-        const result = await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager as aws.SecretsManager);
-        Tx.checkTrue(result === 'your_secret_value');
-      });
-      Tx.test(async () => {
-        const mockVal = {
-          SecretString: null,
-          // pragma: allowlist nextline secret
-          SecretBinary: 'base64_encoded_binary_secret_value'
+          $metadata: {}
         };
         
-        this.mockSecretsManager.getSecretValue = this.sandbox.stub().returns({ promise: this.sandbox.stub().resolves(mockVal) });
+        this.mockSecretsManager.send = async (command) => {
+          if (command instanceof GetSecretValueCommand) return mockVal;
+          return {};
+        };
         
-        const result = await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager as aws.SecretsManager);
+        const result = await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager);
+        Tx.checkTrue(result === 'your_secret_value');
+      });
+
+      Tx.test(async () => {
+        const binaryData = Buffer.from('base64_encoded_binary_secret_value').toString('base64');
+        const mockVal: GetSecretValueCommandOutput = {
+          SecretString: null,
+          SecretBinary: Buffer.from(binaryData, 'base64'),
+          $metadata: {}
+        };
+        
+        this.mockSecretsManager.send = async (command) => {
+          if (command instanceof GetSecretValueCommand) return mockVal;
+          return {};
+        };
+        
+        const result = await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager);
         const expectedBinary = Buffer.from('base64_encoded_binary_secret_value', 'base64').toString('ascii');
         Tx.checkTrue(result === expectedBinary);
       });
+
       Tx.test(async () => {
-      this.mockSecretsManager.getSecretValue = this.sandbox.stub().returns({ promise: this.sandbox.stub().rejects(new Error('test error')) });
+        this.mockSecretsManager.send = async (command) => {
+          if (command instanceof GetSecretValueCommand) throw new Error('test error');
+          return {};
+        };
       
-      try {
-        await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager as aws.SecretsManager)
-      } catch (err) {
-        Tx.checkTrue(err.message === 'test error');
-      }
-      
+        try {
+          await AWSCredentials.getSecrets(testName, testKey, this.mockSecretsManager);
+        } catch (err) {
+          Tx.checkTrue(err.message === 'test error');
+        }
       });
     }
   }
-

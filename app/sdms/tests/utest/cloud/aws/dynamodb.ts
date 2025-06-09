@@ -1,4 +1,4 @@
-import AWS, { DynamoDB } from "aws-sdk";
+import { DynamoDBClient, PutItemCommand, GetItemCommand, DeleteItemCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { AWSDynamoDbDAO, AWSDynamoDbQuery, AWSDynamoDbTransactionDAO, AWSDynamoDbTransactionOperation } from "../../../../src/cloud/providers/aws/dynamodb";
 import sinon from "sinon";
 import { Tx } from "../../utils";
@@ -11,7 +11,7 @@ export class TestAWSDynamoDB {
     private static sandbox: sinon.SinonSandbox;
     private static awsDynamoDb: AWSDynamoDbDAO;
     private static awsDynamoDbQuery: AWSDynamoDbQuery;
-    private static mockDynamoDb;
+    private static mockDynamoDb: DynamoDBClient;
     private static putItemStub;
     private static getItemStub;
     private static deleteItemStub;
@@ -35,22 +35,19 @@ export class TestAWSDynamoDB {
                 this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
                 this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
                 this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
-                this.putItemStub = this.sandbox.stub().returns({
-                    promise: sinon.stub().resolves({})
-                });
-                this.getItemStub = this.sandbox.stub().returns({
-                    promise: sinon.stub().resolves({})
-                });
-                this.deleteItemStub = this.sandbox.stub().returns({
-                    promise: sinon.stub().resolves({})
-                });
+                this.putItemStub = this.sandbox.stub().resolves({});
+                this.getItemStub = this.sandbox.stub().resolves({});
+                this.deleteItemStub = this.sandbox.stub().resolves({});
 
-                // Creating a mock DynamoDB object with the stubbed methods
+                // Creating a mock DynamoDB client with the stubbed methods
                 this.mockDynamoDb = {
-                    putItem: this.putItemStub,
-                    getItem: this.getItemStub,
-                    deleteItem: this.deleteItemStub
-                };
+                    send: async (command) => {
+                        if (command instanceof PutItemCommand) return this.putItemStub();
+                        if (command instanceof GetItemCommand) return this.getItemStub();
+                        if (command instanceof DeleteItemCommand) return this.deleteItemStub();
+                        return {};
+                    }
+                } as unknown as DynamoDBClient;
                 this.awsDynamoDb = new AWSDynamoDbDAO(this.testTenant, this.mockDynamoDb);
 
             });
@@ -211,17 +208,18 @@ export class TestAWSDynamoDB {
                     return this.queryStatement; 
                 },
             } as unknown as AWSDynamoDbQuery;
-            const documentClientStub = {
-                scan: this.sandbox.stub(),
-            };
-            this.sandbox.stub(DynamoDB, 'DocumentClient').returns(documentClientStub);
 
-            documentClientStub.scan.returns({
-                promise: async () => ({
-                    Items: [{ key1: 'value1', key2: 'value2' }],
-                    LastEvaluatedKey: undefined,
-                }),
+            // Mock the DynamoDB client's send method for ScanCommand
+            const scanStub = this.sandbox.stub().resolves({
+                Items: [{ key1: { S: 'value1' }, key2: { S: 'value2' } }],
+                LastEvaluatedKey: undefined,
             });
+
+            this.mockDynamoDb.send = async (command) => {
+                if (command instanceof ScanCommand) return scanStub();
+                return {};
+            };
+
             const [scanResults, cursorDetails] = await this.awsDynamoDb.runQuery(queryMock);
 
             Tx.checkTrue(JSON.stringify(scanResults) === JSON.stringify([{ key1: 'value1', key2: 'value2' }]));
@@ -292,6 +290,7 @@ export class TestAWSDynamoDbTransactionDAO {
     private static sandbox: sinon.SinonSandbox;
     private static awsDynamoDbTransaction: AWSDynamoDbTransactionDAO;
     private static awsDynamoDbDAO: AWSDynamoDbDAO;
+    private static mockDynamoDb: DynamoDBClient;
     private static testTenant: {
         name: string;
         esd: string;
@@ -307,13 +306,15 @@ export class TestAWSDynamoDbTransactionDAO {
         describe(Tx.testInit('AWS DynamoDB Transaction'), () => {
 
             beforeEach(async () => {
-                AWS.config.update({region: 'us-west-2'});
                 this.sandbox = sinon.createSandbox();
                 this.sandbox.define(Config, 'CLOUDPROVIDER', 'amazon');
                 this.sandbox.replace(Config, 'FEATURE_FLAG_LOGGING', false);
                 this.sandbox.replace(Config, 'FEATURE_FLAG_TRACE', false);
                 this.sandbox.replace(Config, 'FEATURE_FLAG_STACKDRIVER_EXPORTER', false);
-                this.awsDynamoDbDAO = new AWSDynamoDbDAO(this.testTenant);
+
+                // Creating a mock DynamoDB client
+                this.mockDynamoDb = new DynamoDBClient({ region: 'us-west-2' });
+                this.awsDynamoDbDAO = new AWSDynamoDbDAO(this.testTenant, this.mockDynamoDb);
                 this.awsDynamoDbTransaction = new AWSDynamoDbTransactionDAO(this.awsDynamoDbDAO);
             });
 
@@ -396,7 +397,10 @@ export class TestAWSDynamoDbTransactionDAO {
                     return this.queryStatement; 
                 },
             } as unknown as AWSDynamoDbQuery;
+
+            // Mock the runQuery method of awsDynamoDbDAO
             const runQueryStub = this.sandbox.stub(this.awsDynamoDbDAO, 'runQuery').resolves([[], { endCursor: undefined }]);
+
             const [scanResults, cursorDetails] = await this.awsDynamoDbTransaction.runQuery(queryMock);
 
             Tx.checkTrue(JSON.stringify(scanResults) === JSON.stringify([]));
@@ -510,17 +514,17 @@ export class TestAWSDynamoDbQuery {
 
         Tx.test(() => {
             const property = 'testProperty';
-            const value = { someKey: 'someValue' };
+            const value = 'someValue';
     
             const result: IJournalQueryModel = this.awsDynamoDbQuery.filter(property, value);
     
             Tx.checkTrue(!!this.awsDynamoDbQuery.queryStatement.FilterExpression && this.awsDynamoDbQuery.queryStatement.FilterExpression.includes(property));
-            Tx.checkTrue(!!this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues && this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues[':' + property] === value);
+            Tx.checkTrue(!!this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues && this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues[':' + property].S === value);
         });
 
         Tx.test(() => {
             const property = 'testProperty';
-            const value = { someKey: 'someValue' };
+            const value = 'someValue';
             const operator = '=';
     
             // Reset the queryStatement for this test
@@ -529,24 +533,24 @@ export class TestAWSDynamoDbQuery {
             let result: IJournalQueryModel = this.awsDynamoDbQuery.filter(property, operator, value);
     
             Tx.checkTrue(!!this.awsDynamoDbQuery.queryStatement.FilterExpression && this.awsDynamoDbQuery.queryStatement.FilterExpression.includes(operator));
-            Tx.checkTrue(this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues?.[':' + property] === value);
+            Tx.checkTrue(this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues?.[':' + property].S === value);
         });
 
         Tx.test(() => {
             const property = 'testProperty';
-            const value = { someKey: 'someValue' };
+            const value = 'someValue';
     
             // Test CONTAINS operator
             const result_CONTAINS = this.awsDynamoDbQuery.filter(property, 'CONTAINS', value);
     
             Tx.checkTrue(result_CONTAINS !== undefined);
             Tx.checkTrue(!!this.awsDynamoDbQuery.queryStatement.FilterExpression && this.awsDynamoDbQuery.queryStatement.FilterExpression.includes('contains(#' + property));
-            Tx.checkTrue(this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues?.[':' + property] === value);
+            Tx.checkTrue(this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues?.[':' + property].S === value);
         });
 
         Tx.test(() => {
             const property = 'testProperty';
-            const value = { someKey: 'someValue' };
+            const value = 'someValue';
     
             try {
                 // Test HAS_ANCESTOR operator, expecting it to throw an error
@@ -558,14 +562,14 @@ export class TestAWSDynamoDbQuery {
 
         Tx.test(() => {
             const property = 'path';
-            const value = { someKey: 'someValue' };
+            const value = 'someValue';
             
             // Test with 'path' property
             const result_path = this.awsDynamoDbQuery.filter(property, '=', value);
             
             Tx.checkTrue(result_path !== undefined);
             Tx.checkTrue(!!this.awsDynamoDbQuery.queryStatement.FilterExpression && this.awsDynamoDbQuery.queryStatement.FilterExpression.includes('#p='));
-            Tx.checkTrue(this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues?.[':p'] === value);
+            Tx.checkTrue(this.awsDynamoDbQuery.queryStatement.ExpressionAttributeValues?.[':p'].S === value);
         });
 
         Tx.test(() => {

@@ -15,20 +15,29 @@
 import { AWSConfig } from './config';
 import { AbstractStorage, StorageFactory } from '../../storage';
 import { TenantModel } from '../../../services/tenant';
-import AWS from 'aws-sdk/global';
-import S3 from 'aws-sdk/clients/s3';
+import {
+    PutObjectCommand,
+    DeleteObjectCommand,
+    DeleteObjectsCommand,
+    ListObjectsV2Command,
+    ListObjectsCommand,
+    CopyObjectCommand
+} from '@aws-sdk/client-s3';
 import { AWSDataEcosystemServices } from './dataecosystem';
 import { AWSSSMhelper } from './ssmhelper';
+import { S3Client } from '@aws-sdk/client-s3';
 @StorageFactory.register('aws')
 export class AWSStorage extends AbstractStorage {
-    private s3: S3; // S3 service object
+    private s3: S3Client; // S3 service object
     private dataPartition: string;
     private awsBucket: string;
 
     public constructor(tenant: TenantModel) {
         super();
-        AWS.config.update({ region: AWSConfig.AWS_REGION });
-        this.s3 = new S3({ apiVersion: '2006-03-01' });
+        this.s3 = new S3Client({
+            region: AWSConfig.AWS_REGION,
+            apiVersion: '2006-03-01'
+        });
         this.dataPartition = tenant?.esd.indexOf('.') !== -1 ? tenant?.esd.split('.')[0] : tenant.esd;
         this.awsBucket = '';
 
@@ -82,9 +91,9 @@ export class AWSStorage extends AbstractStorage {
             Body: ''
         };
         try {
-            await this.s3.putObject(params).promise();
+            await this.s3.send(new PutObjectCommand(params));
         } catch (err) {
-            console.log(err.code + ': ' + err.message);
+            console.log(err.name + ': ' + err.message);
         }
     }
 
@@ -101,9 +110,9 @@ export class AWSStorage extends AbstractStorage {
             Key: folder + '/'
         };
         try {
-            await this.s3.deleteObject(params).promise();
+            await this.s3.send(new DeleteObjectCommand(params));
         } catch (err) {
-            console.log(err.code + ': ' + err.message);
+            console.log(err.name + ': ' + err.message);
         }
     }
 
@@ -115,8 +124,8 @@ export class AWSStorage extends AbstractStorage {
             Bucket: this.awsBucket,
             Prefix: folder + '/'
         };
-        const listedObjects = await this.s3.listObjectsV2(params).promise();
-        if (listedObjects.Contents.length === 0)
+        const listedObjects = await this.s3.send(new ListObjectsV2Command(params));
+        if (!listedObjects.Contents || listedObjects.Contents.length === 0)
             return;
 
         const deleteParams = {
@@ -125,10 +134,10 @@ export class AWSStorage extends AbstractStorage {
         };
 
         listedObjects.Contents.forEach(({ Key }) => {
-            deleteParams.Delete.Objects.push({ Key });
+            if (Key) deleteParams.Delete.Objects.push({ Key });
         });
 
-        await this.s3.deleteObjects(deleteParams).promise();
+        await this.s3.send(new DeleteObjectsCommand(deleteParams));
 
         if (listedObjects.IsTruncated)  // continue delete files as there are more...
             await this.deleteFiles(folderName);
@@ -144,9 +153,9 @@ export class AWSStorage extends AbstractStorage {
             Body: data
         };
         try {
-            await this.s3.putObject(params).promise();
+            await this.s3.send(new PutObjectCommand(params));
         } catch (err) {
-            console.log(err.code + ': ' + err.message);
+            console.log(err.name + ': ' + err.message);
         }
     }
 
@@ -159,9 +168,9 @@ export class AWSStorage extends AbstractStorage {
             Key: folder + '/' + objectName
         };
         try {
-            await this.s3.deleteObject(params).promise();
+            await this.s3.send(new DeleteObjectCommand(params));
         } catch (err) {
-            console.log(err.code + ': ' + err.message);
+            console.log(err.name + ': ' + err.message);
         }
     }
 
@@ -173,9 +182,9 @@ export class AWSStorage extends AbstractStorage {
             Bucket: this.awsBucket,
             Prefix: folder + '/' + prefix
         };
-        const listedObjects = await this.s3.listObjectsV2(params).promise();
+        const listedObjects = await this.s3.send(new ListObjectsV2Command(params));
 
-        if (listedObjects.Contents.length === 0) return;
+        if (!listedObjects.Contents || listedObjects.Contents.length === 0) return;
 
         const deleteParams = {
             Bucket: this.awsBucket,
@@ -183,10 +192,10 @@ export class AWSStorage extends AbstractStorage {
         };
 
         listedObjects.Contents.forEach(({ Key }) => {
-            deleteParams.Delete.Objects.push({ Key });
+            if (Key) deleteParams.Delete.Objects.push({ Key });
         });
 
-        await this.s3.deleteObjects(deleteParams).promise();
+        await this.s3.send(new DeleteObjectsCommand(deleteParams));
 
         if (listedObjects.IsTruncated) // continue delete files as there are more...
             await this.deleteObjects(folderName, prefix);
@@ -206,9 +215,12 @@ export class AWSStorage extends AbstractStorage {
             Bucket: this.awsBucket,
             Prefix: realFolderIn + '/' + prefixIn
         };
-        const files = await this.s3.listObjects(params).promise();
+        const files = await this.s3.send(new ListObjectsCommand(params));
 
-        for (const file of files['Contents']) {
+        if (!files.Contents) return;
+
+        for (const file of files.Contents) {
+            if (!file.Key) continue;
             let newKey = file.Key.replace(realFolderIn, realFolderOut);
             newKey = newKey.replace(folderIn, prefixOut);
             const param = {
@@ -216,7 +228,7 @@ export class AWSStorage extends AbstractStorage {
                 CopySource: file.Key,
                 Key: newKey
             };
-            copyCalls.push(this.s3.copyObject(param));
+            copyCalls.push(this.s3.send(new CopyObjectCommand(param)));
         }
         await Promise.all(copyCalls);
     }
@@ -231,8 +243,8 @@ export class AWSStorage extends AbstractStorage {
             Prefix: folder
         };
 
-        const listedObjects = await this.s3.listObjectsV2(params).promise();
-        if (listedObjects.Contents.length === 0)
+        const listedObjects = await this.s3.send(new ListObjectsV2Command(params));
+        if (!listedObjects.Contents || listedObjects.Contents.length === 0)
             return false;
         return true;
     }

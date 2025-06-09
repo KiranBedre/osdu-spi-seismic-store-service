@@ -16,10 +16,11 @@ import { AbstractCredentials, CredentialsFactory, IAccessTokenModel } from '../.
 import { AWSConfig } from './config';
 import {AWSSSMhelper} from './ssmhelper';
 import {AWSSTShelper} from './stshelper';
-import DynamoDB from 'aws-sdk/clients/dynamodb';
+import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 import axios from 'axios';
 import qs from 'qs';
-import aws from 'aws-sdk';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import {AWSDataEcosystemServices} from './dataecosystem';
 
 const KExpiresMargin = 300; // 5 minutes
@@ -55,16 +56,21 @@ export class AWSCredentials extends AbstractCredentials {
         return undefined;
     }
 
-    async getBucketFolder(folder: string, tenantId: string, db: DynamoDB = new DynamoDB({})): Promise<string> {
+    async getBucketFolder(folder: string, tenantId: string, db: DynamoDBClient =
+        new DynamoDBClient({region: AWSConfig.AWS_REGION})): Promise<string> {
         const tableName = AWSConfig.AWS_TENANT_GROUP_NAME+'-'+tenantId+'-SeismicStore.'+AWSConfig.SUBPROJECTS_KIND;
         const params = {
             TableName: tableName,
             Key: {
-                'id': {S: folder}
+                'id': { S: folder }
             }
         };
-        const data = await db.getItem(params).promise();
-        const ret = aws.DynamoDB.Converter.unmarshall(data.Item);
+        const data = await db.send(new GetItemCommand(params));
+        if (!data.Item) {
+            console.log('error to get Bucket folder: '+folder+'\n');
+            return undefined;
+        }
+        const ret = unmarshall(data.Item);
         if (Object.keys(ret).length === 0){
             console.log('error to get Bucket folder: '+folder+'\n');
             return undefined;
@@ -161,19 +167,20 @@ export class AWSCredentials extends AbstractCredentials {
     public static async getSecrets(
         clientSecretName: string,
         clientSecretDictKey: string,
-        secretsManager:aws.SecretsManager = new aws.SecretsManager({region: AWSConfig.AWS_REGION})): Promise<string> {
+        secretsManager: SecretsManagerClient = new SecretsManagerClient({region:
+            AWSConfig.AWS_REGION})): Promise<string> {
         const params = {
             SecretId: clientSecretName
         };
         try {
-            const data = await secretsManager.getSecretValue(params).promise();
+            const data = await secretsManager.send(new GetSecretValueCommand(params));
             if (data.SecretString) {
                 const secretValue = JSON.parse(data.SecretString);
                 const val = Object.values(secretValue)[0];
                 return Promise.resolve(typeof val === 'string' ? val : JSON.stringify(val));
             }  else if (data.SecretBinary) {
                 const binaryString = Buffer.isBuffer(data.SecretBinary)
-                    ? data.SecretBinary.toString('base64')
+                    ? data.SecretBinary.toString('ascii')
                     : String(data.SecretBinary);
                 const decodedBinarySecret = Buffer.from(binaryString, 'base64').toString('ascii');
                 return Promise.resolve(decodedBinarySecret);
@@ -182,6 +189,7 @@ export class AWSCredentials extends AbstractCredentials {
             }
         } catch (err) {
             console.log(err.code + ': ' + err.message);
+            throw err;
         }
     }
 

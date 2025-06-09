@@ -22,30 +22,34 @@ import {
 } from "../../journal";
 import { AWSConfig } from "./config";
 
-import AWS from "aws-sdk/global";
-import DynamoDB, { ScanInput } from "aws-sdk/clients/dynamodb";
-import aws from "aws-sdk";
-import { PromiseResult } from "aws-sdk/lib/request";
+import {
+  DynamoDBClient,
+  PutItemCommand,
+  GetItemCommand,
+  DeleteItemCommand,
+  ScanCommand,
+  ScanCommandInput,
+  AttributeValue
+} from "@aws-sdk/client-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { AWSDataEcosystemServices } from "./dataecosystem";
-const converter = aws.DynamoDB.Converter;
 
 @JournalFactory.register("aws")
 export class AWSDynamoDbDAO extends AbstractJournal {
-  public KEY = Symbol("id");
+  public KEY: any = Symbol("id");
   private dataPartition: string;
   private tenant: TenantModel;
-  private db: DynamoDB;
+  private db: DynamoDBClient;
   private tenantTablePrefix: string;
   private static ALLOWED_NAMES_REGEX: Map<string, RegExp> = new Map([
     [AWSConfig.SUBPROJECTS_KIND, /^[^-]+$/],
   ]);
 
-  public constructor(tenant: TenantModel, db: DynamoDB = new DynamoDB({})) {
+  public constructor(tenant: TenantModel, db: DynamoDBClient = new DynamoDBClient({ region: AWSConfig.AWS_REGION })) {
     super();
     this.tenant = tenant;
     this.dataPartition =
       tenant.esd.indexOf(".") !== -1 ? tenant.esd.split(".")[0] : tenant.esd;
-    AWS.config.update({ region: AWSConfig.AWS_REGION });
     this.tenantTablePrefix = "";
     this.db = db;
   }
@@ -104,10 +108,12 @@ export class AWSDynamoDbDAO extends AbstractJournal {
         item["ctag"] = entity.ctag;
       }
       // save extra info as this property will be consumed by the service to identify a data record
-      item[this.KEY.toString()] = entity.key;
+      const keyString = this.KEY.toString();
+      // Store the key as a plain object to avoid nested marshalling
+      item[keyString] = JSON.parse(JSON.stringify(entity.key));
 
       const tenantTable = await this.getTableName(entity.key.tableName);
-      const itemMarshall = converter.marshall(item);
+      const itemMarshall = marshall(item, {removeUndefinedValues: true});
       console.log(
         "from table " + tenantTable + " save " + JSON.stringify(itemMarshall)
       );
@@ -115,14 +121,19 @@ export class AWSDynamoDbDAO extends AbstractJournal {
         TableName: tenantTable,
         Item: itemMarshall,
       };
-      await this.db.putItem(para).promise();
+      try {
+      await this.db.send(new PutItemCommand(para));
+    } catch (error) {
+      console.error("Error saving item:", error);
+      throw error;
+    }
     }
   }
 
   public async get(key: any): Promise<[any]> {
     const tenantTable = await this.getTableName(key.tableName);
     const item = { id: key.partitionKey };
-    const itemMarshall = converter.marshall(item);
+    const itemMarshall = marshall(item, {removeUndefinedValues: true});
     console.log(
       "from table " + tenantTable + " get " + JSON.stringify(itemMarshall)
     );
@@ -130,8 +141,9 @@ export class AWSDynamoDbDAO extends AbstractJournal {
       TableName: tenantTable,
       Key: itemMarshall,
     };
-    const data = await this.db.getItem(params).promise();
-    const ret = converter.unmarshall(data.Item);
+    const data = await this.db.send(new GetItemCommand(params));
+    if (!data.Item) return [undefined];
+    const ret = unmarshall(data.Item);
     if (Object.keys(ret).length === 0) return [undefined];
     else {
       // remove aws specific attribute id
@@ -145,7 +157,7 @@ export class AWSDynamoDbDAO extends AbstractJournal {
   public async delete(key: any): Promise<void> {
     const tenantTable = await this.getTableName(key.tableName);
     const item = { id: key.partitionKey };
-    const itemMarshall = converter.marshall(item);
+    const itemMarshall = marshall(item, { removeUndefinedValues: true });
     console.log(
       "from table " + tenantTable + " delete " + JSON.stringify(itemMarshall)
     );
@@ -154,7 +166,7 @@ export class AWSDynamoDbDAO extends AbstractJournal {
       Key: itemMarshall,
     };
 
-    await this.db.deleteItem(params).promise();
+    await this.db.send(new DeleteItemCommand(params));
   }
 
   public createQuery(namespace: string, kind: string): IJournalQueryModel {
@@ -172,26 +184,27 @@ export class AWSDynamoDbDAO extends AbstractJournal {
     );
 
     console.log("query " + JSON.stringify(statement));
-    const db = new DynamoDB.DocumentClient();
     let scanResults = [];
-    let items: PromiseResult<DynamoDB.DocumentClient.ScanOutput, AWS.AWSError>;
+    let items;
     do {
-      items = await db.scan(statement).promise();
+      items = await this.db.send(new ScanCommand(statement));
+      if (!items.Items) break;
       const results = items.Items.map((result) => {
-        let ret = {};
-        ret = result;
+        let ret = unmarshall(result);
         // update object property for service (dao.ts) to consume
         if (ret[this.KEY.toString()]) {
-          ret[this.KEY] = result[this.KEY.toString()];
+          // Handle the Symbol key properly for v3 SDK
+          const keyValue = ret[this.KEY.toString()];
+          ret[this.KEY] = typeof keyValue === 'object' && keyValue.M ? unmarshall(keyValue) : keyValue;
         }
         return ret;
       });
       scanResults = scanResults.concat(results);
       statement.ExclusiveStartKey = items.LastEvaluatedKey;
-    } while (typeof items.LastEvaluatedKey !== "undefined");
+    } while (items.LastEvaluatedKey);
     return Promise.resolve([
       scanResults,
-      { endCursor: items.LastEvaluatedKey },
+      { endCursor: items?.LastEvaluatedKey },
     ]);
   }
 
@@ -333,13 +346,13 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
       TableName: kind,
       FilterExpression: "",
       ExpressionAttributeNames: {},
-      ExpressionAttributeValues: {},
+      ExpressionAttributeValues: {} as Record<string, AttributeValue>,
       ProjectionExpression: "",
     };
   }
   public namespace: string;
   public kind: string;
-  public queryStatement: ScanInput;
+  public queryStatement: ScanCommandInput;
 
   filter(property: string, value: {}): IJournalQueryModel;
 
@@ -367,8 +380,7 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
       this.queryStatement.FilterExpression +=
         "contains(#" + property + ",:" + propertyValue + ")";
       this.queryStatement.ExpressionAttributeNames["#" + property] = property;
-      this.queryStatement.ExpressionAttributeValues[":" + propertyValue] =
-        value;
+      this.queryStatement.ExpressionAttributeValues[":" + propertyValue] = { S: value as string };
       return this;
     }
     if (value === undefined) {
@@ -399,12 +411,12 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
         "#" + property + operator + ":" + property;
       this.queryStatement.ExpressionAttributeNames["#" + property] =
         pathProperty;
-      this.queryStatement.ExpressionAttributeValues[":" + property] = value;
+      this.queryStatement.ExpressionAttributeValues[":" + property] = { S: value as string };
     } else {
       this.queryStatement.FilterExpression +=
         "#" + property + operator + ":" + property;
       this.queryStatement.ExpressionAttributeNames["#" + property] = property;
-      this.queryStatement.ExpressionAttributeValues[":" + property] = value;
+      this.queryStatement.ExpressionAttributeValues[":" + property] = { S: value as string };
     }
     return this;
   }
@@ -448,7 +460,7 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
   public getQueryStatement(
     tableName: string,
     tenantTablePrefix: string
-  ): ScanInput {
+  ): ScanCommandInput {
     // since we have one table for all datasets, we need to
     // add more filters to return dataset specific for that tenant/subproject
     const strs = this.namespace.split("-");
@@ -469,7 +481,7 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
       this.queryStatement.FilterExpression +=
         "#" + tProperty + "=" + ":" + tProperty;
       this.queryStatement.ExpressionAttributeNames["#" + tProperty] = tProperty;
-      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = value;
+      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value as string };
     }
     if (this.kind === AWSConfig.DATASETS_KIND) {
       // one table, filter on subproject too
@@ -480,7 +492,7 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
       this.queryStatement.FilterExpression +=
         "#" + tProperty + "=" + ":" + tProperty;
       this.queryStatement.ExpressionAttributeNames["#" + tProperty] = tProperty;
-      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = value;
+      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value as string };
     }
 
     if (this.kind === AWSConfig.APPS_KIND) {
@@ -494,7 +506,7 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
       this.queryStatement.FilterExpression +=
         "#" + tProperty + "=" + ":" + tProperty;
       this.queryStatement.ExpressionAttributeNames["#" + tProperty] = tProperty;
-      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = value;
+      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value as string };
     }
 
     if (this.queryStatement.FilterExpression.length === 0)

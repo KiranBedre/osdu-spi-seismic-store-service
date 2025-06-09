@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import AWS from 'aws-sdk/global';
-import {AWSConfig} from './config';
-import {STS} from 'aws-sdk';
+import { STSClient, AssumeRoleCommand } from '@aws-sdk/client-sts';
+import { AWSConfig } from './config';
 
 export class AWSSTShelper {
 
-    private sts: STS;
+    private sts: STSClient;
 
     public constructor() {
-        AWS.config.update({ region: AWSConfig.AWS_REGION });
-        this.sts = new STS({apiVersion: '2014-11-06'});
+        this.sts = new STSClient({
+            region: AWSConfig.AWS_REGION,
+            apiVersion: '2014-11-06'
+        });
     }
 
     public async getCredentials(bucketName: string, keyPath: string,
@@ -43,7 +44,10 @@ export class AWSSTShelper {
             RoleSessionName: 'OSDUAWSAssumeRoleSession',
             DurationSeconds: expDuration
         };
-        const roleCredentials =  await this.sts.assumeRole(stsParams).promise();
+        const roleCredentials = await this.sts.send(new AssumeRoleCommand(stsParams));
+        if (!roleCredentials.Credentials) {
+            throw new Error('Failed to get credentials');
+        }
         return roleCredentials.Credentials.AccessKeyId +
         ':' + roleCredentials.Credentials.SecretAccessKey +
         ':' + roleCredentials.Credentials.SessionToken;

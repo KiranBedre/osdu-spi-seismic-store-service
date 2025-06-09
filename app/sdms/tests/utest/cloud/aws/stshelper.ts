@@ -1,6 +1,8 @@
 import sinon from "sinon";
 import { Tx } from "../../utils";
 import { AWSSTShelper } from "../../../../src/cloud/providers/aws/stshelper";
+import { Config } from '../../../../src/cloud';
+import { AWSConfig } from "../../../../src/cloud/providers/aws";
 
 export class TestAWSStsHelper {
     private static sandbox: sinon.SinonSandbox;
@@ -11,6 +13,7 @@ export class TestAWSStsHelper {
 
             beforeEach(() => {
                 this.sandbox = sinon.createSandbox();
+                this.sandbox.define(AWSConfig, 'AWS_REGION', 'us-west-2');
                 this.stsHelper = new AWSSTShelper();
             });
 
@@ -41,10 +44,8 @@ export class TestAWSStsHelper {
         Tx.test(async () => {
             const flagUpload = true;
             this.sandbox.stub(this.stsHelper, "createUploadPolicy").returns("testPolicy");
-            this.sandbox.stub((this.stsHelper['sts'] as any), "assumeRole").returns({
-                promise: this.sandbox.stub().resolves(testCredentials)
+            this.sandbox.stub(this.stsHelper['sts'], "send").resolves(testCredentials);
             
-            })
             const result = await this.stsHelper.getCredentials(bucket, keyPath, roleArn, flagUpload, exp);
             Tx.checkTrue(result === testCredentials.Credentials.AccessKeyId + ':' + testCredentials.Credentials.SecretAccessKey + ':' + testCredentials.Credentials.SessionToken);
         })
@@ -52,10 +53,8 @@ export class TestAWSStsHelper {
         Tx.test(async () => {
             const flagUpload = false;
             this.sandbox.stub(this.stsHelper, "createDownloadPolicy").returns("testPolicy");
-            this.sandbox.stub((this.stsHelper['sts'] as any), "assumeRole").returns({
-                promise: this.sandbox.stub().resolves(testCredentials)
+            this.sandbox.stub(this.stsHelper['sts'], "send").resolves(testCredentials);
             
-            })
             const result = await this.stsHelper.getCredentials(bucket, keyPath, roleArn, flagUpload, exp);
             Tx.checkTrue(result === testCredentials.Credentials.AccessKeyId + ':' + testCredentials.Credentials.SecretAccessKey + ':' + testCredentials.Credentials.SessionToken);
         })
