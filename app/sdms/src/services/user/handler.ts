@@ -411,17 +411,33 @@ export class UserHandler {
         req, tenant: ITenantModel,): Promise<string[]> {
 
         let users = [];
+        // By default, if there are some groups, they are all invalid.
+        let allGroupsAreInvalid = admins.length !== 0 || viewers.length !== 0;
 
         for (const adminGroup of admins) {
-            const result = (await AuthGroups.listUsersInGroup(req.headers.authorization, adminGroup, tenant.esd,
-                req[Config.DE_FORWARD_APPKEY]));
-            users = users.concat(result.map((el) => [el.email, 'admin']));
+            const result = await this.doNotThrowIfGroupNotValid(async() => {
+                return await AuthGroups.listUsersInGroup(req.headers.authorization, adminGroup, tenant.esd,
+                    req[Config.DE_FORWARD_APPKEY]);
+            }, adminGroup);
+            if (result) {
+                users = users.concat(result.map((el) => [el.email, 'admin']));
+                allGroupsAreInvalid = false; // If any of the group is valid, reset this flag.
+            }
         }
 
         for (const viewerGroup of viewers) {
-            const result = (await AuthGroups.listUsersInGroup(req.headers.authorization, viewerGroup, tenant.esd,
-                req[Config.DE_FORWARD_APPKEY]));
-            users = users.concat(result.map((el) => [el.email, 'viewer']));
+            const result = await this.doNotThrowIfGroupNotValid(async() => {
+                return await AuthGroups.listUsersInGroup(req.headers.authorization, viewerGroup, tenant.esd,
+                    req[Config.DE_FORWARD_APPKEY]);
+            }, viewerGroup);
+            if (result) {
+                users = users.concat(result.map((el) => [el.email, 'viewer']));
+                allGroupsAreInvalid = false; // If any of the group is valid, reset this flag.
+            }
+        }
+
+        if (allGroupsAreInvalid) {
+            throw Error.make(Error.Status.NOT_FOUND, 'There are no valid ACLs groups.');
         }
 
         return users;
@@ -536,4 +552,24 @@ export class UserHandler {
         }
     }
 
+    private static async doNotThrowIfGroupNotValid(
+        methodToCall: () => Promise<any>, groupName: string
+    ): Promise<any> {
+        try {
+            return await methodToCall();
+        } catch (error) {
+            if (!(typeof error === 'object' &&
+                typeof error.error === 'object' &&
+                'message' in error.error &&
+                (error.error.message as string).indexOf('Not found'))) {
+                throw (error);
+            }
+            console.warn(
+                'Error: code: ' + error.error.code +
+                ', message: ' + error.error.message +
+                ', for group: ' + groupName
+            );
+            return undefined;
+        }
+    }
 }
