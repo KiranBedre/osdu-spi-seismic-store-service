@@ -43,7 +43,7 @@ export class SDPath {
         let sdPathTokens = sdPath.split('/');
 
         // remove empty elements
-        sdPathTokens = sdPathTokens.filter((el) => el !== (undefined || ''));
+        sdPathTokens = sdPathTokens.filter((el) => el !== undefined  && el !== '');
 
         // create and initialize the result model
         const sdPathRes = {
@@ -53,8 +53,11 @@ export class SDPath {
         // get tenant
         if (sdPathTokens.length > 0) { sdPathRes.tenant = sdPathTokens.shift(); }
 
-        // get subproject
-        if (sdPathTokens.length > 0) { sdPathRes.subproject = sdPathTokens.shift(); }
+        // get subproject and verify subproject is valid
+        if (sdPathTokens.length > 0) {
+            sdPathRes.subproject = sdPathTokens.shift();
+            if (!sdPathRes.subproject.match(/^[a-z][a-z\d\-]*[a-z\d]$/g)) { return undefined }
+        }
 
         // get the dataset if required
         if (isFullDatasetPath && sdPathTokens.length > 0) {
@@ -66,6 +69,9 @@ export class SDPath {
 
         // dataset in root does not have a path, force it
         if (sdPathRes.dataset && !sdPathRes.path) { sdPathRes.path = '/'; }
+
+        // after initialize sdPathRes, verify the path is valid
+        if (sdPathRes.path) {if (!sdPathRes.path.match(/^\/(?:[^\/]+\/)*$/)) { return undefined; }}
 
         // return if not empty
         return sdPathRes;

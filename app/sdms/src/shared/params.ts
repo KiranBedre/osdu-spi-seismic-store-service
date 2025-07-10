@@ -76,14 +76,29 @@ export class Params {
 
         this.checkParam(email, fieldName, required, 'string');
 
-        // eslint-disable-next-line @stylistic/max-len
-        const regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-        if (!regexp.test(email)) {
+        const atCount = (email.match(/@/g) || []).length;
+        if (atCount > 1) {
             throw (Error.make(
                 Error.Status.BAD_REQUEST,
                 'The \'' + fieldName + '\' body field value ' + email + ' is not a valid email.'));
         }
-
+        else if (atCount < 1) {
+            const regexp = new RegExp(/^[a-zA-Z0-9._-]+$/);
+            if (!regexp.test(email)) {
+                throw (Error.make(
+                    Error.Status.BAD_REQUEST,
+                    'The \'' + fieldName + '\' body field value ' + email + ' is not a valid email.'));
+            }
+        }
+        else {
+            // eslint-disable-next-line @stylistic/max-len
+            const regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+            if (!regexp.test(email)) {
+                throw (Error.make(
+                    Error.Status.BAD_REQUEST,
+                    'The \'' + fieldName + '\' body field value ' + email + ' is not a valid email.'));
+            }
+        }
     }
 
     // check if dataset path is valid

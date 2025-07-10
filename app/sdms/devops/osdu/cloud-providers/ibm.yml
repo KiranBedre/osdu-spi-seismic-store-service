@@ -3,6 +3,7 @@ variables:
   SEISMIC_HOST: $IBM_SEISMIC_HOST
 
 sdms_ibm-deploy:
+  allow_failure: true
   extends:
     - ibm-deploy
   needs: ['sdms_compile-and-unit-test']

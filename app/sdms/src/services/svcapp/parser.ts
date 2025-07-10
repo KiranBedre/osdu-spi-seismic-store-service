@@ -21,7 +21,7 @@ export class AppParser {
 
     public static register(req: expRequest): { email: string, sdPath: SDPathModel } {
 
-        Params.checkString(req.query.email, 'email');
+        Params.checkEmail(req.query.email, 'email');
         Params.checkString(req.query.sdpath, 'sdpath');
 
         const email = req.query.email as string;

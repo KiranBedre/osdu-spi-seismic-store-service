@@ -23,7 +23,7 @@ The following software have components provided under the terms of this license:
 - @ibm-cloud/cloudant (from https://www.npmjs.com/package/@ibm-cloud/cloudant)
 - @prisma/client (from https://www.npmjs.com/package/@prisma/client)
 - aws-sdk (from https://www.npmjs.com/package/aws-sdk)
-- boto3 (from https://github.com/boto/boto3)
+- boto3 (from <https://github.com/boto/boto3>, https://github.com/boto/boto3)
 - google-auth-library (from https://www.npmjs.com/package/google-auth-library)
 - keycloak-admin (from https://www.npmjs.com/package/keycloak-admin)
 - log4js (from https://www.npmjs.com/package/log4js)
