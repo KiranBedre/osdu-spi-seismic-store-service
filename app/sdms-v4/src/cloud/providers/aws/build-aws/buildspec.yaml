@@ -69,7 +69,7 @@ phases:
       - export ECR_IMAGE_PROD=${ECR_REGISTRY}:${ECR_TAG_PROD}
       - export ECR_IMAGE_BRANCH_LATEST=${ECR_REGISTRY}:${BRANCH_NAME}
 
-      - echo "Placeholder" >> ${OUTPUT_DIR}/build-info.json # touched so that the output directory has some content incase the build fails so that testing reports are uploaded
+      - echo "Placeholder" >> ${OUTPUT_DIR}/build-info.json # touched so that the output directory has some content in case the build fails so that testing reports are uploaded
 
       - GIT_SECRETS_SCAN_RESULT=$(git secrets --scan 2> ${OUTPUT_DIR}/git_secrets.out.txt && echo OK || echo FAILED)
       - if [ "$GIT_SECRETS_SCAN_RESULT" = "FAILED" ]; then echo "Secrets detected!" && exit 1; fi

@@ -67,7 +67,7 @@ export class TestAWSCredentials {
         Tx.test(async () => {
   
           const getSSMParameterStub = this.sandbox.stub(AWSSSMhelper.prototype, 'getSSMParameter');
-          getSSMParameterStub.onCall(0).resolves('cognito_name');
+          getSSMParameterStub.onCall(0).resolves('idp_name');
           getSSMParameterStub.onCall(1).resolves('client_id');
           getSSMParameterStub.onCall(2).resolves('token_url');
           getSSMParameterStub.onCall(3).resolves('oauth_scope');

@@ -72,7 +72,7 @@ phases:
       - export INTEGRATION_TEST_OUTPUT_BIN=${INTEGRATION_TEST_OUTPUT}/bin
       - mkdir -p ${OUTPUT_DIR}/bin
       - mkdir -p ${OUTPUT_DIR}/testing && mkdir -p ${INTEGRATION_TEST_OUTPUT}  && mkdir -p ${INTEGRATION_TEST_OUTPUT}/bin
-      - echo "Placeholder" >> ${OUTPUT_DIR}/build-info.json # touched so that the output directory has some content incase the build fails so that testing reports are uploaded
+      - echo "Placeholder" >> ${OUTPUT_DIR}/build-info.json # touched so that the output directory has some content in case the build fails so that testing reports are uploaded
 
       - GIT_SECRETS_SCAN_RESULT=$(git secrets --scan 2> ${OUTPUT_DIR}/git_secrets.out.txt && echo OK || echo FAILED)
       - if [ "$GIT_SECRETS_SCAN_RESULT" = "FAILED" ]; then echo "Secrets detected!" && exit 1; fi

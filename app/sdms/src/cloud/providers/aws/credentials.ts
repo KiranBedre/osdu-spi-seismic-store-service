@@ -126,12 +126,12 @@ export class AWSCredentials extends AbstractCredentials {
             AWSCredentials.servicePrincipalCredential.expires_in > Math.floor(Date.now() / 1000)){
             return AWSCredentials.servicePrincipalCredential.access_token;
         }
-        const cogNameSsm = '/osdu/instances/'+AWSConfig.OSDU_INSTANCE_NAME+'/config/cognito/name'
-        const cognitoName = await AWSCredentials.awsSSMHelper.getSSMParameter(cogNameSsm);
-        const tokenUrlSsmPath = '/osdu/cognito/'+cognitoName+'/oauth/token-uri';
-        const oauthCustomScopeSsmPath='/osdu/cognito/'+ cognitoName+'/oauth/custom-scope';
-        const clientIdSsmPath='/osdu/cognito/'+cognitoName+'/client/client-credentials/id';
-        const clientSecretName='/osdu/cognito/'+cognitoName+'/client-credentials-secret';
+        const idpNameSsm = '/osdu/instances/'+AWSConfig.OSDU_INSTANCE_NAME+'/config/idp/name'
+        const idpName = await AWSCredentials.awsSSMHelper.getSSMParameter(idpNameSsm);
+        const tokenUrlSsmPath = '/osdu/idp/'+idpName+'/oauth/token-uri';
+        const oauthCustomScopeSsmPath='/osdu/idp/'+ idpName+'/oauth/custom-scope';
+        const clientIdSsmPath='/osdu/idp/'+idpName+'/client/client-credentials/id';
+        const clientSecretName='/osdu/idp/'+idpName+'/client-credentials-secret';
         // pragma: allowlist nextline secret
         const clientSecretDictKey='client_credentials_client_secret'
 
