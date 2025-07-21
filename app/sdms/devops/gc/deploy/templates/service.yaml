@@ -12,18 +12,21 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-{{ if not .Values.data.redisSdmsHost }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ printf "redis-%s" .Values.conf.appName | quote }}
+  name: {{ .Values.conf.appName | quote }}
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
   namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: {{ .Values.conf.appName | quote }}
+    service: {{ .Values.conf.appName | quote }}
 spec:
   ports:
-  - port: {{ .Values.data.redisSdmsPort }}
-    name: {{ printf "redis-%s-port" .Values.conf.appName | quote }}
-    protocol: TCP
-    targetPort: 6379
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+      name: http
   selector:
-    app: {{ printf "redis-%s" .Values.conf.appName | quote }}
-{{ end }}
+    app: {{ .Values.conf.appName | quote }}

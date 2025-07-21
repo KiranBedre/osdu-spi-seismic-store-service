@@ -1,3 +1,4 @@
+
 #  Copyright 2025 Google LLC
 #  Copyright 2025 EPAM
 #
@@ -12,18 +13,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-{{ if not .Values.data.redisSdmsHost }}
-apiVersion: v1
-kind: Service
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
 metadata:
-  name: {{ printf "redis-%s" .Values.conf.appName | quote }}
-  namespace: {{ .Release.Namespace | quote }}
+  name: {{ printf "%s-pdb" .Values.conf.appName | quote }}
 spec:
-  ports:
-  - port: {{ .Values.data.redisSdmsPort }}
-    name: {{ printf "redis-%s-port" .Values.conf.appName | quote }}
-    protocol: TCP
-    targetPort: 6379
+  minAvailable: {{ sub (include "seismicStore.minReplicasSpot" . ) 1 }}
   selector:
-    app: {{ printf "redis-%s" .Values.conf.appName | quote }}
-{{ end }}
+    matchLabels:
+      provision-type: "spot"
+      app: {{ .Values.conf.appName | quote }}

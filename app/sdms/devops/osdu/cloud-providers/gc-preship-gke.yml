@@ -23,7 +23,6 @@ sdms_gc-preship-deploy:
       --history-max=3
       --set data.imagePullPolicy=Always
       --set data.serviceAccountName=$SEISMIC_GC_SERVICE
-      --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
       --set data.serviceCloudProject=$GC_PROJECT
       --set global.domain=$GC_DOMAIN
       $GC_HELM_SETS

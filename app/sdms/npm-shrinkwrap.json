@@ -28,7 +28,7 @@
         "@google-cloud/storage": "^6.1.0",
         "@google-cloud/trace-agent": "^5.1.6",
         "@ibm-cloud/cloudant": "^0.8.2",
-        "@prisma/client": "^3.8.0",
+        "@prisma/client": "^4.16.2",
         "ajv": "^8.8.0",
         "ajv-formats": "^2.1.1",
         "applicationinsights": "^2.7.3",
@@ -51,7 +51,7 @@
         "keycloak-admin": "^1.14.22",
         "log4js": "^6.3.0",
         "node-cache": "^5.1.2",
-        "prisma": "^3.8.0",
+        "prisma": "^4.16.2",
         "prom-client": "^13.2.0",
         "qs": "^6.11.0",
         "redlock": "^5.0.0-beta.2",
@@ -3830,15 +3830,16 @@
       }
     },
     "node_modules/@prisma/client": {
-      "version": "3.15.2",
-      "resolved": "https://registry.npmjs.org/@prisma/client/-/client-3.15.2.tgz",
-      "integrity": "sha512-ErqtwhX12ubPhU4d++30uFY/rPcyvjk+mdifaZO5SeM21zS3t4jQrscy8+6IyB0GIYshl5ldTq6JSBo1d63i8w==",
+      "version": "4.16.2",
+      "resolved": "https://registry.npmjs.org/@prisma/client/-/client-4.16.2.tgz",
+      "integrity": "sha512-qCoEyxv1ZrQ4bKy39GnylE8Zq31IRmm8bNhNbZx7bF2cU5aiCCnSa93J2imF88MBjn7J9eUQneNxUQVJdl/rPQ==",
       "hasInstallScript": true,
+      "license": "Apache-2.0",
       "dependencies": {
-        "@prisma/engines-version": "3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e"
+        "@prisma/engines-version": "4.16.1-1.4bc8b6e1b66cb932731fb1bdbbc550d1e010de81"
       },
       "engines": {
-        "node": ">=12.6"
+        "node": ">=14.17"
       },
       "peerDependencies": {
         "prisma": "*"
@@ -3850,15 +3851,17 @@
       }
     },
     "node_modules/@prisma/engines": {
-      "version": "3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e",
-      "resolved": "https://registry.npmjs.org/@prisma/engines/-/engines-3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e.tgz",
-      "integrity": "sha512-NHlojO1DFTsSi3FtEleL9QWXeSF/UjhCW0fgpi7bumnNZ4wj/eQ+BJJ5n2pgoOliTOGv9nX2qXvmHap7rJMNmg==",
-      "hasInstallScript": true
+      "version": "4.16.2",
+      "resolved": "https://registry.npmjs.org/@prisma/engines/-/engines-4.16.2.tgz",
+      "integrity": "sha512-vx1nxVvN4QeT/cepQce68deh/Turxy5Mr+4L4zClFuK1GlxN3+ivxfuv+ej/gvidWn1cE1uAhW7ALLNlYbRUAw==",
+      "hasInstallScript": true,
+      "license": "Apache-2.0"
     },
     "node_modules/@prisma/engines-version": {
-      "version": "3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e",
-      "resolved": "https://registry.npmjs.org/@prisma/engines-version/-/engines-version-3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e.tgz",
-      "integrity": "sha512-e3k2Vd606efd1ZYy2NQKkT4C/pn31nehyLhVug6To/q8JT8FpiMrDy7zmm3KLF0L98NOQQcutaVtAPhzKhzn9w=="
+      "version": "4.16.1-1.4bc8b6e1b66cb932731fb1bdbbc550d1e010de81",
+      "resolved": "https://registry.npmjs.org/@prisma/engines-version/-/engines-version-4.16.1-1.4bc8b6e1b66cb932731fb1bdbbc550d1e010de81.tgz",
+      "integrity": "sha512-q617EUWfRIDTriWADZ4YiWRZXCa/WuhNgLTVd+HqWLffjMSPzyM5uOWoauX91wvQClSKZU4pzI4JJLQ9Kl62Qg==",
+      "license": "Apache-2.0"
     },
     "node_modules/@protobufjs/aspromise": {
       "version": "1.1.2",
@@ -12598,19 +12601,20 @@
       "integrity": "sha512-lg++21mreCEOuGWTbO5DnJKAdxfjrdN0S9ysoW9SzdSJvbkWpkaDdpG/cdsPCsEnoLUwmd9m3WcZhngW7yKA2g=="
     },
     "node_modules/prisma": {
-      "version": "3.15.2",
-      "resolved": "https://registry.npmjs.org/prisma/-/prisma-3.15.2.tgz",
-      "integrity": "sha512-nMNSMZvtwrvoEQ/mui8L/aiCLZRCj5t6L3yujKpcDhIPk7garp8tL4nMx2+oYsN0FWBacevJhazfXAbV1kfBzA==",
+      "version": "4.16.2",
+      "resolved": "https://registry.npmjs.org/prisma/-/prisma-4.16.2.tgz",
+      "integrity": "sha512-SYCsBvDf0/7XSJyf2cHTLjLeTLVXYfqp7pG5eEVafFLeT0u/hLFz/9W196nDRGUOo1JfPatAEb+uEnTQImQC1g==",
       "hasInstallScript": true,
+      "license": "Apache-2.0",
       "dependencies": {
-        "@prisma/engines": "3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e"
+        "@prisma/engines": "4.16.2"
       },
       "bin": {
         "prisma": "build/index.js",
         "prisma2": "build/index.js"
       },
       "engines": {
-        "node": ">=12.6"
+        "node": ">=14.17"
       }
     },
     "node_modules/process": {

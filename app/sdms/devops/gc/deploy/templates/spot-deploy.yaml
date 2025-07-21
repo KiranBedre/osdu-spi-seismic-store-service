@@ -1,3 +1,17 @@
+#  Copyright 2025 Google LLC
+#  Copyright 2025 EPAM
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,17 +19,20 @@ metadata:
     app: {{ .Values.conf.appName | quote  }}
     type: ddms
     source: typescript
-  name: {{ .Values.conf.appName  | quote }}
+  name: {{ .Values.conf.appName | quote }}
   namespace: {{ .Release.Namespace  | quote }}
 spec:
   selector:
     matchLabels:
       app: {{ .Values.conf.appName  | quote }}
-  replicas: {{ .Values.conf.replicas }}
+      provision-type: "spot"
+  replicas: {{ include "seismicStore.minReplicasSpot" . }}
   template:
     metadata:
       labels:
         app: {{ .Values.conf.appName  | quote }}
+        provision-type: "spot"
+        sidecar.istio.io/inject: {{ .Values.istio.sidecarInject | quote }}
       annotations:
         rollme: {{ randAlphaNum 5 | quote }}
         sidecar.istio.io/proxyCPU: {{ .Values.istio.proxyCPU | quote }}
@@ -23,6 +40,23 @@ spec:
         sidecar.istio.io/proxyCPULimit: {{ .Values.istio.proxyCPULimit | quote }}
         sidecar.istio.io/proxyMemoryLimit: {{ .Values.istio.proxyMemoryLimit | quote }}
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- range $key, $valuesList := .Values.data.affinityLabelsSpot }}
+            - weight: 80
+              preference:
+                matchExpressions:
+                - key: {{ $key }}
+                  operator: In
+                  values:
+                  {{- toYaml $valuesList | nindent 18 }}
+            {{- end }}
+      tolerations:
+      - key: "kubernetes.io/arch"
+        operator: "Equal"
+        value: "arm64"
+        effect: "NoSchedule"
       containers:
         - name: {{ .Values.conf.appName | quote }}
           image: {{ .Values.data.image | quote }}
@@ -41,19 +75,11 @@ spec:
           envFrom:
           - configMapRef:
               name: {{ printf "%s-config" .Values.conf.appName | quote }}
-          {{- if .Values.global.onPremEnabled }}
-          - secretRef:
-              name: {{ .Values.conf.database | quote }}
-          - secretRef:
-              name: {{ .Values.conf.keycloak | quote }}
-          - secretRef:
-              name: {{ .Values.conf.minio | quote }}
-          {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
           ports:
-            - containerPort: 8080
+            - containerPort: 5000
           livenessProbe:
               failureThreshold: 3
               httpGet:

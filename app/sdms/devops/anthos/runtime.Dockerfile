@@ -15,25 +15,27 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_builder_image_version=16-slim
-ARG docker_node_image_version=16-alpine
+ARG docker_node_image_version=22-alpine
 
 # -------------------------------
 # Compilation stage
 # -------------------------------
-FROM node:${docker_node_builder_image_version} as runtime-builder
+FROM node:${docker_node_image_version} as runtime-builder
 
 ADD ./ /service
 WORKDIR /service
 COPY ./src/cloud/providers/anthos/schema.prisma /service/prisma/schema.prisma
 
-RUN apt update \
-    && apt install g++ gcc build-essential libstdc++6 make python3 -y \
+RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && npm install --quiet node-gyp -g \
+    && npm install --quiet husky -g \
     && npm install --quiet \
+    && npx prisma generate --schema=./prisma/schema.prisma \
     && npm run build \
     && mkdir artifact \
-    && cp -r package.json dist artifact 
+    && cp -r package.json npm-shrinkwrap.json dist artifact \
+    && apk del native-deps
+
 # -------------------------------
 # Package stage
 # -------------------------------
@@ -44,18 +46,20 @@ COPY --from=runtime-builder /service/artifact /seistore-service
 COPY --from=runtime-builder /service/prisma/schema.prisma /seistore-service/src/cloud/providers/anthos/schema.prisma
 WORKDIR /seistore-service
 
-RUN ls
-
+RUN apk update && apk upgrade
 RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && addgroup --gid 10001 appgroup \
     && adduser --disabled-password --gecos --shell --uid 10001 appuser --ingroup appgroup \
     && chown -R appuser:appgroup /seistore-service \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/npm' >> /etc/sudoers \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/node' >> /etc/sudoers \
-    && npm install --production --quiet --force  \
+    && npm install --quiet husky -g \
+    && npm ci --production --quiet \
+    && chown -R appuser:appgroup /seistore-service/node_modules \
     && apk del native-deps \
-    && apk add --update --no-cache openssl1.1-compat \
-    && npx prisma generate --schema=/seistore-service/src/cloud/providers/anthos/schema.prisma
+    && apk add --update --no-cache openssl \
+    && npx prisma generate --schema=/seistore-service/src/cloud/providers/anthos/schema.prisma \
+    && chown -R appuser:appgroup /seistore-service
 
 USER 10001:10001
 

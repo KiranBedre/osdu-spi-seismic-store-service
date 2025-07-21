@@ -25,7 +25,6 @@ sdms_gc-dev2-deploy:
       --set data.imagePullPolicy=Always
       --set data.serviceAccountName=$GC_SERVICE
       --set global.domain=$GC_DOMAIN
-      --set data.appEnvironmentIdentifier=$DATA_PARTITION_ID
       --set data.serviceCloudProject=$GC_PROJECT
       $GC_HELM_SETS
       $GC_HELM_TIMEOUT

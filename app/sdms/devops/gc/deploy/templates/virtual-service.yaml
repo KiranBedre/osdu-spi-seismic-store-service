@@ -12,18 +12,26 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-{{ if not .Values.data.redisSdmsHost }}
-apiVersion: v1
-kind: Service
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
 metadata:
-  name: {{ printf "redis-%s" .Values.conf.appName | quote }}
+  name: {{ .Values.conf.appName | quote }}
   namespace: {{ .Release.Namespace | quote }}
 spec:
-  ports:
-  - port: {{ .Values.data.redisSdmsPort }}
-    name: {{ printf "redis-%s-port" .Values.conf.appName | quote }}
-    protocol: TCP
-    targetPort: 6379
-  selector:
-    app: {{ printf "redis-%s" .Values.conf.appName | quote }}
-{{ end }}
+  hosts:
+    {{- if .Values.global.domain }}
+    - {{ .Values.global.domain | quote }}
+    {{- else }}
+    - "*"
+    {{- end }}
+  gateways:
+    - service-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /api/seismic-store/v3
+      route:
+        - destination:
+            port:
+              number: 80
+            host: {{printf "%s.%s.svc.cluster.local" .Values.conf.appName .Release.Namespace | quote }}
