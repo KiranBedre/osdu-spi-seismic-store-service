@@ -83,7 +83,7 @@
     "applicationinsights": "^2.7.3",
     "applicationinsights-native-metrics": "^0.0.6",
     "aws-sdk": "^2.1024.0",
-    "axios": "^1.7.4",
+    "axios": "^1.8.2",
     "bull": "^4.12.2",
     "colors": "^1.4.0",
     "copyfiles": "^2.4.1",
@@ -91,6 +91,7 @@
     "dotenv": "^10.0.0",
     "express": "^4.20.0",
     "express-prometheus-middleware": "^1.2.0",
+    "form-data": "^4.0.4",
     "google-auth-library": "8.7.0",
     "hpropagate": "^1.0.1",
     "ioredis": "^5.1.0",
@@ -100,6 +101,7 @@
     "keycloak-admin": "^1.14.22",
     "log4js": "^6.3.0",
     "node-cache": "^5.1.2",
+    "path-to-regexp": "^0.1.12",
     "prisma": "^4.16.2",
     "prom-client": "^13.2.0",
     "qs": "^6.11.0",
@@ -157,19 +159,27 @@
     "@ibm-cloud/cloudant": {
       "qs": "$qs",
       "ibm-cloud-sdk-core": {
-        "axios": "1.7.4",
+        "axios": "1.8.2",
         "expect": {
           "jest-message-util": {
             "micromatch": "^4.0.8"
           }
-        }
+        },
+        "form-data": "^2.5.4"
       }
     },
+    "@types/node-fetch": {
+      "form-data": "^3.0.4"
+    },
+    "@types/request": {
+      "form-data": "^2.5.4"
+    },
     "express": {
-      "qs": "$qs"
+      "qs": "$qs",
+      "path-to-regexp": "0.1.12"
     },
     "jwks-rsa": {
-      "axios": "1.7.4",
+      "axios": "1.8.2",
       "jsonwebtoken": "$jsonwebtoken"
     },
     "newman": {
@@ -177,7 +187,7 @@
       "semver": "7.5.2"
     },
     "keycloak-admin": {
-      "axios": "1.7.4"
+      "axios": "1.8.2"
     },
     "cross-spawn": "7.0.5",
     "eslint": {

@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { expect } from 'chai';
-import { Request as expRequest, Response as expResponse } from 'express';
+import type { Request as expRequest, Response as expResponse } from 'express';
 
 class MockExpressResponse {
     public statusCode: number;

@@ -81,12 +81,14 @@ The following software have components provided under the terms of this license:
 - cors (from https://www.npmjs.com/package/cors)
 - express (from https://www.npmjs.com/package/express)
 - express-prometheus-middleware (from https://www.npmjs.com/package/express-prometheus-middleware)
+- form-data (from https://www.npmjs.com/package/form-data)
 - hpropagate (from https://www.npmjs.com/package/hpropagate)
 - ioredis (from https://www.npmjs.com/package/ioredis)
 - js-yaml (from https://www.npmjs.com/package/js-yaml)
 - json-refs (from https://www.npmjs.com/package/json-refs)
 - jsonwebtoken (from https://www.npmjs.com/package/jsonwebtoken)
 - node-cache (from https://www.npmjs.com/package/node-cache)
+- path-to-regexp (from https://www.npmjs.com/package/path-to-regexp)
 - prisma (from https://www.npmjs.com/package/prisma)
 - redlock (from https://www.npmjs.com/package/redlock)
 - replace-in-file (from https://www.npmjs.com/package/replace-in-file)
@@ -108,3 +110,4 @@ W3C-20150513
 The following software have components provided under the terms of this license:
 
 - typescript (from https://www.npmjs.com/package/typescript)
+
