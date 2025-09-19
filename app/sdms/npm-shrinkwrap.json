@@ -34,7 +34,7 @@
         "applicationinsights": "^2.7.3",
         "applicationinsights-native-metrics": "^0.0.6",
         "aws-sdk": "^2.1024.0",
-        "axios": "^1.8.2",
+        "axios": "^1.12.0",
         "bull": "^4.12.2",
         "colors": "^1.4.0",
         "copyfiles": "^2.4.1",
@@ -5928,13 +5928,29 @@
       "dev": true
     },
     "node_modules/axios": {
-      "version": "1.8.2",
-      "resolved": "https://registry.npmjs.org/axios/-/axios-1.8.2.tgz",
-      "integrity": "sha512-ls4GYBm5aig9vWx8AWDSGLpnpDQRtWAfrjU+EuytuODrFBkqesN2RkOQCBzrA1RQNHw1SmRMSDDDSwzNAYQ6Rg==",
+      "version": "1.12.0",
+      "resolved": "https://registry.npmjs.org/axios/-/axios-1.12.0.tgz",
+      "integrity": "sha512-oXTDccv8PcfjZmPGlWsPSwtOJCZ/b6W5jAMCNcfwJbCzDckwG0jrYJFaWH1yvivfCXjVzV/SPDEhMB3Q+DSurg==",
       "dependencies": {
         "follow-redirects": "^1.15.6",
-        "form-data": "^4.0.0",
+        "form-data": "^4.0.4",
         "proxy-from-env": "^1.1.0"
+      }
+    },
+    "node_modules/axios/node_modules/form-data": {
+      "version": "2.5.5",
+      "resolved": "https://registry.npmjs.org/form-data/-/form-data-2.5.5.tgz",
+      "integrity": "sha512-jqdObeR2rxZZbPSGL+3VckHMYtu+f9//KXBsVny6JSX/pa38Fy+bGjuG8eW/H6USNQWhLi8Num++cU2yOCNz4A==",
+      "dependencies": {
+        "asynckit": "^0.4.0",
+        "combined-stream": "^1.0.8",
+        "es-set-tostringtag": "^2.1.0",
+        "hasown": "^2.0.2",
+        "mime-types": "^2.1.35",
+        "safe-buffer": "^5.2.1"
+      },
+      "engines": {
+        "node": ">= 0.12"
       }
     },
     "node_modules/balanced-match": {
