@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import { AzureConfig } from './config';
 import { Config } from '../..';
 import { CallContext, Error, Utils } from '../../../shared';
 import { Operator } from '../../../services/dataset/model';
+import { DatasetUtils } from '../../../services/dataset';
+import { StorageFactory } from '../../../cloud';
 
 
 import axios, { AxiosInstance } from 'axios';
@@ -37,6 +39,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
 
     public KEY = Symbol('id');
     private dataPartition: string;
+    private tenant: TenantModel;
     private static containerCache: { [key: string]: Container; } = {};
     public static axiosInstance: AxiosInstance;
 
@@ -67,6 +70,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     public constructor(tenant: TenantModel) {
         super();
         this.dataPartition = tenant.esd.indexOf('.') !== -1 ? tenant.esd.split('.')[0] : tenant.esd;
+        this.tenant = tenant;
         AzureCosmosDbDAO.axiosInstance = axios.create({
             httpsAgent: require('https').Agent({
                 rejectUnauthorized: false
@@ -139,6 +143,10 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         const data = item.resource.data;
         data[this.KEY] = data[this.KEY.toString()];
         delete data[this.KEY.toString()];
+
+        if (data && ("subproject" in data)) {
+            await this.tierCheck(data);
+        }
         return [data];
     }
 
@@ -487,7 +495,27 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             return result.data;
         });
 
+        if (results.length > 0 && (cosmosQuery.kind === Config.DATASETS_KIND)) {
+            await this.tierCheck(results[0]);
+        }
         return Promise.resolve([results, { endCursor: response.continuationToken }]);
+    }
+
+    private async tierCheck(data: any): Promise<any> {
+        // Get the container and dataset information
+        const bucket = DatasetUtils.getBucketFromDatasetResourceUri(data.gcsurl);
+        const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(data.gcsurl);
+        const tier = await StorageFactory.build(Config.CLOUDPROVIDER, this.tenant).checkTier(bucket, virtualFolder);
+        if (tier) {
+            if (data.filemetadata !== undefined) {
+                data.filemetadata["tier_class"] = tier;
+            }
+            else {
+                data.filemetadata = { "tier_class": tier };
+            }
+            data.filemetadata["live_tier_checked"] = true;
+        }
+        return data;
     }
 
     public createKey(specs: any): object {

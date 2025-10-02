@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2021, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ export interface IAccessTokenModel {
 export interface ICredentials {
     getStorageCredentials(
         tenant: string, subproject: string,
-        bucket: string, readonly: boolean, partitionID: string, objectPrefix?: string): Promise<IAccessTokenModel>;
+        bucket: string, readonly: boolean,
+        partitionID: string, objectPrefix?: string, tier?: string): Promise<IAccessTokenModel>;
     getServiceAccountAccessToken(): Promise<IAccessTokenModel>;
     getIAMResourceUrl(serviceSigner: string): string;
     getAudienceForImpCredentials(): string;
@@ -37,7 +38,8 @@ export interface ICredentials {
 export abstract class AbstractCredentials implements ICredentials {
     public abstract getStorageCredentials(
         tenant: string, subproject: string,
-        bucket: string, readonly: boolean, partitionID: string, objectPrefix?: string): Promise<IAccessTokenModel>;
+        bucket: string, readonly: boolean,
+        partitionID: string, objectPrefix?: string, tier?: string): Promise<IAccessTokenModel>;
     // [OBSOLETE] to remove with /imptoken
     public abstract getServiceAccountAccessToken(): Promise<IAccessTokenModel>;
     // [OBSOLETE] to remove with /imptoken

@@ -81,6 +81,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -101,6 +102,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -123,6 +125,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -147,6 +150,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -180,6 +184,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -248,6 +253,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -305,6 +311,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;
@@ -379,6 +386,7 @@ export class TestAzureCosmosDbListDatasets {
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             let sinonStub = this.sandbox.stub(Items.prototype, 'query');
             sinonStub.returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
 
             const dataset: DatasetModel = {} as DatasetModel;
             dataset.tenant = tenant;

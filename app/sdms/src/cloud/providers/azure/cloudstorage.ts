@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ export class AzureCloudStorage extends AbstractStorage {
         const container = (await this.getBlobServiceClient()).getContainerClient(bucketName);
         let blobs = null;
         if (prefix) {
-            blobs = container.listBlobsByHierarchy('/', { prefix: prefix + '/' });
+            blobs = container.listBlobsFlat( {prefix: prefix + '/' } );
         }
         else {
             blobs = container.listBlobsFlat();
@@ -308,5 +308,26 @@ export class AzureCloudStorage extends AbstractStorage {
         }
 
         return blobList;
+    }
+
+    // check tier of first returned blob from a container
+    public async checkTier(bucketName: string, prefix: string): Promise<string> {
+        const containerClient = (await this.getBlobServiceClient()).getContainerClient(bucketName);
+        let blobs = null;
+        if (prefix) {
+            blobs = containerClient.listBlobsFlat( {prefix: prefix + '/' } );
+        }
+        else {
+            blobs = containerClient.listBlobsFlat();
+        }
+        let blob = await blobs.next();
+        if (blob.done || !blob.value) {
+            console.log("No blobs found in the container.");
+            return;
+        }
+        const blobClient = containerClient.getBlobClient(blob.value.name);
+        const properties = await blobClient.getProperties();
+        const tier = properties.accessTier;
+        return tier;
     }
 }

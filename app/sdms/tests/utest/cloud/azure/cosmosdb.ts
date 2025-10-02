@@ -255,6 +255,7 @@ export class TestAzureCosmosDbDAO {
             azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'});
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
             Tx.checkTrue(res[1].endCursor === 'continuationToken');
         });
@@ -266,6 +267,7 @@ export class TestAzureCosmosDbDAO {
             azureCosmosDbQuery.pagingStart = '';
             azureCosmosDbQuery.pagingLimit = 0;
             this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
+            this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel)
             Tx.checkTrue(res[1].endCursor === 'continuationToken');
         });

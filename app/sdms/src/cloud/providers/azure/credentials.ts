@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,11 +49,30 @@ export class AzureCredentials extends AbstractCredentials {
     // if the virtual folder name is needed, it should be added to the sas token separately.
     public async getStorageCredentials(
         tenant: string, subproject: string,
-        bucket: string,readonly: boolean,partition: string,objectPrefix?: string): Promise<IAccessTokenModel> {
+        bucket: string, readonly: boolean,
+        partition: string,objectPrefix?: string, tier?: string): Promise<IAccessTokenModel> {
         const accountName = await AzureDataEcosystemServices.getStorageResourceName(partition);
         const now = new Date();
         const expiration = this.addMinutes(now, SasExpirationInMinutes);
-        const sasToken = await this.generateSASToken(accountName, bucket, expiration, readonly, objectPrefix);
+        let blockRead = false;
+        if (tier) {
+            if (readonly) {
+                if (tier.toLowerCase() !== "hot") {
+                    throw (Error.make(Error.Status.BAD_REQUEST,
+                        'Read permissions are restricted for datasets not stored in the hot tier.'));
+                }
+            }
+            else {
+                if (tier.toLowerCase() !== "hot") {
+                    blockRead = true;
+                }
+            }
+        }
+
+        const sasToken = await this.generateSASToken(
+            accountName, bucket, expiration, readonly,
+            objectPrefix, blockRead
+        );
         const result = {
             access_token: sasToken,
             expires_in: 3599,
@@ -64,7 +83,7 @@ export class AzureCredentials extends AbstractCredentials {
 
     private async generateSASToken(
         accountName: string, containerName: string, expiration: Date,
-        readOnly: boolean, objectPrefix?: string
+        readOnly: boolean, objectPrefix?: string, blockRead?: boolean
     ): Promise<string> {
 
         const blobServiceClient = new BlobServiceClient(
@@ -79,7 +98,7 @@ export class AzureCredentials extends AbstractCredentials {
         permissions.write = !readOnly;
         permissions.create = !readOnly;
         permissions.delete = !readOnly;
-        permissions.read = true;
+        permissions.read = !blockRead;
 
         const containerSAS = generateBlobSASQueryParameters({
             containerName,

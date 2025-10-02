@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2019, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ export interface IStorage {
     copy(bucketIn: string, prefixIn: string, bucketOut: string, prefixOut: string, ownerEmail: string): Promise<void>;
     randomBucketName(): Promise<string>;
     getStorageTiers(): string[];
+    checkTier(bucketName: string, prefix: string): Promise<string>;
     getObjectSize(bucketName: string, prefix?: string): Promise<number>;
     setStorageTiers(bucketName: string, prefix: string, tierId: string): Promise<void>;
     getStorageAccountRedundancy(): Promise<string>;
@@ -59,6 +60,10 @@ export abstract class AbstractStorage implements IStorage {
     public setStorageTiers(bucketName: string, prefix: string, tierId: string): Promise<void> {
         // eslint-disable-next-line @stylistic/max-len
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented. Storage Tier change is not supported in ' + Config.CLOUDPROVIDER));
+    };
+    public checkTier(bucketName: string, prefix: string): Promise<string> {
+        // eslint-disable-next-line @stylistic/max-len
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented. Storage Tier Check is not supported in ' + Config.CLOUDPROVIDER));
     };
     getStorageAccountRedundancy(): Promise<string> {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));

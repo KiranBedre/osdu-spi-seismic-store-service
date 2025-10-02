@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -685,7 +685,6 @@ export class DatasetHandler {
             tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
             req.headers['impersonation-token-context'] as string);
 
-
         // patch datasetOUT with datasetIN
         if (datasetIN.metadata) { datasetOUT.metadata = datasetIN.metadata; }
         if (datasetIN.filemetadata) {
@@ -695,19 +694,7 @@ export class DatasetHandler {
             else {
                 // Will now only update or create new field in FileMetaData instead of overwriting all
                 for (const key of Object.keys(datasetIN.filemetadata)) {
-                    if (key === 'tier_class') {
-                        const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
-                        const supportedTiers = storage.getStorageTiers();
-                        const index = supportedTiers.findIndex(
-                            item => datasetIN.filemetadata[key].toLowerCase() === item.toLowerCase());
-                        if (index === -1) {
-                            throw (Error.make(Error.Status.BAD_REQUEST,
-                                'The storage Tier option ' + '"' + datasetIN.filemetadata[key] +
-                                '"' + ' is not supported by this API. ' +
-                                'Your available options are ' + supportedTiers.join(', ')));
-                        }
-                        datasetOUT.filemetadata[key] = supportedTiers[index];
-                    }
+                    if (key === 'tier_class') { continue; }
                     else {
                         datasetOUT.filemetadata[key] = datasetIN.filemetadata[key];
                     }
@@ -763,7 +750,6 @@ export class DatasetHandler {
             datasetOUT.name = newName;
         }
 
-        // check if tier_class is set in filemetadata
         if (changeTier !== undefined) {
             const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
             const supportedTiers = storage.getStorageTiers();
@@ -776,16 +762,9 @@ export class DatasetHandler {
                     'Your available options are ' + supportedTiers.join(', ')));
             }
 
-            if (datasetIN.filemetadata?.tier_class !== undefined &&
-                datasetIN.filemetadata?.tier_class !== changeTier) {
-                throw (Error.make(Error.Status.BAD_REQUEST,
-                    'You have set tier_class ' + '"' + datasetIN.filemetadata.tier_class + '"' +
-                    ' and set change_tier ' + '"' + changeTier + '"' +
-                    ' and they do NOT match'));
-            }
-
             // enable_storage_tier_change must be enabled to change tier
             if (changeTier) {
+                if (datasetOUT.filemetadata === undefined) { datasetOUT.filemetadata = {}; }
                 datasetOUT.filemetadata.tier_class = supportedTiers[index];
                 // Updates all blobs storage tiers (not wait for all objects to update)
                 const bucket = DatasetUtils.getBucketFromDatasetResourceUri(datasetOUT.gcsurl);
@@ -1011,7 +990,6 @@ export class DatasetHandler {
                 tenant, datasetIN.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
         }
-
 
         // managing read-only datasets
         if (datasetOUT.readonly) {
@@ -1421,4 +1399,5 @@ export class DatasetHandler {
         return res;
 
     }
+
 }

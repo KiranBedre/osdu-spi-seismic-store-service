@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,13 +83,16 @@ export class UtilityHandler {
     //      - subproject.viewer if the subproject access policy = uniform
     //      - dataset.viewer if the subproject access policy = dataset
     // ------------------------------------------------------------------
-    private static async getConnectionString(req: expRequest, readOnly: boolean): Promise<IAccessTokenModel> {
+    private static async getConnectionString(
+        req: expRequest, readOnly: boolean
+    ): Promise<IAccessTokenModel> {
 
         const requestDataset = UtilityParser.connectionString(req);
         const tenant = await TenantDAO.get(requestDataset.tenant);
         const journalClient = JournalFactoryTenantClient.get(tenant);
         const subproject = await SubProjectDAO.get(journalClient, requestDataset.tenant, requestDataset.subproject);
         const dataPartitionId = DESUtils.getDataPartitionID(tenant.esd);
+        let dataset: DatasetModel;
 
         let bucket: string;
         let virtualFolder: string;
@@ -97,9 +100,17 @@ export class UtilityHandler {
 
         if (requestDataset.name) { // dataset connection strings
 
-            const dataset = subproject.enforce_key ?
+            dataset = subproject.enforce_key ?
                 await DatasetDAO.getByKey(journalClient, requestDataset) :
                 (await DatasetDAO.get(journalClient, requestDataset))[0];
+
+            // check if the dataset does not exist
+            if (!dataset) {
+                throw (Error.make(Error.Status.NOT_FOUND,
+                    'The dataset ' + Config.SDPATHPREFIX + requestDataset.tenant + '/' +
+                    requestDataset.subproject + requestDataset.path +
+                    requestDataset.name + ' does not exist'));
+            }
 
             authGroups = DatasetAuth.getAuthGroups(
                 subproject, dataset, readOnly ? AuthRoles.viewer : AuthRoles.admin, tenant.esd);
@@ -125,6 +136,11 @@ export class UtilityHandler {
                 tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
 
+        if (dataset?.filemetadata && ("live_tier_checked" in dataset.filemetadata)) {
+            return await CredentialsFactory.build(Config.CLOUDPROVIDER).getStorageCredentials(
+            subproject.tenant, subproject.name, bucket, readOnly,
+            dataPartitionId, virtualFolder, dataset.filemetadata["tier_class"]);
+        }
         // generate and return the connection credentials string
         return await CredentialsFactory.build(Config.CLOUDPROVIDER).getStorageCredentials(
             subproject.tenant, subproject.name, bucket, readOnly, dataPartitionId, virtualFolder);
@@ -176,6 +192,14 @@ export class UtilityHandler {
                 await DatasetDAO.getByKey(journalClient, inputParams.dataset) :
                 (await DatasetDAO.get(journalClient, inputParams.dataset))[0];
 
+            // check if the dataset does not exist
+            if (!dataset) {
+                throw (Error.make(Error.Status.NOT_FOUND,
+                    'The dataset ' + Config.SDPATHPREFIX + inputParams.dataset.tenant + '/' +
+                    inputParams.dataset.subproject + inputParams.dataset.path +
+                    inputParams.dataset.name + ' does not exist'));
+            }
+
             readOnly ?
                 await Auth.isReadAuthorized(req.headers.authorization,
                     DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer, tenant.esd),
@@ -188,6 +212,11 @@ export class UtilityHandler {
 
             const bucket = DatasetUtils.getBucketFromDatasetResourceUri(dataset.gcsurl);
             const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
+            if (dataset.filemetadata && ("live_tier_checked" in dataset.filemetadata)) {
+                return await CredentialsFactory.build(Config.CLOUDPROVIDER).getStorageCredentials(
+                subproject.tenant, subproject.name, bucket, readOnly,
+                DESUtils.getDataPartitionID(tenant.esd), virtualFolder, dataset.filemetadata["tier_class"]);
+            }
             return await CredentialsFactory.build(Config.CLOUDPROVIDER).getStorageCredentials(
                 subproject.tenant, subproject.name, bucket, readOnly,
                 DESUtils.getDataPartitionID(tenant.esd), virtualFolder);

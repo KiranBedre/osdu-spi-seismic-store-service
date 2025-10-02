@@ -758,7 +758,8 @@ export class TestDatasetSVC {
                 async getStorageAccountRedundancy() { return ''; },
                 async checkSupportedTier() { return; },
                 async listBlobs() { return ['']; },
-                async listBlobsFilter() { return ['']; }
+                async listBlobsFilter() { return ['']; },
+                async checkTier() { return ''; }
             };
 
             this.sandbox.stub(DatasetParser, 'size').returns(dataset);
