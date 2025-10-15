@@ -34,7 +34,7 @@ include:
       - if: $FOSSA_API_KEY
         changes:
           - app/sdms-v4/**/*
-    ref: release/0.28
+    ref: v0.28.2
     # overwrite logic
   - local: "app/sdms-v4/devops/osdu/scanners/fossa-npm.yml"
     rules:
