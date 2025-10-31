@@ -136,7 +136,9 @@ export class UtilityHandler {
                 tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
 
-        if (dataset?.filemetadata && ("live_tier_checked" in dataset.filemetadata)) {
+        if (dataset?.filemetadata && FeatureFlags.isEnabled(Feature.TIER_STORAGE_BLOCK) &&
+            ("live_tier_checked" in dataset.filemetadata)
+        ) {
             return await CredentialsFactory.build(Config.CLOUDPROVIDER).getStorageCredentials(
             subproject.tenant, subproject.name, bucket, readOnly,
             dataPartitionId, virtualFolder, dataset.filemetadata["tier_class"]);
@@ -212,7 +214,9 @@ export class UtilityHandler {
 
             const bucket = DatasetUtils.getBucketFromDatasetResourceUri(dataset.gcsurl);
             const virtualFolder = DatasetUtils.getVirtualFolderFromDatasetResourceUri(dataset.gcsurl);
-            if (dataset.filemetadata && ("live_tier_checked" in dataset.filemetadata)) {
+            if (dataset.filemetadata && FeatureFlags.isEnabled(Feature.TIER_STORAGE_BLOCK) &&
+                ("live_tier_checked" in dataset.filemetadata)
+            ) {
                 return await CredentialsFactory.build(Config.CLOUDPROVIDER).getStorageCredentials(
                 subproject.tenant, subproject.name, bucket, readOnly,
                 DESUtils.getDataPartitionID(tenant.esd), virtualFolder, dataset.filemetadata["tier_class"]);

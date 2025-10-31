@@ -201,6 +201,7 @@ export class AzureConfig extends Config {
                 FEATURE_FLAG_ENABLE_BULK_DELETE: process.env.FEATURE_FLAG_ENABLE_BULK_DELETE === 'true' || false,
                 FEATURE_FLAG_ENABLE_CHANGE_TIER: process.env.FEATURE_FLAG_ENABLE_CHANGE_TIER === 'true' || false,
                 FEATURE_FLAG_ENABLE_ANALYTICS: process.env.FEATURE_FLAG_ENABLE_ANALYTICS === 'true',
+                FEATURE_FLAG_TIER_STORAGE_BLOCK: process.env.FEATURE_FLAG_TIER_STORAGE_BLOCK === 'true',
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,
                 CCM_TOKEN_SCOPE: AzureConfig.CCM_TOKEN_SCOPE,
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?

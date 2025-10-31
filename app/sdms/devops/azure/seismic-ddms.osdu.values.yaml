@@ -68,6 +68,7 @@ configuration:
       FEATURE_FLAG_ENABLE_CHANGE_TIER: "true"
       SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
       FEATURE_FLAG_ENABLE_BULK_DELETE: "true"
+      FEATURE_FLAG_TIER_STORAGE_BLOCK: "true"
     # Use only for secret rotation
     secrets:
       - name: AZ_REDIS_PASSWORD

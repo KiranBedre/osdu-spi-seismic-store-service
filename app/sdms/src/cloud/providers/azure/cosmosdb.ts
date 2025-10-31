@@ -24,7 +24,7 @@ import { TenantModel } from '../../../services/tenant';
 import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
 import { Config } from '../..';
-import { CallContext, Error, Utils } from '../../../shared';
+import { CallContext, Error, Feature, FeatureFlags, Utils } from '../../../shared';
 import { Operator } from '../../../services/dataset/model';
 import { DatasetUtils } from '../../../services/dataset';
 import { StorageFactory } from '../../../cloud';
@@ -145,7 +145,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         delete data[this.KEY.toString()];
 
         if (data && ("subproject" in data)) {
-            await this.tierCheck(data);
+            if ( FeatureFlags.isEnabled(Feature.TIER_STORAGE_BLOCK) ) { await this.tierCheck(data); }
         }
         return [data];
     }
@@ -496,7 +496,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         });
 
         if (results.length > 0 && (cosmosQuery.kind === Config.DATASETS_KIND)) {
-            await this.tierCheck(results[0]);
+            if ( FeatureFlags.isEnabled(Feature.TIER_STORAGE_BLOCK) ) { await this.tierCheck(results[0]); }
         }
         return Promise.resolve([results, { endCursor: response.continuationToken }]);
     }

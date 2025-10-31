@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2025, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ export enum Feature {
     POST_PROCESS_ON_DATASET_CLOSE,
     BULK_DELETE,
     CHANGE_TIER,
-    ANALYTICS
+    ANALYTICS,
+    TIER_STORAGE_BLOCK
 }
 
 export class FeatureFlags {
@@ -42,6 +43,7 @@ export class FeatureFlags {
             flag === Feature.POST_PROCESS_ON_DATASET_CLOSE && Config.FEATURE_FLAG_POST_PROCESS_ON_DATASET_CLOSE ||
             flag === Feature.BULK_DELETE && Config.FEATURE_FLAG_ENABLE_BULK_DELETE ||
             flag === Feature.CHANGE_TIER && Config.FEATURE_FLAG_ENABLE_CHANGE_TIER ||
-            flag === Feature.ANALYTICS && Config.FEATURE_FLAG_ENABLE_ANALYTICS;
+            flag === Feature.ANALYTICS && Config.FEATURE_FLAG_ENABLE_ANALYTICS ||
+            flag === Feature.TIER_STORAGE_BLOCK && Config.FEATURE_FLAG_TIER_STORAGE_BLOCK;
     }
 }

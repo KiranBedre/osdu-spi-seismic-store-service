@@ -70,6 +70,7 @@ export interface ConfigModel {
     FEATURE_FLAG_ENABLE_BULK_DELETE?: boolean;
     FEATURE_FLAG_ENABLE_CHANGE_TIER?: boolean;
     FEATURE_FLAG_ENABLE_ANALYTICS?: boolean;
+    FEATURE_FLAG_TIER_STORAGE_BLOCK?: boolean;
     SDMS_ANALYTICS_CONTAINER_NAME?: string;
     FULL_DATA_ACCESS_GROUP?: string;
     CCM_SERVICE_URL: string;
@@ -170,6 +171,7 @@ export abstract class Config implements IConfig {
     public static FEATURE_FLAG_ENABLE_BULK_DELETE = false;
     public static FEATURE_FLAG_ENABLE_CHANGE_TIER = false;
     public static FEATURE_FLAG_ENABLE_ANALYTICS = false;
+    public static FEATURE_FLAG_TIER_STORAGE_BLOCK = false;
 
     // Full Data Permission Group
     public static FULL_DATA_ACCESS_GROUP: string;
@@ -339,6 +341,7 @@ export abstract class Config implements IConfig {
         Config.FEATURE_FLAG_ENABLE_BULK_DELETE = model.FEATURE_FLAG_ENABLE_BULK_DELETE;
         Config.FEATURE_FLAG_ENABLE_CHANGE_TIER = model.FEATURE_FLAG_ENABLE_CHANGE_TIER;
         Config.FEATURE_FLAG_ENABLE_ANALYTICS = model.FEATURE_FLAG_ENABLE_ANALYTICS;
+        Config.FEATURE_FLAG_TIER_STORAGE_BLOCK = model.FEATURE_FLAG_TIER_STORAGE_BLOCK;
 
         Config.FULL_DATA_ACCESS_GROUP = process.env.FULL_DATA_ACCESS_GROUP || 'users.data.root';
 
