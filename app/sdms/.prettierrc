@@ -1,0 +1,21 @@
+{
+    "arrowParens": "avoid",
+    "printWidth": 120,
+    "singleQuote": true,
+    "useTabs": false,
+    "tabWidth": 4,
+    "semi": true,
+    "bracketSpacing": true,
+    "trailingComma": "none",
+    "htmlWhitespaceSensitivity": "ignore",
+    "endOfLine": "lf",
+    "insertFinalNewline": true,
+    "overrides": [
+        {
+            "files": "package.json",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
+}

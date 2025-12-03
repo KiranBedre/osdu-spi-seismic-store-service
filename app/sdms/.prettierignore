@@ -1,0 +1,5 @@
+# Ignore markdown files to prevent conflicts with markdownlint
+*.md
+package-lock.json
+package.json
+npm-shrinkwrap.json
