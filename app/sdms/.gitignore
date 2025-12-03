@@ -23,8 +23,10 @@ keys
 # vscode configurations  
 .vscode
 
-# dotenv file 
+# Environment files
 .env
+.env.*
+!.env.example
 
 # newman junit output
 newman
