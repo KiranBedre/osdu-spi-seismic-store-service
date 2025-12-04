@@ -1,5 +1,5 @@
-azure-storage-blob==12.15.0
-azure-cosmos==4.5.1
+azure-storage-blob==12.27.1
+azure-cosmos==4.14.2
 azure-keyvault==4.2.0
-azure-identity==1.19.0
-cryptography==43.0.1
+azure-identity==1.25.1
+cryptography==46.0.3
