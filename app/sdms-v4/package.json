@@ -70,7 +70,7 @@
         "node-cache": "^5.1.2",
         "package": "^1.0.1",
         "path-to-regexp": "^0.1.12",
-        "qs": "^6.11.0",
+        "qs": "^6.14.1",
         "swagger-ui-express": "^4.6.0",
         "typescript": "^4.9.4",
         "xss-filters": "^1.2.7"
@@ -117,6 +117,7 @@
             }
         },
         "form-data": "^4.0.4",
+        "qs": "$qs",
         "json-refs": {
             "path-loader": {
                 "superagent": {
@@ -124,6 +125,7 @@
                 }
             }
         },
+        "jws": "^4.0.1",
         "cross-spawn": "7.0.5",
         "eslint": {
             "cross-spawn": "7.0.5"
