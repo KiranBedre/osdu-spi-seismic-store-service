@@ -44,7 +44,11 @@ export class MinIOStorage extends AbstractStorage {
         super();
         this.tenant = tenant;
         this.minioBucket = '';
-        this.s3 = new S3Client(
+        this.s3 = AnthosConfig.MINIO_ENDPOINT.length === 0 ? new S3Client(
+            {
+                region: AnthosConfig.S3_REGION
+            }
+        ) : new S3Client(
             {
                 // TODO: Replace this with PArtitionInfo API call later
                 credentials: {
@@ -64,15 +68,20 @@ export class MinIOStorage extends AbstractStorage {
     private async initS3Client() {
         if (this.s3 === undefined) {
             const partitionInfo: PartitionInfo = await AnthosCredentials.getPartitionInfo(this.tenant.gcpid);
-            this.s3 = new S3Client(
+            this.s3 = AnthosConfig.MINIO_ENDPOINT.length === 0 ? new S3Client(
+                {
+                    region: AnthosConfig.S3_REGION
+                }
+            ) : new S3Client(
                 {
                     // TODO: Replace this with PArtitionInfo API call later
                     credentials: {
-                        accessKeyId: partitionInfo.accessKey,
-                        secretAccessKey: partitionInfo.secretKey,
+                        accessKeyId: AnthosConfig.MINIO_ACCESS_KEY,
+                        secretAccessKey: AnthosConfig.MINIO_SECRET_KEY,
                     },
-                    endpoint: partitionInfo.endpoint,
+                    endpoint: AnthosConfig.MINIO_ENDPOINT,
                     forcePathStyle: true,
+                    region: 'us-east-1'
                 }
             );
         }
@@ -180,7 +189,7 @@ export class MinIOStorage extends AbstractStorage {
                 }
             );
             const listedObjects = await this.s3.send(listCommand);
-            if (typeof(listedObjects.Contents) === 'undefined' || listedObjects.Contents.length === 0)
+            if (typeof (listedObjects.Contents) === 'undefined' || listedObjects.Contents.length === 0)
                 return;
 
             const deleteParams = {
@@ -258,7 +267,7 @@ export class MinIOStorage extends AbstractStorage {
             const listCommand = new ListObjectsCommand(params);
             const listedObjects = await this.s3.send(listCommand);
 
-            if (typeof(listedObjects.Contents) === 'undefined' || listedObjects.Contents.length === 0)
+            if (typeof (listedObjects.Contents) === 'undefined' || listedObjects.Contents.length === 0)
                 return;
 
             const deleteParams = {
@@ -338,7 +347,7 @@ export class MinIOStorage extends AbstractStorage {
         try {
             const listCommand = new ListObjectsCommand(params);
             const listedObjects = await this.s3.send(listCommand);
-            if (typeof(listedObjects.Contents) === 'undefined' || listedObjects.Contents.length === 0)
+            if (typeof (listedObjects.Contents) === 'undefined' || listedObjects.Contents.length === 0)
                 return false;
             return true;
         } catch (err) {

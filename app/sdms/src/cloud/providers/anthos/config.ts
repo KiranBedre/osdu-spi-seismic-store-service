@@ -26,6 +26,7 @@ export class AnthosConfig extends Config {
     public static MINIO_ACCESS_KEY: string;
     public static MINIO_SECRET_KEY: string;
     public static MINIO_ENDPOINT: string;
+    public static S3_REGION: string;
     public static SDMS_BUCKET: string;
     // Logger
     public static LOGGER_LEVEL: string;
@@ -43,6 +44,7 @@ export class AnthosConfig extends Config {
         AnthosConfig.MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY;
         AnthosConfig.MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY;
         AnthosConfig.MINIO_ENDPOINT = process.env.MINIO_ENDPOINT;
+        AnthosConfig.S3_REGION = process.env.AWS_REGION;
         AnthosConfig.SDMS_BUCKET = process.env.SDMS_BUCKET;
         AnthosConfig.DES_REDIS_INSTANCE_TLS_DISABLE = process.env.DES_REDIS_INSTANCE_TLS_DISABLE === 'true';
 

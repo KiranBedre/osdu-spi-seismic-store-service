@@ -53,3 +53,13 @@ azure-publish:
   rules:
     - if: $DISABLED == 'true'
       when: never
+
+azure-acceptance-test:
+  needs: []
+  extends: []
+  before_script:
+      echo 'empty'
+  script:
+      echo 'empty'
+  only:
+      - $DISABLED == 'true'

@@ -24,4 +24,7 @@ Seismic Secrets
 | **MINIO\_ACCESS\_KEY** | {minio-user-provisioned-for-seismic} |
 | **MINIO\_ENDPOINT** | {minio-host} |
 | **MINIO\_SECRET\_KEY** | {minio-secret-provisioned-for-seismic} |
+| **AWS\_REGION** | Region for s3 bucket |
 | **DATABASE\_URL** | postgresql://{user}:{passw} @{url}/{database} |
+
+**NOTE** if `MINIO_ENDPOINT` it is empty, the anthos implementation will use aws sts to get authenticated to the s3 service (IAM/STS), this is for cloud sts based authentication (STS). If planned to use STS, it is mandatory to setup `AWS_REGION` env var (usually injected automatically if using IRSA or EKS Pod identity).
