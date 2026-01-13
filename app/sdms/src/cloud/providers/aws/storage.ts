@@ -16,6 +16,7 @@ import { AWSConfig } from './config';
 import { AbstractStorage, StorageFactory } from '../../storage';
 import { TenantModel } from '../../../services/tenant';
 import {
+    S3Client,
     PutObjectCommand,
     DeleteObjectCommand,
     DeleteObjectsCommand,
@@ -25,7 +26,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { AWSDataEcosystemServices } from './dataecosystem';
 import { AWSSSMhelper } from './ssmhelper';
-import { S3Client } from '@aws-sdk/client-s3';
+
 @StorageFactory.register('aws')
 export class AWSStorage extends AbstractStorage {
     private s3: S3Client; // S3 service object

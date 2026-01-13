@@ -35,6 +35,7 @@ import { TestLogger } from './aws/logger';
 import { TestAWSDynamoDB, TestAWSDynamoDbTransactionDAO, TestAWSDynamoDbQuery } from './aws/dynamodb';
 import { TestAWSStsHelper } from './aws/stshelper';
 import { TestAwsTrace } from './aws/trace';
+import { TestAWSConfig } from './aws/config';
 import { TestTaskQueue } from "./azure/taskQueue";
 export class TestCloud {
 
@@ -43,6 +44,7 @@ export class TestCloud {
         describe(Tx.title('utest seismic store - cloud core'), () => {
             TestLogger.run();
             TestStorage.run();
+            TestAWSConfig.run();
             TestAWSCredentials.run();
             TestAWSDynamoDbQuery.run();
             TestAWSDynamoDB.run();
