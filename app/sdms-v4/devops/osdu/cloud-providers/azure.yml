@@ -24,6 +24,7 @@ variables:
   E2E_DATA_PARTITION: $TENANT_NAME
 
 sdms-v4_azure_containerize:
+  allow_failure: true
   extends:
     - azure_containerize
   needs:

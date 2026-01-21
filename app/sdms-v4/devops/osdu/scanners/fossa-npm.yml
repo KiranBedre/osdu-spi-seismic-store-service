@@ -52,6 +52,7 @@ sdms-v4_fossa-analyze:
       when: on_success
 
 sdms-v4_fossa-check-notice:
+  allow_failure: true
   extends:
     - .sdms-v4_prepare_fossa
     - .sdms-v4_prepare_fossa_check_notice

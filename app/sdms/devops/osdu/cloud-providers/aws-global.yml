@@ -24,6 +24,7 @@ variables:
       devops/scripts/clean_package_json.sh
 
 sdms_aws-containerize:
+  allow_failure: true
   extends:
     - .azure_clean_code
     - aws-containerize

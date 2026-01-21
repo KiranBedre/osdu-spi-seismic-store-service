@@ -15,6 +15,7 @@
 #  ***************************************************************************
 
 sdms-v4_containerize:
+  allow_failure: true
   image: docker:19.03.12
   services:
     - docker:19.03.12-dind

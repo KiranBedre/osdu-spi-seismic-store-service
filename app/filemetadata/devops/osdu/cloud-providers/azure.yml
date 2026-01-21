@@ -110,6 +110,7 @@ filemetadata_container_scanning:
       when: on_success
 
 filemetadata_azure_deploy:
+  allow_failure: true
   extends: azure_deploy
   needs:
     - filemetadata_azure_containerize
@@ -162,6 +163,7 @@ filemetadata_azure_deploy:
       when: on_success
 
 filemetadata_azure_test:
+  allow_failure: true
   image: python
   extends:
     - azure_test

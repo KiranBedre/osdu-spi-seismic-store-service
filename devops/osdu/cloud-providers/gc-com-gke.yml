@@ -17,13 +17,14 @@ gc-acceptance-test:
     - if: $DISABLED == 'true'
       when: never
 
-gc-osdutest:
-  rules:
-    - if: $DISABLED == 'true'
-      when: never
-
 gc-test-python:
   rules:
     - if: $DISABLED == 'true'
       when: never
 
+gc-dev2-acceptance-test:
+  extends:
+    - .gc-variables
+  rules:
+    - if: $DISABLED == 'true'
+      when: never

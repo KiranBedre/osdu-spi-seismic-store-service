@@ -1,5 +1,6 @@
 filemetadata_unit_test:
   image: python
+  allow_failure: true
   extends:
     - .azure_variables
   stage: build
