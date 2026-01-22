@@ -15,6 +15,7 @@
 // ============================================================================
 
 import sinon from 'sinon';
+import { expect } from 'chai';
 
 import { ContainerClient, BlockBlobClient, BlobBatchClient, BlobServiceClient } from '@azure/storage-blob';
 import { AzureCloudStorage } from '../../../../src/cloud/providers/azure';
@@ -48,6 +49,7 @@ export class TestAzureStorage {
             this.bucketExists();
             this.deleteFiles();
             this.deleteObjects();
+            this.getStorageTiers();
         });
     }
 
@@ -101,6 +103,18 @@ export class TestAzureStorage {
             ['url1','url2','url3']);
             this.sandbox.stub(BlobBatchClient.prototype, 'deleteBlobs').resolves();
             await this.storage.deleteObjects('entity', 'prefix');
+        });
+    }
+
+    private static getStorageTiers() {
+        Tx.sectionInit('getStorageTiers');
+        Tx.test(() => {
+            const tiers = this.storage.getStorageTiers();
+            expect(tiers).to.have.lengthOf(3);
+            expect(tiers).to.include('Hot');
+            expect(tiers).to.include('Cool');
+            expect(tiers).to.include('Cold');
+            expect(tiers).to.not.include('Archive');
         });
     }
 

@@ -31,6 +31,7 @@ import { Sku } from './sku';
 
 @StorageFactory.register('azure')
 export class AzureCloudStorage extends AbstractStorage {
+    private static readonly STORAGE_TIERS = ['Hot', 'Cool', 'Cold'];
     private AZURE_CONTAINER_PREFIX = 'ss-' + Config.SERVICE_ENV;
     private blobServiceClient: BlobServiceClient;
     private blobBatchClient: BlobBatchClient;
@@ -191,7 +192,7 @@ export class AzureCloudStorage extends AbstractStorage {
     }
 
     public getStorageTiers(): string[] {
-        return Object.keys(BlockBlobTier);
+        return AzureCloudStorage.STORAGE_TIERS;
     }
 
     public async getObjectSize(bucketName: string, prefix?: string): Promise<number> {
@@ -260,14 +261,6 @@ export class AzureCloudStorage extends AbstractStorage {
             throw (Error.make(Error.Status.BAD_REQUEST,
                 'The storage Tier option ' + '"' + tierId + '"' + ' is not supported by this API. ' +
                 'Your available options are ' + supportedTiers.join(', ')));
-        }
-        // check storage account is support archive tier
-        const replication = await this.getStorageAccountRedundancy();
-
-        if (supportedTiers[index] === BlockBlobTier.Archive && !(Object as any).values(Sku).includes(replication)) {
-            throw (Error.make(Error.Status.BAD_REQUEST,
-                'The current storage account does not support moving datasets to the Archive tier.'
-            ));
         }
     }
 

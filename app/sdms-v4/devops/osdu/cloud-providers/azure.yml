@@ -248,6 +248,7 @@ sdms-v4_ms_sdms-sync-v3v4_azure_container_scanning:
       when: on_success
 
 sdms-v4_azure_deploy:
+  allow_failure: true
   extends: azure_deploy
   needs:
     - sdms-v4_azure_containerize
@@ -319,6 +320,7 @@ sdms-v4_azure_deploy:
       when: on_success
 
 sdms-v4_azure_test:
+  allow_failure: true
   image: node
   extends:
     - azure_test

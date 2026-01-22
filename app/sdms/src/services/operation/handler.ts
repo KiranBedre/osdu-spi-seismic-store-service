@@ -124,12 +124,13 @@ export class Handler {
         const sdPath = userInput.sdPath;
         const changeTier = userInput.tier;
         const tenant = await TenantDAO.get(sdPath.tenant);
-        const dataset = this.createDataset(sdPath);
-        const [sqlQuery, sqlParams, user] = await this.processRequest(req, sdPath, tenant, dataset, userInput);
         const storage = StorageFactory.build(Config.CLOUDPROVIDER, tenant);
 
         // check if incoming tier is supported by the cloud provider
         await storage.checkSupportedTier(changeTier);
+
+        const dataset = this.createDataset(sdPath);
+        const [sqlQuery, sqlParams, user] = await this.processRequest(req, sdPath, tenant, dataset, userInput);
 
         // push the bulk change tier operation
         const operation = {

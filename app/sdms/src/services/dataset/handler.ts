@@ -248,6 +248,9 @@ export class DatasetHandler {
             const storageSchemaRecord = dataset.storageSchemaRecord;
             delete dataset.storageSchemaRecord;
 
+            // Set default tier if not already set
+            DatasetHandler.setDefaultTierWhenUndefined(dataset, tenant);
+
             // save the dataset entity
             await DatasetHandler.storeDatasetEntity(journalClient, datasetEntityKey,
                 dataset, storageSchemaRecord, req, tenant);
@@ -386,6 +389,9 @@ export class DatasetHandler {
 
         // Apply transforms for openzgy_V1 and segy_v1 is required
         await DatasetHandler.applyTransforms(retrieveStorageRecord, req, datasetOUT, tenant, seismicMetaRecordVersion);
+
+        // Set default tier_class if not present
+        DatasetHandler.setDefaultTierWhenUndefined(datasetOUT, tenant);
 
         // attach the gcpid for fast check
         datasetOUT.ctag = datasetOUT.ctag + tenant.gcpid + ';' + DESUtils.getDataPartitionID(tenant.esd);
@@ -941,6 +947,18 @@ export class DatasetHandler {
                 DatasetAuth.getAuthGroups(subproject, dataset, AuthRoles.viewer, tenant.esd),
                 tenant, subproject.name, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string);
+        }
+    }
+
+    private static setDefaultTierWhenUndefined(dataset: DatasetModel, tenant: TenantModel): void {
+        if (dataset.filemetadata?.tier_class) {
+            return; // Already has a tier_class
+        }
+
+        const defaultTier = StorageFactory.getDefaultTier(Config.CLOUDPROVIDER);
+        if (defaultTier) {
+            dataset.filemetadata ??= {};
+            dataset.filemetadata.tier_class = defaultTier;
         }
     }
 

@@ -181,7 +181,7 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         const results = await this.getMetaDataByKeys(keys)
 
         for (const result of results) {
-            if (result['id'] && result['data']?.filemetadata) {
+            if (result['id'] && result['data']?.filemetadata  && result['data']?.filemetadata.size) {
                 sizes.set(result['id'], result['data']?.filemetadata.size);
             }
         }

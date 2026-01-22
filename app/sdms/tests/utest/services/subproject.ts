@@ -283,6 +283,7 @@ export class TestSubProjectSVC {
                 async copy() { return; },
                 async randomBucketName() { return ''; },
                 getStorageTiers() { return ['tier-a', 'tier-b', 'tier-c']; },
+                getDefaultTier() { return 'tier-a'; },
                 async getObjectSize() { return 1; },
                 async setStorageTiers() {return; },
                 async getStorageAccountRedundancy() { return ''; },

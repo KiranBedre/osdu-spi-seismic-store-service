@@ -476,6 +476,7 @@
     "startswith",
     "statisticsjob",
     "stoken",
+    "storageFactory",
     "STRINGEQUALS",
     "strs",
     "stshelper",

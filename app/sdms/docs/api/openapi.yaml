@@ -2464,7 +2464,7 @@ paths:
           schema:
             type: string
             default: "/a/b/c/"
-        - description: "The target storage tier class: Hot, Cool, Cold, Archive"
+        - description: "The target storage tier class: Hot, Cool, Cold"
           in: query
           name: tier
           required: true

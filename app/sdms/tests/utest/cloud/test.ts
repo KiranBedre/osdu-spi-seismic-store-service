@@ -37,6 +37,7 @@ import { TestAWSStsHelper } from './aws/stshelper';
 import { TestAwsTrace } from './aws/trace';
 import { TestAWSConfig } from './aws/config';
 import { TestTaskQueue } from "./azure/taskQueue";
+import { TestStorageFactory } from './storagefactory';
 export class TestCloud {
 
     public static run() {
@@ -68,6 +69,7 @@ export class TestCloud {
             TestAzureStorage.run();
             TestDataEcoSystem.run();
             TestTaskQueue.run();
+            TestStorageFactory.run();
         });
 
     }

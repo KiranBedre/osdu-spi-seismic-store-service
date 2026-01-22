@@ -35,6 +35,8 @@ configuration:
       tag: latest
       containerPort: 8080
     path: /seistore-svc/api/v3
+    destinationRule:
+      enabled: false
   # FIXME: Prometheus instrumentation needs to be implemented for Seismic DDMS and Seismic File Metadata
   # podAnnotations:
     # prometheus.io/path: /seistore-svc/api/v3/metrics
@@ -105,6 +107,8 @@ configuration:
       image: seismic-ddms-deletion-service
       tag: latest
       containerPort: 8001
+    destinationRule:
+      enabled: false
     probe:
       liveness:
         path: /healthz
@@ -154,6 +158,8 @@ configuration:
       image: seismic-ddms-changetier-service
       tag: latest
       containerPort: 8003
+    destinationRule:
+      enabled: false
     probe:
       liveness:
         path: /healthz
@@ -171,6 +177,8 @@ configuration:
     container:
       image: seismic-ddms-statistics-job
       containerPort: 8080
+    destinationRule:
+      enabled: false
     path: "/"
     pathRewrite: "/"
     cronjobEnabled: true

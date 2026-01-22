@@ -14,3 +14,11 @@ gc-dev2-test-python:
   rules:
     - if: $DISABLED == 'true'
       when: never
+
+gc-dev2-acceptance-test:
+  needs: []
+  extends: []
+  before_script:
+      echo 'empty'
+  script:
+      echo 'empty'

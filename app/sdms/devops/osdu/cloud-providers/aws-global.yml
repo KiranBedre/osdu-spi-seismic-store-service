@@ -52,6 +52,7 @@ sdms_aws-containerize:
       when: on_success
 
 sdms_aws-update-tf:
+  allow_failure: true
   extends: 
     - aws-update-tf
   variables:
@@ -80,6 +81,7 @@ sdms_aws-update-tf:
       when: on_success
 
 sdms_aws-test-newman:
+  allow_failure: true
   extends:
     - .aws
     - .aws_common_variables

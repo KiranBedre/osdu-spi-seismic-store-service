@@ -30,6 +30,7 @@ export interface IStorage {
     copy(bucketIn: string, prefixIn: string, bucketOut: string, prefixOut: string, ownerEmail: string): Promise<void>;
     randomBucketName(): Promise<string>;
     getStorageTiers(): string[];
+    getDefaultTier(): string;
     checkTier(bucketName: string, prefix: string): Promise<string>;
     getObjectSize(bucketName: string, prefix?: string): Promise<number>;
     setStorageTiers(bucketName: string, prefix: string, tierId: string): Promise<void>;
@@ -52,6 +53,9 @@ export abstract class AbstractStorage implements IStorage {
         prefixOut: string, ownerEmail: string): Promise<void>;
     public abstract randomBucketName(): Promise<string>;
     public getStorageTiers(): string[] {
+        throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+    }
+    public getDefaultTier(): string {
         throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
     }
     public getObjectSize(bucketName: string, prefix?: string): Promise<number> {
@@ -82,7 +86,15 @@ export abstract class AbstractStorage implements IStorage {
 }
 
 export class StorageFactory extends CloudFactory {
+    private static readonly DEFAULT_TIERS: { [provider: string]: string } = {
+        'azure': 'Hot'
+    };
+
     public static build(providerLabel: string, args: { [key: string]: any; } = {}): IStorage {
         return CloudFactory.build(providerLabel, AbstractStorage, args) as IStorage;
+    }
+
+    public static getDefaultTier(providerLabel: string): string | undefined {
+        return this.DEFAULT_TIERS[providerLabel.toLowerCase()];
     }
 }
