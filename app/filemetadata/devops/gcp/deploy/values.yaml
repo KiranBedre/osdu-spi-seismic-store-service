@@ -19,7 +19,7 @@ data:
   requestsMemory: "256M"
   limitsCpu: "1"
   limitsMemory: "1G"
-  serviceAccountName: ""
+  serviceAccountName: "seismic-store"
   imagePullPolicy: "IfNotPresent"
   image: ""
 
