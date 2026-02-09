@@ -40,7 +40,7 @@ include:
       - if: $FOSSA_API_KEY
         changes:
           - app/filemetadata/**/*
-    ref: release/0.29
+    ref: v0.29.4
     # overwrite logic
   - local: "app/filemetadata/devops/osdu/scanners/fossa-python.yml"
     rules:

@@ -2,13 +2,13 @@ include:
   # PIPELINE LOGIC
   - project: "osdu/platform/ci-cd-pipelines"
     file: "standard-setup.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # SCANNERS
   # ultimate
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/gitlab-ultimate.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # overwrite logic
   - local: devops/osdu/scanners/gitlab-ultimate.yml
@@ -16,13 +16,13 @@ include:
   # virus scan
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/virus-scan.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # CLOUD PROVIDERS
   # aws
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/aws-global.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # overwrite logic
   - local: devops/osdu/cloud-providers/aws-global.yml
@@ -30,7 +30,7 @@ include:
   # azure
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # overwrite logic
   - local: devops/osdu/cloud-providers/azure.yml
@@ -38,7 +38,7 @@ include:
   # gc
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-global.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # overwrite logic
   - local: devops/osdu/cloud-providers/gc-global.yml
@@ -46,7 +46,7 @@ include:
   # core
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/core-global.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # overwrite logic
   - local: devops/osdu/cloud-providers/core-global.yml
@@ -54,7 +54,7 @@ include:
   # ibm
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/ibm.yml"
-    ref: release/0.29
+    ref: v0.29.4
 
   # overwrite logic
   - local: devops/osdu/cloud-providers/ibm.yml
