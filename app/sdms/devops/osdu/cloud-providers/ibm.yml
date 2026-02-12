@@ -97,6 +97,7 @@ sdms_ibm-preship-promote:
   extends:
     - ibm-preship-promote
   needs: ['sdms_ibm-test-py']
+  allow_failure: true
   before_script:
     - cd app/$SDMS_SERVICE
     - !reference [.ibm, before_script]
