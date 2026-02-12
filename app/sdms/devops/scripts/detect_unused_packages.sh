@@ -17,7 +17,7 @@ function check {
         find node_modules/${PACKAGE} -type f -name '*.ts' >> $FILES
 	    find node_modules/${PACKAGE} -type f -name 'package.json' >> $FILES
       fi
-      RES=$(cat $FILES | xargs -I {} egrep -i "(import|require|loader|plugins|${PACKAGE}).*['\"](${PACKAGE}|.?\d+)[\"']" '{}' | wc -l)
+      RES=$(cat $FILES | xargs -I {} egrep -i "(import|from|require|loader|plugins|${PACKAGE}).*['\"](${PACKAGE}|.?\d+)[\"']" '{}' | wc -l)
       if [ $RES = 0 ]
       then
         echo -e "$PACKAGE"
