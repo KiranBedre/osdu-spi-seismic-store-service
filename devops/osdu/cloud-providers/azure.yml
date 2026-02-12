@@ -53,3 +53,10 @@ azure-publish:
   rules:
     - if: $DISABLED == 'true'
       when: never
+
+azure-acceptance-test:
+  extends:
+    - .azure_variables
+  only:
+    variables:
+      - $DISABLED == 'true'
