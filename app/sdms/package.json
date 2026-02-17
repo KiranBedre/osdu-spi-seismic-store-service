@@ -12,6 +12,7 @@
     "start": "node -r dotenv/config ./dist/server/server-start.js",
     "start:redis": "nohup redis-server > /tmp/redis.log 2>&1 &",
     "setup:dev": "(nohup redis-server > /tmp/redis.log 2>&1 &) && (npm i)",
+    "dev": "npm run copy-docs:dev && nodemon",
     "test": "env UTEST=true mocha -r ts-node/register tests/utest/test.ts",
     "test-coverage": "env UTEST=true nyc mocha -r ts-node/register --reporter mocha-junit-reporter tests/utest/test.ts",
     "test-automation": "npm run clean && npm ci && npm run build && npm run test-coverage",
@@ -23,6 +24,7 @@
     "copy-static-files": "copyfiles --error --up 1 ./docs/api/openapi.yaml ./dist/docs",
     "copy-schemas": "copyfiles --up 1 ./docs/schemas/**/*.json ./dist/docs",
     "copy-rego-policies": "copyfiles --up 1 ./docs/policies/*.rego ./dist/docs",
+    "copy-docs:dev": "copyfiles --error --up 1 ./docs/api/openapi.yaml ./src/docs && copyfiles --up 1 \"./docs/schemas/**/*.json\" ./src/docs && copyfiles --up 1 \"./docs/policies/*.rego\" ./src/docs",
     "postbuild": "npm run copy-static-files && npm run copy-schemas && npm run copy-rego-policies"
   },
   "nyc": {
@@ -143,6 +145,7 @@
     "mocha-junit-reporter": "^2.0.2",
     "newman": "^6.2.1",
     "newman-reporter-htmlextra": "^1.23.1",
+    "nodemon": "^3.1.11",
     "nyc": "^15.1.0",
     "scan-for-secrets": "^2.0.3",
     "sinon": "^17.0.1",

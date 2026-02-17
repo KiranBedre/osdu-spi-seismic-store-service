@@ -2,25 +2,25 @@
 **/node_modules/**
 dist
 
-# python   
-*.pyc 
+# python
+*.pyc
 
-# Log Files   
-*.log 
+# Log Files
+*.log
 
-# test   
+# test
 .nyc_output
-coverage  
+coverage
 test-results.xml
 
 # artifact
-artifact 
+artifact
 seismic-store-service.tar.gz
 
-# keyfiles  
+# keyfiles
 keys
 
-# vscode configurations  
+# vscode configurations
 .vscode
 
 # Environment files
@@ -33,9 +33,12 @@ newman
 
 .DS_Store
 .idea
- 
+
 # backup files
 *.bak
 
 # dump file
 *.rdb
+
+# dev docs copy
+src/docs
