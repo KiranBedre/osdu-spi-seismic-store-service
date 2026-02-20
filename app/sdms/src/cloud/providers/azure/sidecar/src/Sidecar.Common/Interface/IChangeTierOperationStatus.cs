@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
+
 public interface IChangeTierOperationStatus : IChangeTierOperationMessage
 {
     DateTime CreatedAt { get; set; }

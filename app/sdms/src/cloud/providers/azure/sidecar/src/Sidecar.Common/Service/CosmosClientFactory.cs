@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Service;
+
 using Sidecar.Common.Interface;
 
 using Azure.Security.KeyVault.Secrets;

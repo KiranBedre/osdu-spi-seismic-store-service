@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Tests;
+
 using System.Text.RegularExpressions;
 
 internal static partial class TestingHelpers

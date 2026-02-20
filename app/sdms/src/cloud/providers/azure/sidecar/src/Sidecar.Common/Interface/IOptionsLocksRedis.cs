@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
+
 public interface IOptionsLocksRedis
 {
     string RedisLocksHostname { get; set; }

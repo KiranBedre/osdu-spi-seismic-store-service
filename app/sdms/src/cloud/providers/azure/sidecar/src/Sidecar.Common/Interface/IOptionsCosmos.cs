@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
+
 public interface IOptionsCosmos
 {
     string CosmosEndpoint { get; set; }

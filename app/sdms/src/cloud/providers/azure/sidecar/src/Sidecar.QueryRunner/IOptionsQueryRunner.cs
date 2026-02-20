@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.QueryRunner;
+
 public interface IOptionsQueryRunner
 {
 

@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
+
 public interface IQueryPaginatedRequestBody
 {
     string? cs { get; set; }

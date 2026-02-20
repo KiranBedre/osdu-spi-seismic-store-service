@@ -14,6 +14,7 @@
 // limitations under the License.
 // ============================================================================
 namespace Sidecar.Common.Tests.Service;
+
 using Microsoft.Azure.Cosmos;
 
 public class MetadataDeletionWorkerTests

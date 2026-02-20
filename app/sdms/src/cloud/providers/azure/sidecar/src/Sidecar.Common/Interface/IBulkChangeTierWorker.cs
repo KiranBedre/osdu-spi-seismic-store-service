@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
+
 using Sidecar.Common.Model;
 
 public interface IBulkChangeTierWorker

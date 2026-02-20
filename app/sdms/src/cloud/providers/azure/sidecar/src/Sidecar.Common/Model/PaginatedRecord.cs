@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Model;
+
 using Interface;
 public class PaginatedRecords : IPaginatedRecords
 {

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=18-alpine
+ARG docker_node_image_version=24-alpine
 
 FROM node:${docker_node_image_version} as release
 

@@ -15,6 +15,7 @@
 // ============================================================================
 
 namespace Sidecar.Common.Interface;
+
 public interface IOptionsBulkDelete :
     IOptionsConfig,
     IOptionsQueueRedis,
