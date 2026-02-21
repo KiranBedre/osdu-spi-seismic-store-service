@@ -22,7 +22,7 @@ ADD ./ /service
 WORKDIR /service
 
 RUN npm update -g
-RUN apk --no-cache add --virtual binutils=2.43.1-r2 libexpat=2.7.0-r0 python python3 xz-libs=5.6.3-r1\
+RUN apk --no-cache add --virtual binutils libexpat python3 xz-libs \
     && npm install --quiet node-gyp -g \
     && npm install --quiet husky -g \
     && npm install --production --quiet \
