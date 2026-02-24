@@ -24781,7 +24781,18 @@
 									"",
 									"    pm.test(\"gcstoken\", () => {",
 									"        pm.environment.set(\"gcsAccessToken\", jsonData.access_token);",
-									"    })",
+									"    });",
+									"",
+									"    if (pm.environment.get('serviceCloudProvider') === 'azure') {",
+									"        pm.test(\"SAS URL contains GUID prefix for uniform policy\", function () {",
+									"            var sasUrl = jsonData.access_token;",
+									"            var urlBase = sasUrl.split('?')[0];",
+									"            var pathParts = urlBase.split('/');",
+									"            var guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"            var hasGuid = pathParts.some(function(part) { return guidRegex.test(part); });",
+									"            pm.expect(hasGuid, 'SAS URL must contain a GUID prefix after the container name for uniform access policy').to.be.true;",
+									"        });",
+									"    }",
 									"",
 									"    if (pm.environment.get('serviceCloudProvider') === 'google' || pm.environment.get('serviceCloudProvider') === 'gc') {",
 									"        pm.execution.setNextRequest(\"UTILITY UPLOAD NEW TO GCS: Upload utility to GCS\");",
@@ -24814,7 +24825,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{SVC_URL}}/utility/gcs-access-token?sdpath=sd://{{tenant}}/{{subproject}}&readonly=false",
+							"raw": "{{SVC_URL}}/utility/gcs-access-token?sdpath=sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}&readonly=false",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -24825,7 +24836,7 @@
 							"query": [
 								{
 									"key": "sdpath",
-									"value": "sd://{{tenant}}/{{subproject}}"
+									"value": "sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}"
 								},
 								{
 									"key": "readonly",
@@ -24870,6 +24881,17 @@
 									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
 									"    });",
 									"",
+									"    if (pm.environment.get('serviceCloudProvider') === 'azure') {",
+									"        pm.test(\"Connection string SAS URL contains GUID prefix for uniform policy\", function () {",
+									"            var sasUrl = jsonData.access_token;",
+									"            var urlBase = sasUrl.split('?')[0];",
+									"            var pathParts = urlBase.split('/');",
+									"            var guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"            var hasGuid = pathParts.some(function(part) { return guidRegex.test(part); });",
+									"            pm.expect(hasGuid, 'Connection string SAS URL must contain a GUID prefix after the container name for uniform access policy').to.be.true;",
+									"        });",
+									"    }",
+									"",
 									"    pm.environment.set(\"UploadStorageCredential\", jsonData.access_token);",
 									"",
 									"    // Reset environment variables if retryOnFailure function was used before",
@@ -24911,7 +24933,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{subproject}}",
+							"raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}",
 							"host": [
 								"{{SVC_URL}}"
 							],
@@ -24922,7 +24944,7 @@
 							"query": [
 								{
 									"key": "sdpath",
-									"value": "sd://{{tenant}}/{{subproject}}"
+									"value": "sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}"
 								}
 							]
 						}
@@ -25128,7 +25150,7 @@
 									"    // Reset environment variables if retryOnFailure function was used before",
 									"    pm.environment.set('execCounter', 1);",
 									"",
-									"    pm.execution.setNextRequest(\"UTILITY DOWNLOAD NEW FROM ACS - CONNECTION STRING: Download connection string from ACS\");",
+									"    pm.execution.setNextRequest(\"UTILITY DOWNLOAD CONNECTION STRING: Generate download connection credentials\");",
 									"",
 									"}"
 								],
@@ -25167,6 +25189,105 @@
 							"raw": "{{acsSasUrl}}",
 							"host": [
 								"{{acsSasUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DOWNLOAD CONNECTION STRING: Generate download connection credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"        // Skip the dependent blob download test since we have no valid DownloadStorageCredential",
+									"        pm.execution.setNextRequest(\"UTILITY LS SUBPROJECT : Retrieve list of datasets for a subproject\");",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Credential Details\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"        pm.expect(jsonData.token_type).to.exist;",
+									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
+									"    });",
+									"",
+									"    if (pm.environment.get('serviceCloudProvider') === 'azure') {",
+									"        pm.test(\"Download connection string SAS URL contains GUID prefix for uniform policy\", function () {",
+									"            var sasUrl = jsonData.access_token;",
+									"            var urlBase = sasUrl.split('?')[0];",
+									"            var pathParts = urlBase.split('/');",
+									"            var guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"            var hasGuid = pathParts.some(function(part) { return guidRegex.test(part); });",
+									"            pm.expect(hasGuid, 'Download connection string SAS URL must contain a GUID prefix after the container name for uniform access policy').to.be.true;",
+									"        });",
+									"    }",
+									"",
+									"    pm.environment.set(\"DownloadStorageCredential\", jsonData.access_token);",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"",
+									"    pm.execution.setNextRequest(\"UTILITY DOWNLOAD NEW FROM ACS - CONNECTION STRING: Download connection string from ACS\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/download-connection-string?sdpath=sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"download-connection-string"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}"
+								}
 							]
 						}
 					},
@@ -25340,6 +25461,7 @@
 									"        pm.execution.setNextRequest(pm.info.requestName);",
 									"    } else {",
 									"        pm.environment.set('execCounter', 1);",
+									"        pm.execution.setNextRequest(\"UTILITY LS SUBPROJECT : Retrieve list of datasets for a subproject\");",
 									"    }",
 									"",
 									"} else {",
@@ -25369,7 +25491,7 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/cs/o?'));"
+									"pm.variables.set(\"acsSasUrl\", pm.variables.get(\"DownloadStorageCredential\").replace('?', '/cs/o?'));"
 								],
 								"type": "text/javascript"
 							}
@@ -26871,6 +26993,852 @@
 					"response": []
 				},
 				{
+					"name": "UTILITY DATASET-POLICY SUBPROJECT REGISTER: Create subproject with dataset access policy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (pm.response.code != 200) && (pm.response.code != 409)) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200 or 409\", function () {",
+									"        pm.expect(pm.response.code).to.be.oneOf([200,409]);",
+									"    });",
+									"",
+									"    if (pm.response.code === 200) {",
+									"        pm.test(\"Subproject created with dataset access policy\", function () {",
+									"            var jsonData = pm.response.json();",
+									"            pm.expect(jsonData.name).to.eql(pm.environment.get(\"dpSubproject\"));",
+									"            pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"            pm.expect(jsonData.access_policy).to.eql(\"dataset\");",
+									"            pm.expect(jsonData.ltag).to.exist;",
+									"            pm.expect(jsonData.gcs_bucket).to.exist;",
+									"        });",
+									"    };",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dp(length) {",
+									"   var result = '';",
+									"   var characters = 'abcdefghijklmnopqrstuvwxyz';",
+									"   var charactersLength = characters.length;",
+									"   for (var i = 0; i < length - 1; i++) {",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));",
+									"   }",
+									"   return result;",
+									"}",
+									"",
+									"pm.environment.set(\"dpSubproject\", makeID_dp(16));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "ltag",
+								"value": "{{legaltag01}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"storage_class\": \"REGIONAL\",\r\n  \"storage_location\": \"US-CENTRAL1\",\r\n  \"access_policy\": \"dataset\"\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{dpSubproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{dpSubproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY DATASET REGISTER: Register dataset in dataset-policy subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dpDataset'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"dpSubproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get('dpTestPath'));",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"        pm.environment.set(\"dpSbit\", jsonData.sbit);",
+									"    });",
+									"",
+									"    pm.test(\"gcsurl has no virtual folder for dataset policy\", () => {",
+									"        if (pm.environment.get('serviceCloudProvider') === 'azure') {",
+									"            var parts = jsonData.gcsurl.split('/');",
+									"            pm.expect(parts.length, 'gcsurl for dataset policy should have no virtual folder (just container name)').to.eql(1);",
+									"        }",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_dp(length) {",
+									"   var result = '';",
+									"   var characters = 'abcdefghijklmnopqrstuvwxyz';",
+									"   var charactersLength = characters.length;",
+									"   for (var i = 0; i < length - 1; i++) {",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));",
+									"   }",
+									"   return result;",
+									"}",
+									"",
+									"pm.environment.set(\"dpDataset\", makeID_dp(16));",
+									"var path01 = \"/\" + makeID_dp(8) + \"/\" + makeID_dp(4) + \"/\"",
+									"pm.environment.set(\"dpTestPath\", path01);",
+									"pm.environment.set(\"dpTestPathEncoded\", encodeURIComponent(path01));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n}"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{dpSubproject}}/dataset/{{dpDataset}}?path={{dpTestPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{dpSubproject}}",
+								"dataset",
+								"{{dpDataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{dpTestPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY DATASET CLOSE: Close dataset using dpSbit",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    if (pm.environment.get('serviceCloudProvider') != 'azure') {",
+									"        pm.execution.setNextRequest(\"UTILITY DATASET-POLICY DATASET DELETE: Delete dataset from dataset-policy subproject\");",
+									"    }",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{dpSubproject}}/dataset/{{dpDataset}}?path={{dpTestPathEncoded}}&close={{dpSbit}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{dpSubproject}}",
+								"dataset",
+								"{{dpDataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{dpTestPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{dpSbit}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY UPLOAD CONNECTION STRING: Get upload credentials for dataset-policy subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Credential Details\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"        pm.expect(jsonData.token_type).to.exist;",
+									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
+									"    });",
+									"",
+									"    if (pm.environment.get('serviceCloudProvider') === 'azure') {",
+									"        pm.test(\"Dataset-policy SAS URL must NOT contain GUID prefix\", function () {",
+									"            var sasUrl = jsonData.access_token;",
+									"            var urlBase = sasUrl.split('?')[0];",
+									"            var pathParts = urlBase.split('/');",
+									"            var guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"            var hasGuid = pathParts.some(function(part) { return guidRegex.test(part); });",
+									"            pm.expect(hasGuid, 'Dataset-policy SAS URL should NOT contain a GUID prefix - no virtual folder expected').to.be.false;",
+									"        });",
+									"    }",
+									"",
+									"    pm.environment.set(\"dpUploadCredential\", jsonData.access_token);",
+									"    pm.environment.set('execCounter', 1);",
+									"",
+									"    if (pm.environment.get('serviceCloudProvider') === 'azure') {",
+									"        pm.execution.setNextRequest(\"UTILITY DATASET-POLICY UPLOAD TO ACS: Upload blob to dataset-policy subproject\");",
+									"    } else {",
+									"        pm.execution.setNextRequest(\"UTILITY DATASET-POLICY DATASET DELETE: Delete dataset from dataset-policy subproject\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{dpSubproject}}{{dpTestPath}}{{dpDataset}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"upload-connection-string"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{dpSubproject}}{{dpTestPath}}{{dpDataset}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY UPLOAD TO ACS: Upload blob to dataset-policy subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 201) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 201\", function () {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"",
+									"    pm.test(\"Check content length\", function () {",
+									"        pm.response.to.be.header(\"Content-Length\", \"0\");",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"    pm.execution.setNextRequest(\"UTILITY DATASET-POLICY DOWNLOAD CONNECTION STRING: Get download credentials for dataset-policy subproject\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.variables.set(\"dpAcsSasUrl\", pm.variables.get(\"dpUploadCredential\").replace('?', '/dpblob01?'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "hello world from dataset-policy e2e"
+						},
+						"url": {
+							"raw": "{{dpAcsSasUrl}}",
+							"host": [
+								"{{dpAcsSasUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY DOWNLOAD CONNECTION STRING: Get download credentials for dataset-policy subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"        pm.execution.setNextRequest(\"UTILITY DATASET-POLICY DATASET DELETE: Delete dataset from dataset-policy subproject\");",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Credential Details\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"        pm.expect(jsonData.token_type).to.exist;",
+									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
+									"    });",
+									"",
+									"    if (pm.environment.get('serviceCloudProvider') === 'azure') {",
+									"        pm.test(\"Download dataset-policy SAS URL must NOT contain GUID prefix\", function () {",
+									"            var sasUrl = jsonData.access_token;",
+									"            var urlBase = sasUrl.split('?')[0];",
+									"            var pathParts = urlBase.split('/');",
+									"            var guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"            var hasGuid = pathParts.some(function(part) { return guidRegex.test(part); });",
+									"            pm.expect(hasGuid, 'Dataset-policy download SAS URL should NOT contain a GUID prefix').to.be.false;",
+									"        });",
+									"    }",
+									"",
+									"    pm.environment.set(\"dpDownloadCredential\", jsonData.access_token);",
+									"    pm.environment.set('execCounter', 1);",
+									"    pm.execution.setNextRequest(\"UTILITY DATASET-POLICY DOWNLOAD FROM ACS: Download blob from dataset-policy subproject\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/download-connection-string?sdpath=sd://{{tenant}}/{{dpSubproject}}{{dpTestPath}}{{dpDataset}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"download-connection-string"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{dpSubproject}}{{dpTestPath}}{{dpDataset}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY DOWNLOAD FROM ACS: Download blob from dataset-policy subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"        pm.execution.setNextRequest(\"UTILITY DATASET-POLICY DATASET DELETE: Delete dataset from dataset-policy subproject\");",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"text/plain\");",
+									"    });",
+									"",
+									"    pm.test(\"Check blob type\", function () {",
+									"        pm.expect(pm.response.headers.get(\"x-ms-blob-type\")).to.eql(\"BlockBlob\");",
+									"    });",
+									"",
+									"    pm.test(\"Check downloaded content\", function () {",
+									"        pm.expect(pm.response.text()).to.eql(\"hello world from dataset-policy e2e\");",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"    pm.execution.setNextRequest(\"UTILITY DATASET-POLICY DATASET DELETE: Delete dataset from dataset-policy subproject\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.variables.set(\"dpAcsSasUrl\", pm.variables.get(\"dpDownloadCredential\").replace('?', '/dpblob01?'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{dpAcsSasUrl}}",
+							"host": [
+								"{{dpAcsSasUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY DATASET DELETE: Delete dataset from dataset-policy subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{dpSubproject}}/dataset/{{dpDataset}}?path={{dpTestPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{dpSubproject}}",
+								"dataset",
+								"{{dpDataset}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{dpTestPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UTILITY DATASET-POLICY SUBPROJECT DELETE: Delete dataset-policy subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{dpSubproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{dpSubproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "UTILITY STATUS UNSET: Cleanup test environment",
 					"event": [
 						{
@@ -26894,6 +27862,13 @@
 									"pm.environment.unset('utilitySubproject');",
 									"pm.environment.unset('utilityDataset');",
 									"pm.environment.unset('utilityTestPath');",
+									"pm.environment.unset('dpSubproject');",
+									"pm.environment.unset('dpDataset');",
+									"pm.environment.unset('dpTestPath');",
+									"pm.environment.unset('dpTestPathEncoded');",
+									"pm.environment.unset('dpSbit');",
+									"pm.environment.unset('dpUploadCredential');",
+									"pm.environment.unset('dpDownloadCredential');",
 									"pm.environment.set('execCounter', 1);",
 									"",
 									"console.log('Dataset variables were removed for utility folder');"
@@ -32536,12 +33511,7 @@
 									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
 									"    });",
 									"",
-									"    if  (pm.environment.get(\"virtual_folder1\") != undefined) {",
-									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?',  '/'+pm.environment.get(\"virtual_folder1\")+'/blob1?'));",
-									"    }",
-									"    else {",
-									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?', '/blob1?'));",
-									"    }",
+									"    pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?', '/blob1?'));",
 									"",
 									"    // Reset environment variables if retryOnFailure function was used before",
 									"    pm.environment.set('execCounter', 1);",
@@ -33127,12 +34097,7 @@
 									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
 									"    });",
 									"",
-									"    if  (pm.environment.get(\"virtual_folder2\") != undefined) {",
-									"        pm.environment.set(\"acsSasUrl2\", jsonData.access_token.replace('?',  '/'+pm.environment.get(\"virtual_folder2\")+'/blob2?'));",
-									"    }",
-									"    else {",
-									"        pm.environment.set(\"acsSasUrl2\", jsonData.access_token.replace('?', '/blob2?'));",
-									"    }",
+									"    pm.environment.set(\"acsSasUrl2\", jsonData.access_token.replace('?', '/blob2?'));",
 									"",
 									"    // Reset environment variables if retryOnFailure function was used before",
 									"    pm.environment.set('execCounter', 1);",
@@ -34560,12 +35525,7 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"if  (pm.environment.get(\"virtual_folder\") != undefined) {",
-									"        pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob1?'));",
-									"}",
-									"else {",
-									"        pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob1?'));",
-									"}"
+									"pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob1?'));"
 								],
 								"type": "text/javascript"
 							}
@@ -34859,12 +35819,7 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"if  (pm.environment.get(\"virtual_folder\") != undefined) {",
-									"    pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob2?'));",
-									"}",
-									"else {",
-									"    pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob2?'));",
-									"}"
+									"pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob2?'));"
 								],
 								"type": "text/javascript"
 							}
@@ -35818,12 +36773,7 @@
 									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
 									"    });",
 									"",
-									"    if  (pm.environment.get(\"virtual_folder1\") != undefined) {",
-									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?',  '/'+pm.environment.get(\"virtual_folder1\")+'/blob1?'));",
-									"    }",
-									"    else {",
-									"        pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?', '/blob1?'));",
-									"    }",
+									"    pm.environment.set(\"acsSasUrl1\", jsonData.access_token.replace('?', '/blob1?'));",
 									"",
 									"    // Reset environment variables if retryOnFailure function was used before",
 									"    pm.environment.set('execCounter', 1);",
