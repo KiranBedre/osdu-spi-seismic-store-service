@@ -19,15 +19,10 @@ namespace Sidecar.Common.Service;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Utility;
 
-public class CachingBlobClientFactory : IBlobClientFactory
+public class CachingBlobClientFactory(IBlobClientFactory factory) : IBlobClientFactory
 {
     private readonly AsyncCache<string, IBlobClient> _cache = new();
-    private readonly IBlobClientFactory _factory;
-
-    public CachingBlobClientFactory(IBlobClientFactory factory)
-    {
-        _factory = factory;
-    }
+    private readonly IBlobClientFactory _factory = factory;
 
     public Task<IBlobClient> GetBlobClientAsync(string dataPartitionId, CancellationToken ct = default) => _cache.GetValueAsync(
             dataPartitionId,

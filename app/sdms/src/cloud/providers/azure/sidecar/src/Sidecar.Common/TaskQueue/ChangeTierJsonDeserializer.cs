@@ -20,7 +20,7 @@ using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
 using System.Text.Json;
 
-public class ChangeTierJsonDeserializer : ITaskDeserializer<string, IChangeTierOperationMessage>
+public class ChangeTierTaskJsonDeserializer : ITaskDeserializer<string, IChangeTierOperationMessage>
 {
     public IChangeTierOperationMessage Deserialize(string task) => JsonSerializer.Deserialize<ChangeTierOperationMessage>(task)
         ?? throw new Exception($"Error deserializing task {task}");

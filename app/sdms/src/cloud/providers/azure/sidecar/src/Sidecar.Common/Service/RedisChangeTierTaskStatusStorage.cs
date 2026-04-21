@@ -22,20 +22,14 @@ using Interface;
 using Model;
 using Sidecar.Common.Utility;
 
-public class RedisChangeTierTaskStatusStorage : IChangeTierTaskStatusStorage
+public class RedisChangeTierTaskStatusStorage(
+    IOptionsQueueNameRedis options,
+    IRedisConnectionFactory<RedisQueueConnectionFactory> redisConnectionFactory) : IChangeTierTaskStatusStorage
 {
     private readonly TimeSpan _changetierStatusExpirySeconds = TimeSpan.FromDays(90);
 
-    private readonly IOptionsQueueNameRedis _options;
-    private readonly IRedisHandler _queue;
-
-    public RedisChangeTierTaskStatusStorage(
-        IOptionsQueueNameRedis options,
-        IRedisConnectionFactory<RedisQueueConnectionFactory> redisConnectionFactory)
-    {
-        _options = options;
-        _queue = redisConnectionFactory.GetRedis();
-    }
+    private readonly IOptionsQueueNameRedis _options = options;
+    private readonly IRedisHandler _queue = redisConnectionFactory.GetRedis();
 
     public async Task<ChangeTierOperationStatus> CreateChangeTierOperationStatusAsync(IChangeTierOperationMessage opMsg, CancellationToken ct = default)
     {

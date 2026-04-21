@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "55a90351-e45d-43df-9f7e-ecb01a36ed9c",
+		"_postman_id": "b2e3d861-2a65-4de2-ae5e-380f9307a638",
 		"name": "SDMS-E2E ver.M26 - Release 1.0.0 Venus",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -27965,14 +27965,14 @@
 									"",
 									"// create 10 datasets",
 									"for(let ii=0; ii<10; ii++) {",
-    									"originalDatasetSet.push(\"dsx0\" + ii);",
+									"originalDatasetSet.push(\"dsx0\" + ii);",
 									"}",
 									"pm.environment.set(\"lsMultiDatasetsRoot\", originalDatasetSet, Array);",
 									"",
 									"// create 2 dataset in 5 folders",
 									"for(let ii=0; ii<5; ii++) {",
-    								"    originalFolderSet.push(\"folder0\" + ii + '/fsx01');",
-    								"    originalFolderSet.push(\"folder0\" + ii + '/fsx02');",
+									"    originalFolderSet.push(\"folder0\" + ii + '/fsx01');",
+									"    originalFolderSet.push(\"folder0\" + ii + '/fsx02');",
 									"}",
 									"",
 									"const originalSet = originalDatasetSet.concat(originalFolderSet);",
@@ -28426,7 +28426,7 @@
 									"    const datasets = pm.environment.get(\"lsMultiDatasetsRoot\");",
 									"    pm.test(\"Check if two arrays are equal only for datasets\", function () {",
 									"        console.log('lsMultiDatasetsRoot is ' + datasets);",
-        							"        console.log('result_DatasetsRoot is ' + resultDatasets);",
+									"        console.log('result_DatasetsRoot is ' + resultDatasets);",
 									"        pm.expect([...new Set(datasets)].sort().toString()).to.eql([...new Set(resultDatasets)].sort().toString());",
 									"    });",
 									"",
@@ -35994,7 +35994,6 @@
 									"        if ( retryCounterComputeSize <= pm.environment.get(\"maxAmountOfRetriesForComputedSize\") ) {",
 									"            retryCounterComputeSize++;",
 									"            pm.environment.set('retryCounterComputeSize', retryCounterComputeSize);",
-									
 									"            pm.execution.setNextRequest(pm.info.requestName);",
 									"        } else {",
 									"            pm.environment.set('retryCounterComputeSize', 1);",
@@ -36438,6 +36437,7 @@
 									"",
 									"pm.environment.set(\"dsx01\", makeID_dataset(16) + \"_.ds-x\");",
 									"pm.environment.set(\"dsx02\", makeID_dataset(16) + \"_.ds-x\");",
+									"pm.environment.set(\"dsx03\", makeID_dataset(16) + \"_.ds-x\");",
 									"var path = \"/\" + makeID_dataset(8) + \"/\" + makeID_dataset(4) + \"/\" + makeID_dataset(4) + \"/\"",
 									"pm.environment.set(\"testPath\", path);",
 									"pm.environment.set(\"testPathEncoded\", encodeURIComponent(path));",
@@ -37207,7 +37207,6 @@
 									"        if ( retryCounterForChangeTier <= pm.environment.get(\"maxAmountOfRetries\") ) {",
 									"            retryCounterForChangeTier++;",
 									"            pm.environment.set('retryCounterForChangeTier', retryCounterForChangeTier);",
-									
 									"            pm.execution.setNextRequest(pm.info.requestName);",
 									"        } else {",
 									"            pm.environment.set('retryCounterForChangeTier', 1);",
@@ -37449,7 +37448,7 @@
 					"response": []
 				},
 				{
-					"name": "CHANGE-TIER STATUS: Get status of the bulk-delete operation after second deletion",
+					"name": "CHANGE-TIER STATUS: Get status of the change-tier operation after second change",
 					"event": [
 						{
 							"listen": "test",
@@ -37483,7 +37482,6 @@
 									"        if ( retryCounterForChangeTier <= pm.environment.get(\"maxAmountOfRetries\") ) {",
 									"            retryCounterForChangeTier++;",
 									"            pm.environment.set('retryCounterForChangeTier', retryCounterForChangeTier);",
-									
 									"            pm.execution.setNextRequest(pm.info.requestName);",
 									"        } else {",
 									"            pm.environment.set('retryCounterForChangeTier', 1);",
@@ -37617,6 +37615,872 @@
 							"raw": "{{acsSasUrl1}}",
 							"host": [
 								"{{acsSasUrl1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX03 REGISTER: Register a new dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx03'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    ",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx03}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx03}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX03 GET: Retrieve the dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx03'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"testPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"sbit\", function () {",
+									"        pm.environment.set(\"sbit\", jsonData.sbit);",
+									"    });",
+									"",
+									"    pm.test(\"gcsurl\", () => {",
+									"        if (pm.environment.get('serviceCloudProvider') === 'gc') {",
+									"            pm.environment.set(\"gcsBucketName\", jsonData.gcsurl.split('$$')[0]);",
+									"            pm.environment.set(\"gcsObjectPrefix\", encodeURIComponent(jsonData.gcsurl.split('$$')[1]));",
+									"        } else {",
+									"            pm.environment.set(\"gcsBucketName\", jsonData.gcsurl.split('/')[0]);",
+									"            pm.environment.set(\"gcsObjectPrefix\", jsonData.gcsurl.split('/')[1]);",
+									"        }",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    });",
+									"",
+									"    pm.test(\"ctag\", function () {",
+									"        pm.environment.set(\"ctag\", jsonData.ctag);",
+									"    });",
+									"",
+									"    pm.environment.set('virtual_folder3', jsonData.gcsurl.split('/')[1]);",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx03}}?path={{testPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx03}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY UPLOAD DSX03 CONNECTION STRING: Generate upload connection credentials for dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Credential Details\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"        pm.expect(jsonData.token_type).to.exist;",
+									"        pm.expect(jsonData.expires_in).to.greaterThan(0);",
+									"    });",
+									"",
+									"    pm.environment.set(\"acsSasUrl3\", jsonData.access_token.replace('?', '/blob1?'));",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/upload-connection-string?sdpath=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx03}}&x-ms-access-tier=Hot",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"upload-connection-string"
+							],
+							"query": [
+								{
+									"key": "sdpath",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}/{{dsx03}}"
+								},
+								{
+									"key": "x-ms-access-tier",
+									"value": "Hot"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY UPLOAD DSX03 NEW TO ACS - CONNECTION STRING: Upload blob for dataset dsx03",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 201) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 201\", function () {",
+									"        pm.response.to.have.status(201);",
+									"    });",
+									"",
+									"    pm.test(\"Check content length\", function () {",
+									"        pm.response.to.be.header(\"Content-Length\", \"0\");",
+									"    });",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "file",
+							"file": {
+							"src": "{{ds_sample_file_path}}"
+							}
+						},
+						"url": {
+							"raw": "{{acsSasUrl3}}",
+							"host": [
+								"{{acsSasUrl3}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER DATASET DSX01 CLOSE: Close dataset using sbit for DSX03",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{dsx03}}?path={{testPathEncoded}}&close={{sbit}}&x-ms-access-tier=Hot",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{dsx03}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded}}"
+								},
+								{
+									"key": "close",
+									"value": "{{sbit}}"
+								},
+								{
+									"key": "x-ms-access-tier",
+									"value": "Hot"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY DOWNLOAD DSX03 FROM ACS - check the blob tier equals to hot",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"} else {",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Hot\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Hot\";",
+									"    });",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// if  (pm.environment.get(\"virtual_folder\") != undefined) {",
+									"//         pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?',  '/'+pm.environment.get(\"virtual_folder\")+'/blob1?'));",
+									"// }",
+									"// else {",
+									"//         pm.variables.set(\"acsSasUrl\", pm.variables.get(\"UploadStorageCredential\").replace('?', '/blob1?'));",
+									"// }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl3}}",
+							"host": [
+								"{{acsSasUrl3}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER change tier to Cool of datasets with an actual file in a subproject (with locked datasets)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 202) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 202\", function () {",
+									"        pm.response.to.have.status(202);",
+									"    });",
+									"",
+									"    pm.test(\"Validate Operation Id\", function () {",
+									"        pm.expect(jsonData.operation_id).to.exist;",
+									"        console.log(\"Operation ID: \" + jsonData.operation_id);",
+									"    });",
+									"",
+									"    let operation_id = jsonData.operation_id;",
+									"    pm.collectionVariables.set('operationId', operation_id)",
+									"    ",
+									"    var sleepDuration = 10;",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;",
+									"    console.log(pm.response.text())",
+									"    console.log('Wait ' + sleepDuration + ' sec');",
+									"    while (new Date().getTime() < waitUntilTime) {",
+									"        // Do Nothing -> Wait",
+									"    }",
+									"    ",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier?path=sd://{{tenant}}/{{subproject}}{{testPathEncoded}}&tier=Cool",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPathEncoded}}"
+								},
+								{
+									"key": "tier",
+									"value": "Cool"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER STATUS: Get status of the change-tier operation after second change in tier",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (pm.response.code != 200) && (pm.response.code != 404) ) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"} else {",
+									"    var retryCounterForChangeTier = pm.environment.get('retryCounterForChangeTier') || 1;",
+									"    const lodash = require('lodash');",
+									"    var sleepDuration = 5;",
+									"    var waitUntilTime = new Date().getTime() + sleepDuration * 1000;",
+									"    if (pm.response.code == 404) {",
+									"        console.log(pm.response.text())",
+									"        console.log('Wait ' + sleepDuration + ' sec');",
+									"        while (new Date().getTime() < waitUntilTime) {",
+									"            // Do Nothing -> Wait",
+									"        }",
+									"        lodash.retryOnFailure(retryCounterForChangeTier, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"        if ( retryCounterForChangeTier <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"            retryCounterForChangeTier++;",
+									"            pm.environment.set('retryCounterForChangeTier', retryCounterForChangeTier);",
+									"            pm.execution.setNextRequest(pm.info.requestName);",
+									"        } else {",
+									"            pm.environment.set('retryCounterForChangeTier', 1);",
+									"        }",
+									"    } else {",
+									"        var jsonData = pm.response.json();",
+									"",
+									"        pm.test(\"Status code is 200\", function () {",
+									"            pm.response.to.have.status(200);",
+									"        });",
+									"",
+									"        if (jsonData.status != 'Completed') {",
+									"            console.log(\"Waiting for completion: Operation ID: \" + jsonData.operation_id + \", status: \" + jsonData.status);",
+									"            console.log('Waiting time: ' + sleepDuration + ' sec');",
+									"            while (new Date().getTime() < waitUntilTime) {",
+									"            // Do Nothing -> Wait",
+									"            }",
+									"            lodash.retryOnFailure(retryCounterForChangeTier, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"            if ( retryCounterForChangeTier <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"                retryCounterForChangeTier++;",
+									"                pm.environment.set('retryCounterForChangeTier', retryCounterForChangeTier);",
+									"                pm.execution.setNextRequest(pm.info.requestName);",
+									"            } else {",
+									"                pm.environment.set('retryCounterForChangeTier', 1);",
+									"            }",
+									"        } else {",
+									"            pm.test(\"Validate operation status\", function () {",
+									"                pm.expect(jsonData.status).to.eql('Completed');",
+									"            });",
+									"",
+									"            pm.test(\"Validate datasets count\", function () {",
+									"                pm.expect(jsonData.dataset_cnt).to.eql(2);",
+									"                pm.expect(jsonData.completed_cnt).to.eql(2);",
+									"                pm.expect(jsonData.failed_cnt).to.eql(0);",
+									"            });",
+									"            ",
+									"            // Reset environment variables if retryOnFailure function was used before",
+									"            pm.environment.set('execCounter', 1);",
+									"            pm.environment.set('retryCounterForChangeTier', 1);",
+									"        }",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/operation/change-tier/{{operationId}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"operation",
+								"change-tier",
+								"{{operationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CHANGE-TIER UTILITY Check Tiers to Cool - check the blob's tier has changed to cool",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check tier equals to Cool\", function () {",
+									"        pm.response.headers.get('x-ms-access-tier') === \"Cool\";",
+									"    });",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "HEAD",
+						"header": [
+							{
+								"key": "appkey",
+								"type": "text",
+								"value": "{{DE_APP_KEY}}"
+							}
+						],
+						"url": {
+							"raw": "{{acsSasUrl3}}",
+							"host": [
+								"{{acsSasUrl3}}"
 							]
 						}
 					},
@@ -39371,6 +40235,11 @@
 		{
 			"key": "operationId",
 			"value": ""
+		},
+		{
+			"key": "ds_sample_file_path",
+			"value": "tests/e2e/sample/dsSampleFile.txt",
+			"type": "default"
 		}
 	]
 }

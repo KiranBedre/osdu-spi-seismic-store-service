@@ -22,17 +22,10 @@ using Newtonsoft.Json;
 
 using Interface;
 
-public class RedisHandler : IRedisHandler
+public class RedisHandler(ILogger<RedisHandler> logger, IConnectionMultiplexer connectionMultiplexer) : IRedisHandler
 {
-    private readonly ILogger<RedisHandler> _logger;
-    private readonly IConnectionMultiplexer _client;
-
-    public RedisHandler(ILogger<RedisHandler> logger, IConnectionMultiplexer connectionMultiplexer)
-
-    {
-        _logger = logger;
-        _client = connectionMultiplexer;
-    }
+    private readonly ILogger<RedisHandler> _logger = logger;
+    private readonly IConnectionMultiplexer _client = connectionMultiplexer;
 
     public IConnectionMultiplexer GetConnection() => _client;
 

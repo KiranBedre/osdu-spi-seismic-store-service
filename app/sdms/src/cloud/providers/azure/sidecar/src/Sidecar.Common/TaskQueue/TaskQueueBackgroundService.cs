@@ -25,22 +25,15 @@ using Sidecar.Common.Model;
 /// <summary>
 /// Background service that works on the given task queue until cancellation.
 /// </summary>
-public class TaskQueueBackgroundService<TW> : BackgroundService
+public class TaskQueueBackgroundService<TW>(
+    ILogger<TaskQueueBackgroundService<TW>> logger,
+    TW worker,
+    TaskQueueBackgroundServiceOptions opts) : BackgroundService
     where TW : ITaskQueueWorker
 {
-    private readonly ILogger<TaskQueueBackgroundService<TW>> _logger;
-    private readonly TW _worker;
-    private readonly TaskQueueBackgroundServiceOptions _opts;
-
-    public TaskQueueBackgroundService(
-        ILogger<TaskQueueBackgroundService<TW>> logger,
-        TW worker,
-        TaskQueueBackgroundServiceOptions opts)
-    {
-        _logger = logger;
-        _worker = worker;
-        _opts = opts;
-    }
+    private readonly ILogger<TaskQueueBackgroundService<TW>> _logger = logger;
+    private readonly TW _worker = worker;
+    private readonly TaskQueueBackgroundServiceOptions _opts = opts;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

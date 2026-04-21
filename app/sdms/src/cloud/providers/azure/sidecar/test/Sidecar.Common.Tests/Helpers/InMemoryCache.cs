@@ -23,8 +23,8 @@ internal static partial class TestingHelpers
     private static readonly Regex _keyPrefixMatcher = new("(.*?):(.*?):");
     private partial class InMemoryCache
     {
-        private readonly Dictionary<string, RedisValue> _cache = new();
-        private readonly Dictionary<string, List<RedisValue>> _queueCache = new();
+        private readonly Dictionary<string, RedisValue> _cache = [];
+        private readonly Dictionary<string, List<RedisValue>> _queueCache = [];
 
         private static string GetHashKey(RedisKey key, RedisValue field) => $"{key}:{field}:";
 
@@ -34,7 +34,7 @@ internal static partial class TestingHelpers
 
         public long ListRightPush(RedisKey key, string item)
         {
-            var list = _queueCache.ContainsKey(key!) ? _queueCache[key!] : new List<RedisValue>();
+            var list = _queueCache.ContainsKey(key!) ? _queueCache[key!] : [];
 
             var rv = new RedisValue(item);
             list.Add(rv);
@@ -46,7 +46,7 @@ internal static partial class TestingHelpers
 
         public long ListLeftPush(RedisKey key, string item)
         {
-            var list = _queueCache.ContainsKey(key!) ? _queueCache[key!] : new List<RedisValue>();
+            var list = _queueCache.ContainsKey(key!) ? _queueCache[key!] : [];
 
             var rv = new RedisValue(item);
             list.Insert(0, rv);
@@ -60,7 +60,7 @@ internal static partial class TestingHelpers
         {
             if (!_queueCache.ContainsKey(key!))
             {
-                return Array.Empty<RedisValue>();
+                return [];
             }
 
             var values = _queueCache[key!];
@@ -75,7 +75,7 @@ internal static partial class TestingHelpers
                 stop += values.Count;
             }
 
-            return values.Skip((int)start).Take((int)(stop - start + 1)).ToArray();
+            return [.. values.Skip((int)start).Take((int)(stop - start + 1))];
         }
 
         public RedisValue ListLeftPop(RedisKey key)
@@ -165,9 +165,9 @@ internal static partial class TestingHelpers
         public HashEntry[] HashGetAll(RedisKey key)
         {
             var hashPrefix = $"{key}:";
-            return _cache
+            return [.. _cache
                 .Where(e => e.Key.StartsWith(hashPrefix))
-                .Select(e => new HashEntry(e.Key[hashPrefix.Length..].TrimEnd(':'), e.Value)).ToArray();
+                .Select(e => new HashEntry(e.Key[hashPrefix.Length..].TrimEnd(':'), e.Value))];
         }
 
         public async Task<HashEntry[]> HashGetAllAsync(RedisKey key) => await Task.FromResult(HashGetAll(key));

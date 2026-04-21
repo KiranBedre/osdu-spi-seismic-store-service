@@ -18,17 +18,11 @@ namespace Sidecar.ComputeSizeRunner;
 
 using Microsoft.Extensions.Logging;
 
-public class DatasetWriteLockManager : IDatasetWriteLockManager
+public class DatasetWriteLockManager(ILockManager lockManager, ILogger<DatasetWriteLockManager> logger) : IDatasetWriteLockManager
 {
     private const int LOCK_ATTEMPTS = 5;
-    private readonly ILockManager _lockManager;
-    private readonly ILogger<DatasetWriteLockManager> _logger;
-
-    public DatasetWriteLockManager(ILockManager lockManager, ILogger<DatasetWriteLockManager> logger)
-    {
-        _lockManager = lockManager;
-        _logger = logger;
-    }
+    private readonly ILockManager _lockManager = lockManager;
+    private readonly ILogger<DatasetWriteLockManager> _logger = logger;
 
     public async Task<WriteLockSession> LockDataset(string datasetLockKey)
     {

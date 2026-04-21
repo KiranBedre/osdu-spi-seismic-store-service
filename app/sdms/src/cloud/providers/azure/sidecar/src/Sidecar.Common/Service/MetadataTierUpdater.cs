@@ -22,24 +22,17 @@ using System.Threading.Tasks;
 using Interface;
 using Microsoft.Extensions.Logging;
 
-public class MetadataTierUpdater : IMetadataTierUpdater
+public class MetadataTierUpdater(
+    ILogger<MetadataTierUpdater> logger,
+    IDataAccess dataAccess,
+    ICosmosClientFactory cosmosClientFactory) : IMetadataTierUpdater
 {
-    private readonly ILogger<MetadataTierUpdater> _logger;
-    private readonly IDataAccess _dataAccess;
-    private readonly ICosmosClientFactory _cosmosClientFactory;
+    private readonly ILogger<MetadataTierUpdater> _logger = logger;
+    private readonly IDataAccess _dataAccess = dataAccess;
+    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
 
     private int _consecutiveFailures = 0;
     private const int MAX_RETRIES = 5;
-
-    public MetadataTierUpdater(
-        ILogger<MetadataTierUpdater> logger,
-        IDataAccess dataAccess,
-        ICosmosClientFactory cosmosClientFactory)
-    {
-        _logger = logger;
-        _dataAccess = dataAccess;
-        _cosmosClientFactory = cosmosClientFactory;
-    }
 
     public async Task UpdateTier(string dataPartitionId, string id, string tier)
     {
@@ -75,6 +68,7 @@ public class MetadataTierUpdater : IMetadataTierUpdater
                     catch (CosmosException exception)
                     {
                         _logger.LogWarning("Could not process metadata for dataset {id}, with exception {ex}", id, exception);
+                        throw ex;
                     }
                 }
                 _consecutiveFailures++;
@@ -82,6 +76,7 @@ public class MetadataTierUpdater : IMetadataTierUpdater
                 if (_consecutiveFailures == MAX_RETRIES)
                 {
                     _logger.LogWarning("Could not process metadata for dataset {id}, with exception {ex}", id, ex);
+                    throw;
                 }
             }
         } while (!success && _consecutiveFailures < MAX_RETRIES);

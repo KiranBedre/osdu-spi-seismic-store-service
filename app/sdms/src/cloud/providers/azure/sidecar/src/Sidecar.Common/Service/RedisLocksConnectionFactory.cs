@@ -19,21 +19,14 @@ namespace Sidecar.Common.Service;
 using Interface;
 using Microsoft.Extensions.Logging;
 
-public class RedisLocksConnectionFactory : IRedisConnectionFactory<RedisLocksConnectionFactory>
+public class RedisLocksConnectionFactory(
+    ILoggerFactory loggerFactory,
+    ICachingConnectionMultiplexerFactory multiplexerFactory,
+    IOptionsLocksRedis locksOpts) : IRedisConnectionFactory<RedisLocksConnectionFactory>
 {
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly ICachingConnectionMultiplexerFactory _multiplexerFactory;
-    private readonly IOptionsLocksRedis _locksOpts;
-
-    public RedisLocksConnectionFactory(
-        ILoggerFactory loggerFactory,
-        ICachingConnectionMultiplexerFactory multiplexerFactory,
-        IOptionsLocksRedis locksOpts)
-    {
-        _loggerFactory = loggerFactory;
-        _multiplexerFactory = multiplexerFactory;
-        _locksOpts = locksOpts;
-    }
+    private readonly ILoggerFactory _loggerFactory = loggerFactory;
+    private readonly ICachingConnectionMultiplexerFactory _multiplexerFactory = multiplexerFactory;
+    private readonly IOptionsLocksRedis _locksOpts = locksOpts;
 
     public IRedisHandler GetRedis() => FromConfig(
             _locksOpts.RedisLocksHostname,

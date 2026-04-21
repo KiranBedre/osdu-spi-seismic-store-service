@@ -1,5 +1,5 @@
 sdms_lint:
-  image: node:${SDMS_NODE_VERSION}
+  image: node:${SDMS_COMPILE_NODE_VERSION}
   stage: scan
   needs: ['sdms_compile-and-unit-test']
   tags: ['osdu-medium']

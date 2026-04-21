@@ -26,13 +26,13 @@ internal static partial class TestingHelpers
         Query = "SELECT c.id FROM c",
     };
 
-    internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
-            new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
-            new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
-            new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
-            new HashEntry(useJsonAttrNames?"query":"Query",msg.Query),
-            new HashEntry(useJsonAttrNames?"parameters":"Parameters",msg.Parameters)
-        };
+    internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => [
+            new(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
+            new(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
+            new(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
+            new(useJsonAttrNames?"query":"Query",msg.Query),
+            new(useJsonAttrNames?"parameters":"Parameters",msg.Parameters)
+        ];
 
     internal static Mock<ILogger<T>> GetLogger<T>()
     {
@@ -53,7 +53,7 @@ internal static partial class TestingHelpers
                 var formatter = a.Arguments[4];
 
                 var invokeMethod = formatter.GetType().GetMethod("Invoke");
-                var logMessage = (string)invokeMethod?.Invoke(formatter!, new[] { state!, exception! });
+                var logMessage = (string)invokeMethod?.Invoke(formatter!, [state!, exception!]);
 
                 Console.Write(logMessage);
 

@@ -8,14 +8,9 @@ using Sidecar.Common.Model;
 /// This class lets us stub the DES client and instead of calling the DES service,
 /// take the config from the options.
 /// </summary>
-public class DesClientFromEnv : IDesClient
+public class DesClientFromEnv(IOptionsConfig opts) : IDesClient
 {
-    private readonly IOptionsConfig _opts;
-
-    public DesClientFromEnv(IOptionsConfig opts)
-    {
-        _opts = opts;
-    }
+    private readonly IOptionsConfig _opts = opts;
 
     public Task<DesResponse> GetPartitionConfigurationAsync(string dataPartitionId, CancellationToken ct = default) => Task.FromResult(new DesResponse
     {

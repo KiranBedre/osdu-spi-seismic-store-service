@@ -22,24 +22,17 @@ using System.Threading.Tasks;
 using Interface;
 using Microsoft.Extensions.Logging;
 
-public class MetadataDeletionWorker : IMetadataDeletionWorker
+public class MetadataDeletionWorker(
+    ILogger<MetadataDeletionWorker> logger,
+    IDataAccess dataAccess,
+    ICosmosClientFactory cosmosClientFactory) : IMetadataDeletionWorker
 {
-    private readonly ILogger<MetadataDeletionWorker> _logger;
-    private readonly IDataAccess _dataAccess;
-    private readonly ICosmosClientFactory _cosmosClientFactory;
+    private readonly ILogger<MetadataDeletionWorker> _logger = logger;
+    private readonly IDataAccess _dataAccess = dataAccess;
+    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
 
     private int _consecutiveFailures = 0;
     private const int MAX_RETRIES = 5;
-
-    public MetadataDeletionWorker(
-        ILogger<MetadataDeletionWorker> logger,
-        IDataAccess dataAccess,
-        ICosmosClientFactory cosmosClientFactory)
-    {
-        _logger = logger;
-        _dataAccess = dataAccess;
-        _cosmosClientFactory = cosmosClientFactory;
-    }
 
     public async Task DeleteMetadataAsync(string dataPartitionId, string id)
     {
@@ -58,7 +51,7 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
                 _logger.LogWarning("Could not delete metadata for dataset {id}, Attempt {a}", id, _consecutiveFailures / MAX_RETRIES);
                 if (_consecutiveFailures == MAX_RETRIES)
                 {
-                    throw ex;
+                    throw;
                 }
             }
         } while (!success && _consecutiveFailures < MAX_RETRIES);

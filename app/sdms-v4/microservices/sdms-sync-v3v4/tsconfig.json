@@ -8,7 +8,8 @@
         "sourceMap": true,
         "outDir": "dist",
         "esModuleInterop": true,
-        "moduleResolution": "nodenext"
+        "moduleResolution": "nodenext",
+        "rootDir": "src"
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules"]

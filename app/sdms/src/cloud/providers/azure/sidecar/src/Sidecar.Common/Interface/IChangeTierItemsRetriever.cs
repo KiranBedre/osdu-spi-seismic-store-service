@@ -18,7 +18,7 @@ namespace Sidecar.Common.Interface;
 
 using Sidecar.Common.Model;
 
-public interface ITierItemsRetriever
+public interface IChangeTierItemsRetriever
 {
-    Task<(List<ChangeTierItem>?, string?)> GetTierItemsAsync(string dataPartitionId, string query, string? parameters, string? continuationToken, CancellationToken ct = default);
+    Task<(List<ChangeTierItem>?, string?)> GetItemsAsync(string dataPartitionId, string query, string? parameters, string? continuationToken, CancellationToken ct = default);
 }

@@ -26,26 +26,18 @@ using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
 using Azure.Storage.Blobs.Models;
 
-public class BulkChangeTierWorker : IBulkChangeTierWorker
+public class BulkChangeTierWorker(
+    ILogger<BulkChangeTierWorker> logger,
+    IChangeTierTaskStatusStorage changeTierTasks,
+    IMetadataTierUpdater metadataTierUpdater,
+    IBlobClientFactory blobClientFactory) : IBulkChangeTierWorker
 {
-    private readonly ILogger<BulkChangeTierWorker> _logger;
-    private readonly IChangeTierTaskStatusStorage _changeTierTasks;
-    private readonly IMetadataTierUpdater _metadataTierUpdater;
-    private readonly IBlobClientFactory _blobClientFactory;
+    private readonly ILogger<BulkChangeTierWorker> _logger = logger;
+    private readonly IChangeTierTaskStatusStorage _changeTierTasks = changeTierTasks;
+    private readonly IMetadataTierUpdater _metadataTierUpdater = metadataTierUpdater;
+    private readonly IBlobClientFactory _blobClientFactory = blobClientFactory;
     private AccessTier _tier;
     private bool _foundErrors = false;
-
-    public BulkChangeTierWorker(
-        ILogger<BulkChangeTierWorker> logger,
-        IChangeTierTaskStatusStorage changeTierTasks,
-        IMetadataTierUpdater metadataTierUpdater,
-        IBlobClientFactory blobClientFactory)
-    {
-        _logger = logger;
-        _changeTierTasks = changeTierTasks;
-        _metadataTierUpdater = metadataTierUpdater;
-        _blobClientFactory = blobClientFactory;
-    }
 
     public async Task<bool> RunBulkChangeTierAsync(string dataPartitionId, string operationId, string tier, List<ChangeTierItem> itemsToChangeTier, CancellationToken ct)
     {
@@ -113,6 +105,11 @@ public class BulkChangeTierWorker : IBulkChangeTierWorker
             try
             {
                 await ChangeBlobsTierInBulkAsync(blobClient, containerName, null, containerClient, errors, ct);
+            }
+            catch (Azure.RequestFailedException e)
+            {
+                _logger.LogError("Could not process container \'{ContainerName}\': {EMessage}", containerName, e.Message);
+                errors.Add(e.Message);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {

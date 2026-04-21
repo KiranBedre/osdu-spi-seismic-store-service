@@ -23,16 +23,10 @@ using Microsoft.Azure.Cosmos;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CosmosController : ControllerBase
+public class CosmosController(IDataAccess dataAccess, TelemetryClient telemetryClient) : ControllerBase
 {
-    private readonly IDataAccess _dataAccess;
-    private readonly TelemetryClient _telemetryClient;
-
-    public CosmosController(IDataAccess dataAccess, TelemetryClient telemetryClient)
-    {
-        _dataAccess = dataAccess;
-        _telemetryClient = telemetryClient;
-    }
+    private readonly IDataAccess _dataAccess = dataAccess;
+    private readonly TelemetryClient _telemetryClient = telemetryClient;
 
     [HttpPost("/query")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PaginatedRecords))]

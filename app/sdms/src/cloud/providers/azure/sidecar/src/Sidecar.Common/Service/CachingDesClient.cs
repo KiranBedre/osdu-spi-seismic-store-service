@@ -20,15 +20,10 @@ using Interface;
 using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
 
-public class CachingDesClient : IDesClient
+public class CachingDesClient(IDesClient origin) : IDesClient
 {
     private readonly AsyncCache<string, DesResponse> _cache = new();
-    private readonly IDesClient _origin;
-
-    public CachingDesClient(IDesClient origin)
-    {
-        _origin = origin;
-    }
+    private readonly IDesClient _origin = origin;
 
     public Task<DesResponse> GetPartitionConfigurationAsync(string dataPartitionId, CancellationToken ct = default) => _cache.GetValueAsync(
             dataPartitionId,

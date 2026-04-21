@@ -20,16 +20,10 @@ using Azure;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Utility;
 
-public class DatasetSizeRetriever : IDatasetSizeRetriever
+public class DatasetSizeRetriever(ILogger<DatasetSizeRetriever> logger, IBlobClientFactory blobClientFactory) : IDatasetSizeRetriever
 {
-    private readonly ILogger<DatasetSizeRetriever> _logger;
-    private readonly IBlobClientFactory _blobClientFactory;
-
-    public DatasetSizeRetriever(ILogger<DatasetSizeRetriever> logger, IBlobClientFactory blobClientFactory)
-    {
-        _logger = logger;
-        _blobClientFactory = blobClientFactory;
-    }
+    private readonly ILogger<DatasetSizeRetriever> _logger = logger;
+    private readonly IBlobClientFactory _blobClientFactory = blobClientFactory;
 
     public async Task<long> RetrieveSize(IComputeSizeOperationMessage task, CancellationToken ct)
     {

@@ -25,25 +25,17 @@ using Interface;
 using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
 
-public class BulkDeletionWorker : IBulkDeletionWorker
+public class BulkDeletionWorker(
+    ILogger<BulkDeletionWorker> logger,
+    IDeletionTaskStatusStorage deletionTasks,
+    IMetadataDeletionWorker metadataDeletionWorker,
+    IBlobClientFactory blobClientFactory) : IBulkDeletionWorker
 {
-    private readonly ILogger<BulkDeletionWorker> _logger;
-    private readonly IDeletionTaskStatusStorage _deletionTasks;
-    private readonly IMetadataDeletionWorker _metadataDeletionWorker;
-    private readonly IBlobClientFactory _blobClientFactory;
+    private readonly ILogger<BulkDeletionWorker> _logger = logger;
+    private readonly IDeletionTaskStatusStorage _deletionTasks = deletionTasks;
+    private readonly IMetadataDeletionWorker _metadataDeletionWorker = metadataDeletionWorker;
+    private readonly IBlobClientFactory _blobClientFactory = blobClientFactory;
     private bool _foundErrors = false;
-
-    public BulkDeletionWorker(
-        ILogger<BulkDeletionWorker> logger,
-        IDeletionTaskStatusStorage deletionTasks,
-        IMetadataDeletionWorker metadataDeletionWorker,
-        IBlobClientFactory blobClientFactory)
-    {
-        _logger = logger;
-        _deletionTasks = deletionTasks;
-        _metadataDeletionWorker = metadataDeletionWorker;
-        _blobClientFactory = blobClientFactory;
-    }
 
     public async Task<bool> RunBulkDeletionAsync(string dataPartitionId, string operationId, List<DeleteItem> itemsToDelete, bool deletionErrors, CancellationToken ct)
     {

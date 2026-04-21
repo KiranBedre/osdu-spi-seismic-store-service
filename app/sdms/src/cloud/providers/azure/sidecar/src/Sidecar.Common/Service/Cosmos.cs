@@ -23,7 +23,7 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
-public class Cosmos : IDataAccess
+public class Cosmos(ILogger<Cosmos> logger) : IDataAccess
 {
     private const string DATABASE_ID = "sdms-db";
     private const string CONTAINER_ID = "data";
@@ -31,12 +31,7 @@ public class Cosmos : IDataAccess
     private const int MAX_CONCURRENCY = 32;
 
     private static readonly ConcurrentDictionary<string, CosmosClient> _cosmosClients = new();
-    private readonly ILogger<Cosmos> _logger;
-
-    public Cosmos(ILogger<Cosmos> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<Cosmos> _logger = logger;
 
     /// <param name="cs">Connection string for the target Cosmos instance</param>
     /// <param name="sql">SQL query to send to Cosmos</param>
@@ -121,18 +116,18 @@ public class Cosmos : IDataAccess
     {
         if (jsonParameters == null)
         {
-            return new();
+            return [];
         }
 
         try
         {
             var parameters = JsonConvert.DeserializeObject<List<Parameter>>(jsonParameters);
-            return parameters ?? new();
+            return parameters ?? [];
         }
         catch (Exception ex)
         {
             _logger.LogError("Error parsing parameters: {0}", ex.Message);
-            return new();
+            return [];
         }
     }
 

@@ -30,10 +30,10 @@ public class CachingConnectionMultiplexerFactory : ICachingConnectionMultiplexer
             _ => ConnectionMultiplexer.Connect(
                 new ConfigurationOptions
                 {
-                    EndPoints = new()
-                    {
+                    EndPoints =
+                    [
                         new DnsEndPoint(hostname, port),
-                    },
+                    ],
                     Password = password,
                 })
         );

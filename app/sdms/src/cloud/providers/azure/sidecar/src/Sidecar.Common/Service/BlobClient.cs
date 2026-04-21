@@ -23,14 +23,9 @@ using Azure.Storage.Blobs.Specialized;
 /// <summary>
 /// Mockable alternative to the raw BlobServiceClient
 /// </summary>
-public class BlobClient : IBlobClient
+public class BlobClient(BlobServiceClient client) : IBlobClient
 {
-    private readonly BlobServiceClient _client;
-
-    public BlobClient(BlobServiceClient client)
-    {
-        _client = client;
-    }
+    private readonly BlobServiceClient _client = client;
 
     public BlobContainerClient GetContainerClient(string containerName) => _client.GetBlobContainerClient(containerName);
 

@@ -10,33 +10,22 @@ using Sidecar.Common.Model;
 /// <summary>
 /// Worker for Azure Storage Queue.
 /// </summary>
-public class StorageQueueWorker<T, TD, TE> : ITaskQueueWorker
+public class StorageQueueWorker<T, TD, TE>(
+    ILogger<StorageQueueWorker<T, TD, TE>> logger,
+    QueueClient queueClient,
+    TD taskDeserializer,
+    TE executor,
+    StorageQueueWorkerOptions opts) : ITaskQueueWorker
     where TD : ITaskDeserializer<string, T>
     where TE : ITaskExecutor<T>
 {
-    private readonly ITaskExecutor<T> _executor;
-    private readonly ILogger<StorageQueueWorker<T, TD, TE>> _logger;
-    private readonly QueueClient _queueClient;
-    private readonly TD _taskDeserializer;
-    private readonly int _maxDequeueCount;
-    private readonly TimeSpan _lockDuration;  // should be greater than _lockRenewalPeriod
-    private readonly TimeSpan _lockRenewalPeriod;  // should be less than _lockDuration
-
-    public StorageQueueWorker(
-        ILogger<StorageQueueWorker<T, TD, TE>> logger,
-        QueueClient queueClient,
-        TD taskDeserializer,
-        TE executor,
-        StorageQueueWorkerOptions opts)
-    {
-        _logger = logger;
-        _queueClient = queueClient;
-        _taskDeserializer = taskDeserializer;
-        _executor = executor;
-        _maxDequeueCount = opts.MaxDequeueCount;
-        _lockDuration = opts.LockDuration;
-        _lockRenewalPeriod = opts.LockRenewalPeriod;
-    }
+    private readonly ITaskExecutor<T> _executor = executor;
+    private readonly ILogger<StorageQueueWorker<T, TD, TE>> _logger = logger;
+    private readonly QueueClient _queueClient = queueClient;
+    private readonly TD _taskDeserializer = taskDeserializer;
+    private readonly int _maxDequeueCount = opts.MaxDequeueCount;
+    private readonly TimeSpan _lockDuration = opts.LockDuration;  // should be greater than _lockRenewalPeriod
+    private readonly TimeSpan _lockRenewalPeriod = opts.LockRenewalPeriod;  // should be less than _lockDuration
 
     public async Task<ExecutionStatus> HandleNextTaskAsync(CancellationToken ct)
     {
@@ -59,14 +48,14 @@ public class StorageQueueWorker<T, TD, TE> : ITaskQueueWorker
         while (true)
         {
             // wait for either the task execution to be complete, or for the time to update the message lock
-            _ = await Task.WhenAny(new[]
-            {
+            _ = await Task.WhenAny(
+            [
                 taskExecution,
                 Task.Delay(
                     _lockRenewalPeriod,
                     CancellationToken.None  // we want taskExecution to react to the cancellation token
                     ),
-            });
+            ]);
 
             if (taskExecution.IsCompleted)
             {

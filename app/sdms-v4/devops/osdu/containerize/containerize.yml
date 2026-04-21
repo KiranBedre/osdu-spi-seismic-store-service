@@ -49,6 +49,7 @@ sdms-v4_containerize:
       when: always
 
 sdms-v4_ms_sdms-sync-v3v4_containerize:
+  allow_failure: true
   image: docker:19.03.12
   services:
     - docker:19.03.12-dind

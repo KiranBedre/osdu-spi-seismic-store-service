@@ -23,8 +23,7 @@ public class Utils
     private static string MakeId(int length)
     {
         const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        return new(Enumerable.Repeat(CHARS, length)
-            .Select(s => s[_random.Next(s.Length)]).ToArray());
+        return new([.. Enumerable.Repeat(CHARS, length).Select(s => s[_random.Next(s.Length)])]);
     }
 
     public static string RandomMutex() => MakeId(10);

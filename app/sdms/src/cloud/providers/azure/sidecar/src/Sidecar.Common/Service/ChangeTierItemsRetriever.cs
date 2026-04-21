@@ -23,20 +23,14 @@ using Sidecar.Common.Model;
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type
 #pragma warning disable CS8604 // Possible null reference argument for parameter.
 
-public class ChangeTierItemsRetriever : ITierItemsRetriever
+public class ChangeTierItemsRetriever(
+    IDataAccess dataAccess,
+    ICosmosClientFactory cosmosClientFactory) : IChangeTierItemsRetriever
 {
-    private readonly IDataAccess _dataAccess;
-    private readonly ICosmosClientFactory _cosmosClientFactory;
+    private readonly IDataAccess _dataAccess = dataAccess;
+    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
 
-    public ChangeTierItemsRetriever(
-        IDataAccess dataAccess,
-        ICosmosClientFactory cosmosClientFactory)
-    {
-        _dataAccess = dataAccess;
-        _cosmosClientFactory = cosmosClientFactory;
-    }
-
-    public async Task<(List<ChangeTierItem>?, string?)> GetTierItemsAsync(string dataPartitionId, string query, string? parameters, string? continuationToken, CancellationToken ct = default)
+    public async Task<(List<ChangeTierItem>?, string?)> GetItemsAsync(string dataPartitionId, string query, string? parameters, string? continuationToken, CancellationToken ct = default)
     {
         var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId, ct);
 

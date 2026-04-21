@@ -22,20 +22,14 @@ using Interface;
 using Model;
 using Sidecar.Common.Utility;
 
-public class RedisDeletionTaskStatusStorage : IDeletionTaskStatusStorage
+public class RedisDeletionTaskStatusStorage(
+    IOptionsQueueNameRedis options,
+    IRedisConnectionFactory<RedisQueueConnectionFactory> redisConnectionFactory) : IDeletionTaskStatusStorage
 {
     private readonly TimeSpan _deletionStatusExpirySeconds = TimeSpan.FromDays(90);
 
-    private readonly IOptionsQueueNameRedis _options;
-    private readonly IRedisHandler _queue;
-
-    public RedisDeletionTaskStatusStorage(
-        IOptionsQueueNameRedis options,
-        IRedisConnectionFactory<RedisQueueConnectionFactory> redisConnectionFactory)
-    {
-        _options = options;
-        _queue = redisConnectionFactory.GetRedis();
-    }
+    private readonly IOptionsQueueNameRedis _options = options;
+    private readonly IRedisHandler _queue = redisConnectionFactory.GetRedis();
 
     public async Task<DeleteOperationStatus> CreateDeletionOperationStatusAsync(IDeletionOperationMessage opMsg, CancellationToken ct = default)
     {

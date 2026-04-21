@@ -18,7 +18,7 @@ namespace Sidecar.Common.Interface;
 
 using Sidecar.Common.Model;
 
-public interface IItemsRetriever
+public interface IDeletionItemsRetriever
 {
     Task<(List<DeleteItem>?, string?)> GetItemsAsync(string dataPartitionId, string query, string? parameters, string? continuationToken, CancellationToken ct = default);
 }

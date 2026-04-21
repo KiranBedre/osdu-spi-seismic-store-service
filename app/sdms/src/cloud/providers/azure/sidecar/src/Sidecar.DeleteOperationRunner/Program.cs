@@ -198,7 +198,7 @@ public class Program
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
             .AddSingleton<IRedisConnectionFactory<RedisLocksConnectionFactory>, RedisLocksConnectionFactory>()
             .AddSingleton<IRedisConnectionFactory<RedisQueueConnectionFactory>, RedisQueueConnectionFactory>()
-            .AddSingleton<IItemsRetriever, DeleteItemsRetriever>()
+            .AddSingleton<IDeletionItemsRetriever, DeleteItemsRetriever>()
             .AddSingleton<IMetadataDeletionWorker, MetadataDeletionWorker>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkDeletionWorker, BulkDeletionWorker>()

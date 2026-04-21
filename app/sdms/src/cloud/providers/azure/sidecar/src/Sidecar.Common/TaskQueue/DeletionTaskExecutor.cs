@@ -6,29 +6,20 @@ using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
 using System.Globalization;
 
-public class DeletionTaskExecutor : ITaskExecutor<IDeletionOperationMessage>
+public class DeletionTaskExecutor(
+    ILogger<DeletionTaskExecutor> logger,
+    IDeletionTaskStatusStorage deletionTaskStatusStorage,
+    IDeletionItemsRetriever itemsRetriever,
+    IBulkDeletionWorker bulkDeletionWorker,
+    ILockManager lockManager) : ITaskExecutor<IDeletionOperationMessage>
 {
-    private readonly ILogger<DeletionTaskExecutor> _logger;
-    private readonly IDeletionTaskStatusStorage _deletionTaskStatusStorage;
-    private readonly IItemsRetriever _itemsRetriever;
-    private readonly IBulkDeletionWorker _bulkDeletionWorker;
-    private readonly ILockManager _lockManager;
+    private readonly ILogger<DeletionTaskExecutor> _logger = logger;
+    private readonly IDeletionTaskStatusStorage _deletionTaskStatusStorage = deletionTaskStatusStorage;
+    private readonly IDeletionItemsRetriever _itemsRetriever = itemsRetriever;
+    private readonly IBulkDeletionWorker _bulkDeletionWorker = bulkDeletionWorker;
+    private readonly ILockManager _lockManager = lockManager;
 
     private const int LOCK_ATTEMPTS = 5;
-
-    public DeletionTaskExecutor(
-        ILogger<DeletionTaskExecutor> logger,
-        IDeletionTaskStatusStorage deletionTaskStatusStorage,
-        IItemsRetriever itemsRetriever,
-        IBulkDeletionWorker bulkDeletionWorker,
-        ILockManager lockManager)
-    {
-        _logger = logger;
-        _deletionTaskStatusStorage = deletionTaskStatusStorage;
-        _itemsRetriever = itemsRetriever;
-        _bulkDeletionWorker = bulkDeletionWorker;
-        _lockManager = lockManager;
-    }
 
     public async Task ProcessAsync(IDeletionOperationMessage op, CancellationToken ct)
     {
@@ -72,7 +63,7 @@ public class DeletionTaskExecutor : ITaskExecutor<IDeletionOperationMessage>
             finally
             {
                 unlockErrors = await UnlockDatasetsAsync(status, successfullyLocked, unlockErrors);
-                successfullyLocked = new List<DeleteItem>();
+                successfullyLocked = [];
             }
         } while (continuationToken != null);
         if (lockErrors || deletionErrors || unlockErrors)

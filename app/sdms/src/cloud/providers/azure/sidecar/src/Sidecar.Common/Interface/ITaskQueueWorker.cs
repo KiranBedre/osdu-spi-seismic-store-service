@@ -23,5 +23,5 @@ using Sidecar.Common.Model;
 /// </summary>
 public interface ITaskQueueWorker
 {
-    public Task<ExecutionStatus> HandleNextTaskAsync(CancellationToken ct);
+    Task<ExecutionStatus> HandleNextTaskAsync(CancellationToken ct);
 }

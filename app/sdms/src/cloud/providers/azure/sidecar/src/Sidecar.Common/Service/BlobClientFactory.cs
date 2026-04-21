@@ -23,27 +23,18 @@ using Sidecar.Common.Interface;
 using Azure.Core;
 using Azure.Security.KeyVault.Secrets;
 
-public class BlobClientFactory : IBlobClientFactory
+public class BlobClientFactory(
+    ILogger<BlobClientFactory> logger,
+    IDesClient desClient,
+    SecretClient secretClient,
+    TokenCredential credential,
+    IOptionsStorageAccount options) : IBlobClientFactory
 {
-    private readonly ILogger<BlobClientFactory> _logger;
-    private readonly IDesClient _desClient;
-    private readonly SecretClient _secretClient;
-    private readonly TokenCredential _credential;
-    private readonly IOptionsStorageAccount _options;
-
-    public BlobClientFactory(
-        ILogger<BlobClientFactory> logger,
-        IDesClient desClient,
-        SecretClient secretClient,
-        TokenCredential credential,
-        IOptionsStorageAccount options)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _desClient = desClient;
-        _secretClient = secretClient;
-        _credential = credential;
-        _options = options;
-    }
+    private readonly ILogger<BlobClientFactory> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IDesClient _desClient = desClient;
+    private readonly SecretClient _secretClient = secretClient;
+    private readonly TokenCredential _credential = credential;
+    private readonly IOptionsStorageAccount _options = options;
 
     public async Task<IBlobClient> GetBlobClientAsync(string dataPartitionId, CancellationToken ct = default)
     {

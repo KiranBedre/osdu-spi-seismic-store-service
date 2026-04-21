@@ -198,21 +198,21 @@ public class Program
             .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
             .AddSingleton<IRedisConnectionFactory<RedisLocksConnectionFactory>, RedisLocksConnectionFactory>()
             .AddSingleton<IRedisConnectionFactory<RedisQueueConnectionFactory>, RedisQueueConnectionFactory>()
-            .AddSingleton<ITierItemsRetriever, ChangeTierItemsRetriever>()
+            .AddSingleton<IChangeTierItemsRetriever, ChangeTierItemsRetriever>()
             .AddSingleton<IMetadataTierUpdater, MetadataTierUpdater>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IBulkChangeTierWorker, BulkChangeTierWorker>()
-            .AddSingleton<ChangeTierJsonDeserializer>()
+            .AddSingleton<ChangeTierTaskJsonDeserializer>()
             .AddSingleton<ChangeTierTaskExecutor>()
             .AddSingleton<StorageQueueWorker<
                 IChangeTierOperationMessage,
-                ChangeTierJsonDeserializer,
+                ChangeTierTaskJsonDeserializer,
                 ChangeTierTaskExecutor
             >>()
             .AddHostedService<TaskQueueBackgroundService<
                 StorageQueueWorker<
                     IChangeTierOperationMessage,
-                    ChangeTierJsonDeserializer,
+                    ChangeTierTaskJsonDeserializer,
                     ChangeTierTaskExecutor
                 >
             >>()

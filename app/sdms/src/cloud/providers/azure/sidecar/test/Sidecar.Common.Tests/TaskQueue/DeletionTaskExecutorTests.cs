@@ -28,7 +28,7 @@ public class DeletionTaskExecutorTests
         // Arrange
         var loggerMock = new Mock<ILogger<DeletionTaskExecutor>>();
         var taskStatusStorageMock = new Mock<IDeletionTaskStatusStorage>();
-        var itemsRetrieverMock = new Mock<IItemsRetriever>();
+        var itemsRetrieverMock = new Mock<IDeletionItemsRetriever>();
         var bulkDeletionWorkerMock = new Mock<IBulkDeletionWorker>();
         var lockManagerMock = new Mock<ILockManager>();
 
@@ -94,7 +94,7 @@ public class DeletionTaskExecutorTests
         // Arrange
         var loggerMock = new Mock<ILogger<DeletionTaskExecutor>>();
         var taskStatusStorageMock = new Mock<IDeletionTaskStatusStorage>();
-        var itemsRetrieverMock = new Mock<IItemsRetriever>();
+        var itemsRetrieverMock = new Mock<IDeletionItemsRetriever>();
         var bulkDeletionWorkerMock = new Mock<IBulkDeletionWorker>();
         var lockManagerMock = new Mock<ILockManager>();
 
@@ -165,7 +165,7 @@ public class DeletionTaskExecutorTests
         // Arrange
         var loggerMock = new Mock<ILogger<DeletionTaskExecutor>>();
         var taskStatusStorageMock = new Mock<IDeletionTaskStatusStorage>();
-        var itemsRetrieverMock = new Mock<IItemsRetriever>();
+        var itemsRetrieverMock = new Mock<IDeletionItemsRetriever>();
         var bulkDeletionWorkerMock = new Mock<IBulkDeletionWorker>();
         var lockManagerMock = new Mock<ILockManager>();
 

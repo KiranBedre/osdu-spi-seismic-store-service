@@ -18,21 +18,13 @@ namespace Sidecar.ComputeSizeRunner;
 
 using Microsoft.Extensions.Logging;
 
-public class ComputeSizeTaskExecutor : ITaskExecutor<IComputeSizeOperationMessage>
+public class ComputeSizeTaskExecutor(ILogger<ComputeSizeTaskExecutor> logger, IDatasetSizeRetriever datasetSizeRetriever, IMetadataUpdater metadataUpdater, IDatasetWriteLockManager lockManager) : ITaskExecutor<IComputeSizeOperationMessage>
 {
 
-    private readonly ILogger<ComputeSizeTaskExecutor> _logger;
-    private readonly IDatasetSizeRetriever _datasetSizeRetriever;
-    private readonly IMetadataUpdater _metadataUpdater;
-    private readonly IDatasetWriteLockManager _lockManager;
-
-    public ComputeSizeTaskExecutor(ILogger<ComputeSizeTaskExecutor> logger, IDatasetSizeRetriever datasetSizeRetriever, IMetadataUpdater metadataUpdater, IDatasetWriteLockManager lockManager)
-    {
-        _logger = logger;
-        _datasetSizeRetriever = datasetSizeRetriever;
-        _metadataUpdater = metadataUpdater;
-        _lockManager = lockManager;
-    }
+    private readonly ILogger<ComputeSizeTaskExecutor> _logger = logger;
+    private readonly IDatasetSizeRetriever _datasetSizeRetriever = datasetSizeRetriever;
+    private readonly IMetadataUpdater _metadataUpdater = metadataUpdater;
+    private readonly IDatasetWriteLockManager _lockManager = lockManager;
 
     public async Task ProcessAsync(IComputeSizeOperationMessage task, CancellationToken ct)
     {

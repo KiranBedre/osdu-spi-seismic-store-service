@@ -4,16 +4,10 @@ using Azure.Core;
 using Azure.Storage.Queues;
 using Sidecar.Common.Interface;
 
-public class QueueClientFactory
+public class QueueClientFactory(IOptionsStorageQueue opts, TokenCredential credential)
 {
-    private readonly IOptionsStorageQueue _opts;
-    private readonly TokenCredential _credential;
-
-    public QueueClientFactory(IOptionsStorageQueue opts, TokenCredential credential)
-    {
-        _opts = opts;
-        _credential = credential;
-    }
+    private readonly IOptionsStorageQueue _opts = opts;
+    private readonly TokenCredential _credential = credential;
 
     public QueueClient Build()
     {

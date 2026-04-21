@@ -19,15 +19,10 @@ namespace Sidecar.Common.Service;
 using Interface;
 using Sidecar.Common.Utility;
 
-public class CachingCosmosClientFactory : ICosmosClientFactory
+public class CachingCosmosClientFactory(ICosmosClientFactory factory) : ICosmosClientFactory
 {
     private readonly AsyncCache<string, string> _cache = new();
-    private readonly ICosmosClientFactory _factory;
-
-    public CachingCosmosClientFactory(ICosmosClientFactory factory)
-    {
-        _factory = factory;
-    }
+    private readonly ICosmosClientFactory _factory = factory;
 
     public Task<string> GetCosmosConnectionStringAsync(string dataPartitionId, CancellationToken ct = default) => _cache.GetValueAsync(
             dataPartitionId,

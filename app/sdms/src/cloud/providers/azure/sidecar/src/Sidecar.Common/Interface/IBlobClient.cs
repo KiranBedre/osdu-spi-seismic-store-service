@@ -21,6 +21,6 @@ using Azure.Storage.Blobs.Specialized;
 
 public interface IBlobClient
 {
-    public BlobContainerClient GetContainerClient(string containerName);
-    public BlobBatchClient GetBatchClient();
+    BlobContainerClient GetContainerClient(string containerName);
+    BlobBatchClient GetBatchClient();
 }

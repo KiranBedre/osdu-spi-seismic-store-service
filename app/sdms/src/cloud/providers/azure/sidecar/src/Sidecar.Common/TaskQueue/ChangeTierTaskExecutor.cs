@@ -7,29 +7,20 @@ using Sidecar.Common.Service;
 using Sidecar.Common.Utility;
 using System.Globalization;
 
-public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
+public class ChangeTierTaskExecutor(
+    ILogger<ChangeTierTaskExecutor> logger,
+    IChangeTierTaskStatusStorage changeTierTaskStatusStorage,
+    IChangeTierItemsRetriever itemsRetriever,
+    IBulkChangeTierWorker bulkChangeTierWorker,
+    ILockManager lockManager) : ITaskExecutor<IChangeTierOperationMessage>
 {
-    private readonly ILogger<ChangeTierTaskExecutor> _logger;
-    private readonly IChangeTierTaskStatusStorage _changeTierTaskStatusStorage;
-    private readonly ITierItemsRetriever _tieritemsRetriever;
-    private readonly IBulkChangeTierWorker _bulkChangeTierWorker;
-    private readonly ILockManager _lockManager;
+    private readonly ILogger<ChangeTierTaskExecutor> _logger = logger;
+    private readonly IChangeTierTaskStatusStorage _changeTierTaskStatusStorage = changeTierTaskStatusStorage;
+    private readonly IChangeTierItemsRetriever _itemsRetriever = itemsRetriever;
+    private readonly IBulkChangeTierWorker _bulkChangeTierWorker = bulkChangeTierWorker;
+    private readonly ILockManager _lockManager = lockManager;
 
     private const int LOCK_ATTEMPTS = 5;
-
-    public ChangeTierTaskExecutor(
-        ILogger<ChangeTierTaskExecutor> logger,
-        IChangeTierTaskStatusStorage changeTierTaskStatusStorage,
-        ITierItemsRetriever tieritemsRetriever,
-        IBulkChangeTierWorker bulkChangeTierWorker,
-        ILockManager lockManager)
-    {
-        _logger = logger;
-        _changeTierTaskStatusStorage = changeTierTaskStatusStorage;
-        _tieritemsRetriever = tieritemsRetriever;
-        _bulkChangeTierWorker = bulkChangeTierWorker;
-        _lockManager = lockManager;
-    }
 
     public async Task ProcessAsync(IChangeTierOperationMessage op, CancellationToken ct)
     {
@@ -39,24 +30,27 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
 
         var changeTierErrors = true;
         var lockErrors = true;
-        var unlockErrors = false;
-        var errorFlag = false;
-        var lockSessionList = new List<WriteLockSession>();
         var successfullyLocked = new List<ChangeTierItem>();
         string? continuationToken = null;
-        var i = 0;
+        var pageCounter = 1;
         var totalDatasetCount = 0;
+        var unlockErrors = false;
+
+        var errorFlag = false;
+        var lockSessionList = new List<WriteLockSession>();
+
         _ = unlockErrors;
 
         do
         {
             try
             {
-                var (itemsToChangeTier, nextContinuationToken) = await _tieritemsRetriever.GetTierItemsAsync(op.Tenant, op.Query, op.Parameters, continuationToken, ct);
+                var (itemsToChangeTier, nextContinuationToken) = await _itemsRetriever.GetItemsAsync(op.Tenant, op.Query, op.Parameters, continuationToken, ct);
                 continuationToken = nextContinuationToken;
 
                 _logger.LogInformation("page {pageNumber} - items to change tier: {itemCount}",
-                    ++i, itemsToChangeTier!.Count.ToString(CultureInfo.InvariantCulture));
+                    pageCounter++, itemsToChangeTier!.Count.ToString(CultureInfo.InvariantCulture));
+
 
                 totalDatasetCount += itemsToChangeTier.Count;
                 await _changeTierTaskStatusStorage.UpdateFieldStatusOperationAsync(
@@ -82,11 +76,11 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
             if (lockErrors || changeTierErrors || unlockErrors)
             {
                 errorFlag = true;
-                _logger.LogError("Change tier operation {op}, on page {pn} with errors", op.OperationId, i);
+                _logger.LogError("Change tier operation {op}, on page {pn} with errors", op.OperationId, pageCounter);
             }
             else
             {
-                _logger.LogInformation("Change tier operation {op}, on page {pn} successfully", op.OperationId, i);
+                _logger.LogInformation("Change tier operation {op}, on page {pn} successfully", op.OperationId, pageCounter);
             }
         } while (continuationToken != null);
 
@@ -111,6 +105,7 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
     private async Task<bool> UnlockDatasetsAsync(List<WriteLockSession> lockSessionList)
     {
         var unlockErrors = false;
+
         bool unlocked;
         int attempt;
 
@@ -146,7 +141,7 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
         List<ChangeTierItem> successfullyLocked,
         CancellationToken ct)
     {
-        var foundLockErrors = false;
+        var lockErrors = false;
         var lockSession = new WriteLockSession();
         var lockSessionList = new List<WriteLockSession>();
         foreach (var item in itemsToChange)
@@ -154,6 +149,7 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
             var datasetName = GetDatasetName(item);
             var lockKey = op.Tenant + "/" + op.Subproject + datasetName;
             _logger.LogDebug("Acquiring lock for {n}", lockKey);
+
             var attempt = 0;
 
             while (!lockSession.Locked && attempt < LOCK_ATTEMPTS)
@@ -178,12 +174,13 @@ public class ChangeTierTaskExecutor : ITaskExecutor<IChangeTierOperationMessage>
             {
                 await _changeTierTaskStatusStorage.IncrementCountAsync(
                     op.OperationId, Constants.ChangeTierOperationStatus.FAILED_CNT, ct);
-                foundLockErrors = true;
+                lockErrors = true;
             }
         }
 
-        return (foundLockErrors, lockSessionList);
+        return (lockErrors, lockSessionList);
     }
+
 
     private static string GetDatasetName(ChangeTierItem item)
     {

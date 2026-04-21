@@ -85,6 +85,7 @@ sdms-v4_azure_containerize:
       - app/$SDMS_V4_SERVICE/openapi.yaml
 
 sdms-v4_ms_sdms-sync-v3v4_azure_containerize:
+  allow_failure: true
   extends:
     - azure_containerize
   needs:

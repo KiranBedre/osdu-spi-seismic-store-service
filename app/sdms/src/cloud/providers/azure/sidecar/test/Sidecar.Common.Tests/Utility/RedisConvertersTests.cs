@@ -44,13 +44,13 @@ public class RedisConvertersTests
         LastUpdatedAt = DateTime.UtcNow,
     };
 
-    private static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => new HashEntry[]{
-            new HashEntry(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
-            new HashEntry(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
-            new HashEntry(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
-            new HashEntry(useJsonAttrNames?"query":"Query",msg.Query),
-            new HashEntry(useJsonAttrNames?"parameters":"Parameters",msg.Parameters),
-        };
+    private static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => [
+            new(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
+            new(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
+            new(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
+            new(useJsonAttrNames?"query":"Query",msg.Query),
+            new(useJsonAttrNames?"parameters":"Parameters",msg.Parameters),
+        ];
 
     [Fact]
     public void Convert_FromMsg_ToHashEntry_Success()

@@ -19,24 +19,16 @@ namespace Sidecar.ComputeSizeRunner;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 
-public class MetadataUpdater : IMetadataUpdater
+public class MetadataUpdater(ILogger<MetadataUpdater> logger, IDataAccess dataAccess, ICosmosClientFactory cosmosClientFactory, IDateFormatter dateFormatter) : IMetadataUpdater
 {
 
     private int _consecutiveFailures;
     private const int MAX_RETRIES = 2;
 
-    private readonly ILogger<MetadataUpdater> _logger;
-    private readonly IDataAccess _dataAccess;
-    private readonly ICosmosClientFactory _cosmosClientFactory;
-    private readonly IDateFormatter _dateFormatter;
-
-    public MetadataUpdater(ILogger<MetadataUpdater> logger, IDataAccess dataAccess, ICosmosClientFactory cosmosClientFactory, IDateFormatter dateFormatter)
-    {
-        _logger = logger;
-        _dataAccess = dataAccess;
-        _cosmosClientFactory = cosmosClientFactory;
-        _dateFormatter = dateFormatter;
-    }
+    private readonly ILogger<MetadataUpdater> _logger = logger;
+    private readonly IDataAccess _dataAccess = dataAccess;
+    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
+    private readonly IDateFormatter _dateFormatter = dateFormatter;
 
     public async Task UpdateComputeSize(string dataPartitionId, string metadataId, long size, CancellationToken cancellationToken)
     {

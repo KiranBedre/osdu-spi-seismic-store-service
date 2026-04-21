@@ -20,17 +20,11 @@ using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Utility;
 
-public class LockManager : ILockManager
+public class LockManager(ILogger<LockManager> logger, IRedisConnectionFactory<RedisLocksConnectionFactory> redisConnectionFactory) : ILockManager
 {
     private static readonly TimeSpan _ttl = TimeSpan.FromSeconds(6);
-    private readonly IRedisHandler _locksRedis;
-    private readonly ILogger<LockManager> _logger;
-
-    public LockManager(ILogger<LockManager> logger, IRedisConnectionFactory<RedisLocksConnectionFactory> redisConnectionFactory)
-    {
-        _logger = logger;
-        _locksRedis = redisConnectionFactory.GetRedis();
-    }
+    private readonly IRedisHandler _locksRedis = redisConnectionFactory.GetRedis();
+    private readonly ILogger<LockManager> _logger = logger;
 
     private async Task<object?> GetLockAsync(string key)
     {

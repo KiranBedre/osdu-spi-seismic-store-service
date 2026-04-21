@@ -28,7 +28,7 @@ public static class RedisConverters
     public static HashEntry[] ToHashEntries(this ISupportsRedisHashEntry obj, bool useJsonPropertyNames = false)
     {
         var properties = obj.GetType().GetProperties();
-        return properties
+        return [.. properties
             .Where(x => x.GetValue(obj) != null)
             .Select(p =>
             {
@@ -42,8 +42,7 @@ public static class RedisConverters
                 var jpa = p.GetCustomAttribute<JsonPropertyNameAttribute>();
                 var propName = (useJsonPropertyNames && jpa is not null && !string.IsNullOrEmpty(jpa.Name)) ? jpa.Name : p.Name;
                 return new HashEntry(propName, hashValue);
-            })
-            .ToArray();
+            })];
     }
 
     public static T FromHashEntries<T>(this HashEntry[] hashEntries, bool useJsonPropertyNames = false) where T : ISupportsRedisHashEntry

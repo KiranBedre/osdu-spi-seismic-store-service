@@ -24,6 +24,6 @@ using Sidecar.Common.Model;
 /// </summary>
 public interface IDesClient
 {
-    public Task<DesResponse> GetPartitionConfigurationAsync(string dataPartitionId, CancellationToken ct = default);
+    Task<DesResponse> GetPartitionConfigurationAsync(string dataPartitionId, CancellationToken ct = default);
 }
 

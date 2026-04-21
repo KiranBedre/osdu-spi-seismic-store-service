@@ -20,18 +20,12 @@ using Sidecar.Common.Interface;
 
 using Azure.Security.KeyVault.Secrets;
 
-public class CosmosClientFactory : ICosmosClientFactory
+public class CosmosClientFactory(
+    IDesClient desClient,
+    SecretClient secretClient) : ICosmosClientFactory
 {
-    private readonly IDesClient _desClient;
-    private readonly SecretClient _secretClient;
-
-    public CosmosClientFactory(
-        IDesClient desClient,
-        SecretClient secretClient)
-    {
-        _desClient = desClient;
-        _secretClient = secretClient;
-    }
+    private readonly IDesClient _desClient = desClient;
+    private readonly SecretClient _secretClient = secretClient;
 
     public async Task<string> GetCosmosConnectionStringAsync(string dataPartitionId, CancellationToken ct = default)
     {

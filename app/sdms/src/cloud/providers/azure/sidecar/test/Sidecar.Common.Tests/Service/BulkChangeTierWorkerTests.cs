@@ -25,7 +25,7 @@ using Sidecar.Common.Service;
 using Sidecar.Common.Utility;
 using System.Net;
 
-public class BulkDeletionWorkerTests
+public class BulkChangeTierWorkerTests
 {
     [Fact]
     public void ParseContainerAndFolderName_Should_Parse_Correctly()
@@ -58,72 +58,72 @@ public class BulkDeletionWorkerTests
     [Theory]
     [InlineData(null)]
     [InlineData("/a/b/c")]
-    public async Task ProcessItemDeletion_WithInvalidGcsUrl_IncrementsFailedCount(string? gcsurl)
+    public async Task ProcessItemChangeTier_WithInvalidGcsUrl_IncrementsFailedCount(string? gcsurl)
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
-        var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
+        var loggerMock = new Mock<ILogger<BulkChangeTierWorker>>();
+        var statusStorageMock = new Mock<IChangeTierTaskStatusStorage>();
+        var metadataChangeTierWorkerMock = new Mock<IMetadataTierUpdater>();
         var blobClientMock = new Mock<IBlobClientFactory>();
 
-        var deletionWorker = new BulkDeletionWorker(
+        var changeTierWorker = new BulkChangeTierWorker(
             loggerMock.Object,
             statusStorageMock.Object,
-            metadataDeletionWorkerMock.Object,
+            metadataChangeTierWorkerMock.Object,
             blobClientMock.Object
         );
 
         var tenant = "someTenant";
         var operationId = "123";
-        var item = new DeleteItem
+        var item = new ChangeTierItem
         {
             Id = "item123",
             Gcsurl = gcsurl
         };
-        var itemsToDelete = new List<DeleteItem> { item };
+        var itemsToChangeTier = new List<ChangeTierItem> { item };
 
-        var deletionErrors = false;
+        var changeTierErrors = false;
 
         // Act
-        var foundErrors = await deletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
+        var foundErrors = await changeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
 
         // Assert
         Assert.True(foundErrors);
 
         // Assert
         statusStorageMock.Verify(x => x.IncrementCountAsync(
-            operationId, Constants.DeleteOperationStatus.FAILED_CNT, It.IsAny<CancellationToken>()), Times.Once);
+            operationId, Constants.ChangeTierOperationStatus.FAILED_CNT, It.IsAny<CancellationToken>()), Times.Once);
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-            operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+            operationId, Constants.ChangeTierOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), Times.Once);
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-            operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), Times.Once);
+            operationId, Constants.ChangeTierOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task RunBulkDeletion_Should_Work_With_EmptyItems()
+    public async Task RunBulkChangeTier_Should_Work_With_EmptyItems()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
-        var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
+        var loggerMock = new Mock<ILogger<BulkChangeTierWorker>>();
+        var statusStorageMock = new Mock<IChangeTierTaskStatusStorage>();
+        var metadataChangeTierWorkerMock = new Mock<IMetadataTierUpdater>();
         var blobClientMock = new Mock<IBlobClientFactory>();
 
-        var bulkDeletionWorker = new BulkDeletionWorker(
+        var bulkChangeTierWorker = new BulkChangeTierWorker(
             loggerMock.Object,
             statusStorageMock.Object,
-            metadataDeletionWorkerMock.Object,
+            metadataChangeTierWorkerMock.Object,
             blobClientMock.Object
         );
 
-        var itemsToDelete = new List<DeleteItem> { };
+        var itemsToChangeTier = new List<ChangeTierItem> { };
 
-        var deletionErrors = false;
+        var changeTierErrors = false;
 
         var tenant = "opendes";
         var operationId = "123";
 
         // Act
-        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
+        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
 
         // Assert
         Assert.False(foundErrors);
@@ -134,12 +134,12 @@ public class BulkDeletionWorkerTests
     }
 
     [Fact]
-    public async Task RunBulkDeletion_Should_Work()
+    public async Task RunBulkChangeTier_Should_Work()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
-        var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
+        var loggerMock = new Mock<ILogger<BulkChangeTierWorker>>();
+        var statusStorageMock = new Mock<IChangeTierTaskStatusStorage>();
+        var metadataChangeTierWorkerMock = new Mock<IMetadataTierUpdater>();
         var blobClientMock = new Mock<IBlobClient>();
         var blobClientFactoryMock = new Mock<IBlobClientFactory>();
         var blobBatchClientMock = new Mock<BlobBatchClient>();
@@ -149,14 +149,14 @@ public class BulkDeletionWorkerTests
         var tenant = "tenant";
         var operationId = "123";
 
-        var bulkDeletionWorker = new BulkDeletionWorker(
+        var bulkChangeTierWorker = new BulkChangeTierWorker(
             loggerMock.Object,
             statusStorageMock.Object,
-            metadataDeletionWorkerMock.Object,
+            metadataChangeTierWorkerMock.Object,
             blobClientFactoryMock.Object
         );
 
-        var itemsToDelete = new List<DeleteItem> {
+        var itemsToChangeTier = new List<ChangeTierItem> {
             new() {
                     Id = "123",
                     Gcsurl = "container/folder1",
@@ -171,7 +171,7 @@ public class BulkDeletionWorkerTests
                 }
         };
 
-        var deletionErrors = false;
+        var changeTierErrors = false;
 
         _ = blobClientMock
             .Setup(client => client.GetContainerClient(It.IsAny<string>()))
@@ -186,7 +186,7 @@ public class BulkDeletionWorkerTests
             .ReturnsAsync(blobClientMock.Object);
 
         _ = blobBatchMock
-            .Setup(b => b.DeleteBlob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>()));
+            .Setup(b => b.SetBlobAccessTier(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AccessTier>(), It.IsAny<RehydratePriority>(), It.IsAny<BlobRequestConditions>()));
 
         _ = blobBatchClientMock
             .Setup(blobBatchClientMock => blobBatchClientMock.CreateBatch())
@@ -205,29 +205,29 @@ public class BulkDeletionWorkerTests
             .Returns(mockedBlobsPages);
 
         // Act
-        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
+        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
 
         // Assert
         Assert.False(foundErrors);
         statusStorageMock.Verify(x => x.IncrementCountAsync(
-                operationId, Constants.DeleteOperationStatus.COMPLETED_CNT, It.IsAny<CancellationToken>()),
-            Times.Exactly(itemsToDelete.Count));
+                operationId, Constants.ChangeTierOperationStatus.COMPLETED_CNT, It.IsAny<CancellationToken>()),
+            Times.Exactly(itemsToChangeTier.Count));
 
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-                operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()),
+                operationId, Constants.ChangeTierOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()),
             Times.Once);
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-                operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()),
+                operationId, Constants.ChangeTierOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task RunBulkDeletion_WithFailedMetadata_Should_Work()
+    public async Task RunBulkChangeTier_WithFailedMetadata_Should_Work()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<BulkDeletionWorker>>();
-        var statusStorageMock = new Mock<IDeletionTaskStatusStorage>();
-        var metadataDeletionWorkerMock = new Mock<IMetadataDeletionWorker>();
+        var loggerMock = new Mock<ILogger<BulkChangeTierWorker>>();
+        var statusStorageMock = new Mock<IChangeTierTaskStatusStorage>();
+        var metadataChangeTierWorkerMock = new Mock<IMetadataTierUpdater>();
         var blobClientMock = new Mock<IBlobClient>();
         var blobClientFactoryMock = new Mock<IBlobClientFactory>();
         var blobBatchClientMock = new Mock<BlobBatchClient>();
@@ -237,14 +237,14 @@ public class BulkDeletionWorkerTests
         var tenant = "tenant";
         var operationId = "123";
 
-        var bulkDeletionWorker = new BulkDeletionWorker(
+        var bulkChangeTierWorker = new BulkChangeTierWorker(
             loggerMock.Object,
             statusStorageMock.Object,
-            metadataDeletionWorkerMock.Object,
+            metadataChangeTierWorkerMock.Object,
             blobClientFactoryMock.Object
         );
 
-        var itemsToDelete = new List<DeleteItem> {
+        var itemsToChangeTier = new List<ChangeTierItem> {
             new() {
                     Id = "123",
                     Gcsurl = "container/folder1",
@@ -253,7 +253,7 @@ public class BulkDeletionWorkerTests
                 }
         };
 
-        var deletionErrors = false;
+        var changeTierErrors = false;
 
         _ = blobClientMock
             .Setup(client => client.GetContainerClient(It.IsAny<string>()))
@@ -268,7 +268,7 @@ public class BulkDeletionWorkerTests
             .ReturnsAsync(blobClientMock.Object);
 
         _ = blobBatchMock
-            .Setup(b => b.DeleteBlob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DeleteSnapshotsOption>(), It.IsAny<BlobRequestConditions>()));
+            .Setup(b => b.SetBlobAccessTier(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AccessTier>(), It.IsAny<RehydratePriority>(), It.IsAny<BlobRequestConditions>()));
 
         _ = blobBatchClientMock
             .Setup(blobBatchClientMock => blobBatchClientMock.CreateBatch())
@@ -285,21 +285,21 @@ public class BulkDeletionWorkerTests
             .Setup(clientFactory => clientFactory.GetBlobsAsync(It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(mockedBlobsPages);
 
-        _ = metadataDeletionWorkerMock
-              .Setup(container => container.DeleteMetadataAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _ = metadataChangeTierWorkerMock
+              .Setup(container => container.UpdateTier(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
               .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act
-        var foundErrors = await bulkDeletionWorker.RunBulkDeletionAsync(tenant, operationId, itemsToDelete, deletionErrors, CancellationToken.None);
+        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
 
         //Assert
         Assert.True(foundErrors);
         statusStorageMock.Verify(x => x.IncrementCountAsync(
-            operationId, Constants.DeleteOperationStatus.FAILED_CNT, It.IsAny<CancellationToken>()), Times.Once);
+            operationId, Constants.ChangeTierOperationStatus.FAILED_CNT, It.IsAny<CancellationToken>()), Times.Once);
 
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-            operationId, Constants.DeleteOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), Times.Once);
+            operationId, Constants.ChangeTierOperationStatus.STATUS, Status.InProgress.ToString(), It.IsAny<CancellationToken>()), Times.Once);
         statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
-            operationId, Constants.DeleteOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), Times.Once);
+            operationId, Constants.ChangeTierOperationStatus.STATUS_DESCRIPTION, Status.InProgress.Description(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
