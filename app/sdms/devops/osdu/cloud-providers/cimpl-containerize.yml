@@ -9,7 +9,6 @@ sdms_cimpl-containerize-gitlab:
   before_script:
     - cd app/$SDMS_SERVICE && pwd
     - ls ./docs/api/openapi.yaml && sed -i 's|#{SDMS_PREFIX}#|'$CIMPL_SDMS_PREFIX'|' ./docs/api/openapi.yaml
-    - !reference [.cimpl_set_image_name, script]
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   rules:
     - if: $CI_COMMIT_BRANCH =~ '/^release/' && $CIMPL == '1'
@@ -25,3 +24,4 @@ sdms_cimpl-containerize-gitlab:
         - devops/**/*
         - app/sdms/**/*
       when: on_success
+
