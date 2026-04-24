@@ -13,6 +13,9 @@ data:
   redisSdmsHost: ""
   redisSdmsPort: "6379"
   redisSdmsTlsDisabled: true
+  redisSharedHost: ""
+  redisSharedPort: "6379"
+  redisSharedTlsDisabled: true
   serviceEnv: "dev"
   # Deployment
   requestsCpu: "15m"

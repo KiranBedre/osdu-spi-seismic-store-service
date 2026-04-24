@@ -1,8 +1,0 @@
-include:
-  - local: devops/osdu/cloud-providers/core-gke.yml
-  - local: devops/osdu/cloud-providers/core-containerize.yml
-  - local: devops/osdu/cloud-providers/core-helm.yml
-
-variables:
-  APP_VERSION: "$CORE_HELM_PACKAGE_VERSION-SNAPSHOT"
-  CORE_SUPPORTED_PLATFORM: "linux/amd64"

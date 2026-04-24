@@ -1,0 +1,11 @@
+cimpl-containerize-gitlab:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-containerize-bootstrap-gitlab:
+  needs: []
+  extends: []
+  rules:
+    - when: never

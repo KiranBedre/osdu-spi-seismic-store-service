@@ -1,0 +1,11 @@
+cimpl-helm-charts-gitlab:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-helm-charts-release-gitlab:
+  needs: []
+  extends: []
+  rules:
+    - when: never

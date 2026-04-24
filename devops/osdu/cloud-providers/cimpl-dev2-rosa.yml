@@ -1,0 +1,31 @@
+cimpl-dev2-deploy:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev2-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev2-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev2-acceptance-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev2-acceptance-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+

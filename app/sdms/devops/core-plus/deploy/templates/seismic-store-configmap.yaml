@@ -23,3 +23,10 @@ data:
   {{- end}}
   LOCKSMAP_REDIS_INSTANCE_PORT: {{ .Values.data.redisSdmsPort | quote }}
   LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE: {{ .Values.data.redisSdmsTlsDisabled | quote }}
+  {{- if .Values.data.redisSharedHost }}
+  REDIS_SHARED_INSTANCE_ADDRESS: {{ .Values.data.redisSharedHost | quote }}
+  {{- else }}
+  REDIS_SHARED_INSTANCE_ADDRESS: {{ printf "redis-%s" .Values.conf.appName | quote }}
+  {{- end }}
+  REDIS_SHARED_INSTANCE_PORT: {{ .Values.data.redisSharedPort | quote }}
+  REDIS_SHARED_INSTANCE_TLS_DISABLE: {{ .Values.data.redisSharedTlsDisabled | quote }}

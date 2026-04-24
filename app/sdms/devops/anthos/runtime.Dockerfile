@@ -50,16 +50,17 @@ RUN apk update && apk upgrade
 RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
     && addgroup --gid 10001 appgroup \
     && adduser --disabled-password --gecos --shell --uid 10001 appuser --ingroup appgroup \
-    && chown -R appuser:appgroup /seistore-service \
+    && chown -R appuser:root /seistore-service \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/npm' >> /etc/sudoers \
     && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/node' >> /etc/sudoers \
     && npm install --quiet husky -g \
     && npm ci --production --quiet \
-    && chown -R appuser:appgroup /seistore-service/node_modules \
+    && chown -R appuser:root /seistore-service/node_modules \
     && apk del native-deps \
     && apk add --update --no-cache openssl \
     && npx prisma generate --schema=/seistore-service/src/cloud/providers/anthos/schema.prisma \
-    && chown -R appuser:appgroup /seistore-service
+    && chown -R appuser:root /seistore-service \
+    && chmod -R g=u /seistore-service
 
 USER 10001:10001
 

@@ -29,6 +29,8 @@ spec:
         args:
         - --requirepass
         - $(REDIS_PASSWORD)
+        - --save
+        - ""
         ports:
         - containerPort: 6379
           protocol: TCP

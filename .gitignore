@@ -27,3 +27,5 @@ dev/
 .nyc_output
 coverage  
 test-results.xml
+allure-results
+cimpl/allure-results

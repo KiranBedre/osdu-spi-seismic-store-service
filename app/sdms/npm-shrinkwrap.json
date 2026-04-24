@@ -93,6 +93,7 @@
         "mocha-bamboo-reporter": "^1.1.2",
         "mocha-junit-reporter": "^2.0.2",
         "newman": "^6.2.1",
+        "newman-reporter-allure": "^3.6.0",
         "newman-reporter-htmlextra": "^1.23.1",
         "nodemon": "^3.1.11",
         "nyc": "^15.1.0",
@@ -5607,6 +5608,24 @@
       },
       "peerDependenciesMeta": {
         "ajv": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/allure-js-commons": {
+      "version": "3.6.0",
+      "resolved": "https://registry.npmjs.org/allure-js-commons/-/allure-js-commons-3.6.0.tgz",
+      "integrity": "sha512-RquIzMlh2l+ZLtq+Uxt+ZpOptxLzyPvLfPGbwU7dtgXo0QfUvhLFFkCljIR7Gjxo7jZ+WVqoto1yOPpXqU/i4g==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "dependencies": {
+        "md5": "^2.3.0"
+      },
+      "peerDependencies": {
+        "allure-playwright": "3.6.0"
+      },
+      "peerDependenciesMeta": {
+        "allure-playwright": {
           "optional": true
         }
       }
@@ -11592,6 +11611,24 @@
       },
       "engines": {
         "node": ">=16"
+      }
+    },
+    "node_modules/newman-reporter-allure": {
+      "version": "3.6.0",
+      "resolved": "https://registry.npmjs.org/newman-reporter-allure/-/newman-reporter-allure-3.6.0.tgz",
+      "integrity": "sha512-VAAfO4CxqhNN+tzGkJ4y7BK9tni37o+Ms8hWKNEfFgccH7XVHctmmx6pZeOYFtIAUF8cl2TvVnCLFDSu6xTsAQ==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "dependencies": {
+        "allure-js-commons": "3.6.0"
+      },
+      "peerDependencies": {
+        "newman": ">=3.5.0"
+      },
+      "peerDependenciesMeta": {
+        "newman": {
+          "optional": true
+        }
       }
     },
     "node_modules/newman-reporter-htmlextra": {

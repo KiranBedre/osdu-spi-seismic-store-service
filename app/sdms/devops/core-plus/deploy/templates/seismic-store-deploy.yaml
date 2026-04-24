@@ -38,6 +38,11 @@ spec:
               secretKeyRef:
                 name: {{ .Values.conf.sdmsRedisSecretName | quote }}
                 key: REDIS_PASSWORD
+          - name: REDIS_SHARED_INSTANCE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.conf.sdmsRedisSecretName | quote }}
+                key: REDIS_PASSWORD
           envFrom:
           - configMapRef:
               name: {{ printf "%s-config" .Values.conf.appName | quote }}
@@ -51,20 +56,20 @@ spec:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
           ports:
-            - containerPort: 8080
+            - containerPort: 5000
           livenessProbe:
               failureThreshold: 3
               httpGet:
                 path: /api/seismic-store/v3/svcstatus
                 port: 5000
-              initialDelaySeconds: 120
+              initialDelaySeconds: 15
               periodSeconds: 60
           readinessProbe:
               failureThreshold: 3
               httpGet:
                 path: /api/seismic-store/v3/svcstatus/readiness
                 port: 5000
-              initialDelaySeconds: 120 
+              initialDelaySeconds: 15
               periodSeconds: 15
           resources:
             requests:

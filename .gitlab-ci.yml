@@ -37,12 +37,12 @@ include:
   # overwrite logic
   - local: devops/osdu/cloud-providers/gc-global.yml
 
-  # core
+  # cimpl
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/core-global.yml"
+    file: "cloud-providers/cimpl-global.yml"
 
   # overwrite logic
-  - local: devops/osdu/cloud-providers/core-global.yml
+  - local: devops/osdu/cloud-providers/cimpl-global.yml
 
   # ibm
   - project: "osdu/platform/ci-cd-pipelines"
@@ -50,6 +50,10 @@ include:
 
   # overwrite logic
   - local: devops/osdu/cloud-providers/ibm.yml
+
+  # REPORTING
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "reporting/reporting.yml"
 
   # SERVICES (APPS)
   # filemetadata

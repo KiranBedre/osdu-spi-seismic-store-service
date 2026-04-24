@@ -121,6 +121,10 @@ case $i in
   testComputeSize="${i#*=}"
   shift
   ;;
+  --allure-dir=*)
+  allure_dir="${i#*=}"
+  shift
+  ;;
   *)
   usage "unknown option $i"
   ;;
@@ -217,12 +221,19 @@ rm -f ./tests/e2e/results/e2e_tests_*.html
 
 if [ -f "./node_modules/newman/bin/newman.js" ]; then
    cp -r ./node_modules/newman-reporter-htmlextra ./node_modules/newman/
+   cp -r ./node_modules/newman-reporter-allure ./node_modules/newman/
    runTests() {
+      ALLURE_OPT=""
+      if [ -n "${allure_dir}" ]; then
+         ALLURE_OPT="--reporters cli,junit,htmlextra,allure --reporter-allure-resultsDir ${allure_dir}"
+      else
+         ALLURE_OPT="--reporters cli,junit,htmlextra"
+      fi
       ./node_modules/newman/bin/newman.js run ./tests/e2e/postman_collection.json \
          -e ./tests/e2e/postman_env.json \
          --insecure \
          --timeout 900000 \
-         --reporters cli,junit,htmlextra \
+         $ALLURE_OPT \
          --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
          --reporter-htmlextra-export ./tests/e2e/results/e2e_tests_iteration$1.html \
          --reporter-junit-export ./newman/e2e_tests_iteration$1.xml \
@@ -232,13 +243,20 @@ if [ -f "./node_modules/newman/bin/newman.js" ]; then
 else
    npm install -g newman
    npm install -g newman-reporter-htmlextra
+   npm install -g newman-reporter-allure
 
    runTests() {
+      ALLURE_OPT=""
+      if [ -n "${allure_dir}" ]; then
+         ALLURE_OPT="--reporters cli,junit,htmlextra,allure --reporter-allure-resultsDir ${allure_dir}"
+      else
+         ALLURE_OPT="--reporters cli,junit,htmlextra"
+      fi
       newman run ./tests/e2e/postman_collection.json \
          -e ./tests/e2e/postman_env.json \
          --insecure \
          --timeout 900000 \
-         --reporters cli,junit,htmlextra \
+         $ALLURE_OPT \
          --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
          --reporter-htmlextra-export ./tests/e2e/results/e2e_tests_iteration$1.html \
          --reporter-junit-export ./newman/e2e_tests_iteration$1.xml \
