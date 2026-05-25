@@ -8,28 +8,28 @@ Apache-2.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- @aws-sdk/client-dynamodb (from https://www.npmjs.com/package/@aws-sdk/client-dynamodb)
-- @aws-sdk/client-s3 (from https://www.npmjs.com/package/@aws-sdk/client-s3)
-- @aws-sdk/client-secrets-manager (from https://www.npmjs.com/package/@aws-sdk/client-secrets-manager)
-- @aws-sdk/client-ssm (from https://www.npmjs.com/package/@aws-sdk/client-ssm)
-- @aws-sdk/client-sts (from https://www.npmjs.com/package/@aws-sdk/client-sts)
-- @aws-sdk/util-dynamodb (from https://www.npmjs.com/package/@aws-sdk/util-dynamodb)
+- @aws-sdk/client-dynamodb (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-dynamodb)
+- @aws-sdk/client-s3 (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-s3)
+- @aws-sdk/client-secrets-manager (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-secrets-manager)
+- @aws-sdk/client-ssm (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-ssm)
+- @aws-sdk/client-sts (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts)
+- @aws-sdk/util-dynamodb (from https://github.com/aws/aws-sdk-js-v3/tree/main/packages/util-dynamodb)
 - @google-cloud/datastore (from https://www.npmjs.com/package/@google-cloud/datastore)
-- @google-cloud/logging-winston (from https://www.npmjs.com/package/@google-cloud/logging-winston)
-- @google-cloud/pubsub (from https://www.npmjs.com/package/@google-cloud/pubsub)
-- @google-cloud/secret-manager (from https://www.npmjs.com/package/@google-cloud/secret-manager)
-- @google-cloud/storage (from https://www.npmjs.com/package/@google-cloud/storage)
+- @google-cloud/logging-winston (from https://github.com/googleapis/nodejs-logging-winston#readme)
+- @google-cloud/pubsub (from https://github.com/googleapis/nodejs-pubsub#readme)
+- @google-cloud/secret-manager (from https://github.com/googleapis/google-cloud-node/tree/main/packages/google-cloud-secretmanager)
+- @google-cloud/storage (from https://github.com/googleapis/nodejs-storage#readme)
 - @google-cloud/trace-agent (from https://www.npmjs.com/package/@google-cloud/trace-agent)
 - @ibm-cloud/cloudant (from https://www.npmjs.com/package/@ibm-cloud/cloudant)
-- @prisma/client (from https://www.npmjs.com/package/@prisma/client)
+- @prisma/client (from https://www.prisma.io/)
 - aws-sdk (from https://www.npmjs.com/package/aws-sdk)
 - boto3 (from <https://github.com/boto/boto3>, https://github.com/boto/boto3)
-- google-auth-library (from https://www.npmjs.com/package/google-auth-library)
+- google-auth-library (from https://github.com/googleapis/google-cloud-node-core/tree/main/packages/google-auth-library-nodejs)
 - keycloak-admin (from https://www.npmjs.com/package/keycloak-admin)
-- log4js (from https://www.npmjs.com/package/log4js)
-- prisma (from https://www.npmjs.com/package/prisma)
+- log4js (from https://log4js-node.github.io/log4js-node/)
+- prisma (from https://www.prisma.io/)
 - prom-client (from https://www.npmjs.com/package/prom-client)
-- typescript (from https://www.npmjs.com/package/typescript)
+- typescript (from https://www.typescriptlang.org/)
 
 ========================================================================
 BSD-2-Clause
@@ -37,7 +37,7 @@ BSD-2-Clause
 The following software have components provided under the terms of this license:
 
 - aws-sdk (from https://www.npmjs.com/package/aws-sdk)
-- dotenv (from https://www.npmjs.com/package/dotenv)
+- dotenv (from https://github.com/motdotla/dotenv#readme)
 
 ========================================================================
 BSD-3-Clause
@@ -46,7 +46,7 @@ The following software have components provided under the terms of this license:
 
 - aws-sdk (from https://www.npmjs.com/package/aws-sdk)
 - json-refs (from https://www.npmjs.com/package/json-refs)
-- qs (from https://www.npmjs.com/package/qs)
+- qs (from https://github.com/ljharb/qs)
 - xss-filters (from https://www.npmjs.com/package/xss-filters)
 
 ========================================================================
@@ -54,62 +54,62 @@ CC-BY-4.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- typescript (from https://www.npmjs.com/package/typescript)
+- typescript (from https://www.typescriptlang.org/)
 
 ========================================================================
 MIT
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- @azure/core-auth (from https://www.npmjs.com/package/@azure/core-auth)
-- @azure/core-rest-pipeline (from https://www.npmjs.com/package/@azure/core-rest-pipeline)
-- @azure/cosmos (from https://www.npmjs.com/package/@azure/cosmos)
+- @azure/core-auth (from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-auth/README.md)
+- @azure/core-rest-pipeline (from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-rest-pipeline/)
+- @azure/cosmos (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/cosmosdb/cosmos/README.md)
 - @azure/identity (from https://www.npmjs.com/package/@azure/identity)
-- @azure/keyvault-secrets (from https://www.npmjs.com/package/@azure/keyvault-secrets)
-- @azure/storage-blob (from https://www.npmjs.com/package/@azure/storage-blob)
-- @azure/storage-queue (from https://www.npmjs.com/package/@azure/storage-queue)
+- @azure/keyvault-secrets (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/keyvault/keyvault-secrets/README.md)
+- @azure/storage-blob (from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-blob/)
+- @azure/storage-queue (from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-queue/)
 - PyJWT (from http://github.com/jpadilla/pyjwt, https://pypi.org/project/PyJWT/)
-- ajv (from https://www.npmjs.com/package/ajv)
-- ajv-formats (from https://www.npmjs.com/package/ajv-formats)
-- applicationinsights (from https://www.npmjs.com/package/applicationinsights)
+- ajv (from https://ajv.js.org/)
+- ajv-formats (from https://github.com/ajv-validator/ajv-formats#readme)
+- applicationinsights (from https://github.com/microsoft/ApplicationInsights-node.js#readme)
 - applicationinsights-native-metrics (from https://www.npmjs.com/package/applicationinsights-native-metrics)
 - aws-sdk (from https://www.npmjs.com/package/aws-sdk)
-- axios (from https://www.npmjs.com/package/axios)
-- bull (from https://www.npmjs.com/package/bull)
+- axios (from https://axios-http.com/)
+- bull (from https://github.com/OptimalBits/bull#readme)
 - colors (from https://www.npmjs.com/package/colors)
 - copyfiles (from https://www.npmjs.com/package/copyfiles)
 - cors (from https://www.npmjs.com/package/cors)
-- express (from https://www.npmjs.com/package/express)
+- express (from https://expressjs.com/)
 - express-prometheus-middleware (from https://www.npmjs.com/package/express-prometheus-middleware)
 - form-data (from https://www.npmjs.com/package/form-data)
 - hpropagate (from https://www.npmjs.com/package/hpropagate)
-- ioredis (from https://www.npmjs.com/package/ioredis)
-- js-yaml (from https://www.npmjs.com/package/js-yaml)
+- ioredis (from https://github.com/luin/ioredis#readme)
+- js-yaml (from https://github.com/nodeca/js-yaml#readme)
 - json-refs (from https://www.npmjs.com/package/json-refs)
-- jsonwebtoken (from https://www.npmjs.com/package/jsonwebtoken)
+- jsonwebtoken (from https://github.com/auth0/node-jsonwebtoken#readme)
 - node-cache (from https://www.npmjs.com/package/node-cache)
-- path-to-regexp (from https://www.npmjs.com/package/path-to-regexp)
-- prisma (from https://www.npmjs.com/package/prisma)
-- redlock (from https://www.npmjs.com/package/redlock)
+- path-to-regexp (from https://github.com/pillarjs/path-to-regexp#readme)
+- prisma (from https://www.prisma.io/)
+- redlock (from https://github.com/mike-marcacci/node-redlock)
 - replace-in-file (from https://www.npmjs.com/package/replace-in-file)
-- swagger-ui-express (from https://www.npmjs.com/package/swagger-ui-express)
-- typescript (from https://www.npmjs.com/package/typescript)
-- uuid (from https://www.npmjs.com/package/uuid)
-- winston (from https://www.npmjs.com/package/winston)
+- swagger-ui-express (from https://github.com/scottie1984/swagger-ui-express)
+- typescript (from https://www.typescriptlang.org/)
+- uuid (from https://github.com/uuidjs/uuid#readme)
+- winston (from https://github.com/winstonjs/winston#readme)
 
 ========================================================================
 Unicode-DFS-2016
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- typescript (from https://www.npmjs.com/package/typescript)
+- typescript (from https://www.typescriptlang.org/)
 
 ========================================================================
 W3C-20150513
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- typescript (from https://www.npmjs.com/package/typescript)
+- typescript (from https://www.typescriptlang.org/)
 
 ========================================================================
 bsd-2-clause-views

@@ -22,9 +22,3 @@ gc-test-python:
     - if: $DISABLED == 'true'
       when: never
 
-gc-dev2-acceptance-test:
-  extends:
-    - .gc-variables
-  rules:
-    - if: $DISABLED == 'true'
-      when: never

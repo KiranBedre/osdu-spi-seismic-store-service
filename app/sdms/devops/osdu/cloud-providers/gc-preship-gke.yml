@@ -2,7 +2,8 @@ sdms_gc-preship-deploy:
   extends:
     - gc-preship-deploy
   needs: 
-    - 'sdms_gc-dev2-deploy'
+    - 'sdms_gc-containerize-gitlab'
+    - 'sdms_gc-helm-charts-release-gitlab'
   variables:
     GC_HELM_DEPLOYMENT_SERVICE: seismic-store-deploy
     GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"
