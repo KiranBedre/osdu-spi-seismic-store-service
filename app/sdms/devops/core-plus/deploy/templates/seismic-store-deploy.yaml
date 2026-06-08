@@ -51,7 +51,7 @@ spec:
           - secretRef:
               name: {{ .Values.conf.keycloak | quote }}
           - secretRef:
-              name: {{ .Values.conf.minio | quote }}
+              name: {{ printf "%s-%s" .Values.global.dataPartitionId .Values.conf.s3SecretName | quote }}
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true

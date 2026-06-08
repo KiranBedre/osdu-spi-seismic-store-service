@@ -23,11 +23,12 @@ export class AnthosConfig extends Config {
     public static KEYCLOAK_CLIENT_ID: string;
     public static KEYCLOAK_CLIENT_SECRET: string;
     public static KEYCLOAK_URL: string;
-    public static MINIO_ACCESS_KEY: string;
-    public static MINIO_SECRET_KEY: string;
-    public static MINIO_ENDPOINT: string;
+    public static S3_ACCESS_KEY: string;
+    public static S3_SECRET_KEY: string;
+    public static S3_ENDPOINT: string;
     public static S3_REGION: string;
     public static SDMS_BUCKET: string;
+    public static STS_ROLE_ARN: string;
     // Logger
     public static LOGGER_LEVEL: string;
     // max len for a group name in DE
@@ -41,11 +42,12 @@ export class AnthosConfig extends Config {
         AnthosConfig.KEYCLOAK_CLIENT_SECRET = process.env.KEYCLOAK_CLIENT_SECRET;
         AnthosConfig.KEYCLOAK_URL = process.env.KEYCLOAK_URL;
 
-        AnthosConfig.MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY;
-        AnthosConfig.MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY;
-        AnthosConfig.MINIO_ENDPOINT = process.env.MINIO_ENDPOINT;
+        AnthosConfig.S3_ACCESS_KEY = process.env.S3_ACCESS_KEY || process.env.MINIO_ACCESS_KEY;
+        AnthosConfig.S3_SECRET_KEY = process.env.S3_SECRET_KEY || process.env.MINIO_SECRET_KEY;
+        AnthosConfig.S3_ENDPOINT = process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT;
         AnthosConfig.S3_REGION = process.env.AWS_REGION;
         AnthosConfig.SDMS_BUCKET = process.env.SDMS_BUCKET;
+        AnthosConfig.STS_ROLE_ARN = process.env.STS_ROLE_ARN || 'arn:x:ignored:by:minio:';
         AnthosConfig.DES_REDIS_INSTANCE_TLS_DISABLE = process.env.DES_REDIS_INSTANCE_TLS_DISABLE === 'true';
 
         // Logger

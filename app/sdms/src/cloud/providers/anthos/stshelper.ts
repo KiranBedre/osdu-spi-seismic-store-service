@@ -87,11 +87,7 @@ export class MinIOSTShelper {
                     Resource: [
                         'arn:aws:s3:::'+bucketName
                     ],
-                    Condition: {
-                        StringEquals: {
-                            's3:prefix': keyPath+'/'
-                        }
-                    }
+                    Condition: { StringEquals: { 's3:prefix': keyPath+'/' } }
                 },
                 {
                     Sid: 'Two', // Statement 2: Allow Listing files under the file location
@@ -102,11 +98,7 @@ export class MinIOSTShelper {
                     Resource: [
                         'arn:aws:s3:::'+bucketName
                     ],
-                    Condition: {
-                        StringLike: {
-                            's3:prefix': keyPath+'/*'
-                        }
-                    }
+                    Condition: { StringLike: { 's3:prefix': keyPath+'/*' } }
 
                 },
                 {
@@ -164,11 +156,7 @@ export class MinIOSTShelper {
                     Resource: [
                         'arn:aws:s3:::'+bucketName
                     ],
-                    Condition: {
-                        StringEquals: {
-                            's3:prefix': keyPath+'/'
-                        }
-                    }
+                    Condition: { StringEquals: { 's3:prefix': keyPath+'/' } }
                 },
                 {
                     Sid: 'Two', // Statement 2: Allow Listing files under the file location
@@ -179,11 +167,7 @@ export class MinIOSTShelper {
                     Resource: [
                         'arn:aws:s3:::'+bucketName
                     ],
-                    Condition: {
-                        StringLike: {
-                            's3:prefix': keyPath+'/*'
-                        }
-                    }
+                    Condition: { StringLike: { 's3:prefix': keyPath+'/*' } }
 
                 },
                 {

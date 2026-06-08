@@ -96,19 +96,21 @@ export class AnthosCredentials extends AbstractCredentials {
         subproject: string,
         subprojectPath: string, // <bucket_name>$$<subProjectFolder>
         readonly: boolean,
-        _partition: string
+        _partition: string,
+        objectPrefix?: string
     ): Promise<IAccessTokenModel> {
         let flagUpload = true;
 
         const partitionInfo: PartitionInfo = {
-            endpoint: AnthosConfig.MINIO_ENDPOINT,
-            accessKey: AnthosConfig.MINIO_ACCESS_KEY,
-            secretKey: AnthosConfig.MINIO_SECRET_KEY,
+            endpoint: AnthosConfig.S3_ENDPOINT,
+            accessKey: AnthosConfig.S3_ACCESS_KEY,
+            secretKey: AnthosConfig.S3_SECRET_KEY,
         }
 
         const splitPath = subprojectPath.split('$$');
         const S3bucket = splitPath[0];
         const subprojectFolder = splitPath[1];
+        const keyPath = objectPrefix ? subprojectFolder + '/' + objectPrefix : subprojectFolder;
 
         if (readonly) { // readOnly True
             flagUpload = false;
@@ -120,8 +122,8 @@ export class AnthosCredentials extends AbstractCredentials {
         const minIOSTSHelper = new MinIOSTShelper(partitionInfo);
         const credentials = await minIOSTSHelper.getCredentials(
             S3bucket,
-            subprojectFolder,
-            'arn:x:ignored:by:minio:',
+            keyPath,
+            AnthosConfig.STS_ROLE_ARN,
             flagUpload,
             '3600'
         );

@@ -31,8 +31,9 @@ First you need to set variables in **values.yaml** file using any code editor. S
 
 | Name | Description | Type | Default |Required |
 |------|-------------|------|---------|---------|
-| **global.domain** | your domain for the external endpoint, ex `example.com` | string | - | yes |
+| **global.domain** | your domain for the external endpoint, ex `example.com` | string | "" | yes |
 | **global.limitsEnabled** | whether CPU and memory limits are enabled | boolean | true | yes |
+| **global.dataPartitionId** | data partition identifier | string | "" | yes |
 
 ### Configmap variables
 
@@ -44,23 +45,26 @@ First you need to set variables in **values.yaml** file using any code editor. S
 | **data.storageHost** | storage service endpoint | string | "<http://storage>" | yes |
 | **data.legalHost** | legal service endpoint | string | "<http://legal>" | yes |
 | **data.entitlementsHost** | entitlements service endpoint | string | "<http://entitlements>" | yes |
-| **data.redisSdmsHost** | The host for redis instance. If empty (by default), helm installs an internal redis instance | string | - | yes |
-| **data.redisSdmsPort** | redis instance port | string | "6379" | yes |
-| **data.redisSdmsTlsDisabled** | redis tls disabled conf | bool | "true" | yes |
+| **data.redisSdmsHost** | The host for redis SDMS instance. If empty (by default), helm installs an internal redis instance | string | "" | yes |
+| **data.redisSdmsPort** | redis SDMS instance port | string | "6379" | yes |
+| **data.redisSdmsTlsDisabled** | redis SDMS TLS disabled conf | bool | true | yes |
+| **data.redisSharedHost** | The host for redis shared instance | string | "" | yes |
+| **data.redisSharedPort** | redis shared instance port | string | "6379" | yes |
+| **data.redisSharedTlsDisabled** | redis shared TLS disabled conf | bool | true | yes |
 | **data.serviceEnv** | service environment | string | "dev" | yes |
 
 ### Deployment variables
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|---------|
-| **data.requestsCpu** | amount of requested CPU | string | "5m" | yes |
+| **data.requestsCpu** | amount of requested CPU | string | "15m" | yes |
 | **data.requestsMemory** | amount of requested memory| string | "150Mi" | yes |
 | **data.limitsCpu** | CPU limit | string | "1" | only if `global.limitsEnabled` is true |
 | **data.limitsMemory** | memory limit | string | "1G" | only if `global.limitsEnabled` is true |
 | **data.serviceAccountName** | name of your service account | string | "seismic-store" | yes |
 | **data.imagePullPolicy** | when to pull image | string | "IfNotPresent" | yes |
-| **data.image** | service image | string | - | yes |
-| **data.redisImage** | service image | string | `docker.io/library/redis:7` | yes |
+| **data.image** | service image | string | "" | yes |
+| **data.redisImage** | redis image | string | "docker.io/library/redis:7.2-alpine" | yes |
 
 ### Config variables
 
@@ -68,10 +72,11 @@ First you need to set variables in **values.yaml** file using any code editor. S
 |------|-------------|------|---------|---------|
 | **conf.configmap** | configmap to be used | string | "seismic-store-config" | yes |
 | **conf.appName** | name of the app | string | "seismic-store" | yes |
-| **conf.sdmsRedisSecretName** | sdms Redis secret that contains redis password with REDIS_PASSWORD key | string | `seismic-store-redis-secret` | yes |
 | **conf.database** | secret for database | string | "seismic-store-db-secret" | yes |
 | **conf.keycloak** | secret for keycloak | string | "seismic-store-keycloak-secret" | yes |
-| **conf.minio** | secret for minio, should contain SDMS_BUCKET variable | string | "seismic-store-minio-secret" | yes |
+| **conf.s3SecretName** | secret for S3/SeaweedFS storage(prefixed with `global.dataPartitionId`) | string | "seismic-seaweedfs-secret" | yes |
+| **conf.sdmsRedisSecretName** | sdms Redis secret that contains redis password with REDIS_PASSWORD key | string | "seismic-store-redis-secret" | yes |
+| **conf.replicas** | number of replicas for the deployment | integer | 1 | yes |
 
 ### ISTIO variables
 

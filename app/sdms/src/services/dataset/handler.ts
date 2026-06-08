@@ -744,14 +744,11 @@ export class DatasetHandler {
                     datasetIN.subproject + datasetIN.path + newName + ' already exists'));
             }
 
-            datasetOUTKey = await this.findDatasetKey(subproject, journalClient, datasetIN);
-            // if (subproject.enforce_key) {
-            //     datasetOUTKey = journalClient.createKey({
-            //         namespace: Config.SEISMIC_STORE_NS + '-' + datasetIN.tenant + '-' + datasetIN.subproject,
-            //         path: [Config.DATASETS_KIND],
-            //         enforcedKey: datasetIN.path.slice(0, -1) + '/' + datasetIN.name
-            //     });
-            // }
+            // Use getKey (deterministic, no DB query) instead of findDatasetKey, which would
+            // query for the new name that does not exist yet and return undefined when enforce_key=false.
+            // enforce_key=true was already using the same key formula via findDatasetKey; this unifies
+            // both paths and fixes the crash for enforce_key=false (F04).
+            datasetOUTKey = DatasetDAO.getKey(journalClient, datasetIN);
 
             datasetOUT.name = newName;
         }

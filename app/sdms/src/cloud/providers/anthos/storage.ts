@@ -44,7 +44,7 @@ export class MinIOStorage extends AbstractStorage {
         super();
         this.tenant = tenant;
         this.minioBucket = '';
-        this.s3 = AnthosConfig.MINIO_ENDPOINT.length === 0 ? new S3Client(
+        this.s3 = AnthosConfig.S3_ENDPOINT.length === 0 ? new S3Client(
             {
                 region: AnthosConfig.S3_REGION
             }
@@ -52,10 +52,10 @@ export class MinIOStorage extends AbstractStorage {
             {
                 // TODO: Replace this with PArtitionInfo API call later
                 credentials: {
-                    accessKeyId: AnthosConfig.MINIO_ACCESS_KEY,
-                    secretAccessKey: AnthosConfig.MINIO_SECRET_KEY,
+                    accessKeyId: AnthosConfig.S3_ACCESS_KEY,
+                    secretAccessKey: AnthosConfig.S3_SECRET_KEY,
                 },
-                endpoint: AnthosConfig.MINIO_ENDPOINT,
+                endpoint: AnthosConfig.S3_ENDPOINT,
                 forcePathStyle: true,
                 region: 'us-east-1'
             }
@@ -68,7 +68,7 @@ export class MinIOStorage extends AbstractStorage {
     private async initS3Client() {
         if (this.s3 === undefined) {
             const partitionInfo: PartitionInfo = await AnthosCredentials.getPartitionInfo(this.tenant.gcpid);
-            this.s3 = AnthosConfig.MINIO_ENDPOINT.length === 0 ? new S3Client(
+            this.s3 = AnthosConfig.S3_ENDPOINT.length === 0 ? new S3Client(
                 {
                     region: AnthosConfig.S3_REGION
                 }
@@ -76,10 +76,10 @@ export class MinIOStorage extends AbstractStorage {
                 {
                     // TODO: Replace this with PArtitionInfo API call later
                     credentials: {
-                        accessKeyId: AnthosConfig.MINIO_ACCESS_KEY,
-                        secretAccessKey: AnthosConfig.MINIO_SECRET_KEY,
+                        accessKeyId: AnthosConfig.S3_ACCESS_KEY,
+                        secretAccessKey: AnthosConfig.S3_SECRET_KEY,
                     },
-                    endpoint: AnthosConfig.MINIO_ENDPOINT,
+                    endpoint: AnthosConfig.S3_ENDPOINT,
                     forcePathStyle: true,
                     region: 'us-east-1'
                 }

@@ -1,6 +1,7 @@
 global:
   domain: ""
   limitsEnabled: true
+  dataPartitionId: ""
 
 data:
   # Configmap
@@ -32,7 +33,7 @@ conf:
   appName: "seismic-store"
   database: "seismic-store-db-secret"
   keycloak: "seismic-store-keycloak-secret"
-  minio: "seismic-store-minio-secret"
+  s3SecretName: "seismic-seaweedfs-secret"
   sdmsRedisSecretName: "seismic-store-redis-secret" # pragma: allowlist secret
   replicas: 1
 
