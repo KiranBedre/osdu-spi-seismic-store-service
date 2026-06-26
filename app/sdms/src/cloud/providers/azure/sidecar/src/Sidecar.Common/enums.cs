@@ -48,3 +48,11 @@ public enum Status
     [Description("Completed With Errors")]
     CompletedWithErrors = 3
 }
+
+public enum RestoreOperationStatus
+{
+    InProgress = 0,
+    Succeeded = 1,
+    Failed = 2,
+    Rejected = 3
+}
