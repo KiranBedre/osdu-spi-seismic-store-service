@@ -1,0 +1,160 @@
+// ============================================================================
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+import { Container, CosmosClient } from '@azure/cosmos';
+import { IRestoreOperationStatus } from '../../../services/operation/model';
+import { AzureDataEcosystemServices } from './dataecosystem';
+import { AzureConfig } from './config';
+import { AzureCredentials } from './credentials';
+import { Error } from '../../../shared';
+import { LoggerFactory } from '../../logger';
+
+export class AzureRestoreOperationStatusStorage {
+
+    private get logger() { return LoggerFactory.getLogger(); }
+
+    private static cosmosClientCache = new Map<string, Promise<CosmosClient>>();
+    private static containerCache = new Map<string, Promise<Container>>();
+    private static readonly CONTEXT = 'RestoreOperationStatusStorage';
+
+    private getCosmosClient(tenant: string): Promise<CosmosClient> {
+        if (!AzureRestoreOperationStatusStorage.cosmosClientCache.has(tenant)) {
+            const clientPromise = (async () => {
+                const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(tenant);
+                return new CosmosClient({
+                    endpoint: connectionParams.endpoint,
+                    aadCredentials: AzureCredentials.defaultAzureCredential
+                });
+            })().catch((err) => {
+                AzureRestoreOperationStatusStorage.cosmosClientCache.delete(tenant);
+                throw err;
+            });
+            AzureRestoreOperationStatusStorage.cosmosClientCache.set(tenant, clientPromise);
+        }
+        return AzureRestoreOperationStatusStorage.cosmosClientCache.get(tenant)!;
+    }
+
+    private getContainer(tenant: string): Promise<Container> {
+        if (!AzureRestoreOperationStatusStorage.containerCache.has(tenant)) {
+            const containerPromise = (async () => {
+                const cosmosClient = await this.getCosmosClient(tenant);
+                const database = cosmosClient.database(AzureConfig.COSMOS_DATABASE_ID);
+                const container = database.container(AzureConfig.COSMOS_RESTORE_STATUS_CONTAINER);
+                return container;
+            })().catch((err) => {
+                AzureRestoreOperationStatusStorage.containerCache.delete(tenant);
+                throw err;
+            });
+            AzureRestoreOperationStatusStorage.containerCache.set(tenant, containerPromise);
+        }
+        return AzureRestoreOperationStatusStorage.containerCache.get(tenant)!;
+    }
+
+    public async createRestoreOperation(params: {
+        operationId: string;
+        tenant: string;
+        subproject: string;
+        sdPath: string;
+        restoreTimestamp: string;
+        reason?: string;
+        createdBy: string;
+    }): Promise<void> {
+        try {
+            const container = await this.getContainer(params.tenant);
+
+            const record = {
+                id: params.operationId,
+                operationId: params.operationId,
+                tenant: params.tenant,
+                subproject: params.subproject,
+                sdPath: params.sdPath,
+                restoreTimestamp: params.restoreTimestamp,
+                reason: params.reason || undefined,
+                createdBy: params.createdBy,
+                status: 'InProgress',
+                error_message: '',
+                startedAt: new Date().toISOString(),
+                lastUpdatedAt: new Date().toISOString(),
+            };
+
+            await container.items.create(record);
+        } catch (error) {
+            this.logger.error({
+                message: `Failed to create restore operation status: ${error?.message || error}`,
+                context: AzureRestoreOperationStatusStorage.CONTEXT
+            });
+            throw Error.make(Error.Status.UNKNOWN,
+                'Failed to create restore operation status: ' + (error as any).message);
+        }
+    }
+
+    public async getRestoreOperationStatus(operationId: string, tenant: string): Promise<IRestoreOperationStatus> {
+        if (!tenant) {
+            throw Error.make(Error.Status.BAD_REQUEST, 'Tenant is required to fetch restore operation status');
+        }
+
+        const container = await this.getContainer(tenant);
+        const { resource } = await container.item(operationId, operationId).read();
+
+        if (!resource) {
+            throw Error.make(Error.Status.NOT_FOUND, `Restore operation not found for operationId: '${operationId}'`);
+        }
+
+        return {
+            operationId: resource.operationId,
+            status: resource.status,
+            sdPath: resource.sdPath,
+            restoreTimestamp: resource.restoreTimestamp,
+            reason: resource.reason,
+            tenant: resource.tenant,
+            subproject: resource.subproject,
+            createdBy: resource.createdBy,
+            error_message: resource.error_message,
+            startedAt: resource.startedAt,
+            lastUpdatedAt: resource.lastUpdatedAt,
+            completedAt: resource.completedAt,
+        };
+    }
+
+    public async markRestoreOperationFailed(operationId: string, tenant: string, errorMessage: string): Promise<void> {
+        const container = await this.getContainer(tenant);
+        await container.item(operationId, operationId).patch([
+            { op: 'replace', path: '/status', value: 'Failed' },
+            { op: 'replace', path: '/error_message', value: errorMessage },
+            { op: 'add', path: '/completedAt', value: new Date().toISOString() },
+            { op: 'replace', path: '/lastUpdatedAt', value: new Date().toISOString() },
+        ]);
+    }
+
+    /**
+     * Secondary check: queries Cosmos for any in-progress restore in this data partition.
+     * Used as a fallback when Redis lock state may be lost (e.g., Redis restart).
+     * Returns the operationId if found, null otherwise.
+     */
+    public async getInProgressRestoreOperationId(tenant: string): Promise<string | null> {
+        const container = await this.getContainer(tenant);
+
+        const query = {
+            query: 'SELECT TOP 1 c.operationId FROM c WHERE c.status = @status',
+            parameters: [
+                { name: '@status', value: 'InProgress' }
+            ]
+        };
+
+        const { resources } = await container.items.query(query).fetchAll();
+        return resources.length > 0 ? resources[0].operationId : null;
+    }
+}

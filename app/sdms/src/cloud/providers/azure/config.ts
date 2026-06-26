@@ -54,6 +54,18 @@ export class AzureConfig extends Config {
 
     // cosmo db max throughput settings
     public static COSMO_MAX_THROUGHPUT: number;
+    public static COSMO_CHANGE_TIER_MAX_THROUGHPUT: number;
+
+    // Cosmos DB database and container names
+    public static COSMOS_DATABASE_ID = 'sdms-db';
+    public static COSMOS_DATA_CONTAINER = 'data';
+    public static COSMOS_CHANGE_TIER_STATUS_CONTAINER = 'ChangeTierOperationStatus';
+    public static COSMOS_CHANGE_TIER_FAILURE_CONTAINER = 'ChangeTierFailure';
+    public static COSMOS_RESTORE_STATUS_CONTAINER = 'RestoreOperationStatus';
+    
+    // Cosmos DB partition key paths
+    public static COSMOS_PARTITION_KEY_ID = '/id';
+    public static COSMOS_PARTITION_KEY_OPERATION_ID = '/operationId';
 
     // internal logging
     public static ENABLE_LOGGING_INFO: boolean;
@@ -135,6 +147,10 @@ export class AzureConfig extends Config {
             AzureConfig.SDMS_CHANGE_TIER_QUEUE = process.env.SDMS_CHANGE_TIER_QUEUE ||
                 AzureConfig.SDMS_CHANGE_TIER_QUEUE || 'sdms-queue-changetier';
 
+            // restore operation queue
+            AzureConfig.SDMS_RESTORE_QUEUE = process.env.SDMS_RESTORE_QUEUE ||
+                AzureConfig.SDMS_RESTORE_QUEUE || 'sdms-queue-restore';
+
             // storage queue endpoint
             AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT ||
                 process.env.AZURE_STORAGE_QUEUE_ENDPOINT;
@@ -183,6 +199,7 @@ export class AzureConfig extends Config {
                 SMDS_DELETION_QUEUE: AzureConfig.SMDS_DELETION_QUEUE,
                 SDMS_COMPUTE_SIZE_QUEUE: AzureConfig.SDMS_COMPUTE_SIZE_QUEUE,
                 SDMS_CHANGE_TIER_QUEUE: AzureConfig.SDMS_CHANGE_TIER_QUEUE,
+                SDMS_RESTORE_QUEUE: AzureConfig.SDMS_RESTORE_QUEUE,
                 DES_SERVICE_HOST_COMPLIANCE: AzureConfig.DES_SERVICE_HOST_COMPLIANCE,
                 DES_SERVICE_HOST_ENTITLEMENT: AzureConfig.DES_SERVICE_HOST_ENTITLEMENT,
                 DES_SERVICE_HOST_STORAGE: AzureConfig.DES_SERVICE_HOST_STORAGE,
@@ -219,6 +236,7 @@ export class AzureConfig extends Config {
                 FEATURE_FLAG_ENABLE_CHANGE_TIER: process.env.FEATURE_FLAG_ENABLE_CHANGE_TIER === 'true' || false,
                 FEATURE_FLAG_ENABLE_ANALYTICS: process.env.FEATURE_FLAG_ENABLE_ANALYTICS === 'true',
                 FEATURE_FLAG_TIER_STORAGE_BLOCK: process.env.FEATURE_FLAG_TIER_STORAGE_BLOCK === 'true',
+                FEATURE_FLAG_ENABLE_RESTORE: process.env.FEATURE_FLAG_ENABLE_RESTORE === 'true' || false,
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,
                 CCM_TOKEN_SCOPE: AzureConfig.CCM_TOKEN_SCOPE,
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?

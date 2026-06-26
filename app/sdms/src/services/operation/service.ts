@@ -43,4 +43,20 @@ router.get('/change-tier/:operationid', async (req: Request, res: Response) => {
     await Handler.handle(req, res, Operation.BulkChangeTierStatus);
 });
 
+// trigger a point-in-time restore operation
+router.post('/restore', async (req: Request, res: Response) => {
+    await CallContext.initializeForRequest(req, async () => {
+        CallContext.endpointId = 'operation-restore-post';
+        await Handler.handle(req, res, Operation.RestorePush);
+    });
+});
+
+// get restore operation status
+router.get('/restore/:operationId', async (req: Request, res: Response) => {
+    await CallContext.initializeForRequest(req, async () => {
+        CallContext.endpointId = 'operation-restore-status';
+        await Handler.handle(req, res, Operation.RestoreStatus);
+    });
+});
+
 export { router as OperationRouter };

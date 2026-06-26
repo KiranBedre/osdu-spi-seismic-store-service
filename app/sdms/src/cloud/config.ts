@@ -39,6 +39,9 @@ export interface ConfigModel {
     SDMS_COMPUTE_SIZE_QUEUE?: string;
     SMDS_DELETION_QUEUE?: string;
     SDMS_CHANGE_TIER_QUEUE?: string;
+    SDMS_RESTORE_QUEUE?: string;
+    SDMS_RESTORE_LOCK_TTL_SECONDS?: number;
+    SDMS_RESTORE_MAX_DAYS?: number;
     DES_SERVICE_HOST_ENTITLEMENT: string;
     DES_SERVICE_HOST_COMPLIANCE: string;
     DES_SERVICE_HOST_STORAGE: string;
@@ -71,6 +74,7 @@ export interface ConfigModel {
     FEATURE_FLAG_ENABLE_CHANGE_TIER?: boolean;
     FEATURE_FLAG_ENABLE_ANALYTICS?: boolean;
     FEATURE_FLAG_TIER_STORAGE_BLOCK?: boolean;
+    FEATURE_FLAG_ENABLE_RESTORE?: boolean;
     SDMS_ANALYTICS_CONTAINER_NAME?: string;
     FULL_DATA_ACCESS_GROUP?: string;
     CCM_SERVICE_URL: string;
@@ -145,6 +149,15 @@ export abstract class Config implements IConfig {
     // Queue used for bulk change tier operation
     public static SDMS_CHANGE_TIER_QUEUE: string;
 
+    // Queue used for restore operations
+    public static SDMS_RESTORE_QUEUE: string;
+
+    // TTL for restore operation distributed lock (seconds), default 2 hours
+    public static SDMS_RESTORE_LOCK_TTL_SECONDS = 7200;
+
+    // Maximum age for restoreTimestamp (days), default 30 days
+    public static SDMS_RESTORE_MAX_DAYS = 30;
+
     // DataEcosystem Configuration
     public static DES_SERVICE_HOST_ENTITLEMENT: string;
     public static DES_SERVICE_HOST_COMPLIANCE: string;
@@ -172,6 +185,7 @@ export abstract class Config implements IConfig {
     public static FEATURE_FLAG_ENABLE_CHANGE_TIER = false;
     public static FEATURE_FLAG_ENABLE_ANALYTICS = false;
     public static FEATURE_FLAG_TIER_STORAGE_BLOCK = false;
+    public static FEATURE_FLAG_ENABLE_RESTORE = false;
 
     // Full Data Permission Group
     public static FULL_DATA_ACCESS_GROUP: string;
@@ -327,6 +341,13 @@ export abstract class Config implements IConfig {
 
         Config.SDMS_CHANGE_TIER_QUEUE = model.SDMS_CHANGE_TIER_QUEUE ||
             process.env.SDMS_CHANGE_TIER_QUEUE;
+
+        Config.SDMS_RESTORE_QUEUE = model.SDMS_RESTORE_QUEUE ||
+            process.env.SDMS_RESTORE_QUEUE;
+        Config.SDMS_RESTORE_LOCK_TTL_SECONDS = model.SDMS_RESTORE_LOCK_TTL_SECONDS ||
+            +(process.env.SDMS_RESTORE_LOCK_TTL_SECONDS || 7200);
+        Config.SDMS_RESTORE_MAX_DAYS = model.SDMS_RESTORE_MAX_DAYS ||
+            +(process.env.SDMS_RESTORE_MAX_DAYS || 30);
         Config.SDMS_ANALYTICS_CONTAINER_NAME = process.env.SDMS_ANALYTICS_CONTAINER_NAME ||
             'sdms-analytics-reports';
 
@@ -342,6 +363,7 @@ export abstract class Config implements IConfig {
         Config.FEATURE_FLAG_ENABLE_CHANGE_TIER = model.FEATURE_FLAG_ENABLE_CHANGE_TIER;
         Config.FEATURE_FLAG_ENABLE_ANALYTICS = model.FEATURE_FLAG_ENABLE_ANALYTICS;
         Config.FEATURE_FLAG_TIER_STORAGE_BLOCK = model.FEATURE_FLAG_TIER_STORAGE_BLOCK;
+        Config.FEATURE_FLAG_ENABLE_RESTORE = model.FEATURE_FLAG_ENABLE_RESTORE;
 
         Config.FULL_DATA_ACCESS_GROUP = process.env.FULL_DATA_ACCESS_GROUP || 'users.data.root';
 

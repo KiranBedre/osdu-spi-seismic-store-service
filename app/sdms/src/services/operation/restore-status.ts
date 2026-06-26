@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,4 +14,6 @@
 // limitations under the License.
 // ============================================================================
 
-export enum Operation { BulkDeletePush, BulkDeleteStatus, BulkChangeTierPush, BulkChangeTierStatus, RestorePush, RestoreStatus }
+import { AzureRestoreOperationStatusStorage } from '../../cloud/providers/azure/restore-operation-status';
+
+export const restoreStatusStorage = new AzureRestoreOperationStatusStorage();

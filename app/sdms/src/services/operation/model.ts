@@ -37,3 +37,26 @@ export interface IBulkChangeTierOperationQueueTask extends IOperationQueueTask {
     tier: string;
     parameters: string;
 }
+
+export interface IRestoreOperationQueueTask extends IOperationQueueTask {
+    createdBy: string;
+    sdPath: string;
+    restoreTimestamp: string;
+    reason?: string;
+    correlationId?: string;
+}
+
+export interface IRestoreOperationStatus {
+    operationId: string;
+    status: string;
+    sdPath: string;
+    restoreTimestamp: string;
+    reason?: string;
+    tenant: string;
+    subproject: string;
+    createdBy: string;
+    error_message?: string;
+    startedAt: string;
+    lastUpdatedAt?: string;
+    completedAt?: string;
+}
