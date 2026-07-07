@@ -22,6 +22,7 @@ public interface IOptionsRestore :
     IOptionsLocksRedis,
     IOptionsQueueNameRedis,
     IOptionsStorageQueue,
-    IOptionsRedisMsi
+    IOptionsRedisMsi,
+    IOptionsAzureResourceScope
 {
 }

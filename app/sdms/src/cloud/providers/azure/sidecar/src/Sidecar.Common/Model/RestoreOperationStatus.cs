@@ -53,4 +53,21 @@ public class RestoreOperationStatus : RestoreOperationMessage, IRestoreOperation
     [JsonPropertyName("status")]
     [JsonProperty("status")]
     public string Status { get; set; } = "";
+
+    /// <summary>
+    /// Detailed error stack trace if available (for debugging).
+    /// </summary>
+    [JsonPropertyName("errorDetails")]
+    [JsonProperty("errorDetails")]
+    public string? ErrorDetails { get; set; }
+
+    /// <summary>
+    /// Azure Storage Point-in-Time Restore (PITR) identifier for the blob-range restore.
+    /// Persisted as soon as the restore is accepted so a redelivered message resumes the
+    /// same restore (Azure serializes one restore per account) instead of starting a new one.
+    /// Null until blob restore has been initiated.
+    /// </summary>
+    [JsonPropertyName("blobRestoreId")]
+    [JsonProperty("blobRestoreId")]
+    public string? BlobRestoreId { get; set; }
 }

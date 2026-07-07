@@ -70,6 +70,25 @@ public class Program
         opts.TaskStorageQueueName = Environment.GetEnvironmentVariable("SDMS_RESTORE_QUEUE") ?? opts.TaskStorageQueueName;
         opts.RedisMsiEnabled ??= Environment.GetEnvironmentVariable("AZURE_MSI_ISENABLED")!;
         opts.RedisClientId ??= Environment.GetEnvironmentVariable("REDIS_CLIENT_ID")!;
+        opts.AzureSubscriptionId = ResolveRequiredValue(
+            opts.AzureSubscriptionId,
+            "AZURE_SUBSCRIPTION_ID",
+            "AzureSubscriptionId");
+        opts.AzureResourceGroup = ResolveRequiredValue(
+            opts.AzureResourceGroup,
+            "AZURE_RESOURCE_GROUP",
+            "AzureResourceGroup");
+    }
+
+    private static string ResolveRequiredValue(string? optionValue, string envVarName, string optionName)
+    {
+        var resolvedValue = string.IsNullOrWhiteSpace(optionValue)
+            ? Environment.GetEnvironmentVariable(envVarName)
+            : optionValue;
+
+        return string.IsNullOrWhiteSpace(resolvedValue)
+            ? throw new ArgumentException($"{optionName} is required and cannot be null, empty, or whitespace.")
+            : resolvedValue;
     }
 
     private static async Task AttemptOptionsFromKeyVaultAsync(OptionsRestore opts)
@@ -184,6 +203,7 @@ public class Program
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsConfig>(sp => sp.GetRequiredService<IOptionsRestore>())
+            .AddSingleton<IOptionsAzureResourceScope>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsRedisMsi>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton(new TaskQueueBackgroundServiceOptions
             {
@@ -203,6 +223,11 @@ public class Program
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IRestoreOperationStatusStorage, CosmosRestoreTaskStatusStorage>()
             .AddSingleton<IMetadataRestoreService, MetadataRestoreService>()
+            .AddSingleton<IDatasetStorageInfoProvider, CosmosDatasetStorageInfoProvider>()
+            .AddSingleton<IAzureStorageResourceResolver, AzureStorageResourceResolver>()
+            .AddSingleton<IContainerRestoreService, ContainerRestoreService>()
+            .AddSingleton<IBlobRestoreService, BlobRestoreService>()
+            .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<QueueClientFactory>()
             .AddSingleton<QueueClient>(sp => sp.GetRequiredService<QueueClientFactory>().Build())
             .AddSingleton<RestoreJsonDeserializer>()

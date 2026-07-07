@@ -77,6 +77,12 @@ public class OptionsRestore :
     [Option("appResourceId", Required = false)]
     public string? AppResourceId { get; set; }
 
+    [Option("azureSubscriptionId", Required = true)]
+    public string AzureSubscriptionId { get; set; }
+
+    [Option("azureResourceGroup", Required = true)]
+    public string AzureResourceGroup { get; set; }
+
     /// <summary>Storage Queue name for restore tasks (env: SDMS_RESTORE_QUEUE).</summary>
     [Option("taskStorageQueueName", Required = false, Default = "restore-queue")]
     public string TaskStorageQueueName { get; set; }

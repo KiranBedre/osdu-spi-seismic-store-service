@@ -14,38 +14,45 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.RestoreRunner;
+namespace Sidecar.Common.Service;
 
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
 
 /// <summary>
-/// STUB — Metadata restore service.
+/// STUB — Cosmos metadata restore service.
+///
+/// Responsibility: restore the Cosmos metadata document to the target point-in-time.
+/// Storage-location discovery (gcsurl, blob paths) is NOT handled here — it is a storage
+/// concern owned by IDatasetStorageInfoProvider and orchestrated by the executor.
+///
+/// FinalizeRestoreAsync
+/// Restores the Cosmos metadata document to the target point-in-time.
+/// Called after blob restore completes, so storage is ready when metadata becomes active.
+/// This is a stub — implementation requires a decided archival/snapshot backend.
 ///
 /// BLOCKER: Implementation requires a decided archival/snapshot backend.
 /// No such mechanism exists in the repo today. Options under evaluation:
 ///   - Azure Cosmos DB continuous backup + point-in-time restore
 ///   - Custom metadata snapshot written to Azure Storage at dataset creation / tier change
 ///   - Cosmos DB change-feed replay from a snapshot stored in Azure Storage
-///
-/// The interface (IMetadataRestoreService) is intentionally backend-agnostic.
-/// Replace this stub with the real implementation once the archival backend is confirmed.
 /// </summary>
-public class MetadataRestoreService(ILogger<MetadataRestoreService> logger) : IMetadataRestoreService
+public class MetadataRestoreService(
+    ILogger<MetadataRestoreService> logger) : IMetadataRestoreService
 {
     private readonly ILogger<MetadataRestoreService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <inheritdoc/>
-    public Task RestoreAsync(string sdPath, string restorePointInTime, string operationId, CancellationToken ct)
+    public Task FinalizeRestoreAsync(string sdPath, string restorePointInTime, string operationId, CancellationToken ct)
     {
         _logger.LogError(
-            "MetadataRestoreService is not yet implemented. " +
+            "MetadataRestoreService.FinalizeRestoreAsync is not yet implemented. " +
             "Archival backend has not been decided or built yet. " +
             "OperationId: {OperationId}, SdPath: {SdPath}, RestorePoint: {RestorePointInTime}",
             operationId, sdPath, restorePointInTime);
 
         throw new NotImplementedException(
-            "Metadata restore is not yet implemented. " +
+            "Metadata restore finalization is not yet implemented. " +
             "The archival/snapshot backend has not been decided or built.");
     }
 }

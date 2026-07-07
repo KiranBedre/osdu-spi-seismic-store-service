@@ -14,22 +14,15 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Interface;
+namespace Sidecar.Common.Model;
 
-public interface IRestoreOperationStatus : IRestoreOperationMessage
-{
-    string Id { get; set; }
-    string CreatedAt { get; set; }
-    string LastUpdatedAt { get; set; }
-    /// <summary>
-    /// Values: "InProgress" | "Succeeded" | "Failed" | "Rejected"
-    /// </summary>
-    string Status { get; set; }
-
-    /// <summary>
-    /// Azure Storage PITR restore identifier for the blob-range restore, persisted so a
-    /// redelivered restore message resumes the same restore rather than starting a new one.
-    /// Null until blob restore has been initiated.
-    /// </summary>
-    string? BlobRestoreId { get; set; }
-}
+/// <summary>
+/// Storage location and blob paths for a dataset, resolved from Cosmos metadata.
+/// </summary>
+public sealed record DatasetStorageInfo(
+    string GcsUrl,
+    string ContainerName,
+    string? VirtualFolder,
+    List<string> BlobPaths,
+    string AccessPolicy = "",
+    bool IsDeleted = false);

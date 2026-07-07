@@ -17,22 +17,17 @@
 namespace Sidecar.Common.Interface;
 
 /// <summary>
-/// Restores metadata records for a target dataset sd-path to a prior state.
-/// This is a stub contract — implementation depends on the archival/snapshot
-/// mechanism chosen for the archival backend. Options include: Cosmos DB continuous backup,
-
-/// Blob restore (PITR) is handled separately.
+/// Restores the Cosmos metadata document to a target point-in-time.
 /// </summary>
 public interface IMetadataRestoreService
 {
     /// <summary>
-    /// Restores metadata records for the given target dataset
-    /// to the state at <paramref name="restorePointInTime"/>.
-    /// The concrete archival source is determined by the implementing class.
+    /// Finalizes the restore by applying metadata restore to target point-in-time.
+    /// Called after blob restore completes, so storage is ready when metadata becomes active.
     /// </summary>
     /// <param name="sdPath">The full SD dataset path to restore.</param>
     /// <param name="restorePointInTime">ISO-8601 target restore timestamp.</param>
     /// <param name="operationId">Correlation ID for idempotency and logging.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task RestoreAsync(string sdPath, string restorePointInTime, string operationId, CancellationToken ct);
+    Task FinalizeRestoreAsync(string sdPath, string restorePointInTime, string operationId, CancellationToken ct);
 }

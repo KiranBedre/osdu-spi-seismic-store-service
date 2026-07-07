@@ -185,6 +185,11 @@ public static class Constants
         /// Container for storing restore operation status
         /// </summary>
         public const string RESTORE_STATUS_CONTAINER_ID = "RestoreOperationStatus";
+
+        /// <summary>
+        /// Container for storing archived dataset metadata snapshots
+        /// </summary>
+        public const string ARCHIVE_DATASET_METADATA_CONTAINER_ID = "ArchiveDatasetMetadata";
     }
 
     /// <summary>
@@ -198,12 +203,83 @@ public static class Constants
         /// A pod crash auto-frees the lock after this window.
         /// Same-operation retry (idempotent re-acquire) is unaffected by this TTL.
         /// </summary>
-        public const int LOCK_TTL_HOURS = 24;
+        public const int LOCK_TTL_HOURS = 5;
 
         /// <summary>
         /// Redis lock key prefix scoped to restore operations.
         /// Full key: restore-op:{dataPartitionId}
         /// </summary>
         public const string LOCK_KEY_PREFIX = "restore-op:";
+
+        /// <summary>
+        /// Default poll interval (seconds) when ARM does not provide Retry-After.
+        /// </summary>
+        public const int POLL_DEFAULT_INTERVAL_SECONDS = 5;
+
+        /// <summary>
+        /// Maximum fallback poll interval (seconds) for exponential backoff.
+        /// </summary>
+        public const int POLL_MAX_FALLBACK_INTERVAL_SECONDS = 60;
+
+        /// <summary>
+        /// Maximum total polling duration (hours) before timing out the restore status loop.
+        /// </summary>
+        public const int POLL_MAX_DURATION_HOURS = 2;
+
+        /// <summary>
+        /// Maximum exponent used by fallback exponential backoff to cap growth.
+        /// </summary>
+        public const int POLL_MAX_BACKOFF_EXPONENT = 10;
+
+        /// <summary>
+        /// Maximum number of concurrent blob operations during restore/validation.
+        /// </summary>
+        public const int PARALLEL_BLOB_RESTORE_LIMIT = 5;
+
+        /// <summary>
+        /// Azure Storage resource-provider (management-plane) API version used for
+        /// Point-in-Time Restore (restoreBlobRanges) requests.
+        /// </summary>
+        public const string STORAGE_MANAGEMENT_API_VERSION = "2025-06-01";
+
+        /// <summary>
+        /// Poll interval (seconds) while waiting for an undeleted container to become
+        /// visible before proceeding with blob restore.
+        /// </summary>
+        public const int CONTAINER_VISIBILITY_POLL_INTERVAL_SECONDS = 3;
+
+        /// <summary>
+        /// Maximum number of attempts to confirm an undeleted container is visible.
+        /// </summary>
+        public const int CONTAINER_VISIBILITY_MAX_ATTEMPTS = 10;
+    }
+
+    /// <summary>
+    /// Subproject access-policy values that determine container ownership semantics.
+    /// 'dataset' gives each dataset a dedicated container (deleted with the dataset);
+    /// 'uniform' shares a single container across datasets in the subproject.
+    /// </summary>
+    public static class AccessPolicy
+    {
+        public const string DATASET = "dataset";
+        public const string UNIFORM = "uniform";
+    }
+
+    /// <summary>
+    /// Constants for resolving Azure management-plane storage resource identity.
+    /// </summary>
+    public static class StorageResource
+    {
+        /// <summary>
+        /// Key used to locate the account name in a storage connection string
+        /// (e.g. "AccountName=&lt;name&gt;").
+        /// </summary>
+        public const string ACCOUNT_NAME_KEY = "AccountName=";
+
+        /// <summary>
+        /// Prefix of the compute resource group name from which the data-partition
+        /// resource group is derived for PITR operations.
+        /// </summary>
+        public const string COMPUTE_RG_PREFIX = "Compute-rg-";
     }
 }

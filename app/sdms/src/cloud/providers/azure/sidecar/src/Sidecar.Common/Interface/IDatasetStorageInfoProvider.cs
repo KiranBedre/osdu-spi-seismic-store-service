@@ -16,20 +16,21 @@
 
 namespace Sidecar.Common.Interface;
 
-public interface IRestoreOperationStatus : IRestoreOperationMessage
-{
-    string Id { get; set; }
-    string CreatedAt { get; set; }
-    string LastUpdatedAt { get; set; }
-    /// <summary>
-    /// Values: "InProgress" | "Succeeded" | "Failed" | "Rejected"
-    /// </summary>
-    string Status { get; set; }
+using Sidecar.Common.Model;
 
+/// <summary>
+/// Reads the storage location for a dataset from the metadata store.
+/// This keeps storage restore logic independent from Cosmos query details.
+/// </summary>
+public interface IDatasetStorageInfoProvider
+{
     /// <summary>
-    /// Azure Storage PITR restore identifier for the blob-range restore, persisted so a
-    /// redelivered restore message resumes the same restore rather than starting a new one.
-    /// Null until blob restore has been initiated.
+    /// Resolves the dataset info needed by restore:
+    /// storage container, optional folder prefix, and blob paths.
+    /// Must support both active (primary) metadata and archived metadata records.
     /// </summary>
-    string? BlobRestoreId { get; set; }
+    /// <param name="sdPath">Full dataset SD path.</param>
+    /// <param name="operationId">Operation ID for correlation and logging.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<DatasetStorageInfo> ResolveDatasetInfoAsync(string sdPath, string operationId, CancellationToken ct);
 }
