@@ -29,18 +29,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Sidecar.Common.Config;
+using Sidecar.Common.Extensions;
 using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
 
 public class Program
 {
     private static ILogger<Program>? _logger;
+
     private static void HandleOptionsParserError(IEnumerable<Error> errs)
     {
         var errorMessage = errs.Select(err => err.ToString()).Where(x => x is not null)!.Aggregate((x, y) => x + Environment.NewLine + y);
         throw new ArgumentException(errorMessage);
     }
-
 
     private static void AttemptOptionsFromEnv(OptionsBulkDelete opts)
     {
@@ -73,7 +74,11 @@ public class Program
 
         opts.TaskStorageQueueName = Environment.GetEnvironmentVariable("SMDS_DELETION_QUEUE") ??
                                          opts.TaskStorageQueueName;
+
+        opts.RedisMsiEnabled ??= Environment.GetEnvironmentVariable("AZURE_MSI_ISENABLED")!;
+        opts.RedisClientId ??= Environment.GetEnvironmentVariable("REDIS_CLIENT_ID")!;
     }
+
     private static async Task AttemptOptionsFromKeyVaultAsync(OptionsBulkDelete opts)
     {
         var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), new DefaultAzureCredential());
@@ -183,6 +188,7 @@ public class Program
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
             .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
             .AddSingleton<IOptionsConfig>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
+            .AddSingleton<IOptionsRedisMsi>(sp => sp.GetRequiredService<IOptionsBulkDelete>())
             .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
             {
                 DelayWhenTaskNotFound = TimeSpan.FromSeconds(5),
@@ -195,7 +201,7 @@ public class Program
             });
 
         _ = services
-            .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
+            .AddRedisConnectionFactory(opts, _logger!)
             .AddSingleton<IRedisConnectionFactory<RedisLocksConnectionFactory>, RedisLocksConnectionFactory>()
             .AddSingleton<IRedisConnectionFactory<RedisQueueConnectionFactory>, RedisQueueConnectionFactory>()
             .AddSingleton<IDeletionItemsRetriever, DeleteItemsRetriever>()

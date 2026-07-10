@@ -14,24 +14,26 @@
 // limitations under the License.
 // ============================================================================
 
+import type { RedisOptions } from 'ioredis';
+import Bull from 'bull';
 import { JournalFactoryTenantClient, StorageFactory } from '..';
 import { DatasetDAO, DatasetModel } from '../../services/dataset';
-import { Locker } from '../../services/dataset/locker';
+import { lockerInstance } from '../../services/dataset/locker';
 import { SubProjectModel } from '../../services/subproject';
 import { Config } from '../config';
 import { LoggerFactory } from '../logger';
-import * as Redis from 'ioredis';
-
-import Bull from 'bull';
 
 // [TODO] this file should be moved in the main shared folder (not under cloud/shared)
 export class StorageJobManager {
 
-   public static copyJobsQueue: Bull.Queue;
+   public copyJobsQueue: Bull.Queue;
+   protected readonly COPY_QUEUE_LIMIT_MAX = 100;
+   protected readonly COPY_QUEUE_LIMIT_DURATION_MS = 600000;
+   protected readonly COPY_QUEUE_CONCURRENCY = 50;
+   protected readonly LOCK_ACQUIRE_MAX_ATTEMPTS = 100;
 
-   public static setup(cacheParams: { ADDRESS: string, PORT: number, KEY?: string, DISABLE_TLS?: boolean; }) {
-
-      const redisOptions: Redis.RedisOptions = {
+   public async setup(cacheParams: { ADDRESS: string, PORT: number, KEY?: string, DISABLE_TLS?: boolean; }) {
+      const redisOptions: RedisOptions = {
          host: cacheParams.ADDRESS,
          port: cacheParams.PORT,
          connectionName: 'sdms-copy-agent'
@@ -45,47 +47,43 @@ export class StorageJobManager {
          }
       }
 
-      StorageJobManager.copyJobsQueue = new Bull('copyjobqueue', {
+      this.copyJobsQueue = new Bull('copyjobqueue', {
          redis: redisOptions,
          limiter: {
-            max: 100,
-            duration: 600000,
+            max: this.COPY_QUEUE_LIMIT_MAX,
+            duration: this.COPY_QUEUE_LIMIT_DURATION_MS
          }
       });
 
       // setup job processing callback
-      StorageJobManager.copyJobsQueue.process(50, (input) => {
-         return StorageJobManager.copy(input);
+      this.copyJobsQueue.process(this.COPY_QUEUE_CONCURRENCY, (input) => {
+         return this.copy(input);
       }).catch(
          (error) => { LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error)); });
 
       // setup  handlers for job events
-      StorageJobManager.setupEventHandlers();
-
+      this.setupEventHandlers();
    }
 
-   private static setupEventHandlers() {
+   protected setupEventHandlers() {
 
-      StorageJobManager.copyJobsQueue.on('failed', (input) => {
+      this.copyJobsQueue.on('failed', (input) => {
          LoggerFactory.build(Config.CLOUDPROVIDER).error(
             'Copy job failure event for dataset' + input.data.datasetFrom.name +
             ' to ' + input.data.datasetTo.name + ' emitted.');
       });
 
-      StorageJobManager.copyJobsQueue.on('error', (error) => {
+      this.copyJobsQueue.on('error', (error) => {
          LoggerFactory.build(Config.CLOUDPROVIDER).error(error);
       });
-
    }
 
-   public static async copy(input: any) {
+   public async copy(input: any) {
 
       enum TransferStatus {
          Completed = 'Completed',
          Aborted = 'Aborted'
       }
-
-      const LOCK_ACQUIRE_MAX_ATTEMPTS = 100;
 
       let registeredDataset: DatasetModel;
       let registeredDatasetKey: any;
@@ -100,8 +98,8 @@ export class StorageJobManager {
 
          // try about 100 times to acquire mutex before failing the job
          try {
-            for (let i = 0; i < LOCK_ACQUIRE_MAX_ATTEMPTS; i++) {
-               cacheMutex = await Locker.acquireMutex(datasetToPath);
+            for (let i = 0; i < this.LOCK_ACQUIRE_MAX_ATTEMPTS; i++) {
+               cacheMutex = await lockerInstance.acquireMutex(datasetToPath);
 
                if (cacheMutex) {
                   break;
@@ -145,15 +143,15 @@ export class StorageJobManager {
 
          await DatasetDAO.update(journalClient, registeredDataset, registeredDatasetKey);
 
-         await Locker.releaseMutex(cacheMutex);
+         await lockerInstance.releaseMutex(cacheMutex);
 
          const lockKeyFrom = input.data.datasetFrom.tenant + '/' + input.data.datasetFrom.subproject +
             input.data.datasetFrom.path + input.data.datasetFrom.name;
-         await Locker.unlock(lockKeyFrom, input.data.readlockId);
+         await lockerInstance.unlock(lockKeyFrom, input.data.readlockId);
 
          const lockKeyTo = input.data.datasetTo.tenant + '/' + input.data.datasetTo.subproject +
             input.data.datasetTo.path + input.data.datasetTo.name;
-         await Locker.unlock(lockKeyTo, registeredDataset.sbit);
+         await lockerInstance.unlock(lockKeyTo, registeredDataset.sbit);
 
          LoggerFactory.build(Config.CLOUDPROVIDER).info(
             '[copy-transfer] completed copy operations to ' + datasetToPath);
@@ -165,9 +163,9 @@ export class StorageJobManager {
             '[copy-transfer] Copy operations from ' + datasetFromPath + 'to ' + datasetToPath + 'failed due to'
             + JSON.stringify(err));
          if (cacheMutex) {
-            await Locker.del(datasetToPath);
-            await Locker.del(datasetFromPath);
-            await Locker.releaseMutex(cacheMutex);
+            await lockerInstance.del(datasetToPath);
+            await lockerInstance.del(datasetFromPath);
+            await lockerInstance.releaseMutex(cacheMutex);
          }
 
          // try to update the status to aborted if possible
@@ -178,8 +176,24 @@ export class StorageJobManager {
 
          throw err;
       }
+   }
 
+   /**
+    * Cleanup method for graceful shutdown.
+    * Override in derived classes for provider-specific cleanup logic.
+    */
+   public async cleanup(): Promise<void> {
+      // Default: no-op - override in derived classes if cleanup is needed
    }
 }
 
+// Singleton instance that will be initialized and used throughout the application
+export let storageJobManagerInstance: StorageJobManager = new StorageJobManager();
 
+/**
+ * Set the active storage job manager instance. Used by cloud providers to inject their specific implementation.
+ * @param instance - The storage job manager instance to use
+ */
+export function setStorageJobManagerInstance(instance: StorageJobManager): void {
+   storageJobManagerInstance = instance;
+}

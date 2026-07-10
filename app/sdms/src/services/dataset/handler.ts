@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2025, Schlumberger
+// Copyright 2017-2026, Schlumberger
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,13 +26,11 @@ import { SubprojectAuth, SubProjectDAO, SubProjectModel } from '../subproject';
 import { TenantDAO, TenantGroups, TenantModel } from '../tenant';
 import { DatasetAuth } from './auth';
 import { DatasetDAO } from './dao';
-import { IWriteLockSession, Locker } from './locker';
+import { IWriteLockSession, lockerInstance } from './locker';
 import { DatasetOP } from './optype';
 import { DatasetParser } from './parser';
 import { SchemaManagerFactory } from './schema-manager';
 import { ComputedSizeResponse, GetSizeResponse, IDatasetModel } from './model';
-import { read } from 'fs';
-
 
 export class DatasetHandler {
 
@@ -146,7 +144,7 @@ export class DatasetHandler {
             await DatasetDAO.getByKey(journalClient, dataset) :
             (await DatasetDAO.get(journalClient, dataset))[0];
         if (alreadyRegisteredDataset) {
-            await Locker.removeWriteLock(writeLockSession, true); // Keep the lock session
+            await lockerInstance.removeWriteLock(writeLockSession, true); // Keep the lock session
             return alreadyRegisteredDataset;
         }
     }
@@ -256,7 +254,7 @@ export class DatasetHandler {
                 dataset, storageSchemaRecord, req, tenant);
 
             // release the mutex and keep the lock session
-            await Locker.removeWriteLock(writeLockSession, true);
+            await lockerInstance.removeWriteLock(writeLockSession, true);
 
             // attach the gcpid for fast check
             dataset.ctag = dataset.ctag + tenant.gcpid + ';' + DESUtils.getDataPartitionID(tenant.esd);
@@ -279,7 +277,7 @@ export class DatasetHandler {
                 subproject, journalClient, dataset, req, tenant);
 
             // release the mutex and unlock the resource
-            await Locker.removeWriteLock(writeLockSession);
+            await lockerInstance.removeWriteLock(writeLockSession);
 
             // if the error was a 423, the previous line cleaned the status of locker cache.
             // it is no more required to throw a 423 error or consumer applications can wrongly retry the call
@@ -300,7 +298,7 @@ export class DatasetHandler {
     private static async setLockOnDataset(dataset: DatasetModel, writeLockSession: IWriteLockSession,
         req: expRequest): Promise<IWriteLockSession> {
         const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
-        writeLockSession = await Locker.createWriteLock(
+        writeLockSession = await lockerInstance.createWriteLock(
             datasetLockKey, req.headers['x-seismic-dms-lockid'] as string);
         return writeLockSession;
     }
@@ -562,7 +560,7 @@ export class DatasetHandler {
 
         // ensure is not write locked
         if (!Config.SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS) {
-            if (Locker.isWriteLock(await Locker.getLock(lockKey))) {
+            if (lockerInstance.isWriteLock(await lockerInstance.getLock(lockKey))) {
                 throw (Error.make(Error.Status.LOCKED,
                     'The dataset ' + Config.SDPATHPREFIX + datasetIn.tenant + '/' +
                     datasetIn.subproject + datasetIn.path + datasetIn.name + ' is write locked ' +
@@ -611,7 +609,7 @@ export class DatasetHandler {
 
             // remove any remaining locks (this should be removed with SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS)
             const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
-            await Locker.unlock(datasetLockKey);
+            await lockerInstance.unlock(datasetLockKey);
 
         } else {
 
@@ -631,7 +629,7 @@ export class DatasetHandler {
 
             // remove any remaining locks (this should be removed with SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS)
             const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
-            await Locker.unlock(datasetLockKey);
+            await lockerInstance.unlock(datasetLockKey);
 
         }
 
@@ -667,7 +665,7 @@ export class DatasetHandler {
         await DatasetHandler.accessPolicyNotUniform(datasetIN, journalClient, tenant, subproject);
 
         // unlock the dataset for close operation (and patch)
-        const lockres = wid ? await Locker.unlock(lockKey, wid) : { id: null, cnt: 0 };
+        const lockres = wid ? await lockerInstance.unlock(lockKey, wid) : { id: null, cnt: 0 };
 
         // ensure nobody got the lock between the close and the mutex acquisition
         await DatasetHandler.checkForWriteLock(lockKey, datasetIN);
@@ -825,9 +823,9 @@ export class DatasetHandler {
         } else {
             const datasetOUTLockKey = datasetOUT.tenant + '/' + datasetOUT.subproject
                 + datasetOUT.path + datasetOUT.name;
-            const datasetOUTLockRes = await Locker.getLock(datasetOUTLockKey);
+            const datasetOUTLockRes = await lockerInstance.getLock(datasetOUTLockKey);
             if (datasetOUTLockRes) {
-                if (Locker.isWriteLock(datasetOUTLockRes)) {
+                if (lockerInstance.isWriteLock(datasetOUTLockRes)) {
                     datasetOUT.sbit = datasetOUTLockRes as string;
                     datasetOUT.sbit_count = 1;
                 } else {
@@ -878,7 +876,7 @@ export class DatasetHandler {
 
     private static async checkForWriteLock(lockKey: string, datasetIN: DatasetModel) {
         if (!Config.SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS) {
-            if (Locker.isWriteLock(await Locker.getLock(lockKey))) {
+            if (lockerInstance.isWriteLock(await lockerInstance.getLock(lockKey))) {
                 throw (Error.make(Error.Status.LOCKED,
                     'The dataset ' + Config.SDPATHPREFIX + datasetIN.tenant + '/' +
                     datasetIN.subproject + datasetIN.path + datasetIN.name + ' is write locked ' +
@@ -918,7 +916,7 @@ export class DatasetHandler {
 
 
         // unlock the dataset
-        const unlockRes = await Locker.unlock(lockKey, wid);
+        const unlockRes = await lockerInstance.unlock(lockKey, wid);
         dataset.sbit = unlockRes.id;
         dataset.sbit_count = unlockRes.cnt;
 
@@ -1025,8 +1023,8 @@ export class DatasetHandler {
         // lock in cache
         const lockKey = datasetIN.tenant + '/' + datasetIN.subproject + datasetIN.path + datasetIN.name;
         const lockres = open4write ?
-            await Locker.acquireWriteLock(lockKey, req.headers['x-seismic-dms-lockid'] as string, wid) :
-            await Locker.acquireReadLock(lockKey, req.headers['x-seismic-dms-lockid'] as string, wid);
+            await lockerInstance.acquireWriteLock(lockKey, req.headers['x-seismic-dms-lockid'] as string, wid) :
+            await lockerInstance.acquireReadLock(lockKey, req.headers['x-seismic-dms-lockid'] as string, wid);
 
         // attach lock information
         datasetOUT.sbit = lockres.id;
@@ -1038,7 +1036,6 @@ export class DatasetHandler {
         datasetOUT.access_policy = subproject.access_policy || Config.UNIFORM_ACCESS_POLICY;
 
         return datasetOUT;
-
     }
 
     // Unlock the dataset
@@ -1060,9 +1057,9 @@ export class DatasetHandler {
         // check if the dataset does not exist
         const lockKey = datasetIN.tenant + '/' + datasetIN.subproject + datasetIN.path + datasetIN.name;
         if (!dataset) {
-            if (await Locker.getLock(lockKey)) {
+            if (await lockerInstance.getLock(lockKey)) {
                 // if a previous call fails, the dataset is not created but the lock is acquired and not released
-                await Locker.unlock(lockKey);
+                await lockerInstance.unlock(lockKey);
                 return;
             } else { // the dataset does not exist and is not locked
                 throw (Error.make(Error.Status.NOT_FOUND,
@@ -1078,7 +1075,7 @@ export class DatasetHandler {
             req.headers['impersonation-token-context'] as string);
 
         // unlock
-        await Locker.unlock(lockKey);
+        await lockerInstance.unlock(lockKey);
 
     }
 
@@ -1249,7 +1246,7 @@ export class DatasetHandler {
             // attempt to acquire a mutex on the dataset name and set the lock for the dataset in redis
             // a mutex is applied on the resource on the shared cache (removed at the end of the method)
             const datasetLockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
-            writeLockSession = await Locker.createWriteLock(
+            writeLockSession = await lockerInstance.createWriteLock(
                 datasetLockKey, req.headers['x-seismic-dms-lockid'] as string);
 
             // Get the container and dataset information
@@ -1269,7 +1266,7 @@ export class DatasetHandler {
             await DatasetDAO.update(journalClient, dataset, key);
 
             // release the mutex and unlock the resource
-            await Locker.removeWriteLock(writeLockSession);
+            await lockerInstance.removeWriteLock(writeLockSession);
 
             return {
                 computed_size: size,
@@ -1279,7 +1276,7 @@ export class DatasetHandler {
         } catch (err) {
 
             // release the mutex and unlock the resource
-            await Locker.removeWriteLock(writeLockSession);
+            await lockerInstance.removeWriteLock(writeLockSession);
             throw (err);
         }
 
@@ -1319,7 +1316,7 @@ export class DatasetHandler {
         // ensure is not write locked
         if (!Config.SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS) {
             const lockKey = datasetIN.tenant + '/' + datasetIN.subproject + datasetIN.path + datasetIN.name;
-            if (Locker.isWriteLock(await Locker.getLock(lockKey))) {
+            if (lockerInstance.isWriteLock(await lockerInstance.getLock(lockKey))) {
                 throw (Error.make(Error.Status.LOCKED,
                     'The dataset ' + Config.SDPATHPREFIX + datasetIN.tenant + '/' +
                     datasetIN.subproject + datasetIN.path + datasetIN.name + ' is write locked ' +
@@ -1414,5 +1411,4 @@ export class DatasetHandler {
         return res;
 
     }
-
 }

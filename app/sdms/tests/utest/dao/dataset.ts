@@ -22,7 +22,7 @@ import { Config } from '../../../src/cloud';
 import { google } from '../../../src/cloud/providers';
 import { DatasetModel } from '../../../src/services/dataset';
 import { DatasetDAO } from '../../../src/services/dataset/dao';
-import { Locker } from '../../../src/services/dataset/locker';
+import { lockerInstance } from '../../../src/services/dataset/locker';
 import { IPaginationModel, ListDatasetsParams } from '../../../src/services/dataset/model';
 import { Tx } from '../utils';
 
@@ -482,25 +482,25 @@ export class TestDataset {
 	private static testFixOldModel() {
 		Tx.sectionInit('fix old model');
 		Tx.test(async () => {
-			this.sandbox.stub(Locker, 'getLock').resolves('WriteLockValue');
+			this.sandbox.stub(lockerInstance, 'getLock').resolves('WriteLockValue');
 			const result = await DatasetDAO.fixOldModel(this.dataset, 'tenant-a', 'subproject-a');
 			Tx.checkTrue(result.sbit === 'WriteLockValue' && result.sbit_count === 1);
 		});
 
 		Tx.test(async () => {
-			this.sandbox.stub(Locker, 'getLock').resolves(['RAxBxCx', 'RDxExFx']);
+			this.sandbox.stub(lockerInstance, 'getLock').resolves(['RAxBxCx', 'RDxExFx']);
 			const result = await DatasetDAO.fixOldModel(this.dataset, 'tenant-a', 'subproject-a');
 			Tx.checkTrue(result.sbit === 'RAxBxCx,RDxExFx' && result.sbit_count === 2);
 		});
 
 		Tx.test(async () => {
-			this.sandbox.stub(Locker, 'getLock').resolves(undefined);
+			this.sandbox.stub(lockerInstance, 'getLock').resolves(undefined);
 			const result = await DatasetDAO.fixOldModel(this.dataset, 'tenant-a', 'subproject-a');
 			Tx.checkTrue(result.sbit === null && result.sbit_count === 0);
 		});
 
 		Tx.test(async () => {
-			this.sandbox.stub(Locker, 'getLock').resolves(undefined);
+			this.sandbox.stub(lockerInstance, 'getLock').resolves(undefined);
 			const dataset = { name: 'dataset-a' } as DatasetModel;
 			const result = await DatasetDAO.fixOldModel(dataset, 'tenant-a', 'subproject-a');
 

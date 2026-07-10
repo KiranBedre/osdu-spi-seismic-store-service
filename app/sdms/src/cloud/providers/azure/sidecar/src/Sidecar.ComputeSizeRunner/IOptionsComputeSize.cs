@@ -19,7 +19,7 @@ namespace Sidecar.ComputeSizeRunner;
 public interface IOptionsComputeSize :
     IOptionsConfig,
     IOptionsLocksRedis,
-    IOptionsStorageQueue
+    IOptionsStorageQueue,
+    IOptionsRedisMsi
 {
-
 }

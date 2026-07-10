@@ -14,31 +14,41 @@
 // limitations under the License.
 // ============================================================================
 
-import { Locker } from '../../src/services/dataset/locker'
-Locker.init().catch((error)=>{ console.log(error);});
+import { lockerInstance } from '../../src/services/dataset/locker'
 
-import { TestAuthorization } from './auth/test';
-import { TestCloud } from './cloud/test';
-import { TestDao } from './dao/test';
-import { TestDES } from './dataecosystem/test';
-import { TestServices } from './services/test';
-import { TestServicesUserHandler } from './services/user/handler';
-import { TestImpersonationTokenHandler } from './services/impersonation_token/handler';
-import { TestServicesUtilityHandler } from './services/utility/handler';
-import { DatasetDAOTest } from './services/dataset/dao';
-import { ParserTest } from './services/dataset/parser';
-import { FilterParserTest } from './services/dataset/filter-parser';
-import { TestShared } from './shared/test';
+// Wrap in async IIFE to ensure Locker initializes before tests run
+(async () => {
+    try {
+        await lockerInstance.init();
 
-TestAuthorization.run();
-TestServices.run();
-TestServicesUserHandler.run();
-TestImpersonationTokenHandler.run();
-TestServicesUtilityHandler.run();
-TestDao.run();
-DatasetDAOTest.run();
-ParserTest.run();
-FilterParserTest.run();
-TestCloud.run();
-TestDES.run();
-TestShared.run();
+        // Import and run test suites after Locker is initialized
+        const { TestAuthorization } = require('./auth/test');
+        const { TestCloud } = require('./cloud/test');
+        const { TestDao } = require('./dao/test');
+        const { TestDES } = require('./dataecosystem/test');
+        const { TestServices } = require('./services/test');
+        const { TestServicesUserHandler } = require('./services/user/handler');
+        const { TestImpersonationTokenHandler } = require('./services/impersonation_token/handler');
+        const { TestServicesUtilityHandler } = require('./services/utility/handler');
+        const { DatasetDAOTest } = require('./services/dataset/dao');
+        const { ParserTest } = require('./services/dataset/parser');
+        const { FilterParserTest } = require('./services/dataset/filter-parser');
+        const { TestShared } = require('./shared/test');
+
+        TestAuthorization.run();
+        TestServices.run();
+        TestServicesUserHandler.run();
+        TestImpersonationTokenHandler.run();
+        TestServicesUtilityHandler.run();
+        TestDao.run();
+        DatasetDAOTest.run();
+        ParserTest.run();
+        FilterParserTest.run();
+        TestCloud.run();
+        TestDES.run();
+        TestShared.run();
+    } catch (error) {
+        console.error('Failed to initialize tests:', error);
+        process.exit(1);
+    }
+})();

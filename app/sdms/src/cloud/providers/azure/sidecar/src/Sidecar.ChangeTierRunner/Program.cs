@@ -29,18 +29,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Sidecar.Common.Config;
+using Sidecar.Common.Extensions;
 using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
 
 public class Program
 {
     private static ILogger<Program>? _logger;
+
     private static void HandleOptionsParserError(IEnumerable<Error> errs)
     {
         var errorMessage = errs.Select(err => err.ToString()).Where(x => x is not null)!.Aggregate((x, y) => x + Environment.NewLine + y);
         throw new ArgumentException(errorMessage);
     }
-
 
     private static void AttemptOptionsFromEnv(OptionsChangeTier opts)
     {
@@ -73,7 +74,11 @@ public class Program
 
         opts.TaskStorageQueueName = Environment.GetEnvironmentVariable("SDMS_CHANGE_TIER_QUEUE") ??
                                          opts.TaskStorageQueueName;
+
+        opts.RedisMsiEnabled ??= Environment.GetEnvironmentVariable("AZURE_MSI_ISENABLED")!;
+        opts.RedisClientId ??= Environment.GetEnvironmentVariable("REDIS_CLIENT_ID")!;
     }
+
     private static async Task AttemptOptionsFromKeyVaultAsync(OptionsChangeTier opts)
     {
         var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), new DefaultAzureCredential());
@@ -183,6 +188,7 @@ public class Program
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptionsChangeTier>())
             .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptionsChangeTier>())
             .AddSingleton<IOptionsConfig>(sp => sp.GetRequiredService<IOptionsChangeTier>())
+            .AddSingleton<IOptionsRedisMsi>(sp => sp.GetRequiredService<IOptionsChangeTier>())
             .AddSingleton<TaskQueueBackgroundServiceOptions>(new TaskQueueBackgroundServiceOptions
             {
                 DelayWhenTaskNotFound = TimeSpan.FromSeconds(5),
@@ -195,7 +201,7 @@ public class Program
             });
 
         _ = services
-            .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
+            .AddRedisConnectionFactory(opts, _logger!)
             .AddSingleton<IRedisConnectionFactory<RedisLocksConnectionFactory>, RedisLocksConnectionFactory>()
             .AddSingleton<IRedisConnectionFactory<RedisQueueConnectionFactory>, RedisQueueConnectionFactory>()
             .AddSingleton<IChangeTierItemsRetriever, ChangeTierItemsRetriever>()
@@ -238,7 +244,6 @@ public class Program
         var options = new ApplicationInsightsServiceOptions { InstrumentationKey = opts.AppInsightsInstrumentationKey };
 #pragma warning restore CS0618 // Type or member is obsolete
         _ = services.AddApplicationInsightsTelemetry(options: options);
-
     }
 
     private static async Task Main(string[] args)

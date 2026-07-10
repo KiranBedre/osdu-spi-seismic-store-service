@@ -22,7 +22,7 @@ import { Config, google, JournalFactoryTenantClient } from '../../../src/cloud';
 import { IDESEntitlementGroupModel } from '../../../src/cloud/dataecosystem';
 import { DESEntitlement, DESUtils } from '../../../src/dataecosystem';
 import { DatasetDAO } from '../../../src/services/dataset';
-import { Locker } from '../../../src/services/dataset/locker';
+import { lockerInstance } from '../../../src/services/dataset/locker';
 import { SubProjectDAO } from '../../../src/services/subproject';
 import { TenantDAO, TenantGroups, TenantModel } from '../../../src/services/tenant';
 import { UtilityHandler } from '../../../src/services/utility/handler';
@@ -250,9 +250,9 @@ export class TestUtilitySVC {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx/spx1/a2/dsx01';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
-            this.sandbox.stub(Locker, 'getLock');
-            this.sandbox.stub(Locker, 'createWriteLock');
-            this.sandbox.stub(Locker, 'unlock');
+            this.sandbox.stub(lockerInstance, 'getLock');
+            this.sandbox.stub(lockerInstance, 'createWriteLock');
+            this.sandbox.stub(lockerInstance, 'unlock');
             this.sandbox.stub(Auth, 'isWriteAuthorized');
             this.sandbox.stub(Auth, 'isReadAuthorized');
             this.sandbox.stub(SubProjectDAO, 'get').resolves({ gcs_bucket: 'b', ltag: 'l' } as any);
@@ -262,8 +262,8 @@ export class TestUtilitySVC {
             this.sandbox.stub(DatasetDAO, 'register');
             this.sandbox.stub(google.GCS.prototype, 'copy');
             this.sandbox.stub(google.GCS.prototype, 'saveObject');
-            this.sandbox.stub(Locker, 'acquireMutex').resolves('mutex');
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves('mutex');
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             this.sandbox.stub(google.GoogleSeistore.prototype, 'getEmailFromTokenPayload').resolves('email');
             this.transaction.run.resolves();
             await UtilityHandler.handler(expReq, expRes, UtilityOP.CP);
@@ -276,12 +276,12 @@ export class TestUtilitySVC {
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
             this.sandbox.stub(Auth, 'isWriteAuthorized');
             this.sandbox.stub(Auth, 'isReadAuthorized');
-            this.sandbox.stub(Locker, 'getLock');
-            this.sandbox.stub(Locker, 'createWriteLock').resolves(
+            this.sandbox.stub(lockerInstance, 'getLock');
+            this.sandbox.stub(lockerInstance, 'createWriteLock').resolves(
                 { idempotent: undefined, wid: undefined, mutex: undefined, key: undefined });
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
-            this.sandbox.stub(Locker, 'unlock').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'unlock').resolves();
             this.sandbox.stub(SubProjectDAO, 'get').resolves({ gcs_bucket: 'b', ltag: 'l' } as any);
             this.sandbox.stub(DatasetDAO, 'get').onCall(0).resolves(
                 [{ gcsurl: 'b/p' }] as any).onCall(1).resolves([] as any);
@@ -305,10 +305,10 @@ export class TestUtilitySVC {
             this.sandbox.stub(DatasetDAO, 'get').onCall(0).resolves([] as any);
             this.sandbox.stub(Response, 'writeError');
             this.transaction.run.resolves();
-            this.sandbox.stub(Locker, 'acquireMutex').resolves('mutex');
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
-            this.sandbox.stub(Locker, 'createWriteLock').resolves();
-            this.sandbox.stub(Locker, 'unlock').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves('mutex');
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'createWriteLock').resolves();
+            this.sandbox.stub(lockerInstance, 'unlock').resolves();
             await UtilityHandler.handler(expReq, expRes, UtilityOP.CP);
         });
 
@@ -316,9 +316,9 @@ export class TestUtilitySVC {
             expReq.query.sdpath_from = 'sd://tnx/spx1/a1/dsx01';
             expReq.query.sdpath_to = 'sd://tnx/spx1/a2/dsx01';
             this.sandbox.stub(TenantDAO, 'get').resolves({} as any);
-            this.sandbox.stub(Locker, 'getLock');
-            this.sandbox.stub(Locker, 'createWriteLock').resolves();
-            this.sandbox.stub(Locker, 'unlock').resolves();
+            this.sandbox.stub(lockerInstance, 'getLock');
+            this.sandbox.stub(lockerInstance, 'createWriteLock').resolves();
+            this.sandbox.stub(lockerInstance, 'unlock').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized');
             this.sandbox.stub(Auth, 'isReadAuthorized');
             this.sandbox.stub(SubProjectDAO, 'get').resolves({ gcs_bucket: 'b', ltag: 'l' } as any);
@@ -326,8 +326,8 @@ export class TestUtilitySVC {
                 [{ ltag: 'l', gcsurl: 'b/p' }] as any).onCall(1).resolves([{ ltag: 'l', gcsurl: 'b/p' }] as any);
             this.sandbox.stub(Auth, 'isLegalTagValid');
             this.sandbox.stub(Response, 'writeError');
-            this.sandbox.stub(Locker, 'acquireMutex').resolves('mutex');
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves('mutex');
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             this.transaction.run.resolves();
             await UtilityHandler.handler(expReq, expRes, UtilityOP.CP);
         });

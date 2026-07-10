@@ -16,6 +16,7 @@
 
 namespace Sidecar.Common.Tests;
 #pragma warning disable CS8600
+
 internal static partial class TestingHelpers
 {
     internal static DeleteOperationMessage GetDelOpMsg() => new()
@@ -25,14 +26,6 @@ internal static partial class TestingHelpers
         Subproject = "subproj007",
         Query = "SELECT c.id FROM c",
     };
-
-    internal static HashEntry[] GetDelOpMsgHashEntry(DeleteOperationMessage msg, bool useJsonAttrNames = false) => [
-            new(useJsonAttrNames?"operation_id":"OperationId", msg.OperationId),
-            new(useJsonAttrNames?"tenant":"Tenant",msg.Tenant),
-            new(useJsonAttrNames?"subproject":"Subproject",msg.Subproject),
-            new(useJsonAttrNames?"query":"Query",msg.Query),
-            new(useJsonAttrNames?"parameters":"Parameters",msg.Parameters)
-        ];
 
     internal static Mock<ILogger<T>> GetLogger<T>()
     {
@@ -53,10 +46,9 @@ internal static partial class TestingHelpers
                 var formatter = a.Arguments[4];
 
                 var invokeMethod = formatter.GetType().GetMethod("Invoke");
-                var logMessage = (string)invokeMethod?.Invoke(formatter!, [state!, exception!]);
+                var logMessage = (string)invokeMethod?.Invoke(formatter!, new[] { state!, exception! });
 
                 Console.Write(logMessage);
-
             }));
 
         return logger;
@@ -64,8 +56,14 @@ internal static partial class TestingHelpers
 
     internal static Mock<IDatabase> GetDatabase()
     {
-        var db = new Mock<IDatabase>(MockBehavior.Strict);
-        var cache = new InMemoryCache();
+        return GetDatabase(out _);
+    }
+
+    internal static Mock<IDatabase> GetDatabase(out InMemoryCache cache)
+    {
+        var db = new Mock<IDatabase>(MockBehavior.Loose); // Changed to Loose to support String operations with optional params
+        var localCache = new InMemoryCache();
+        cache = localCache;
 
         db.Setup(d => d.KeyExpire(It.IsAny<RedisKey>(), It.IsAny<TimeSpan?>(), It.IsAny<ExpireWhen>(), It.IsAny<CommandFlags>()))
             .Returns(true).Verifiable();
@@ -76,126 +74,129 @@ internal static partial class TestingHelpers
         db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, RedisValue, When, CommandFlags>((key, field, value, when, flags) =>
             {
-                return cache.HashSet(key, field, value);
+                return localCache.HashSet(key, field, value);
             }).Verifiable();
 
         db.Setup(d => d.HashSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, RedisValue, When, CommandFlags>(async (key, field, value, when, flags) =>
             {
-                return await cache.HashSetAsync(key, field, value);
+                return await localCache.HashSetAsync(key, field, value);
             }).Verifiable();
 
         _ = db.Setup(d => d.HashSet(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), It.IsAny<CommandFlags>()))
             .Callback<RedisKey, HashEntry[], CommandFlags>((key, values, flags) =>
             {
-                cache.HashSet(key, values);
+                localCache.HashSet(key, values);
             });
 
         _ = db.Setup(d => d.HashSetAsync(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, HashEntry[], CommandFlags>(async (key, values, flags) =>
             {
-                _ = await cache.HashSetAsync(key, values);
+                _ = await localCache.HashSetAsync(key, values);
             });
 
         db.Setup(d => d.HashGetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, CommandFlags>(async (key, field, flags) =>
             {
-                return await cache.HashGetAsync(key, field);
-
+                return await localCache.HashGetAsync(key, field);
             }).Verifiable();
 
         db.Setup(d => d.HashGet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, CommandFlags>((key, field, flags) =>
             {
-                return cache.HashGet(key, field);
-
+                return localCache.HashGet(key, field);
             }).Verifiable();
 
         db.Setup(d => d.HashIncrement(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<long>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, long?, CommandFlags>((key, field, inc, flags) =>
             {
-                return cache.HashIncrement(key, field, inc);
-
+                return localCache.HashIncrement(key, field, inc);
             }).Verifiable();
 
         db.Setup(d => d.HashDecrement(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<long>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, long?, CommandFlags>((key, field, inc, flags) =>
             {
-                return cache.HashDecrement(key, field, inc);
-
+                return localCache.HashDecrement(key, field, inc);
             }).Verifiable();
 
         db.Setup(d => d.KeyExistsAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>(async (key, flags) =>
             {
-                return await cache.KeyExistsAsync(key!);
+                return await localCache.KeyExistsAsync(key!);
             }).Verifiable();
 
         db.Setup(d => d.KeyExists(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>((key, flags) =>
             {
-                return cache.KeyExists(key!);
+                return localCache.KeyExists(key!);
             }).Verifiable();
 
         db.Setup(d => d.ListLeftPush(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, When, CommandFlags>((key, value, when, flags) =>
             {
-                return cache.ListLeftPush(key, value!);
+                return localCache.ListLeftPush(key, value!);
             }).Verifiable();
 
         db.Setup(d => d.ListLeftPushAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, When, CommandFlags>(async (key, value, when, flags) =>
             {
-                return await cache.ListLeftPushAsync(key, value!);
+                return await localCache.ListLeftPushAsync(key, value!);
             }).Verifiable();
 
         db.Setup(d => d.ListRightPush(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, When, CommandFlags>((key, value, when, flags) =>
             {
-                return cache.ListRightPush(key, value!);
+                return localCache.ListRightPush(key, value!);
             }).Verifiable();
 
         db.Setup(d => d.ListRightPushAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, RedisValue, When, CommandFlags>(async (key, value, when, flags) =>
             {
-                return await cache.ListRightPushAsync(key, value!);
+                return await localCache.ListRightPushAsync(key, value!);
             }).Verifiable();
 
         db.Setup(d => d.ListLeftPop(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>((key, flags) =>
             {
-                return cache.ListLeftPop(key);
+                return localCache.ListLeftPop(key);
             }).Verifiable();
 
         db.Setup(d => d.ListRange(It.IsAny<RedisKey>(), It.IsAny<long>(), It.IsAny<long>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, long, long, CommandFlags>((key, start, stop, flags) =>
             {
-                return cache.ListRange(key, start, stop);
+                return localCache.ListRange(key, start, stop);
             }).Verifiable();
 
         db.Setup(d => d.ListLeftPopAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>(async (key, flags) =>
             {
-                return await cache.ListLeftPopAsync(key);
+                return await localCache.ListLeftPopAsync(key);
             }).Verifiable();
 
         db.Setup(d => d.HashGetAll(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>((key, flags) =>
             {
-                return cache.HashGetAll(key);
+                return localCache.HashGetAll(key);
             }).Verifiable();
 
         db.Setup(d => d.HashGetAllAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>(async (key, flags) =>
             {
-                return await cache.HashGetAllAsync(key);
+                return await localCache.HashGetAllAsync(key);
             }).Verifiable();
 
         db.Setup(d => d.KeyDeleteAsync(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns<RedisKey, CommandFlags>(async (key, flags) =>
             {
-                return await cache.KeyDeleteAsync(key);
+                return await localCache.KeyDeleteAsync(key);
             }).Verifiable();
+
+        // Lock operations - simple implementation that always succeeds for testing
+        db.Setup(d => d.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true).Verifiable();
+
+        db.Setup(d => d.LockReleaseAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true).Verifiable();
 
         return db;
     }

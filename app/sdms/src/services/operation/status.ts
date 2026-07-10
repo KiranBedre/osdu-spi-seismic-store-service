@@ -55,4 +55,12 @@ export class OperationStatusStorage extends CacheCore {
     }
 }
 
-export const operationStatusStorage = new OperationStatusStorage();
+export let operationStatusStorage = new OperationStatusStorage();
+
+/**
+ * Set the active operation status storage instance. Used by cloud providers to inject their specific implementation.
+ * @param instance - The operation status storage instance to use
+ */
+export function setOperationStatusStorage(instance: OperationStatusStorage): void {
+    operationStatusStorage = instance;
+}

@@ -18,7 +18,14 @@ namespace Sidecar.Common.Interface;
 
 using StackExchange.Redis;
 
-public interface ICachingConnectionMultiplexerFactory
+/// <summary>
+/// Abstract factory for creating Redis connections.
+/// Implementations handle different authentication strategies (MSI, password, etc.)
+/// </summary>
+public interface IRedisMultiplexerFactory
 {
-    IConnectionMultiplexer GetRedisConnection(string hostname, int port, string password);
+    /// <summary>
+    /// Gets or creates a Redis connection for the specified endpoint.
+    /// </summary>
+    Task<IConnectionMultiplexer> GetConnectionAsync(string hostname, int port);
 }

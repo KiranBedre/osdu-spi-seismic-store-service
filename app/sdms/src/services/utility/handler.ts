@@ -21,16 +21,15 @@ import { Config, CredentialsFactory, JournalFactoryTenantClient, StorageFactory 
 import { IAccessTokenModel } from '../../cloud/credentials';
 import { IDESEntitlementGroupModel } from '../../cloud/dataecosystem';
 import { SeistoreFactory } from '../../cloud/seistore';
-import { StorageJobManager } from '../../cloud/shared/queue';
+import { storageJobManagerInstance } from '../../cloud/shared/queue';
 import { DESEntitlement, DESStorage, DESUtils } from '../../dataecosystem';
 import { Error, Feature, FeatureFlags, Response, Utils } from '../../shared';
 import { DatasetAuth, DatasetDAO, DatasetModel, DatasetUtils } from '../dataset';
-import { IWriteLockSession, Locker } from '../dataset/locker';
+import { IWriteLockSession, lockerInstance } from '../dataset/locker';
 import { SubprojectAuth, SubProjectDAO } from '../subproject';
 import { TenantDAO } from '../tenant';
 import { UtilityOP } from './optype';
 import { UtilityParser } from './parser';
-
 
 export class UtilityHandler {
 
@@ -424,13 +423,13 @@ export class UtilityHandler {
 
             // check if a copy is already in progress from a previous request
             const lockKeyTo = datasetTo.tenant + '/' + datasetTo.subproject + datasetTo.path + datasetTo.name;
-            const toDatasetLock = await Locker.getLock(lockKeyTo);
+            const toDatasetLock = await lockerInstance.getLock(lockKeyTo);
 
             preRegisteredDataset = subproject.enforce_key ?
                 await DatasetDAO.getByKey(journalClient, datasetTo) :
                 (await DatasetDAO.get(journalClient, datasetTo))[0];
 
-            if (toDatasetLock && Locker.isWriteLock(toDatasetLock)) {
+            if (toDatasetLock && lockerInstance.isWriteLock(toDatasetLock)) {
 
                 if (preRegisteredDataset && 'transfer_status' in preRegisteredDataset &&
                     preRegisteredDataset.transfer_status === TransferStatus.InProgress) {
@@ -462,13 +461,13 @@ export class UtilityHandler {
                     ' already exists'));
             }
 
-            writeLockSession = await Locker.createWriteLock(lockKeyTo);
+            writeLockSession = await lockerInstance.createWriteLock(lockKeyTo);
 
             // check if the source can be opened for read (no copy on writelock dataset)
             const lockKeyFrom = datasetFrom.tenant + '/' + datasetFrom.subproject + datasetFrom.path + datasetFrom.name;
-            const fromDatasetLock = await Locker.getLock(lockKeyFrom);
+            const fromDatasetLock = await lockerInstance.getLock(lockKeyFrom);
 
-            if (fromDatasetLock && Locker.isWriteLock(fromDatasetLock)) {
+            if (fromDatasetLock && lockerInstance.isWriteLock(fromDatasetLock)) {
                 throw (Error.make(Error.Status.BAD_REQUEST,
                     'The dataset ' + Config.SDPATHPREFIX + sdPathFrom.tenant + '/' + sdPathFrom.subproject +
                     sdPathFrom.path + sdPathFrom.dataset + ' is write locked and cannot be copied'));
@@ -478,9 +477,8 @@ export class UtilityHandler {
             let readlock: { id: string, cnt: number; };
 
             if (userInputs.lock) {
-                readlock = await Locker.acquireReadLock(lockKeyFrom);
+                readlock = await lockerInstance.acquireReadLock(lockKeyFrom);
             }
-
 
             // Check if legal tag of the source is valid
             if (datasetFrom.ltag) {
@@ -495,7 +493,6 @@ export class UtilityHandler {
                 await Auth.isLegalTagValid(req.headers.authorization, datasetTo.ltag,
                     tenant.esd, req[Config.DE_FORWARD_APPKEY]);
             }
-
 
             const datasetToEntityKey = journalClient.createKey({
                 namespace: Config.SEISMIC_STORE_NS + '-' + datasetTo.tenant + '-' + datasetTo.subproject,
@@ -530,7 +527,7 @@ export class UtilityHandler {
             // copy the objects
             const RETRY_MAX_ATTEMPTS = 10;
 
-            copyJob = await StorageJobManager.copyJobsQueue.add({
+            copyJob = await storageJobManagerInstance.copyJobsQueue.add({
                 sourceBucket: bucketFrom,
                 destinationBucket: bucketTo,
                 datasetFrom,
@@ -545,7 +542,7 @@ export class UtilityHandler {
             });
 
             // release the mutex but keep the lock
-            await Locker.removeWriteLock(writeLockSession, true);
+            await lockerInstance.removeWriteLock(writeLockSession, true);
 
             return {
                 'status': 'Copy in progress',
@@ -554,7 +551,7 @@ export class UtilityHandler {
 
         } catch (err) {
 
-            await Locker.removeWriteLock(writeLockSession);
+            await lockerInstance.removeWriteLock(writeLockSession);
 
             if (copyJob) {
                 await copyJob.remove();

@@ -32,11 +32,11 @@ sdms_gc-deploy:
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GC == '1'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GC == '1' && $GC_PROJECT != null
       when: on_success
-    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $GC == '1'
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $GC == '1' && $GC_PROJECT != null
       when: on_success
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $GC == '1'
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $GC == '1' && $GC_PROJECT != null
       changes:
         - devops/**/*
         - app/sdms/**/*
@@ -72,11 +72,11 @@ sdms_gc-test-python:
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GC == '1'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GC == '1' && $GC_PROJECT != null
       when: on_success
-    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $GC == '1'
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $GC == '1' && $GC_PROJECT != null
       when: on_success
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $GC == '1'
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $GC == '1' && $GC_PROJECT != null
       changes:
         - devops/**/*
         - app/sdms/**/*

@@ -21,7 +21,7 @@ public interface IOptionsChangeTier :
     IOptionsQueueRedis,
     IOptionsLocksRedis,
     IOptionsQueueNameRedis,
-    IOptionsStorageQueue
+    IOptionsStorageQueue,
+    IOptionsRedisMsi
 {
-
 }

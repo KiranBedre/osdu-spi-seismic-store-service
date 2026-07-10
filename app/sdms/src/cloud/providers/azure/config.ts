@@ -15,7 +15,6 @@
 // ============================================================================
 
 import { Config, ConfigFactory } from '../../config';
-import { LoggerFactory } from '../../logger';
 import { AzureInsightsLogger } from './insights';
 import { KeyVault } from './keyvault';
 
@@ -38,6 +37,17 @@ export class AzureConfig extends Config {
     // Apis base url path
     public static API_VERSION = 'v3';
     public static API_BASE_URL_PATH = '/seistore-svc/api/' + AzureConfig.API_VERSION;
+
+    // MSI Redis authentication
+    public static AZURE_MSI_ISENABLED: boolean;
+
+    /**
+     * Helper to determine if MSI authentication should be used for Redis
+     * @returns true if MSI is enabled AND not in unit test mode
+     */
+    public static shouldUseMsiAuth(): boolean {
+        return !Config.UTEST && this.AZURE_MSI_ISENABLED;
+    }
 
     // max len for a group name in DE
     public static DES_GROUP_CHAR_LIMIT = 256;
@@ -89,6 +99,9 @@ export class AzureConfig extends Config {
             // (await client.getSecret(this.IMP_SERVICE_ACCOUNT_SIGNER)).value;
             AzureConfig.IMP_SERVICE_ACCOUNT_SIGNER = 'not@implemented,tester-carbon.slbservice.com';
 
+            // MSI Redis authentication configuration
+            AzureConfig.AZURE_MSI_ISENABLED = process.env.AZURE_MSI_ISENABLED === 'true';
+
             // redis cache port for locks (the port as env variable)
             AzureConfig.LOCKSMAP_REDIS_INSTANCE_PORT = +process.env.REDIS_INSTANCE_PORT;
             AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS = process.env.REDIS_INSTANCE_ADDRESS ||
@@ -99,7 +112,11 @@ export class AzureConfig extends Config {
                 AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY;
             Config.checkRequiredConfig(AzureConfig.LOCKSMAP_REDIS_INSTANCE_PORT, 'REDIS_INSTANCE_PORT');
             Config.checkRequiredConfig(AzureConfig.LOCKSMAP_REDIS_INSTANCE_ADDRESS, 'REDIS_INSTANCE_ADDRESS');
-            Config.checkRequiredConfig(AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY, 'REDIS_INSTANCE_KEY');
+
+            // Conditional validation based on authentication method
+            if (!AzureConfig.AZURE_MSI_ISENABLED) {
+                Config.checkRequiredConfig(AzureConfig.LOCKSMAP_REDIS_INSTANCE_KEY, 'REDIS_INSTANCE_KEY');
+            }
 
             // redis shared
             AzureConfig.REDIS_SHARED_INSTANCE_KEY = process.env.REDIS_SHARED_INSTANCE_KEY ||
@@ -221,7 +238,5 @@ export class AzureConfig extends Config {
             console.error('Unable to initialize configuration for azure cloud provider ' + error);
             throw error;
         }
-
     }
-
 }

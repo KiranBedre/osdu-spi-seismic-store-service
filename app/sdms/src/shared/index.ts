@@ -22,5 +22,5 @@ export { Response } from './response';
 export { SDPath, ISDPathModel as SDPathModel } from './sdpath';
 export { FeatureFlags, Feature } from './featureflags';
 export { getInMemoryCacheInstance } from './node-cache';
-export { CacheCore, cacheShared } from './cache';
+export { CacheCore, cacheShared, setCacheShared } from './cache';
 export { CallContext } from './context';

@@ -17,7 +17,7 @@
 import { DatasetModel, PaginationModel, QueryFilter } from '.';
 import { Config, IJournal } from '../../cloud';
 import { Utils } from '../../shared';
-import { Locker } from './locker';
+import { lockerInstance } from './locker';
 import { ListDatasetsParams, PaginatedDatasetList } from './model';
 
 export class DatasetDAO {
@@ -269,11 +269,11 @@ export class DatasetDAO {
         entity.ctag = entity.ctag || '0000000000000000';
         entity.readonly = entity.readonly || false;
         const lockKey = entity.tenant + '/' + entity.subproject + entity.path + entity.name;
-        const lockResponse = await Locker.getLock(lockKey);
+        const lockResponse = await lockerInstance.getLock(lockKey);
         if (!lockResponse) { // unlocked
             entity.sbit = null;
             entity.sbit_count = 0;
-        } else if (Locker.isWriteLock(lockResponse)) { // write lock
+        } else if (lockerInstance.isWriteLock(lockResponse)) { // write lock
             entity.sbit = lockResponse as string;
             entity.sbit_count = 1;
         } else { // read lock

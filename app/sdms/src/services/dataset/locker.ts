@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import Redis from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 import Redlock from 'redlock';
 import { Config, LoggerFactory } from '../../cloud';
 import { Error, Utils } from '../../shared';
@@ -27,114 +27,108 @@ export interface IWriteLockSession { idempotent: boolean, wid: string, mutex: an
 
 export class Locker {
 
-    private static TTL = 6000; // max lock time in ms
-    private static EXP_WRITE_LOCK = 86400; // after 24h the write lock entry will be removed
-    private static EXP_READ_LOCK = 3600; // after 1h  the read lock entry will be removed
-    private static TIME_5MIN = 300; // exp time margin to use in the main read locks
+    private readonly TTL = 6000; // max lock time in ms
+    private readonly EXP_WRITE_LOCK = 86400; // after 24h the write lock entry will be removed
+    private readonly EXP_READ_LOCK = 3600; // after 1h  the read lock entry will be removed
+    private readonly TIME_5MIN = 300; // exp time margin to use in the main read locks
 
-    private static redisClient: Redis;
-    private static redisSubscriptionClient: Redis;
-    private static redlock: Redlock;
+    private static readonly REDIS_MAX_RETRIES_PER_REQUEST = 10;
+    private static readonly REDIS_COMMAND_TIMEOUT_MS = 60000; // 60 seconds
 
-    public static getWriteLockTTL(): number { return this.EXP_WRITE_LOCK; };
-    public static getReadLockTTL(): number { return this.EXP_READ_LOCK; };
-    public static getMutexTTL(): number { return this.TTL; };
+    protected redisClient: Redis;
+    protected redisSubscriptionClient: Redis;
+    private redlock: Redlock;
 
-    // Exponential Retry strategy in event of an error
-    private static retryStrategy = (times: number) => {
-        return Math.pow(2, times) + Math.random() * 100;
-    };
+    public getWriteLockTTL(): number { return this.EXP_WRITE_LOCK; }
+    public getReadLockTTL(): number { return this.EXP_READ_LOCK; }
+    public getMutexTTL(): number { return this.TTL; }
 
-    public static async init() {
+    /**
+     * Creates base Redis options with standard retry and timeout configuration
+     */
+    protected createBaseRedisOptions(): RedisOptions {
+        return {
+            maxRetriesPerRequest: Locker.REDIS_MAX_RETRIES_PER_REQUEST,
+            retryStrategy: (times: number) => {
+                return Math.pow(2, times) + Math.random() * 100;
+            },
+            commandTimeout: Locker.REDIS_COMMAND_TIMEOUT_MS
+        } as RedisOptions;
+    }
+
+    public async init() {
 
         if (Config.UTEST) {
             const redis = require('ioredis-mock');
             this.redisClient = new redis();
             this.redisSubscriptionClient = new redis();
         } else {
+            // Build Redis options incrementally
+            const redisBaseOptions: RedisOptions = {
+                host: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
+                port: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
+                ...this.createBaseRedisOptions()
+            };
 
             if (Config.LOCKSMAP_REDIS_INSTANCE_KEY) {
-                if (Config.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE) {
-                    this.redisClient = new Redis({
-                        host: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
-                        port: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
-                        password: Config.LOCKSMAP_REDIS_INSTANCE_KEY,
-                        maxRetriesPerRequest: 10,
-                        retryStrategy: this.retryStrategy,
-                        commandTimeout: 60000,
-                        connectionName: 'sdms-locker'
-                    });
-                    this.redisSubscriptionClient = new Redis({
-                        host: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
-                        port: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
-                        password: Config.LOCKSMAP_REDIS_INSTANCE_KEY,
-                        maxRetriesPerRequest: 10,
-                        retryStrategy: this.retryStrategy,
-                        commandTimeout: 60000,
-                        connectionName: 'sdms-locker-subscription'
-                    });
-                } else {
-                    this.redisClient = new Redis({
-                        host: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
-                        port: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
-                        password: Config.LOCKSMAP_REDIS_INSTANCE_KEY,
-                        tls: { servername: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS },
-                        maxRetriesPerRequest: 10,
-                        retryStrategy: this.retryStrategy,
-                        commandTimeout: 60000,
-                        connectionName: 'sdms-locker'
-                    });
-                    this.redisSubscriptionClient = new Redis({
-                        host: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
-                        port: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
-                        password: Config.LOCKSMAP_REDIS_INSTANCE_KEY,
-                        tls: { servername: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS },
-                        maxRetriesPerRequest: 10,
-                        retryStrategy: this.retryStrategy,
-                        commandTimeout: 60000,
-                        connectionName: 'sdms-locker-subscription'
-                    });
-                }
-
-            }
-            else {
-
-                this.redisClient = new Redis({
-                    host: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
-                    port: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
-                    maxRetriesPerRequest: 10,
-                    retryStrategy: this.retryStrategy,
-                    commandTimeout: 60000,
-                    connectionName: 'sdms-locker'
-                });
-                this.redisSubscriptionClient = new Redis({
-                    host: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
-                    port: Config.LOCKSMAP_REDIS_INSTANCE_PORT,
-                    maxRetriesPerRequest: 10,
-                    retryStrategy: this.retryStrategy,
-                    commandTimeout: 60000,
-                    connectionName: 'sdms-locker-subscription'
-                });
+                redisBaseOptions.password = Config.LOCKSMAP_REDIS_INSTANCE_KEY;
             }
 
-            // This will automatically remove the wid entries from the main read lock
-            this.redisSubscriptionClient.on('message', async (channel, key) => {
-                if (channel === '__keyevent@0__:expired') {
-                    await Locker.unlockReadLockSession(
-                        key.substring(0, key.lastIndexOf('/')),
-                        key.substring(key.lastIndexOf('/') + 1)
-                    );
-                }
+            // Apply TLS configuration
+            if (!Config.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE) {
+                redisBaseOptions.tls = { servername: Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS };
+            }
+
+            // Create primary client
+            this.redisClient = new Redis({
+                ...redisBaseOptions,
+                connectionName: 'sdms-locker'
             });
 
-            this.redisClient.on('error', (error) => {
-                LoggerFactory.build(Config.CLOUDPROVIDER).error(error);
+            // Create subscription client
+            this.redisSubscriptionClient = new Redis({
+                ...redisBaseOptions,
+                connectionName: 'sdms-locker-subscription'
             });
-
         }
 
-        // initialize the locker
-        this.redlock = new Redlock([this.redisClient], {
+        // Setup event handlers
+        this.setupEventHandlers();
+
+        // Initialize Redlock
+        this.initializeRedlock();
+    }
+
+    /**
+     * Setup Redis event handlers for message subscriptions and errors
+     */
+    protected setupEventHandlers() {
+        // This will automatically remove the wid entries from the main read lock
+        this.redisSubscriptionClient.on('message', async (channel, key) => {
+            if (channel === '__keyevent@0__:expired') {
+                await this.unlockReadLockSession(
+                    key.substring(0, key.lastIndexOf('/')),
+                    key.substring(key.lastIndexOf('/') + 1)
+                );
+            }
+        });
+
+        this.redisClient.on('error', (error) => {
+            LoggerFactory.build(Config.CLOUDPROVIDER).error(error);
+        });
+
+        this.redisSubscriptionClient.on('error', (error) => {
+            LoggerFactory.build(Config.CLOUDPROVIDER).error(error);
+        });
+    }
+
+    /**
+     * Initialize the Redlock distributed lock manager
+     */
+    protected initializeRedlock() {
+        // Note: Even with built-in ioredis v5.x types, there's still a type mismatch
+        // with Redlock v5's eval method signature
+        this.redlock = new Redlock([this.redisClient as any], {
             // the expected clock drift
             driftFactor: 0.01, // time in ms
             // the max number of times Redlock will attempt
@@ -144,23 +138,23 @@ export class Locker {
             retryDelay: 200, // time in ms
             // the max time in ms randomly added to retries
             // to improve performance under high contention
-            retryJitter: 200, // time in ms
+            retryJitter: 200 // time in ms
         });
     }
 
-    private static generateReadLockID(): string {
+    private generateReadLockID(): string {
         return 'R' + Utils.makeID(15);
     }
 
-    private static generateWriteLockID(): string {
+    private generateWriteLockID(): string {
         return 'W' + Utils.makeID(15);
     }
 
-    public static isWriteLock(lock: string[] | string): boolean {
+    public isWriteLock(lock: string[] | string): boolean {
         return typeof (lock) === 'string';
     }
 
-    private static getLockMessage(lockKey: string, lockValue: string[] | string): string {
+    private getLockMessage(lockKey: string, lockValue: string[] | string): string {
         if (this.isWriteLock(lockValue)) {
             const operationType =
                 typeof (lockValue) === 'string' && lockValue.startsWith('WDELETE') ? 'deletion' : 'write';
@@ -168,42 +162,42 @@ export class Locker {
         } else {
             return lockKey + ' is locked for read with different id ' + Error.get423ReadLockReason();
         }
-    };
+    }
 
-    public static async getLock(key: string): Promise<string[] | string> {
+    public async getLock(key: string): Promise<string[] | string> {
         const entity = await this.get(key);
         return entity ? entity.startsWith('rms') ? entity.substr(4).split(':') : entity : undefined;
     }
 
-    private static async setLock(key: string, value: string[] | string, expireTime: number): Promise<string> {
+    private async setLock(key: string, value: string[] | string, expireTime: number): Promise<string> {
         return value ? typeof (value) === 'string' ?
             await this.set(key, value as string, expireTime) :
             await this.set(key, 'rms:' + (value as string[]).join(':'), expireTime) : undefined;
     }
 
-    private static async get(key: string): Promise<string> {
+    private async get(key: string): Promise<string> {
         return await this.redisClient.get(key);
     }
 
-    private static async set(key: string, value: string, expireTime: number): Promise<string> {
+    private async set(key: string, value: string, expireTime: number): Promise<string> {
         return await this.redisClient.setex(key, expireTime, value);
     }
 
-    public static async del(key: string): Promise<number> {
+    public async del(key: string): Promise<number> {
         return await this.redisClient.del(key);
     }
 
-    private static async getTTL(key: string): Promise<number> {
+    private async getTTL(key: string): Promise<number> {
         return await this.redisClient.ttl(key);
     }
 
     // create a write lock for new resources. This is a locking operation!
     // it place the mutex on the required resource!!! (the caller should remove the mutex)
-    public static async createWriteLock(lockKey: string, idempotentWriteLock?: string): Promise<IWriteLockSession> {
+    public async createWriteLock(lockKey: string, idempotentWriteLock?: string): Promise<IWriteLockSession> {
 
         // const datasetPath = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
         const cacheLock = await this.acquireMutex(lockKey);
-        const lockValue = (await Locker.getLock(lockKey));
+        const lockValue = (await this.getLock(lockKey));
 
         // idempotency requirement
         if (idempotentWriteLock && !idempotentWriteLock.startsWith('W')) {
@@ -234,19 +228,19 @@ export class Locker {
     }
 
     // remove both lock and mutex
-    public static async removeWriteLock(writeLockSession: IWriteLockSession, keepTheLock = false): Promise<void> {
+    public async removeWriteLock(writeLockSession: IWriteLockSession, keepTheLock = false): Promise<void> {
         if (writeLockSession && writeLockSession.mutex) {
-            await Locker.releaseMutex(writeLockSession.mutex);
+            await this.releaseMutex(writeLockSession.mutex);
         }
         if (!keepTheLock) {
             if (writeLockSession && writeLockSession.wid) {
-                await Locker.del(writeLockSession.key);
+                await this.del(writeLockSession.key);
             }
         }
     }
 
     // acquire write lock on the resource and update the status on the metadata
-    public static async acquireWriteLock(lockKey: string, idempotentWriteLock: string, wid?: string): Promise<ILock> {
+    public async acquireWriteLock(lockKey: string, idempotentWriteLock: string, wid?: string): Promise<ILock> {
 
         // idempotency requirement
         if (idempotentWriteLock && !idempotentWriteLock.startsWith('W')) {
@@ -255,7 +249,7 @@ export class Locker {
         }
 
         const cacheLock = await this.acquireMutex(lockKey);
-        const lockValue = (await Locker.getLock(lockKey));
+        const lockValue = (await this.getLock(lockKey));
 
         // Already write locked but the idempotentWriteLock match the once in cache (idempotent call)
         if (lockValue && idempotentWriteLock && lockValue === idempotentWriteLock) {
@@ -276,7 +270,7 @@ export class Locker {
 
             // create a new write lock and save in cache
             const lockID = idempotentWriteLock || this.generateWriteLockID();
-            await Locker.set(lockKey, lockID, this.EXP_WRITE_LOCK);
+            await this.set(lockKey, lockID, this.EXP_WRITE_LOCK);
             await this.releaseMutex(cacheLock);
             return { id: lockID, cnt: 1 };
         }
@@ -305,11 +299,10 @@ export class Locker {
         // Trusted Open
         await this.releaseMutex(cacheLock);
         return { id: wid, cnt: this.isWriteLock(lockValue) ? 1 : (lockValue as string[]).length };
-
     }
 
     // create lock existing resource
-    public static async acquireReadLock(lockKey: string, idempotentReadLock?: string, wid?: string): Promise<ILock> {
+    public async acquireReadLock(lockKey: string, idempotentReadLock?: string, wid?: string): Promise<ILock> {
 
         // idempotency requirement
         if (idempotentReadLock && !idempotentReadLock.startsWith('R')) {
@@ -319,7 +312,7 @@ export class Locker {
 
         // const datasetPath = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
         const cacheLock = await this.acquireMutex(lockKey);
-        const lockValue = (await Locker.getLock(lockKey));
+        const lockValue = (await this.getLock(lockKey));
 
         if (lockValue && idempotentReadLock && !this.isWriteLock(lockValue) &&
             (lockValue as string[]).indexOf(idempotentReadLock) > -1) {
@@ -360,8 +353,8 @@ export class Locker {
 
             // create a new read lock session and a new main read lock
             const lockID = idempotentReadLock || this.generateReadLockID();
-            await Locker.setLock(lockKey + '/' + lockID, lockID, this.EXP_READ_LOCK);
-            await Locker.setLock(lockKey, [lockID], this.EXP_READ_LOCK + this.TIME_5MIN);
+            await this.setLock(lockKey + '/' + lockID, lockID, this.EXP_READ_LOCK);
+            await this.setLock(lockKey, [lockID], this.EXP_READ_LOCK + this.TIME_5MIN);
             // when the session key expired i have to remove the wid/lockid from the main read lock
             this.redisSubscriptionClient.subscribe('__keyevent@0__:expired', lockKey + '/' + lockID)
                 .catch((error) => LoggerFactory.build(Config.CLOUDPROVIDER).error(JSON.stringify(error)));
@@ -378,8 +371,8 @@ export class Locker {
         if (!wid) {
             const lockID = idempotentReadLock || this.generateReadLockID();
             (lockValue as string[]).push(lockID);
-            await Locker.setLock(lockKey + '/' + lockID, lockID, this.EXP_READ_LOCK);
-            await Locker.setLock(lockKey, lockValue, this.EXP_READ_LOCK + this.TIME_5MIN);
+            await this.setLock(lockKey + '/' + lockID, lockID, this.EXP_READ_LOCK);
+            await this.setLock(lockKey, lockValue, this.EXP_READ_LOCK + this.TIME_5MIN);
             await this.releaseMutex(cacheLock);
             // when the session key expired i have to remove the wid/lockid from the main read lock
             this.redisSubscriptionClient.subscribe('__keyevent@0__:expired', lockKey + '/' + lockID)
@@ -390,14 +383,13 @@ export class Locker {
         // wid present and found in read lock ids -> TRUSTED OPEN
         await this.releaseMutex(cacheLock);
         return { id: wid, cnt: (lockValue as string[]).length };
-
     }
 
-    public static async unlock(lockKey: string, wid?: string): Promise<ILock> {
+    public async unlock(lockKey: string, wid?: string): Promise<ILock> {
 
         const cacheLock = await this.acquireMutex(lockKey);
 
-        const lockValue = (await Locker.getLock(lockKey));
+        const lockValue = (await this.getLock(lockKey));
 
         if (wid && lockValue) {
 
@@ -410,7 +402,7 @@ export class Locker {
                 }
 
                 // unlock in cache
-                await Locker.del(lockKey);
+                await this.del(lockKey);
                 await this.releaseMutex(cacheLock);
                 return { id: null, cnt: 0 };
             }
@@ -428,12 +420,12 @@ export class Locker {
                 // if read locked remove all session read locks
                 if (!this.isWriteLock(lockValue)) {
                     for (const item of lockValue) {
-                        await Locker.del(lockKey + '/' + item);
+                        await this.del(lockKey + '/' + item);
                     }
                 }
 
                 // remove main lock from cache
-                await Locker.del(lockKey);
+                await this.del(lockKey);
                 await this.releaseMutex(cacheLock);
                 return { id: null, cnt: 0 };
 
@@ -461,13 +453,13 @@ export class Locker {
             }
 
             // remove the session read lock and update the main read lock
-            await Locker.del(lockKey + '/' + wid);
+            await this.del(lockKey + '/' + wid);
             const lockValueNew = (lockValue as string[]).filter((el) => el !== wid);
             if (lockValueNew.length > 0) {
-                const ttl = await Locker.getTTL(lockKey);
-                await Locker.setLock(lockKey, lockValueNew, ttl);
+                const ttl = await this.getTTL(lockKey);
+                await this.setLock(lockKey, lockValueNew, ttl);
             } else {
-                await Locker.del(lockKey);
+                await this.del(lockKey);
             }
             await this.releaseMutex(cacheLock);
             return {
@@ -485,29 +477,28 @@ export class Locker {
         return { id: null, cnt: 0 };
     }
 
-    public static async unlockReadLockSession(key: string, wid: string) {
+    public async unlockReadLockSession(key: string, wid: string) {
 
         const cacheLock = await this.acquireMutex(key);
-        const lockValue = (await Locker.getLock(key));
+        const lockValue = (await this.getLock(key));
 
         if (lockValue && !this.isWriteLock(lockValue)) {
             if (lockValue.indexOf(wid) > -1) {
                 const lockValueNew = (lockValue as string[]).filter((el) => el !== wid);
                 if (lockValueNew.length > 0) {
-                    const ttl = await Locker.getTTL(key);
-                    await Locker.setLock(key, lockValueNew, ttl);
+                    const ttl = await this.getTTL(key);
+                    await this.setLock(key, lockValueNew, ttl);
                 } else {
-                    await Locker.del(key);
+                    await this.del(key);
                 }
             }
         }
 
         await this.releaseMutex(cacheLock);
-
     }
 
     // We are acquiring a shared mutex on redis using redlock
-    public static async acquireMutex(key: string): Promise<any> {
+    public async acquireMutex(key: string): Promise<any> {
 
         try {
             const cacheLock = await this.redlock.acquire(['locks:' + key], this.TTL);
@@ -517,10 +508,9 @@ export class Locker {
                 ' cannot be locked at the moment. Please try again shortly. ' +
                 Error.get423CannotLockReason());
         }
-
     }
 
-    public static async releaseMutex(cacheLock: any): Promise<void> {
+    public async releaseMutex(cacheLock: any): Promise<void> {
 
         // attempt to unlock the resource, retry in case of error or let the redlock release it
         let retry = 4;
@@ -534,4 +524,23 @@ export class Locker {
         } while (retry--)
     }
 
+    /**
+     * Cleanup method for graceful shutdown.
+     * Override in derived classes for provider-specific cleanup logic.
+     */
+    public async cleanup(): Promise<void> {
+        // Default: no-op - override in derived classes if cleanup is needed
+    }
+}
+
+// Singleton instance that will be initialized and used throughout the application
+// This can be replaced with a cloud-specific instance (e.g., azureLockerInstance) during initialization
+export let lockerInstance: Locker = new Locker();
+
+/**
+ * Set the active locker instance. Used by cloud providers to inject their specific implementation.
+ * @param instance - The locker instance to use
+ */
+export function setLockerInstance(instance: Locker): void {
+    lockerInstance = instance;
 }

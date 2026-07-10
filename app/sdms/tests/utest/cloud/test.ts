@@ -38,6 +38,8 @@ import { TestAwsTrace } from './aws/trace';
 import { TestAWSConfig } from './aws/config';
 import { TestTaskQueue } from "./azure/taskQueue";
 import { TestStorageFactory } from './storagefactory';
+import { TestStorageJobManager } from './shared/queue.test';
+import { TestMSITokenProvider } from './azure/msi-token-provider';
 export class TestCloud {
 
     public static run() {
@@ -58,7 +60,7 @@ export class TestCloud {
             TestGoogleCredentials.run();
             TestGCSCore.run();
             TestGCDatastoreDAO.run();
-            TestGCDatastoreTransactionDAO.run()
+            TestGCDatastoreTransactionDAO.run();
             TestGoogleDatastoreDAO.run();
             TestGoogleDatastoreTransactionDAO.run();
             TestAzureCosmosDbDAO.run();
@@ -70,8 +72,8 @@ export class TestCloud {
             TestDataEcoSystem.run();
             TestTaskQueue.run();
             TestStorageFactory.run();
+            TestStorageJobManager.run();
+            TestMSITokenProvider.run();
         });
-
     }
-
 }

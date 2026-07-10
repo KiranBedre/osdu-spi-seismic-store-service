@@ -19,11 +19,17 @@ import { Config } from '../cloud';
 
 export class CacheCore {
 
+    protected static readonly REDIS_MAX_RETRIES_PER_REQUEST = 5;
+    protected static readonly REDIS_COMMAND_TIMEOUT_MS = 5000;
+
     protected redisClient: Redis;
 
     public async init(
-        host: string, port: number, password: string,
-        disableTls: boolean, connectionName = 'sdms-cache'): Promise<void> {
+        host: string,
+        port: number,
+        password: string,
+        disableTls: boolean,
+        connectionName = 'sdms-shared-cache'): Promise<void> {
 
         if (Config.UTEST) {
             const redis = require('ioredis-mock');
@@ -32,16 +38,8 @@ export class CacheCore {
         }
 
         if (host && port && !this.redisClient) {
-            const redisOptions = {
-                host,
-                port,
-                retryStrategy: (times: number) => {
-                    return Math.pow(2, times) + Math.random() * 100;
-                },
-                maxRetriesPerRequest: 5,
-                commandTimeout: 5000,
-                connectionName
-            } as RedisOptions;
+            const redisOptions = this.createBaseRedisOptions(host, port, connectionName);
+
             if (password) {
                 redisOptions.password = password;
                 if (!disableTls) {
@@ -56,6 +54,37 @@ export class CacheCore {
         }
     }
 
+    /**
+     * Creates base Redis options with common configuration
+     * @param host Redis host
+     * @param port Redis port
+     * @param connectionName Connection name for identification
+     * @returns Base RedisOptions object
+     */
+    protected createBaseRedisOptions(
+        host: string,
+        port: number,
+        connectionName: string
+    ): RedisOptions {
+        return {
+            host,
+            port,
+            retryStrategy: (times: number) => {
+                return Math.pow(2, times) + Math.random() * 100;
+            },
+            maxRetriesPerRequest: CacheCore.REDIS_MAX_RETRIES_PER_REQUEST,
+            commandTimeout: CacheCore.REDIS_COMMAND_TIMEOUT_MS,
+            connectionName
+        };
+    }
+
+    /**
+     * Cleanup method for graceful shutdown.
+     * Override in derived classes for provider-specific cleanup logic.
+     */
+    public async cleanup(): Promise<void> {
+        // Default: no-op - override in derived classes if cleanup is needed
+    }
 }
 
 export class Cache extends CacheCore {
@@ -86,5 +115,12 @@ export class Cache extends CacheCore {
     }
 }
 
-export const cacheShared = new Cache();
+export let cacheShared = new Cache();
 
+/**
+ * Set the active cache instance. Used by cloud providers to inject their specific implementation.
+ * @param instance - The cache instance to use
+ */
+export function setCacheShared(instance: Cache): void {
+    cacheShared = instance;
+}

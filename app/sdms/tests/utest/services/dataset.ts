@@ -26,7 +26,7 @@ import { DESStorage, DESUtils } from '../../../src/dataecosystem';
 import { IStorage } from '../../../src/cloud/storage';
 import { DatasetAuth, DatasetDAO, DatasetModel } from '../../../src/services/dataset';
 import { DatasetHandler } from '../../../src/services/dataset/handler';
-import { Locker } from '../../../src/services/dataset/locker';
+import { lockerInstance } from '../../../src/services/dataset/locker';
 import { IDatasetModel, IDatasetPatchRequest } from '../../../src/services/dataset/model';
 import { DatasetOP } from '../../../src/services/dataset/optype';
 import { DatasetParser } from '../../../src/services/dataset/parser';
@@ -195,9 +195,9 @@ export class TestDatasetSVC {
             this.sandbox.stub(DESStorage, 'insertRecord').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            this.sandbox.stub(Locker, 'createWriteLock').resolves(
+            this.sandbox.stub(lockerInstance, 'createWriteLock').resolves(
                 { idempotent: false, key: 'x', mutex: 'x', wid: 'x' });
-            this.sandbox.stub(Locker, 'removeWriteLock').resolves();
+            this.sandbox.stub(lockerInstance, 'removeWriteLock').resolves();
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Register);
             Tx.check200(expRes.statusCode);
@@ -235,9 +235,9 @@ export class TestDatasetSVC {
             this.sandbox.stub(DESStorage, 'insertRecord').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            this.sandbox.stub(Locker, 'createWriteLock').resolves(
+            this.sandbox.stub(lockerInstance, 'createWriteLock').resolves(
             { idempotent: false, key: 'x', mutex: 'x', wid: 'x' });
-            this.sandbox.stub(Locker, 'removeWriteLock');
+            this.sandbox.stub(lockerInstance, 'removeWriteLock');
             this.sandbox.stub(DESUtils, 'getDataPartitionID').resolves('tenant-a');
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Register);
             Tx.check200(expRes.statusCode);
@@ -367,9 +367,9 @@ export class TestDatasetSVC {
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DatasetDAO, 'delete').resolves();
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
-            this.sandbox.stub(Locker, 'unlock').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'unlock').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Delete);
             Tx.check200(expRes.statusCode);
         });
@@ -419,9 +419,9 @@ export class TestDatasetSVC {
             this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, 'key']);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DESStorage, 'deleteRecord').resolves();
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
-            this.sandbox.stub(Locker, 'unlock').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'unlock').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Delete);
             Tx.check200(expRes.statusCode);
         });
@@ -463,14 +463,14 @@ export class TestDatasetSVC {
                 }
             };
 
-            this.sandbox.stub(Locker, 'unlock').resolves();
+            this.sandbox.stub(lockerInstance, 'unlock').resolves();
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             this.sandbox.stub(DESStorage, 'insertRecord').resolves();
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
             Tx.check200(expRes.statusCode);
         });
@@ -608,13 +608,13 @@ export class TestDatasetSVC {
 
             this.sandbox.stub(DatasetParser, 'patch').returns(
                 datasetPatchRequest);
-            this.sandbox.stub(Locker, 'unlock').resolves(undefined);
+            this.sandbox.stub(lockerInstance, 'unlock').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetOUT, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             this.sandbox.stub(DESStorage, 'insertRecord').resolves();
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
@@ -626,13 +626,13 @@ export class TestDatasetSVC {
             // simple dataset close without an update
             expReq.query.close = 'Wid';
             
-            this.sandbox.stub(Locker, 'unlock').resolves({ id: 'id', cnt: 1 });
+            this.sandbox.stub(lockerInstance, 'unlock').resolves({ id: 'id', cnt: 1 });
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
 
             let postProcessorStub = this.sandbox.createStubInstance<IDatasetPostProcessor>(DefaultDatasetPostProcessor);
             const onDatasetCloseStub = postProcessorStub.onDatasetClose.resolves();
@@ -648,13 +648,13 @@ export class TestDatasetSVC {
             expReq.query.close = 'Wid';
             expReq.body.gtags = ['tagA', 'tagB'];
             
-            this.sandbox.stub(Locker, 'unlock').resolves({ id: 'id', cnt: 1 });
+            this.sandbox.stub(lockerInstance, 'unlock').resolves({ id: 'id', cnt: 1 });
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(DESStorage, 'insertRecord').resolves();
 
@@ -768,9 +768,9 @@ export class TestDatasetSVC {
             this.sandbox.stub(DatasetDAO, 'update').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            this.sandbox.stub(Locker, 'createWriteLock').resolves(
+            this.sandbox.stub(lockerInstance, 'createWriteLock').resolves(
                 { idempotent: false, key: 'x', mutex: 'x', wid: 'x' });
-            this.sandbox.stub(Locker, 'removeWriteLock').resolves();
+            this.sandbox.stub(lockerInstance, 'removeWriteLock').resolves();
             this.sandbox.stub(StorageFactory, 'build').returns(storage);
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
@@ -863,8 +863,8 @@ export class TestDatasetSVC {
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves(
                 [{ name: 'dataset-a', gtags: ['tag01', 'tag02'] } as IDatasetModel, undefined]);
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             const updateStub = this.sandbox.stub(DatasetDAO, 'update');
             updateStub.resolves();
@@ -878,8 +878,8 @@ export class TestDatasetSVC {
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves(
                 [{ name: 'dataset-a', gtags: ['tag01', 'tag02'] } as IDatasetModel, undefined]);
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
             const updateStub = this.sandbox.stub(DatasetDAO, 'update');
             updateStub.resolves();
@@ -892,8 +892,8 @@ export class TestDatasetSVC {
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([undefined, undefined]);
-            this.sandbox.stub(Locker, 'acquireMutex').resolves();
-            this.sandbox.stub(Locker, 'releaseMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.PutTags);
             Tx.check404(expRes.statusCode);
         });
@@ -909,7 +909,7 @@ export class TestDatasetSVC {
                 { dataset: this.dataset, open4write: true, wid: undefined });
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
-            this.sandbox.stub(Locker, 'acquireWriteLock').resolves({ cnt: 1, id: 'WCacheLockValue' });
+            this.sandbox.stub(lockerInstance, 'acquireWriteLock').resolves({ cnt: 1, id: 'WCacheLockValue' });
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Lock);
@@ -931,7 +931,7 @@ export class TestDatasetSVC {
                 { dataset: this.dataset, open4write: false, wid: undefined });
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
-            this.sandbox.stub(Locker, 'acquireReadLock').resolves({ cnt: 1, id: 'RCacheLockValue' });
+            this.sandbox.stub(lockerInstance, 'acquireReadLock').resolves({ cnt: 1, id: 'RCacheLockValue' });
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Lock);
@@ -946,7 +946,7 @@ export class TestDatasetSVC {
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(true);
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            this.sandbox.stub(Locker, 'acquireReadLock').resolves({ cnt: 1, id: 'RCacheLockValue' });
+            this.sandbox.stub(lockerInstance, 'acquireReadLock').resolves({ cnt: 1, id: 'RCacheLockValue' });
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
 
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Lock);
@@ -988,7 +988,7 @@ export class TestDatasetSVC {
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
             this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves();
-            this.sandbox.stub(Locker, 'unlock').resolves();
+            this.sandbox.stub(lockerInstance, 'unlock').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.UnLock);
             Tx.check200(expRes.statusCode);
         });

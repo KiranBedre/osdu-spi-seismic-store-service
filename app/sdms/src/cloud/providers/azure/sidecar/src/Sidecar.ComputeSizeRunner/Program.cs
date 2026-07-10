@@ -29,12 +29,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Sidecar.Common.Config;
+using Sidecar.Common.Extensions;
 using Sidecar.Common.TaskQueue;
 using Sidecar.Common.Utility;
 
 public class Program
 {
     private static ILogger<Program>? _logger;
+
     private static void HandleOptionsParserError(IEnumerable<Error> errs)
     {
         var errorMessage = errs.Select(err => err.ToString()).Where(x => x is not null)!.Aggregate((x, y) => x + Environment.NewLine + y);
@@ -65,6 +67,9 @@ public class Program
 
         opts.TaskStorageQueueName = Environment.GetEnvironmentVariable("SDMS_COMPUTE_SIZE_QUEUE") ??
             opts.TaskStorageQueueName;
+
+        opts.RedisMsiEnabled ??= Environment.GetEnvironmentVariable("AZURE_MSI_ISENABLED")!;
+        opts.RedisClientId ??= Environment.GetEnvironmentVariable("REDIS_CLIENT_ID")!;
     }
 
     private static async Task AttemptOptionsFromKeyVaultAsync(OptionsComputeSize opts)
@@ -76,7 +81,6 @@ public class Program
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_HOSTNAME),
             secretClient.GetSecretAsync(Constants.SecretNames.REDIS_LOCKS_PASSWORD),
             secretClient.GetSecretAsync(Constants.SecretNames.APP_RESOURCE_ID),
-            secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY),
             secretClient.GetSecretAsync(Constants.SecretNames.CENTRAL_STORAGE_QUEUE_ENDPOINT));
 
         _logger?.LogInformation("Got variables from Key Vault...");
@@ -167,7 +171,8 @@ public class Program
             .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptionsComputeSize>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptionsComputeSize>())
             .AddSingleton<IOptionsConfig>(sp => sp.GetRequiredService<IOptionsComputeSize>())
-            .AddSingleton<ICachingConnectionMultiplexerFactory, CachingConnectionMultiplexerFactory>()
+            .AddSingleton<IOptionsRedisMsi>(sp => sp.GetRequiredService<IOptionsComputeSize>())
+            .AddRedisConnectionFactory(opts, _logger!)
             .AddSingleton<IRedisConnectionFactory<RedisLocksConnectionFactory>, RedisLocksConnectionFactory>()
             .AddSingleton<IBlobClientFactory, BlobClientFactory>()
             .AddSingleton<IDateFormatter, DateFormatter>()
@@ -217,7 +222,6 @@ public class Program
         var options = new ApplicationInsightsServiceOptions { InstrumentationKey = opts.AppInsightsInstrumentationKey };
 #pragma warning restore CS0618 // Type or member is obsolete
         _ = services.AddApplicationInsightsTelemetry(options: options);
-
     }
 
     private static async Task Main(string[] args)

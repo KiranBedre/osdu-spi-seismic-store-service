@@ -63,4 +63,16 @@ public class OptionsComputeSize : IOptionsComputeSize
 
     [Option("taskStorageQueueName", Required = false, Default = "sdms-queue-computesize", HelpText = "Name of the Azure Storage queue for operation tasks")]
     public string TaskStorageQueueName { get; set; }
+
+    [Option("redisMsiEnabled", Required = false, HelpText = "Whether MSI-based Redis authentication is enabled")]
+    public string RedisMsiEnabled { get; set; }
+
+    [Option("redisClientId", Required = false, HelpText = "Client ID of the managed identity to use for Redis authentication")]
+    public string RedisClientId { get; set; }
+
+    [Option("connectTimeoutMilliseconds", Required = false, Default = "10000", HelpText = "Specifies the time in milliseconds that should be allowed for connection")]
+    public string ConnectTimeoutMilliseconds { get; set; }
+
+    [Option("syncTimeoutMilliseconds", Required = false, Default = "5000", HelpText = "Specifies the time in milliseconds that the system should allow for synchronous operations")]
+    public string SyncTimeoutMilliseconds { get; set; }
 }

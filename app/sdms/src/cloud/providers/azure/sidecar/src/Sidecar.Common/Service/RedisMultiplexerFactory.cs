@@ -18,23 +18,19 @@ namespace Sidecar.Common.Service;
 
 using Sidecar.Common.Interface;
 using StackExchange.Redis;
-using System.Collections.Concurrent;
-using System.Net;
 
-public class CachingConnectionMultiplexerFactory : ICachingConnectionMultiplexerFactory
+/// <summary>
+/// Redis connection factory using Managed Identity authentication.
+/// No password required - uses Azure AD tokens.
+/// </summary>
+public class RedisMultiplexerFactory : IRedisMultiplexerFactory
 {
-    private readonly ConcurrentDictionary<Tuple<string, int, string>, ConnectionMultiplexer> _cache = new();
+    private readonly IRedisConnectionProvider _provider;
 
-    public IConnectionMultiplexer GetRedisConnection(string hostname, int port, string password) => _cache.GetOrAdd(
-            new(hostname, port, password),
-            _ => ConnectionMultiplexer.Connect(
-                new ConfigurationOptions
-                {
-                    EndPoints =
-                    [
-                        new DnsEndPoint(hostname, port),
-                    ],
-                    Password = password,
-                })
-        );
+    public RedisMultiplexerFactory(IRedisConnectionProvider provider)
+    {
+        _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+    }
+
+    public Task<IConnectionMultiplexer> GetConnectionAsync(string hostname, int port) => _provider.GetConnectionAsync(hostname, port);
 }

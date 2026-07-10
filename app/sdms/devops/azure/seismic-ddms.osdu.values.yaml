@@ -71,6 +71,8 @@ configuration:
       SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
       FEATURE_FLAG_ENABLE_BULK_DELETE: "true"
       FEATURE_FLAG_TIER_STORAGE_BLOCK: "true"
+      AZURE_MSI_ISENABLED: "false"
+      REDIS_CLIENT_ID: "{{ .Values.azure.identity_id }}"
     # Use only for secret rotation
     secrets:
       - name: AZ_REDIS_PASSWORD
@@ -120,6 +122,8 @@ configuration:
       SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
       SDMS_REDIS_QUEUE_PORT: "6380"
       SDMS_REDIS_LOCKS_PORT: "6380"
+      AZURE_MSI_ISENABLED: "false"
+      REDIS_CLIENT_ID: "{{ .Values.azure.identity_id }}"
     request:
       cpu: 0.1
       memory: 1Gi
@@ -170,6 +174,8 @@ configuration:
       SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
       SDMS_REDIS_QUEUE_PORT: "6380"
       SDMS_REDIS_LOCKS_PORT: "6380"
+      AZURE_MSI_ISENABLED: "false"
+      REDIS_CLIENT_ID: "{{ .Values.azure.identity_id }}"
   # #####################################
   # # Job statistics #
   # #####################################

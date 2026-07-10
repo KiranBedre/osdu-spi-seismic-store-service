@@ -14,8 +14,8 @@
 // limitations under the License.
 // ============================================================================
 
-import { Locker } from '../services/dataset/locker';
 import axios from 'axios';
+import { lockerInstance } from '../services/dataset/locker';
 
 export class ErrorModel {
     public error: {
@@ -89,19 +89,19 @@ export class Error {
     }
 
     public static get423WriteLockReason(): string {
-        return this.create423Reason(this.Reason423.WRITE_LOCK, Locker.getWriteLockTTL());
+        return this.create423Reason(this.Reason423.WRITE_LOCK, lockerInstance.getWriteLockTTL());
     }
 
     public static get423ReadLockReason(): string {
-        return this.create423Reason(this.Reason423.READ_LOCK, Locker.getReadLockTTL());
+        return this.create423Reason(this.Reason423.READ_LOCK, lockerInstance.getReadLockTTL());
     }
 
     public static get423CannotLockReason(): string {
-        return this.create423Reason(this.Reason423.CANNOT_LOCK, Locker.getMutexTTL());
+        return this.create423Reason(this.Reason423.CANNOT_LOCK, lockerInstance.getMutexTTL());
     }
 
     public static get423CannotUnlockReason(): string {
-        return this.create423Reason(this.Reason423.CANNOT_UNLOCK, Locker.getMutexTTL())
+        return this.create423Reason(this.Reason423.CANNOT_UNLOCK, lockerInstance.getMutexTTL())
     }
 
 }

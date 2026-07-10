@@ -1,21 +1,17 @@
 import sinon from 'sinon';
-import Bull from 'bull';
 import { Request as expRequest, Response as expResponse } from 'express';
-import { Auth, AuthRoles } from '../../../../src/auth';
-import { Config, CredentialsFactory, JournalFactoryTenantClient, StorageFactory } from '../../../../src/cloud';
+import { Auth } from '../../../../src/auth';
+import { Config, CredentialsFactory, JournalFactoryTenantClient, StorageFactory, LoggerFactory } from '../../../../src/cloud';
 import { IAccessTokenModel, ICredentials, } from '../../../../src/cloud/credentials';
 import { IDESEntitlementGroupModel } from '../../../../src/cloud/dataecosystem';
-import { SeistoreFactory } from '../../../../src/cloud/seistore';
-import { StorageJobManager } from '../../../../src/cloud/shared/queue';
-import { DESEntitlement, DESStorage, DESUtils } from '../../../../src/dataecosystem';
-import { Error, Feature, FeatureFlags, Response, Utils } from '../../../../src/shared';
-import { DatasetAuth, DatasetDAO, DatasetModel, DatasetUtils } from '../../../../src/services/dataset';
-import { IWriteLockSession, Locker } from '../../../../src/services/dataset/locker';
-import { SubprojectAuth, SubProjectDAO, SubProjectModel } from '../../../../src/services/subproject';
+import { DESEntitlement, DESStorage } from '../../../../src/dataecosystem';
+import { Error } from '../../../../src/shared';
+import { DatasetDAO, DatasetModel } from '../../../../src/services/dataset';
+import { lockerInstance } from '../../../../src/services/dataset/locker';
+import { SubProjectDAO, SubProjectModel } from '../../../../src/services/subproject';
 import { TenantDAO } from '../../../../src/services/tenant';
 import { ITenantModel } from '../../../../src/services/tenant/model';
 import { UtilityOP } from '../../../../src/services/utility/optype';
-import { UtilityParser } from '../../../../src/services/utility/parser';
 import { UtilityHandler as Handler } from '../../../../src/services/utility/handler';
 import { Tx } from '../../utils';
 
@@ -206,7 +202,6 @@ export class TestServicesUtilityHandler {
             Tx.check200(res.statusCode)
 
         } );
-        
     };
 
     private static lsTest(tenantModel: ITenantModel, subProjectModel: SubProjectModel, datasetModel: DatasetModel) {
@@ -391,7 +386,6 @@ export class TestServicesUtilityHandler {
             Tx.check400(res.statusCode)
 
         } );
-        
     };
 
     private static cpTest(tenantModel: ITenantModel, subProjectModel: SubProjectModel, datasetModel: DatasetModel) {
@@ -435,8 +429,8 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(TenantDAO, 'get').resolves(tenantModel);
             this.sandbox.stub(SubProjectDAO, 'get').resolves(subProjectModel);
             this.sandbox.stub(DatasetDAO, 'getByKey').resolves(datasetModel);
-            this.sandbox.stub(Locker, "getLock").resolves("toDatasetLock");
-            this.sandbox.stub(Locker, "isWriteLock").returns(true);
+            this.sandbox.stub(lockerInstance, "getLock").resolves("toDatasetLock");
+            this.sandbox.stub(lockerInstance, "isWriteLock").returns(true);
             this.sandbox.stub(DESStorage, 'getRecord').resolves({ id: "" });
 
             await Handler.handler(req, res, op);
@@ -461,8 +455,8 @@ export class TestServicesUtilityHandler {
             this.sandbox.stub(TenantDAO, 'get').resolves(tenantModel);
             this.sandbox.stub(SubProjectDAO, 'get').resolves(subProjectModel);
             this.sandbox.stub(DatasetDAO, 'get').resolves([datasetModel, undefined]);
-            this.sandbox.stub(Locker, "getLock").resolves("toDatasetLock");
-            this.sandbox.stub(Locker, "isWriteLock").returns(true);
+            this.sandbox.stub(lockerInstance, "getLock").resolves("toDatasetLock");
+            this.sandbox.stub(lockerInstance, "isWriteLock").returns(true);
             this.sandbox.stub(DESStorage, 'getRecord').resolves({ id: "" });
 
             await Handler.handler(req, res, op);
@@ -558,7 +552,6 @@ export class TestServicesUtilityHandler {
             Tx.check400(res.statusCode)
 
         } );
-        
     };
 
     private static getConnectionStringTest(tenantModel: ITenantModel, subProjectModel: SubProjectModel, datasetModel: DatasetModel, iCredentials: ICredentials) {
@@ -659,7 +652,6 @@ export class TestServicesUtilityHandler {
             Tx.check400(res.statusCode)
 
         } );
-        
     };
 
     private static listStorageTiersTest() {
@@ -674,7 +666,6 @@ export class TestServicesUtilityHandler {
             Tx.check200(res.statusCode)
 
         } );
-        
     };
 
     private static errorTest() {
@@ -689,7 +680,5 @@ export class TestServicesUtilityHandler {
             Tx.check500(res.statusCode)
 
         } );
-        
     };
-
 };

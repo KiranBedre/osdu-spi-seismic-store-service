@@ -1,24 +1,31 @@
 gc-deploy:
+  extends: []
+  script:
+    - echo "Not implemented"
   rules:
-    - if: $DISABLED == 'true'
-      when: never
+    - when: never
 
 gc-test:
-  extends:
-    - .gc-variables
+  stage: integration
+  extends: []
+  script:
+    - echo "Not implemented"
   rules:
-    - if: $DISABLED == 'true'
-      when: never
+    - when: never
 
 gc-acceptance-test:
-  extends:
-    - .gc-variables
+  stage: acceptance
+  extends: []
+  script:
+    - echo "Not implemented"
   rules:
-    - if: $DISABLED == 'true'
-      when: never
+    - when: never
 
 gc-test-python:
+  stage: integration
+  extends: []
+  script:
+    - echo "Not implemented"
   rules:
-    - if: $DISABLED == 'true'
-      when: never
+    - when: never
 

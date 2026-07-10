@@ -16,16 +16,11 @@
 
 import sinon from 'sinon';
 import { DatasetModel, PaginationModel, ListDatasetsParams } from '../../../../src/services/dataset';
-import { Config, IJournal, IJournalTransaction } from '../../../../src/cloud';
-import { AzureConfig } from '../../../../src/cloud/providers/azure';
-import { Utils } from '../../../../src/shared';
-import { Locker } from '../../../../src/services/dataset/locker';
-import { PaginatedDatasetList } from '../../../../src/services/dataset/model';
-import { AzureCosmosDbQuery } from '../../../../src/cloud/providers/azure';
+import { IJournal, IJournalTransaction } from '../../../../src/cloud';
+import { lockerInstance } from '../../../../src/services/dataset/locker';
 import { DatasetDAO as DAO } from '../../../../src/services/dataset/';
 import { Tx } from '../../utils';
 import { IJournalQueryModel } from '../../../../src/cloud/journal';
-import { threadId } from 'worker_threads';
 import { SqlParameter } from '@azure/cosmos';
 
 export class DatasetDAOTest {
@@ -167,7 +162,6 @@ export class DatasetDAOTest {
             await DAO.register(journalClient, datasetEntity);
 
         } );
-        
     };
     
     private static getByKeyTest(journalClient: IJournal, datasetModel: DatasetModel) {
@@ -180,7 +174,6 @@ export class DatasetDAOTest {
             Tx.checkTrue(!(dm === undefined));
 
         } );
-        
     };
 
     private static getTest(journalClient: IJournal, datasetModel: DatasetModel) {
@@ -193,7 +186,6 @@ export class DatasetDAOTest {
             Tx.checkTrue(!(dm === undefined));
 
         } );
-        
     };
 
     private static updateTest(journalClient: IJournal, datasetModel: DatasetModel) {
@@ -205,7 +197,6 @@ export class DatasetDAOTest {
             await DAO.update(journalClient, datasetModel, { key: "" });
 
         } );
-        
     };
 
     private static updateAllTest(journalClient: IJournal, datasetModel: DatasetModel) {
@@ -217,7 +208,6 @@ export class DatasetDAOTest {
             await DAO.updateAll(journalClient, [{ data: datasetModel,  key: "" } ]);
 
         } );
-        
     };
 
     private static listTest(journalClient: IJournal, datasetModel: DatasetModel, pagination: PaginationModel) {
@@ -239,7 +229,6 @@ export class DatasetDAOTest {
             Tx.checkTrue(!(pm === undefined));
 
         } );
-        
     };
 
     private static deleteAllTest(journalClient: IJournal, datasetModel: DatasetModel) {
@@ -251,7 +240,6 @@ export class DatasetDAOTest {
             await DAO.deleteAll(journalClient, datasetModel.tenant, datasetModel.subproject);
 
         } );
-        
     };
 
     private static deleteTest(journalClient: IJournal, datasetModel: DatasetModel) {
@@ -263,7 +251,6 @@ export class DatasetDAOTest {
             await DAO.delete(journalClient, datasetModel);
 
         } );
-        
     };
 
     private static paginatedListContentTest(journalClient: IJournal, datasetModel: DatasetModel, pagination: PaginationModel) {
@@ -285,7 +272,6 @@ export class DatasetDAOTest {
             Tx.checkTrue(!(output === undefined));
 
         } );
-        
     };
 
     private static listDatasetsTest(journalClient: IJournal, datasetModel: DatasetModel, pagination: PaginationModel) {
@@ -298,7 +284,6 @@ export class DatasetDAOTest {
             Tx.checkTrue(!(output === undefined));
 
         } );
-        
     };
 
     private static listContentTest(journalClient: IJournal, datasetModel: DatasetModel) {
@@ -318,7 +303,6 @@ export class DatasetDAOTest {
             Tx.checkTrue(!(results === undefined));
 
         } );
-        
     };
 
     private static fixOldModelTest(datasetModel: DatasetModel) {
@@ -327,7 +311,7 @@ export class DatasetDAOTest {
 
         Tx.test(async () => {
 
-            this.sandbox.stub(Locker, "getLock").resolves(["xx"]);
+            this.sandbox.stub(lockerInstance, "getLock").resolves(["xx"]);
             let entity = await DAO.fixOldModel(datasetModel, datasetModel.tenant, datasetModel.subproject);
             Tx.checkTrue(!(entity === undefined));
 
@@ -335,7 +319,7 @@ export class DatasetDAOTest {
 
         Tx.test(async () => {
 
-            this.sandbox.stub(Locker, "getLock").resolves("xx");
+            this.sandbox.stub(lockerInstance, "getLock").resolves("xx");
             let entity = await DAO.fixOldModel(datasetModel, datasetModel.tenant, datasetModel.subproject);
             Tx.checkTrue(!(entity === undefined));
 
@@ -352,7 +336,5 @@ export class DatasetDAOTest {
             Tx.checkTrue(!(entity === undefined));
 
         } );
-        
     };
-
 }

@@ -16,12 +16,9 @@
 
 namespace Sidecar.Common.Tests;
 
-using System.Text.RegularExpressions;
-
 internal static partial class TestingHelpers
 {
-    private static readonly Regex _keyPrefixMatcher = new("(.*?):(.*?):");
-    private partial class InMemoryCache
+    internal partial class InMemoryCache
     {
         private readonly Dictionary<string, RedisValue> _cache = [];
         private readonly Dictionary<string, List<RedisValue>> _queueCache = [];
@@ -122,7 +119,6 @@ internal static partial class TestingHelpers
                 return _cache[key!];
             }
             return RedisValue.EmptyString;
-
         }
 
         public async Task<RedisValue> HashGetAsync(RedisKey key, RedisValue field) => await Task.FromResult(HashGet(key, field));
@@ -187,6 +183,19 @@ internal static partial class TestingHelpers
             _ = HashSet(key, field, initVal);
             return initVal;
         }
-    }
 
+        // String operations for lock management
+        public bool StringSet(RedisKey key, RedisValue value)
+        {
+            _cache[key!] = value;
+            return true;
+        }
+
+        public RedisValue StringGet(RedisKey key)
+        {
+            return _cache.TryGetValue(key!, out var value) ? value : RedisValue.Null;
+        }
+
+        public Task<RedisValue> StringGetAsync(RedisKey key) => Task.FromResult(StringGet(key));
+    }
 }

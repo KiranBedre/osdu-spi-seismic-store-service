@@ -21,7 +21,7 @@ public interface IOptionsBulkDelete :
     IOptionsQueueRedis,
     IOptionsLocksRedis,
     IOptionsQueueNameRedis,
-    IOptionsStorageQueue
+    IOptionsStorageQueue,
+    IOptionsRedisMsi
 {
-
 }

@@ -100,6 +100,7 @@
     "js-yaml": "^4.1.0",
     "json-refs": "^3.0.15",
     "jsonwebtoken": "9.0.3",
+    "jwt-decode": "^3.1.2",
     "keycloak-admin": "^1.14.22",
     "log4js": "^6.3.0",
     "node-cache": "^5.1.2",

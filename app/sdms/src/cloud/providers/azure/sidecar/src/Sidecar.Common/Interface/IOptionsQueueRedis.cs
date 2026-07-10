@@ -16,7 +16,7 @@
 
 namespace Sidecar.Common.Interface;
 
-public interface IOptionsQueueRedis
+public interface IOptionsQueueRedis : IOptionsRedis
 {
     string RedisQueueHostname { get; set; }
     string RedisQueuePassword { get; set; }

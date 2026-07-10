@@ -19,23 +19,29 @@ namespace Sidecar.Common.Service;
 using Interface;
 using Microsoft.Extensions.Logging;
 
-public class RedisLocksConnectionFactory(
-    ILoggerFactory loggerFactory,
-    ICachingConnectionMultiplexerFactory multiplexerFactory,
-    IOptionsLocksRedis locksOpts) : IRedisConnectionFactory<RedisLocksConnectionFactory>
+public class RedisLocksConnectionFactory : IRedisConnectionFactory<RedisLocksConnectionFactory>
 {
-    private readonly ILoggerFactory _loggerFactory = loggerFactory;
-    private readonly ICachingConnectionMultiplexerFactory _multiplexerFactory = multiplexerFactory;
-    private readonly IOptionsLocksRedis _locksOpts = locksOpts;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly IRedisMultiplexerFactory _multiplexerFactory;
+    private readonly IOptionsLocksRedis _locksOpts;
+
+    public RedisLocksConnectionFactory(
+        ILoggerFactory loggerFactory,
+        IRedisMultiplexerFactory multiplexerFactory,
+        IOptionsLocksRedis locksOpts)
+    {
+        _loggerFactory = loggerFactory;
+        _multiplexerFactory = multiplexerFactory;
+        _locksOpts = locksOpts;
+    }
 
     public IRedisHandler GetRedis() => FromConfig(
             _locksOpts.RedisLocksHostname,
-            _locksOpts.RedisLocksPort,
-            _locksOpts.RedisLocksPassword);
+            _locksOpts.RedisLocksPort);
 
-    private IRedisHandler FromConfig(string hostname, string port, string password)
+    private IRedisHandler FromConfig(string hostname, string port)
     {
-        var connection = _multiplexerFactory.GetRedisConnection(hostname, Convert.ToInt32(port), password);
+        var connection = _multiplexerFactory.GetConnectionAsync(hostname, Convert.ToInt32(port)).GetAwaiter().GetResult();
         return new RedisHandler(_loggerFactory.CreateLogger<RedisHandler>(), connection);
     }
 }
