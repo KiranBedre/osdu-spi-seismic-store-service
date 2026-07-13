@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Microsoft
+// Copyright 2017-2026, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -162,6 +162,11 @@ public static class Constants
         public const string DATA_CONTAINER_ID = "data";
 
         /// <summary>
+        /// Container for storing archived dataset metadata snapshots
+        /// </summary>
+        public const string ARCHIVE_CONTAINER_ID = "ArchiveDatasetMetadata";
+
+        /// <summary>
         /// Container for storing change tier operation status
         /// </summary>
         public const string CHANGE_TIER_STATUS_CONTAINER_ID = "ChangeTierOperationStatus";
@@ -185,11 +190,6 @@ public static class Constants
         /// Container for storing restore operation status
         /// </summary>
         public const string RESTORE_STATUS_CONTAINER_ID = "RestoreOperationStatus";
-
-        /// <summary>
-        /// Container for storing archived dataset metadata snapshots
-        /// </summary>
-        public const string ARCHIVE_DATASET_METADATA_CONTAINER_ID = "ArchiveDatasetMetadata";
     }
 
     /// <summary>
@@ -281,5 +281,17 @@ public static class Constants
         /// resource group is derived for PITR operations.
         /// </summary>
         public const string COMPUTE_RG_PREFIX = "Compute-rg-";
+    }
+
+    /// <summary>
+    /// Archive operation type values written to the archive snapshot's 'operation' field.
+    /// This is a serialized contract shared with the TypeScript archival path (which defines
+    /// the full set: patch, delete, bulk_delete, change_tier). Only the operations produced
+    /// by the .NET sidecars are declared here.
+    /// </summary>
+    public static class ArchiveOperation
+    {
+        public const string BULK_DELETE = "bulk_delete";
+        public const string CHANGE_TIER = "change_tier";
     }
 }

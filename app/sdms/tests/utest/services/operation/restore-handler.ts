@@ -45,6 +45,10 @@ import { Tx } from '../../utils';
 
 loggerStub.restore();
 
+// Relative dates keep these tests independent of the calendar: the restore point is
+// recent (within SDMS_RESTORE_MAX_DAYS) and safely after the dataset creation time.
+const RESTORE_POINT_IN_TIME = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+
 export class TestRestoreHandler {
 
     private static sandbox = sinon.createSandbox();
@@ -69,7 +73,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 'Accidental overwrite'
             };
             req.headers['data-partition-id'] = 'tenant';
@@ -84,7 +88,7 @@ export class TestRestoreHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ name: 'dataset1', created_date: '2026-06-01T00:00:00.000Z' }, {}] as any);
             this.sandbox.stub(lockerInstance, 'getLock').resolves(null);
             this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(null);
-            this.sandbox.stub(restoreStatusStorage, 'getInProgressRestoreOperationId').resolves(null);
+            this.sandbox.stub(restoreStatusStorage, 'getActiveRestoreOperationId').resolves(null);
             this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(true);
             this.sandbox.stub(Utils, 'getUserId').resolves('user@example.com');
             this.sandbox.stub(restoreStatusStorage, 'createRestoreOperation').resolves();
@@ -105,7 +109,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(false);
@@ -117,7 +121,7 @@ export class TestRestoreHandler {
         // Missing sdPath
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
@@ -126,7 +130,7 @@ export class TestRestoreHandler {
             Tx.check400((res as any).statusCode);
         });
 
-        // Missing restoreTimestamp
+        // Missing restorePointInTime
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
@@ -142,7 +146,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2099-06-10T08:30:00.000Z',
+                restorePointInTime: '2099-06-10T08:30:00.000Z',
                 reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
@@ -155,7 +159,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 123
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
@@ -168,7 +172,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 'test'
             };
 
@@ -191,7 +195,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'invalid-path',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
@@ -204,7 +208,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 'test'
             };
 
@@ -224,7 +228,7 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: RESTORE_POINT_IN_TIME,
                 reason: 'test'
             };
 
@@ -238,7 +242,7 @@ export class TestRestoreHandler {
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ name: 'dataset1', created_date: '2026-06-01T00:00:00.000Z' }, {}] as any);
             this.sandbox.stub(lockerInstance, 'getLock').resolves(null);
             this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(null);
-            this.sandbox.stub(restoreStatusStorage, 'getInProgressRestoreOperationId').resolves(null);
+            this.sandbox.stub(restoreStatusStorage, 'getActiveRestoreOperationId').resolves(null);
             this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(true);
             this.sandbox.stub(RestoreOperationLock, 'release').resolves(true);
             this.sandbox.stub(Utils, 'getUserId').resolves('user@example.com');
@@ -268,7 +272,7 @@ export class TestRestoreHandler {
                 operationId: 'op-123',
                 status: 'Succeeded',
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                restoreTimestamp: '2026-06-10T08:30:00.000Z',
+                restorePointInTime: '2026-06-10T08:30:00.000Z',
                 reason: 'test',
                 tenant: 'tenant',
                 subproject: 'subproject',

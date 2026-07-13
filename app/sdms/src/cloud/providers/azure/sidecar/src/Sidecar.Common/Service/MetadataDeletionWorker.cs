@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Microsoft
+// Copyright 2017-2026, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,26 +22,39 @@ using System.Threading.Tasks;
 using Interface;
 using Microsoft.Extensions.Logging;
 
-public class MetadataDeletionWorker(
-    ILogger<MetadataDeletionWorker> logger,
-    IDataAccess dataAccess,
-    ICosmosClientFactory cosmosClientFactory) : IMetadataDeletionWorker
+public class MetadataDeletionWorker : IMetadataDeletionWorker
 {
-    private readonly ILogger<MetadataDeletionWorker> _logger = logger;
-    private readonly IDataAccess _dataAccess = dataAccess;
-    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
+    private readonly ILogger<MetadataDeletionWorker> _logger;
+    private readonly IDataAccess _dataAccess;
+    private readonly ICosmosClientFactory _cosmosClientFactory;
+    private readonly IArchiveService _archiveService;
 
     private int _consecutiveFailures = 0;
     private const int MAX_RETRIES = 5;
 
+    public MetadataDeletionWorker(
+        ILogger<MetadataDeletionWorker> logger,
+        IDataAccess dataAccess,
+        ICosmosClientFactory cosmosClientFactory,
+        IArchiveService archiveService)
+    {
+        _logger = logger;
+        _dataAccess = dataAccess;
+        _cosmosClientFactory = cosmosClientFactory;
+        _archiveService = archiveService;
+    }
+
     public async Task DeleteMetadataAsync(string dataPartitionId, string id)
     {
+        // Archive current state before deletion
+        await _archiveService.ArchiveBeforeDeleteAsync(dataPartitionId, id);
+
         var success = false;
         do
         {
             try
             {
-                var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId);
+                var cs = await _cosmosClientFactory.GetCosmosConnectionEndpointAsync(dataPartitionId);
                 success = await _dataAccess.DeleteMetadataAsync(cs, id);
                 _consecutiveFailures = 0;
             }
@@ -51,7 +64,7 @@ public class MetadataDeletionWorker(
                 _logger.LogWarning("Could not delete metadata for dataset {id}, Attempt {a}", id, _consecutiveFailures / MAX_RETRIES);
                 if (_consecutiveFailures == MAX_RETRIES)
                 {
-                    throw;
+                    throw ex;
                 }
             }
         } while (!success && _consecutiveFailures < MAX_RETRIES);

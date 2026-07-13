@@ -79,9 +79,9 @@ public class CosmosDatasetStorageInfoProvider(
 
                 // TODO: Query the archival metadata container for a deleted-dataset fallback.
                 // Archival snapshots are written to a SEPARATE Cosmos container
-                // (Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID) on delete/patch/
+                // (Constants.CosmosDb.ARCHIVE_CONTAINER_ID) on delete/patch/
                 // change_tier. Each archival document carries top-level bookkeeping fields
-                // (archivedAt, operation, OriginalId) alongside a `data` field holding the full
+                // (archivedAtEpochMs, operation, OriginalId) alongside a `data` field holding the full
                 // dataset-entity snapshot, so entity fields live at the same c.data.* paths as an
                 // active record; the newest snapshot reflects the pre-deletion state.
                 // IDataAccess.GetRecordsAsync currently targets only the default data container, so
@@ -89,11 +89,11 @@ public class CosmosDatasetStorageInfoProvider(
                 // container directly via _cosmosClientFactory (pattern in ChangeTierFailureTracker)
                 // once the approach is finalized. Query to run:
                 //   SELECT TOP 1 c.data.gcsurl, c.data.files FROM c
-                //   WHERE IS_DEFINED(c.archivedAt)
+                //   WHERE IS_DEFINED(c.archivedAtEpochMs)
                 //     AND c.data.tenant = @tenant AND c.data.subproject = @subproject
                 //     AND c.data.path = @path AND c.data.name = @name
                 //     AND IS_DEFINED(c.data.gcsurl)
-                //   ORDER BY c.archivedAt DESC
+                //   ORDER BY c.archivedAtEpochMs DESC
                 // When implemented, set:
                 //   records = <archival query result>;
                 //   isDeleted = records.records is { Count: > 0 };

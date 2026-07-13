@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import { RestoreOperationLock } from './restore-lock';
 import { TaskQueueFactory } from '../../cloud/taskQueue';
 import { SqlParameter } from '@azure/cosmos';
 import { ISDPathModel } from '../../shared/sdpath';
+import { AzureArchiveService } from '../../cloud/providers/azure/archive-service';
 import { ITenantModel } from '../tenant/model';
 
 export class Handler {
@@ -192,7 +193,7 @@ export class Handler {
         const context = 'RestorePush';
         this.checkFeature(Feature.RESTORE);
 
-        const { sdPath, restoreTimestamp, reason } = this.parseAndValidateRestoreRequest(req);
+        const { sdPath, restorePointInTime, reason } = this.parseAndValidateRestoreRequest(req);
 
         const parsedPath = SDPath.getFromString(sdPath, true);
         if (!parsedPath || !parsedPath.tenant || !parsedPath.subproject) {
@@ -219,29 +220,26 @@ export class Handler {
                 await DatasetDAO.getByKey(journalClient, dataset) :
                 (await DatasetDAO.get(journalClient, dataset))[0];
             if (!datasetOUT) {
-                throw Error.make(Error.Status.NOT_FOUND,
-                    'The dataset ' + Config.SDPATHPREFIX + dataset.tenant + '/' +
-                    dataset.subproject + dataset.path + dataset.name + ' does not exist');
-            }
-            // Check restoreTimestamp is after dataset creation
-            if (datasetOUT.created_date) {
-                const createdAt = new Date(datasetOUT.created_date).getTime();
-                const restoreAt = new Date(restoreTimestamp).getTime();
-                if (restoreAt <= createdAt) {
-                    throw Error.make(Error.Status.BAD_REQUEST,
-                        'restoreTimestamp must be after the dataset creation time (' +
-                        datasetOUT.created_date + '). Cannot restore to a point before the dataset existed.');
-                }
-            }
-            // Check dataset is not write-locked
-            if (!Config.SKIP_WRITE_LOCK_CHECK_ON_MUTABLE_OPERATIONS) {
-                const lockKey = dataset.tenant + '/' + dataset.subproject + dataset.path + dataset.name;
-                const lockValue = await lockerInstance.getLock(lockKey);
-                if (lockerInstance.isWriteLock(lockValue)) {
-                    throw Error.make(Error.Status.LOCKED,
+                // Dataset not found in primary — check archive container for deleted datasets
+                const datasetKey = DatasetDAO.getKey(journalClient, dataset) as any;
+                const archiveExists = await this.checkArchiveContainerForDataset(
+                    datasetKey.partitionKey, parsedPath.tenant);
+                if (!archiveExists) {
+                    throw Error.make(Error.Status.NOT_FOUND,
                         'The dataset ' + Config.SDPATHPREFIX + dataset.tenant + '/' +
-                        dataset.subproject + dataset.path + dataset.name + ' is write locked ' +
-                        Error.get423WriteLockReason());
+                        dataset.subproject + dataset.path + dataset.name +
+                        ' does not exist and has no archived state');
+                }
+            } else {
+                // Check restorePointInTime is after dataset creation
+                if (datasetOUT.created_date) {
+                    const createdAt = new Date(datasetOUT.created_date).getTime();
+                    const restoreAt = new Date(restorePointInTime).getTime();
+                    if (restoreAt <= createdAt) {
+                        throw Error.make(Error.Status.BAD_REQUEST,
+                            'restorePointInTime must be after the dataset creation time (' +
+                            datasetOUT.created_date + '). Cannot restore to a point before the dataset existed.');
+                    }
                 }
             }
         }
@@ -268,11 +266,11 @@ export class Handler {
                 'Restore service temporarily unavailable. Please try again later.');
         }
 
-        // Step 2: Check Cosmos for in-progress operations (covers Redis TTL expiry edge case)
-        const inProgressOperationId = await restoreStatusStorage.getInProgressRestoreOperationId(parsedPath.tenant);
+        // Step 2: Check Cosmos for active operations (covers Redis TTL expiry edge case)
+        const inProgressOperationId = await restoreStatusStorage.getActiveRestoreOperationId(parsedPath.tenant);
         if (inProgressOperationId) {
             this.logger.info({
-                message: `Restore rejected: Cosmos shows in-progress operationId ${inProgressOperationId}`,
+                message: `Restore rejected: Cosmos shows active operationId ${inProgressOperationId}`,
                 context, rejectionSource: 'cosmos-fallback',
             });
             throw Error.make(Error.Status.ALREADY_EXISTS,
@@ -307,31 +305,32 @@ export class Handler {
             throw Error.make(Error.Status.BAD_REQUEST, 'User not found');
         }
 
-        // Create operation record and enqueue — release lock on any failure
+        // Enqueue first, then create status record — release lock on any failure
         try {
-            await restoreStatusStorage.createRestoreOperation({
-                operationId,
-                tenant: parsedPath.tenant,
-                subproject: parsedPath.subproject,
-                sdPath,
-                restoreTimestamp,
-                reason,
-                createdBy: user,
-            });
-
             // Enqueue restore job
             const task: IRestoreOperationQueueTask = {
                 type: OperationType.RESTORE,
                 operation_id: operationId,
                 createdBy: user,
                 sdPath,
-                restoreTimestamp,
+                restorePointInTime,
                 reason,
                 correlationId: CallContext.correlationId,
             };
 
             const taskQueue = TaskQueueFactory.build(Config.CLOUDPROVIDER);
             await taskQueue.pushTask(task);
+
+            // Create operation record after successful enqueue
+            await restoreStatusStorage.createRestoreOperation({
+                operationId,
+                tenant: parsedPath.tenant,
+                subproject: parsedPath.subproject,
+                sdPath,
+                restorePointInTime,
+                reason,
+                createdBy: user,
+            });
         } catch (error) {
             this.logger.error({
                 message: `Failed to create/enqueue restore operation: ${(error as any).message}`,
@@ -383,23 +382,23 @@ export class Handler {
 
     private static parseAndValidateRestoreRequest(req: expRequest): {
         sdPath: string;
-        restoreTimestamp: string;
+        restorePointInTime: string;
         reason?: string;
     } {
-        const { sdPath, restoreTimestamp, reason } = req.body || {};
+        const { sdPath, restorePointInTime, reason } = req.body || {};
 
         if (!sdPath || typeof sdPath !== 'string') {
             throw Error.make(Error.Status.BAD_REQUEST, 'sdPath is required and must be a string');
         }
-        if (!restoreTimestamp || typeof restoreTimestamp !== 'string') {
-            throw Error.make(Error.Status.BAD_REQUEST, 'restoreTimestamp is required and must be an ISO-8601 string');
+        if (!restorePointInTime || typeof restorePointInTime !== 'string') {
+            throw Error.make(Error.Status.BAD_REQUEST, 'restorePointInTime is required and must be an ISO-8601 string');
         }
-        const ts = new Date(restoreTimestamp);
+        const ts = new Date(restorePointInTime);
         if (isNaN(ts.getTime())) {
-            throw Error.make(Error.Status.BAD_REQUEST, 'restoreTimestamp must be a valid ISO-8601 date');
+            throw Error.make(Error.Status.BAD_REQUEST, 'restorePointInTime must be a valid ISO-8601 date');
         }
         if (ts.getTime() > Date.now()) {
-            throw Error.make(Error.Status.BAD_REQUEST, 'restoreTimestamp must be in the past');
+            throw Error.make(Error.Status.BAD_REQUEST, 'restorePointInTime must be in the past');
         }
         const maxDays = Config.SDMS_RESTORE_MAX_DAYS;
         if (!maxDays || maxDays <= 0) {
@@ -409,18 +408,35 @@ export class Handler {
         const maxAgeMs = maxDays * 24 * 60 * 60 * 1000;
         if (Date.now() - ts.getTime() > maxAgeMs) {
             throw Error.make(Error.Status.BAD_REQUEST,
-                `restoreTimestamp must be within the last ${maxDays} days. Point-in-time restore is only available for the past ${maxDays} days.`);
+                `restorePointInTime must be within the last ${maxDays} days. Point-in-time restore is only available for the past ${maxDays} days.`);
         }
         if (reason && typeof reason !== 'string') {
             throw Error.make(Error.Status.BAD_REQUEST, 'reason must be a string if provided');
         }
 
-        return { sdPath, restoreTimestamp, reason };
+        return { sdPath, restorePointInTime, reason };
     }
 
     private static checkFeature(feature: Feature) {
         if (!FeatureFlags.isEnabled(feature)) {
             throw (Error.make(Error.Status.NOT_IMPLEMENTED, 'Method not implemented.'));
+        }
+    }
+
+    /**
+     * Checks if a deleted dataset has archived metadata entries that can be restored.
+     */
+    private static async checkArchiveContainerForDataset(
+        datasetId: string, tenant: string): Promise<boolean> {
+        try {
+            return await AzureArchiveService.hasArchivedEntries(datasetId, tenant);
+        } catch (error) {
+            LoggerFactory.getLogger().error({
+                message: `Failed to check archive container for dataset ${datasetId}: ${(error as any)?.message}`,
+                context: 'RestorePush.checkArchive'
+            });
+            throw Error.make(Error.Status.NOT_AVAILABLE,
+                'Unable to verify archived state for the dataset. Please try again later.');
         }
     }
 

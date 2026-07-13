@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2026, Microsoft
+// Copyright 2026, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,9 @@ public class RestoreOperationStatus : RestoreOperationMessage, IRestoreOperation
 
     /// <summary>
     /// Operation lifecycle status.
-    /// Values: "InProgress" | "Succeeded" | "Failed" | "Rejected"
+    /// Values: "Enqueued" | "InProgress" | "Succeeded" | "Failed" | "Rejected".
+    /// "Enqueued" is the initial status written by the SDMS API when the restore message is
+    /// queued; the sidecar then transitions it to "InProgress" and finally to a terminal state.
     /// </summary>
     [JsonPropertyName("status")]
     [JsonProperty("status")]

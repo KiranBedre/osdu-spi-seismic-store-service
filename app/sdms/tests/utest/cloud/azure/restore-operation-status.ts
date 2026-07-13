@@ -65,7 +65,7 @@ export class TestAzureRestoreOperationStatus {
             this.testCreateRestoreOperation();
             this.testGetRestoreOperationStatus();
             this.testMarkRestoreOperationFailed();
-            this.testGetInProgressRestoreOperationId();
+            this.testGetActiveRestoreOperationId();
         });
     }
 
@@ -78,7 +78,7 @@ export class TestAzureRestoreOperationStatus {
                 tenant: 'tenant-a',
                 subproject: 'subproject-a',
                 sdPath: 'sd://tenant-a/subproject-a/path/dataset',
-                restoreTimestamp: '2026-06-20T10:00:00.000Z',
+                restorePointInTime: '2026-06-20T10:00:00.000Z',
                 reason: 'recover data',
                 createdBy: 'user@example.com'
             });
@@ -90,10 +90,10 @@ export class TestAzureRestoreOperationStatus {
             expect(record.tenant).to.equal('tenant-a');
             expect(record.subproject).to.equal('subproject-a');
             expect(record.sdPath).to.equal('sd://tenant-a/subproject-a/path/dataset');
-            expect(record.restoreTimestamp).to.equal('2026-06-20T10:00:00.000Z');
+            expect(record.restorePointInTime).to.equal('2026-06-20T10:00:00.000Z');
             expect(record.reason).to.equal('recover data');
             expect(record.createdBy).to.equal('user@example.com');
-            expect(record.status).to.equal('InProgress');
+            expect(record.status).to.equal('Enqueued');
             expect(record.error_message).to.equal('');
             expect(record.startedAt).to.be.a('string');
             expect(record.lastUpdatedAt).to.be.a('string');
@@ -109,7 +109,7 @@ export class TestAzureRestoreOperationStatus {
                     operationId: 'op-123',
                     status: 'Succeeded',
                     sdPath: 'sd://tenant-a/subproject-a/path/dataset',
-                    restoreTimestamp: '2026-06-20T10:00:00.000Z',
+                    restorePointInTime: '2026-06-20T10:00:00.000Z',
                     reason: 'recover data',
                     tenant: 'tenant-a',
                     subproject: 'subproject-a',
@@ -127,7 +127,7 @@ export class TestAzureRestoreOperationStatus {
                 operationId: 'op-123',
                 status: 'Succeeded',
                 sdPath: 'sd://tenant-a/subproject-a/path/dataset',
-                restoreTimestamp: '2026-06-20T10:00:00.000Z',
+                restorePointInTime: '2026-06-20T10:00:00.000Z',
                 reason: 'recover data',
                 tenant: 'tenant-a',
                 subproject: 'subproject-a',
@@ -177,25 +177,28 @@ export class TestAzureRestoreOperationStatus {
         });
     }
 
-    private static testGetInProgressRestoreOperationId() {
-        Tx.sectionInit('getInProgressRestoreOperationId');
+    private static testGetActiveRestoreOperationId() {
+        Tx.sectionInit('getActiveRestoreOperationId');
 
         Tx.test(async () => {
             this.fetchAllStub.resolves({ resources: [{ operationId: 'op-123' }] });
 
-            const result = await this.storage.getInProgressRestoreOperationId('tenant-a');
+            const result = await this.storage.getActiveRestoreOperationId('tenant-a');
 
             expect(result).to.equal('op-123');
             sinon.assert.calledOnceWithExactly(this.queryStub, {
-                query: 'SELECT TOP 1 c.operationId FROM c WHERE c.status = @status',
-                parameters: [{ name: '@status', value: 'InProgress' }]
+                query: 'SELECT TOP 1 c.operationId FROM c WHERE c.status IN (@enqueued, @inProgress)',
+                parameters: [
+                    { name: '@enqueued', value: 'Enqueued' },
+                    { name: '@inProgress', value: 'InProgress' }
+                ]
             });
         });
 
         Tx.test(async () => {
             this.fetchAllStub.resolves({ resources: [] });
 
-            const result = await this.storage.getInProgressRestoreOperationId('tenant-a');
+            const result = await this.storage.getActiveRestoreOperationId('tenant-a');
 
             expect(result).to.equal(null);
         });

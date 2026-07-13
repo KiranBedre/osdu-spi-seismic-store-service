@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ export class AzureConfig extends Config {
     // cosmo db max throughput settings
     public static COSMO_MAX_THROUGHPUT: number;
     public static COSMO_CHANGE_TIER_MAX_THROUGHPUT: number;
+    public static COSMO_ARCHIVE_MAX_THROUGHPUT: number;
+    public static COSMO_RESTORE_STATUS_MAX_THROUGHPUT: number;
 
     // Cosmos DB database and container names
     public static COSMOS_DATABASE_ID = 'sdms-db';
@@ -62,10 +64,22 @@ export class AzureConfig extends Config {
     public static COSMOS_CHANGE_TIER_STATUS_CONTAINER = 'ChangeTierOperationStatus';
     public static COSMOS_CHANGE_TIER_FAILURE_CONTAINER = 'ChangeTierFailure';
     public static COSMOS_RESTORE_STATUS_CONTAINER = 'RestoreOperationStatus';
+    public static COSMOS_ARCHIVE_CONTAINER = 'ArchiveDatasetMetadata';
     
+    // Archive TTL derived from restore max days (Config.SDMS_RESTORE_MAX_DAYS)
+    public static get COSMOS_ARCHIVE_TTL_SECONDS(): number {
+        const maxDays = Config.SDMS_RESTORE_MAX_DAYS;
+        const validDays = Number.isInteger(maxDays) && maxDays > 0 ? maxDays : 30;
+        return validDays * 24 * 60 * 60;
+    }
+    
+    // Dataset entity ID prefix — only entities with this prefix are archived
+    public static DATASET_ENTITY_PREFIX = 'ds-';
+
     // Cosmos DB partition key paths
     public static COSMOS_PARTITION_KEY_ID = '/id';
     public static COSMOS_PARTITION_KEY_OPERATION_ID = '/operationId';
+    public static COSMOS_PARTITION_KEY_SDPATH = '/sdPath';
 
     // internal logging
     public static ENABLE_LOGGING_INFO: boolean;
@@ -167,6 +181,10 @@ export class AzureConfig extends Config {
 
             // cosmo throughput settings
             AzureConfig.COSMO_MAX_THROUGHPUT = +process.env.COSMO_MAX_THROUGHPUT || 40000;
+            AzureConfig.COSMO_CHANGE_TIER_MAX_THROUGHPUT = +process.env.COSMO_CHANGE_TIER_MAX_THROUGHPUT || 4000;
+            // Archive is written on every dataset mutation; restore status is low volume.
+            AzureConfig.COSMO_ARCHIVE_MAX_THROUGHPUT = +process.env.COSMO_ARCHIVE_MAX_THROUGHPUT || 4000;
+            AzureConfig.COSMO_RESTORE_STATUS_MAX_THROUGHPUT = +process.env.COSMO_RESTORE_STATUS_MAX_THROUGHPUT || 4000;
 
             // logging
             AzureConfig.ENABLE_LOGGING_INFO = process.env.ENABLE_LOGGING_INFO !== 'false'; // enabled by default

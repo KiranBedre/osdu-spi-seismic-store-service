@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ export abstract class Config implements IConfig {
     // TTL for restore operation distributed lock (seconds), default 2 hours
     public static SDMS_RESTORE_LOCK_TTL_SECONDS = 7200;
 
-    // Maximum age for restoreTimestamp (days), default 30 days
+    // Maximum age for restorePointInTime (days), default 30 days
     public static SDMS_RESTORE_MAX_DAYS = 30;
 
     // DataEcosystem Configuration
@@ -303,6 +303,14 @@ export abstract class Config implements IConfig {
         }
     }
 
+    // Parses a value to a positive integer, falling back to a default when the
+    // value is missing or non-numeric (e.g. an unresolved template placeholder
+    // or the literal string "null" from misconfigured infra).
+    protected static parsePositiveIntOrDefault(value: unknown, defaultValue: number): number {
+        const parsed = Number(value);
+        return Number.isInteger(parsed) && parsed > 0 ? parsed : defaultValue;
+    }
+
     protected static async initServiceConfiguration(model: ConfigModel): Promise<void> {
 
         Config.SERVICE_ENV = model.SERVICE_ENV;
@@ -344,10 +352,10 @@ export abstract class Config implements IConfig {
 
         Config.SDMS_RESTORE_QUEUE = model.SDMS_RESTORE_QUEUE ||
             process.env.SDMS_RESTORE_QUEUE;
-        Config.SDMS_RESTORE_LOCK_TTL_SECONDS = model.SDMS_RESTORE_LOCK_TTL_SECONDS ||
-            +(process.env.SDMS_RESTORE_LOCK_TTL_SECONDS || 7200);
-        Config.SDMS_RESTORE_MAX_DAYS = model.SDMS_RESTORE_MAX_DAYS ||
-            +(process.env.SDMS_RESTORE_MAX_DAYS || 30);
+        Config.SDMS_RESTORE_LOCK_TTL_SECONDS = Config.parsePositiveIntOrDefault(
+            model.SDMS_RESTORE_LOCK_TTL_SECONDS ?? process.env.SDMS_RESTORE_LOCK_TTL_SECONDS, 7200);
+        Config.SDMS_RESTORE_MAX_DAYS = Config.parsePositiveIntOrDefault(
+            model.SDMS_RESTORE_MAX_DAYS ?? process.env.SDMS_RESTORE_MAX_DAYS, 30);
         Config.SDMS_ANALYTICS_CONTAINER_NAME = process.env.SDMS_ANALYTICS_CONTAINER_NAME ||
             'sdms-analytics-reports';
 

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Microsoft
+// Copyright 2017-2026, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,68 +17,87 @@
 namespace Sidecar.Common.Service;
 
 using Microsoft.Azure.Cosmos;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 using Interface;
 using Microsoft.Extensions.Logging;
+using Sidecar.Common.Model;
+using Sidecar.Common.Utility;
 
-public class MetadataTierUpdater(
-    ILogger<MetadataTierUpdater> logger,
-    IDataAccess dataAccess,
-    ICosmosClientFactory cosmosClientFactory) : IMetadataTierUpdater
+public class MetadataTierUpdater : IMetadataTierUpdater
 {
-    private readonly ILogger<MetadataTierUpdater> _logger = logger;
-    private readonly IDataAccess _dataAccess = dataAccess;
-    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
+    private readonly ILogger<MetadataTierUpdater> _logger;
+    private readonly IDataAccess _dataAccess;
+    private readonly ICosmosClientFactory _cosmosClientFactory;
+    private readonly IArchiveService _archiveService;
 
-    private int _consecutiveFailures = 0;
-    private const int MAX_RETRIES = 5;
+    // Cosmos patch paths for dataset tier metadata (used only by this updater)
+    private const string TierClassPatchPath = "/data/filemetadata/tier_class";
+    private const string FileMetadataPatchPath = "/data/filemetadata";
 
-    public async Task UpdateTier(string dataPartitionId, string id, string tier)
+    public MetadataTierUpdater(
+        ILogger<MetadataTierUpdater> logger,
+        IDataAccess dataAccess,
+        ICosmosClientFactory cosmosClientFactory,
+        IArchiveService archiveService)
     {
-        var success = false;
-        do
-        {
-            try
-            {
-                var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId);
+        _logger = logger;
+        _dataAccess = dataAccess;
+        _cosmosClientFactory = cosmosClientFactory;
+        _archiveService = archiveService;
+    }
 
-                var updates = new Dictionary<string, object> {
-                    {
-                        "/data/filemetadata/tier_class", tier
-                    }
-                };
-                success = await _dataAccess.UpdateMetadataAsync(cs, id, updates);
-                _consecutiveFailures = 0;
-            }
-            catch (CosmosException ex)
-            {
-                if (ex.Message.Contains("no path found beyond: 'filemetadata'"))
-                {
-                    try
-                    {
-                        var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId);
-                        var updates = new Dictionary<string, object> {
-                            {
-                                "/data/filemetadata", new {}
-                            }
-                        };
-                        var res = await _dataAccess.UpdateMetadataAsync(cs, id, updates);
-                    }
-                    catch (CosmosException exception)
-                    {
-                        _logger.LogWarning("Could not process metadata for dataset {id}, with exception {ex}", id, exception);
-                        throw ex;
-                    }
-                }
-                _consecutiveFailures++;
-                _logger.LogWarning("Could not process metadata for dataset {id}, Attempt {a}", id, _consecutiveFailures / MAX_RETRIES);
-                if (_consecutiveFailures == MAX_RETRIES)
-                {
-                    _logger.LogWarning("Could not process metadata for dataset {id}, with exception {ex}", id, ex);
-                    throw;
-                }
-            }
-        } while (!success && _consecutiveFailures < MAX_RETRIES);
+    /// <summary>
+    /// Updates the tier_class metadata for a dataset.
+    /// Uses a two-phase approach: first tries direct path update, then creates missing path structure if needed.
+    /// Retry logic is handled by the caller (Polly General pipeline) and Cosmos SDK.
+    /// </summary>
+    public async Task UpdateTier(string dataPartitionId, string id, string tier, string? operationId = null)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        // Archive current state before mutation
+        await _archiveService.ArchiveBeforeUpdateAsync(dataPartitionId, id, ArchiveOperation.change_tier, operationId);
+
+        var cs = await _cosmosClientFactory.GetCosmosConnectionEndpointAsync(dataPartitionId);
+
+        // First try direct path - this works if filemetadata already exists
+        var directUpdate = new Dictionary<string, object> {
+            { TierClassPatchPath, tier }
+        };
+
+        try
+        {
+            await _dataAccess.UpdateMetadataAsync(cs, id, directUpdate, operationId);
+
+            _logger.LogDebug("Metadata tier updated - Dataset: {DatasetId}, Tier: {Tier}, Duration: {DurationMs}ms",
+                id, tier, stopwatch.ElapsedMilliseconds);
+            return;
+        }
+        catch (CosmosException ex) when (ex.Message.Contains("no path found beyond: 'filemetadata'"))
+        {
+            // Expected case: filemetadata path doesn't exist yet, will create it below
+            _logger.LogInformation("Creating filemetadata path for Dataset: {DatasetId}", id);
+        }
+
+        // Create filemetadata object with tier_class (path doesn't exist)
+        var createPath = new Dictionary<string, object> {
+            { FileMetadataPatchPath, new { tier_class = tier } }
+        };
+
+        try
+        {
+            await _dataAccess.UpdateMetadataAsync(cs, id, createPath, operationId);
+
+            _logger.LogDebug("Metadata tier updated (created path) - Dataset: {DatasetId}, Tier: {Tier}, Duration: {DurationMs}ms",
+                id, tier, stopwatch.ElapsedMilliseconds);
+        }
+        catch (CosmosException ex)
+        {
+            _logger.LogError(ex, "Metadata tier update failed - Dataset: {DatasetId}, Tier: {Tier}, StatusCode: {StatusCode}, Duration: {DurationMs}ms",
+                id, tier, ex.StatusCode, stopwatch.ElapsedMilliseconds);
+            throw;
+        }
     }
 }

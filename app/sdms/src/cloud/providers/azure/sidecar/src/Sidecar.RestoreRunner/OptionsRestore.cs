@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2026, Microsoft
+// Copyright 2026, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -96,5 +96,6 @@ public class OptionsRestore :
     [Option("syncTimeoutMilliseconds", Required = false, Default = "5000")]
     public string SyncTimeoutMilliseconds { get; set; }
 
+    [Option("storageQueueEndpoint", Required = false, HelpText = "Queue endpoint to connect to the task queue on Azure Storage")]
     public string? StorageQueueEndpoint { get; set; }
 }

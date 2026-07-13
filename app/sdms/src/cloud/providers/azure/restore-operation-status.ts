@@ -68,7 +68,7 @@ export class AzureRestoreOperationStatusStorage {
         tenant: string;
         subproject: string;
         sdPath: string;
-        restoreTimestamp: string;
+        restorePointInTime: string;
         reason?: string;
         createdBy: string;
     }): Promise<void> {
@@ -81,10 +81,10 @@ export class AzureRestoreOperationStatusStorage {
                 tenant: params.tenant,
                 subproject: params.subproject,
                 sdPath: params.sdPath,
-                restoreTimestamp: params.restoreTimestamp,
+                restorePointInTime: params.restorePointInTime,
                 reason: params.reason || undefined,
                 createdBy: params.createdBy,
-                status: 'InProgress',
+                status: 'Enqueued',
                 error_message: '',
                 startedAt: new Date().toISOString(),
                 lastUpdatedAt: new Date().toISOString(),
@@ -117,7 +117,7 @@ export class AzureRestoreOperationStatusStorage {
             operationId: resource.operationId,
             status: resource.status,
             sdPath: resource.sdPath,
-            restoreTimestamp: resource.restoreTimestamp,
+            restorePointInTime: resource.restorePointInTime,
             reason: resource.reason,
             tenant: resource.tenant,
             subproject: resource.subproject,
@@ -140,17 +140,21 @@ export class AzureRestoreOperationStatusStorage {
     }
 
     /**
-     * Secondary check: queries Cosmos for any in-progress restore in this data partition.
-     * Used as a fallback when Redis lock state may be lost (e.g., Redis restart).
+     * Secondary check: queries Cosmos for any active (non-terminal) restore in this data partition.
+     * Used as a fallback when Redis lock state may be lost (e.g., Redis restart or lock TTL expiry).
+     * A restore is considered active while its status is 'Enqueued' or 'InProgress'; both must block
+     * a new restore so that an operation stuck at 'Enqueued' (never picked up by the sidecar) is not
+     * silently overtaken once the Redis lock expires.
      * Returns the operationId if found, null otherwise.
      */
-    public async getInProgressRestoreOperationId(tenant: string): Promise<string | null> {
+    public async getActiveRestoreOperationId(tenant: string): Promise<string | null> {
         const container = await this.getContainer(tenant);
 
         const query = {
-            query: 'SELECT TOP 1 c.operationId FROM c WHERE c.status = @status',
+            query: 'SELECT TOP 1 c.operationId FROM c WHERE c.status IN (@enqueued, @inProgress)',
             parameters: [
-                { name: '@status', value: 'InProgress' }
+                { name: '@enqueued', value: 'Enqueued' },
+                { name: '@inProgress', value: 'InProgress' }
             ]
         };
 
