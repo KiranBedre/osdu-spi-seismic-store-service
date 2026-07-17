@@ -227,6 +227,7 @@ public class Program
             .AddSingleton<QueueClient>(sp => sp.GetRequiredService<QueueClientFactory>().Build())
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IDataAccess, Cosmos>()
+            .AddSingleton<IArchivedSnapshotSelector, ArchivedSnapshotSelector>()
             .AddSingleton<IArchiveService, ArchiveService>();
 
         _ = services

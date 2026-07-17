@@ -101,6 +101,25 @@ public class CosmosRestoreTaskStatusStorage(
 
             return new TrackedRestoreStatus(response.Resource, response.ETag);
         }
+        catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            stopwatch.Stop();
+            // Idempotent get-or-create. A Conflict means a status doc for this operationId already
+            // exists — created by a concurrent delivery of the SAME message. Azure Storage Queues are
+            // at-least-once and can redeliver when the visibility timeout lapses during a multi-hour
+            // restore, so two deliveries can both read null and both attempt create; the loser gets a
+            // 409. That is the desired end state, not a failure, so re-read and return the existing
+            // doc instead of rethrowing (which the executor would misclassify and wrongly mark the
+            // operation Failed). Cosmos id-uniqueness is the real guard, not the executor's prior GET.
+            _logger.LogInformation(
+                "CosmosDB CREATE restore status conflicted (already exists, concurrent delivery); returning existing doc - OperationId: {OperationId}, Duration: {DurationMs}ms",
+                status.OperationId, stopwatch.ElapsedMilliseconds);
+
+            var existing = await GetRestoreOperationStatusAsync(dataPartitionId, status.OperationId, ct);
+            return existing
+                ?? throw new InvalidOperationException(
+                    $"Restore status create conflicted for OperationId {status.OperationId} but the existing document could not be read back.");
+        }
         catch (CosmosException ex)
         {
             stopwatch.Stop();

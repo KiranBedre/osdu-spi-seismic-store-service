@@ -62,7 +62,7 @@ export class TestAzureArchiveService {
         Tx.sectionInit('archiveBeforeSave - archives existing item');
 
         Tx.test(async () => {
-            const existingData = { id: 'dataset-1', data: { name: 'test-dataset', status: 'active', created_date: 'Mon Jun 01 2026', last_modified_date: 'Tue Jun 15 2026' } };
+            const existingData = { id: 'dataset-1', data: { name: 'test-dataset', tenant: 'opendes', subproject: 'sp1', path: '/a/', status: 'active', created_date: 'Mon Jun 01 2026', last_modified_date: 'Tue Jun 15 2026' }, _ts: 1780000000, _etag: 'x' };
             const readStub = this.sandbox.stub().resolves({ resource: existingData });
             const createStub = this.sandbox.stub().resolves({});
 
@@ -71,7 +71,7 @@ export class TestAzureArchiveService {
                     if (name === 'data') {
                         return { item: () => ({ read: readStub }) } as any;
                     }
-                    return { items: { create: createStub } } as any;
+                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
                 }
             } as any);
 
@@ -81,17 +81,23 @@ export class TestAzureArchiveService {
             assert.isTrue(createStub.calledOnce, 'Should create archive entry');
 
             const archiveEntry = createStub.firstCall.args[0];
-            assert.equal(archiveEntry.sdPath, 'dataset-1');
+            assert.equal(archiveEntry.sdPath, 'sd://opendes/sp1/a/test-dataset');
             assert.equal(archiveEntry.operation, 'patch');
             assert.equal(archiveEntry.ttl, 2592000);
-            assert.deepEqual(archiveEntry.document, existingData.data);
+            // Full document ({ id, data }) is stored, with Cosmos system props (_ts, _etag) stripped
+            assert.equal(archiveEntry.document.id, 'dataset-1');
+            assert.equal(archiveEntry.document.data.name, 'test-dataset');
+            assert.isUndefined(archiveEntry.document._ts);
+            assert.isUndefined(archiveEntry.document._etag);
             assert.isNumber(archiveEntry.datasetCreatedAtEpochMs);
             assert.isAbove(archiveEntry.datasetCreatedAtEpochMs, 0);
             assert.isNumber(archiveEntry.versionCreatedAtEpochMs);
-            assert.isAbove(archiveEntry.versionCreatedAtEpochMs, 0);
+            // First version of the lifecycle: no predecessor snapshot exists, so the live-window
+            // START falls back to the dataset's created date (not the second-truncated _ts).
+            assert.equal(archiveEntry.versionCreatedAtEpochMs, archiveEntry.datasetCreatedAtEpochMs);
             assert.isNumber(archiveEntry.archivedAtEpochMs);
-            assert.include(archiveEntry.id, 'dataset-1_');
-            assert.include(archiveEntry.id, `_${archiveEntry.archivedAtEpochMs}`);
+            assert.include(archiveEntry.id, 'dataset-1__');
+            assert.include(archiveEntry.id, `__${archiveEntry.archivedAtEpochMs}`);
             assert.isUndefined(archiveEntry.archivedBy);
         });
     }
@@ -108,7 +114,7 @@ export class TestAzureArchiveService {
                     if (name === 'data') {
                         return { item: () => ({ read: readStub }) } as any;
                     }
-                    return { items: { create: createStub } } as any;
+                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
                 }
             } as any);
 
@@ -132,7 +138,7 @@ export class TestAzureArchiveService {
                     if (name === 'data') {
                         return { item: () => ({ read: readStub }) } as any;
                     }
-                    return { items: { create: createStub } } as any;
+                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
                 }
             } as any);
 
@@ -160,7 +166,7 @@ export class TestAzureArchiveService {
                     if (name === 'data') {
                         return { item: () => ({ read: readStub }) } as any;
                     }
-                    return { items: { create: createStub } } as any;
+                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
                 }
             } as any);
 
@@ -187,7 +193,7 @@ export class TestAzureArchiveService {
                     if (name === 'data') {
                         return { item: () => ({ read: readStub }) } as any;
                     }
-                    return { items: { create: createStub } } as any;
+                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
                 }
             } as any);
 

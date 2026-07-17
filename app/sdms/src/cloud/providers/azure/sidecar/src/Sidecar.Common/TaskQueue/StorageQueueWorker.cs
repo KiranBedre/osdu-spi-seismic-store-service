@@ -141,9 +141,9 @@ public class StorageQueueWorker<T, TD, TE>(
             _logger.LogInformation("Received message {MessageId}", message.MessageId);
             if (message.DequeueCount > _maxDequeueCount)
             {
-                _logger.LogInformation(
-                    "Deleting message {MessageId}, dequeue count {DequeueCount} is too high",
-                    message.MessageId, message.DequeueCount);
+                _logger.LogWarning(
+                    "Discarding message {MessageId} after exceeding max dequeue count ({DequeueCount} > {MaxDequeueCount}); any associated operation may be left unfinished and requires manual recovery.",
+                    message.MessageId, message.DequeueCount, _maxDequeueCount);
                 await DeleteFromQueueAsync(message, ct);
                 continue;
             }

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2026, Microsoft Corporation
+// Copyright 2026, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,27 @@
 // limitations under the License.
 // ============================================================================
 
-namespace Sidecar.Common.Model;
+namespace Sidecar.Common.Utility;
+
+using Newtonsoft.Json.Linq;
 
 /// <summary>
-/// Archive operation values persisted in Cosmos.
-/// Member names intentionally match wire values to keep serialization stable.
+/// Helpers for working with Cosmos documents represented as <see cref="JObject"/>.
 /// </summary>
-public enum ArchiveOperation
+public static class JObjectExtensions
 {
-    patch,
-    bulk_delete,
-    change_tier,
-    restore
+    /// <summary>
+    /// Returns a copy of the document with Cosmos system properties (keys prefixed '_') removed,
+    /// so the result mirrors the { id, data } shape and can be safely re-written or archived.
+    /// </summary>
+    public static JObject StripSystemProperties(this JObject document)
+    {
+        var clone = (JObject)document.DeepClone();
+        foreach (var property in clone.Properties().Where(p => p.Name.StartsWith('_')).ToList())
+        {
+            property.Remove();
+        }
+
+        return clone;
+    }
 }

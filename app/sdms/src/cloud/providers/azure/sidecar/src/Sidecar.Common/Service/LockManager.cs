@@ -106,6 +106,85 @@ public class LockManager(ILogger<LockManager> logger, IRedisConnectionFactory<Re
                 };
             }
         }
+        // Lock exists - cannot acquire
+        await ReleaseMutexAsync(key, mutex);
+        return new WriteLockSession();
+    }
+
+    /// <inheritdoc cref="ILockManager.AcquireWriteLockAsync(string, string, TimeSpan)"/>
+    public async Task<WriteLockSession> AcquireWriteLockAsync(string key, string idempotentLockId, TimeSpan ttl)
+    {
+        // Validate idempotent lock ID format (must start with "W" like NodeJS implementation)
+        if (!idempotentLockId.StartsWith(Constants.WRITE_LOCK_PREFIX))
+        {
+            _logger.LogError("Invalid idempotent lock ID {LockId}: must start with '{Prefix}'",
+                idempotentLockId, Constants.WRITE_LOCK_PREFIX);
+            return new WriteLockSession();
+        }
+
+        var mutex = Utils.RandomMutex();
+        try
+        {
+            await AcquireMutexAsync(key, mutex);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Cannot acquire mutex {key}. ", key);
+            return new WriteLockSession();
+        }
+
+        var lockValue = await GetLockAsync(key);
+
+        // Case 1: Lock already exists and matches idempotent key (idempotent call - re-acquire).
+        // Refresh the TTL so a redelivered/retried operation extends its hold rather than running
+        // on the residual lifetime of the original acquisition. Without this refresh the lock's
+        // fixed TTL is consumed across successive retries and can expire while the operation is
+        // still in progress, allowing a concurrent executor to acquire the same lock and race. The
+        // stored value is unchanged (still our idempotent id); only the expiry is renewed.
+        if (lockValue is string existingLock && existingLock == idempotentLockId)
+        {
+            var refreshed = await _locksRedis.SetAsync(key, idempotentLockId, ttl);
+            await ReleaseMutexAsync(key, mutex);
+            if (refreshed)
+            {
+                _logger.LogInformation("Idempotent lock re-acquisition (TTL refreshed) for {Key} with ID {LockId}", key, idempotentLockId);
+            }
+            else
+            {
+                // We still hold the lock (value matched); only the TTL extension failed. Proceed as
+                // locked but warn, since the lock now retains its previous (shorter) expiry.
+                _logger.LogWarning(
+                    "Idempotent lock re-acquired for {Key} with ID {LockId} but TTL refresh failed; lock retains its previous expiry",
+                    key, idempotentLockId);
+            }
+
+            return new WriteLockSession()
+            {
+                Wid = idempotentLockId,
+                Key = key,
+                Locked = true,
+                IsIdempotent = true
+            };
+        }
+
+        // Case 2: Unlocked dataset (no lock values) - create new lock with TTL
+        if (lockValue is null)
+        {
+            var result = await _locksRedis.SetAsync(key, idempotentLockId, ttl);
+            await ReleaseMutexAsync(key, mutex);
+            if (result)
+            {
+                return new WriteLockSession()
+                {
+                    Wid = idempotentLockId,
+                    Key = key,
+                    Locked = true,
+                    IsIdempotent = false
+                };
+            }
+        }
+
+        // Case 3: Lock exists but doesn't match idempotent key
         await ReleaseMutexAsync(key, mutex);
         return new WriteLockSession();
     }
@@ -171,6 +250,48 @@ public class LockManager(ILogger<LockManager> logger, IRedisConnectionFactory<Re
 
         }
         _logger.LogDebug("Write Lock for {key} not found. Lock not removed.", session.Key);
+        await ReleaseMutexAsync(session.Key, mutex);
+        return false;
+    }
+
+    /// <inheritdoc cref="ILockManager.MakeWriteLockIndefiniteAsync"/>
+    public async Task<bool> MakeWriteLockIndefiniteAsync(WriteLockSession session) =>
+        await _redisPipeline.ExecuteAsync(
+            async _ => await MakeWriteLockIndefiniteCoreAsync(session).ConfigureAwait(false)).ConfigureAwait(false);
+
+    /// <summary>
+    /// Core implementation of write lock TTL removal without retry logic. Re-writes the lock key with
+    /// its current value and no expiry, which strips any existing TTL and makes the lock indefinite.
+    /// </summary>
+    private async Task<bool> MakeWriteLockIndefiniteCoreAsync(WriteLockSession session)
+    {
+        var mutex = Utils.RandomMutex();
+        try
+        {
+            await AcquireMutexAsync(session.Key, mutex);
+        }
+        catch (Exception e) when (!ResilienceExtensions.IsTransientRedisError(e))
+        {
+            _logger.LogError(e, "Cannot acquire mutex {key}. ", session.Key);
+            return false;
+        }
+
+        var lockValue = await GetLockAsync(session.Key);
+        if (lockValue is string s)
+        {
+            if (s.Equals(session.Wid))
+            {
+                // Re-set the key with no expiry to remove the TTL, making the lock indefinite.
+                var persisted = await _locksRedis.SetAsync(session.Key, session.Wid);
+                await ReleaseMutexAsync(session.Key, mutex);
+                _logger.LogWarning("Write Lock for {key} made indefinite (no TTL).", session.Key);
+                return persisted;
+            }
+            _logger.LogError("Could not make lock indefinite for {key}. {value} is not a current lock value.", session.Key, lockValue);
+            await ReleaseMutexAsync(session.Key, mutex);
+            return false;
+        }
+        _logger.LogError("Could not make lock indefinite for {key}. Lock not found.", session.Key);
         await ReleaseMutexAsync(session.Key, mutex);
         return false;
     }

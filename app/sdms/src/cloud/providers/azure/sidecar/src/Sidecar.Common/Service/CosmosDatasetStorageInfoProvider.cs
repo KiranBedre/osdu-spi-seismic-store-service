@@ -19,6 +19,7 @@ namespace Sidecar.Common.Service;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Sidecar.Common.Exceptions;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
@@ -29,33 +30,43 @@ using Sidecar.Common.Utility;
 public class CosmosDatasetStorageInfoProvider(
     ILogger<CosmosDatasetStorageInfoProvider> logger,
     IDataAccess dataAccess,
-    ICosmosClientFactory cosmosClientFactory)
+    ICosmosClientFactory cosmosClientFactory,
+    IArchivedSnapshotSelector snapshotSelector)
     : IDatasetStorageInfoProvider
 {
     private readonly ILogger<CosmosDatasetStorageInfoProvider> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IDataAccess _dataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
     private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory ?? throw new ArgumentNullException(nameof(cosmosClientFactory));
+    private readonly IArchivedSnapshotSelector _snapshotSelector = snapshotSelector ?? throw new ArgumentNullException(nameof(snapshotSelector));
 
     /// <inheritdoc/>
-    public async Task<DatasetStorageInfo> ResolveDatasetInfoAsync(string sdPath, string operationId, CancellationToken ct)
+    public async Task<DatasetStorageInfo> ResolveDatasetInfoAsync(string sdPath, string restorePointInTime, string operationId, CancellationToken ct)
     {
-        var blobs = new List<string>();
-
         try
         {
-            var sdPathParts = ParseSdPath(sdPath);
+            var sdPathParts = SdPathParser.Parse(sdPath);
             var endpoint = await _cosmosClientFactory.GetCosmosConnectionEndpointAsync(sdPathParts.Tenant, ct);
 
-            // Primary lookup: live dataset records in the default data container. Archival
-            // snapshots live in a SEPARATE container (see the archival TODO below), so they never
-            // appear here and no archivedAt filter is needed.
-            const string PrimaryQuery = @"SELECT TOP 1 c.data.gcsurl, c.data.files FROM c
+            // Parse the requested point-in-time once. It is authoritative for both the archive
+            // window comparison and the live-version fallback guards below.
+            if (!DateTimeExtensions.TryParseFlexibleUtc(restorePointInTime, out var restorePointOffset))
+            {
+                throw new ArgumentException(
+                    $"Invalid restorePointInTime '{restorePointInTime}'. Expected an ISO-8601 timestamp.",
+                    nameof(restorePointInTime));
+            }
+
+            var restorePointEpochMs = restorePointOffset.ToUnixTimeMilliseconds();
+
+            // 1. Live lookup in the data container. Its presence/absence is the SOLE source of truth
+            // for isDeleted: the archive is consulted for live datasets too (a past version may have
+            // been active at the restore point), so "answered from archive" no longer implies
+            // deleted.
+            const string PRIMARYQUERY = @"SELECT c.data.gcsurl, c.data.filemetadata, c.data.created_date, c.data.last_modified_date FROM c
     WHERE c.data.tenant = @tenant
     AND c.data.subproject = @subproject
     AND c.data.path = @path
-    AND c.data.name = @name
-    AND IS_DEFINED(c.data.gcsurl)
-    ORDER BY c._ts DESC";
+    AND c.data.name = @name";
 
             var parameters = JsonConvert.SerializeObject(new List<Parameter>
             {
@@ -65,52 +76,98 @@ public class CosmosDatasetStorageInfoProvider(
                 new() { Name = "@name", Value = sdPathParts.Dataset },
             });
 
-            var records = await _dataAccess.GetRecordsAsync(endpoint, PrimaryQuery, parameters, null, 1, operationId);
+            var liveRecords = await _dataAccess.GetRecordsAsync(endpoint, PRIMARYQUERY, parameters, null, 1, operationId);
+            var liveExists = liveRecords.records is { Count: > 0 };
+            var isDeleted = !liveExists;
 
-            // A dataset resolved only via the archival fallback (not the active/primary records)
-            // indicates it was deleted and moved to the archival store.
-            var isDeleted = false;
-
-            if (records.records is not { Count: > 0 })
+            // Live version bounds (created_date = lifecycle start; last_modified_date = current
+            // version start), computed once from the live projection for lifecycle scoping and the
+            // fallback guards.
+            long? liveCreatedEpochMs = null;
+            long? liveVersionStartEpochMs = null;
+            if (liveExists)
             {
-                _logger.LogInformation(
-                    "No active metadata found in primary records, trying archival metadata - OperationId: {OperationId}, SdPath: {SdPath}",
-                    operationId, sdPath);
-
-                // TODO: Query the archival metadata container for a deleted-dataset fallback.
-                // Archival snapshots are written to a SEPARATE Cosmos container
-                // (Constants.CosmosDb.ARCHIVE_CONTAINER_ID) on delete/patch/
-                // change_tier. Each archival document carries top-level bookkeeping fields
-                // (archivedAtEpochMs, operation, OriginalId) alongside a `data` field holding the full
-                // dataset-entity snapshot, so entity fields live at the same c.data.* paths as an
-                // active record; the newest snapshot reflects the pre-deletion state.
-                // IDataAccess.GetRecordsAsync currently targets only the default data container, so
-                // it cannot run this query without a container override. Query the archival
-                // container directly via _cosmosClientFactory (pattern in ChangeTierFailureTracker)
-                // once the approach is finalized. Query to run:
-                //   SELECT TOP 1 c.data.gcsurl, c.data.files FROM c
-                //   WHERE IS_DEFINED(c.archivedAtEpochMs)
-                //     AND c.data.tenant = @tenant AND c.data.subproject = @subproject
-                //     AND c.data.path = @path AND c.data.name = @name
-                //     AND IS_DEFINED(c.data.gcsurl)
-                //   ORDER BY c.archivedAtEpochMs DESC
-                // When implemented, set:
-                //   records = <archival query result>;
-                //   isDeleted = records.records is { Count: > 0 };
+                var liveJson = JsonConvert.SerializeObject(liveRecords.records![0]);
+                using var liveDoc = JsonDocument.Parse(liveJson);
+                var liveRoot = liveDoc.RootElement;
+                liveCreatedEpochMs = TryGetEpochMs(liveRoot, "created_date");
+                liveVersionStartEpochMs = TryGetEpochMs(liveRoot, "last_modified_date") ?? liveCreatedEpochMs;
             }
 
-            if (records.records is not { Count: > 0 })
+            // 2. Lifecycle key scopes archive selection to a single "life" of this sdPath (delete +
+            // recreate reuses the same deterministic id, so one sdPath can interleave several lives).
+            // Live -> the current life's created_date; deleted -> the most recent archived life.
+            var lifecycleKey = liveExists
+                ? liveCreatedEpochMs
+                : await _snapshotSelector.ResolveLatestLifecycleKeyAsync(endpoint, sdPath, ct);
+
+            // 3. Archive-interval-first: the version whose half-open window
+            // [versionCreatedAt, archivedAt) contains the restore point. For a live dataset this
+            // finds a PAST version when the restore point predates the current one; it returns
+            // nothing when the restore point falls in the still-live (unarchived) current window.
+            // Selection goes through the shared IArchivedSnapshotSelector so this reader and the
+            // metadata reader can never pick different versions for the same restore point.
+            var archivedSnapshot = await _snapshotSelector.SelectSnapshotAsync(
+                endpoint, sdPath, restorePointEpochMs, lifecycleKey, operationId, ct);
+
+            // Decide which version to restore from using the pure selection logic (archive-interval-
+            // first, then the current-lifecycle live fallback). Keeping the branching in a side-effect-
+            // free function lets it be exercised exhaustively with table-driven tests.
+            var decision = RestoreVersionSelector.Decide(
+                hasArchivedSnapshot: archivedSnapshot is not null,
+                liveExists: liveExists,
+                liveCreatedEpochMs: liveCreatedEpochMs,
+                liveVersionStartEpochMs: liveVersionStartEpochMs,
+                restorePointEpochMs: restorePointEpochMs);
+
+            object? selectedRecord;
+            switch (decision)
             {
-                _logger.LogInformation(
-                    "No metadata found in primary or archival records for dataset - OperationId: {OperationId}, SdPath: {SdPath}",
-                    operationId, sdPath);
-                return new DatasetStorageInfo(string.Empty, string.Empty, null, blobs);
+                case RestoreVersionDecision.UseArchivedSnapshot:
+                    // The archive stores the full dataset document under "document"; its "data" node
+                    // carries gcsurl/filemetadata at the same shape the live projection uses, so
+                    // downstream extraction below is identical for both paths.
+                    selectedRecord = archivedSnapshot!.Document["data"]
+                        ?? throw new InvalidOperationException(
+                            $"Archived snapshot '{archivedSnapshot.Id}' is missing its 'data' node. OperationId: {operationId}, SdPath: {sdPath}");
+                    break;
+
+                case RestoreVersionDecision.RejectRestorePointInLiveWindow:
+                    // The restore point falls inside the current live version's window: the dataset
+                    // already reflects that state, so there is nothing to restore. Reject here (before
+                    // any archive/metadata write) rather than re-archiving and re-writing the current
+                    // version onto itself. This is a request-level rejection, not an operational
+                    // failure, so it surfaces as status Rejected.
+                    throw new RestoreRejectedException(
+                        $"Restore point '{restorePointInTime}' falls within the current live version's window; " +
+                        $"the dataset already reflects that state, so there is nothing to restore. " +
+                        $"OperationId: {operationId}, SdPath: {sdPath}");
+
+                case RestoreVersionDecision.RejectBeforeCreation:
+                    throw new RestoreRejectedException(
+                        $"Restore point '{restorePointInTime}' is at or before the dataset's creation. " +
+                        $"Point-in-time restore is scoped to the current dataset lifecycle. OperationId: {operationId}, SdPath: {sdPath}");
+
+                case RestoreVersionDecision.RejectNoLiveVersion:
+                    throw new RestoreRejectedException(
+                        $"Restore point '{restorePointInTime}' falls in a period with no live version for this dataset. " +
+                        $"OperationId: {operationId}, SdPath: {sdPath}");
+
+                case RestoreVersionDecision.RejectDeletedNoVersion:
+                default:
+                    // Deleted dataset with no archived version covering the restore point: the dataset
+                    // did not exist at that instant (point in an earlier life, a deletion gap, or before
+                    // it ever existed). Reject with a clear out-of-range message, mirroring the metadata
+                    // restore path, instead of returning an empty result that would surface as a
+                    // confusing empty-container failure downstream.
+                    throw new RestoreRejectedException(
+                        $"No dataset version existed at restore point '{restorePointInTime}' for SdPath '{sdPath}'. " +
+                        $"The dataset was deleted or did not exist at that instant. OperationId: {operationId}");
             }
 
             // Primary and archival queries both project the entity at c.data.*, so the
-            // resolved record has a single shape here (gcsurl/files at the root).
-            var metadataRecord = records.records[0];
-            var json = JsonConvert.SerializeObject(metadataRecord);
+            // resolved record has a single shape here (gcsurl/filemetadata at the root).
+            var json = JsonConvert.SerializeObject(selectedRecord);
             using var doc = JsonDocument.Parse(json);
             var datasetRoot = doc.RootElement;
 
@@ -129,27 +186,39 @@ public class CosmosDatasetStorageInfoProvider(
                 "Resolved storage location from gcsurl - GcsUrl: {GcsUrl}, Container: {Container}, VirtualFolder: {VirtualFolder}, OperationId: {OperationId}",
                 gcsurl, containerName, virtualFolder, operationId);
 
-            if (datasetRoot.TryGetProperty("files", out var filesElement) &&
-                filesElement.ValueKind == JsonValueKind.Array)
+            // The dataset document has no per-blob path list; its content summary lives in the
+            // "filemetadata" object (e.g. { "size": <bytes>, "nobjects": <count>, "type": ... }).
+            // These fields may be absent (or non-numeric) on a given version, so keep them null when
+            // missing rather than defaulting to 0: a null means "not recorded, cannot validate" and
+            // is distinct from a recorded 0 (an empty dataset). Consistency validation skips (and
+            // logs) any figure that is null so a missing count/size does not falsely assert an empty
+            // range.
+            long? expectedObjectCount = null;
+            long? expectedTotalSize = null;
+            if (datasetRoot.TryGetProperty("filemetadata", out var fileMetaElement) &&
+                fileMetaElement.ValueKind == JsonValueKind.Object)
             {
-                foreach (var file in filesElement.EnumerateArray())
-                {
-                    if (file.ValueKind == JsonValueKind.Object &&
-                        file.TryGetProperty("path", out var pathElement) &&
-                        pathElement.ValueKind == JsonValueKind.String)
-                    {
-                        var blobPath = pathElement.GetString();
-                        if (!string.IsNullOrWhiteSpace(blobPath))
-                        {
-                            blobs.Add(blobPath);
-                        }
-                    }
-                }
+                expectedObjectCount = TryGetLong(fileMetaElement, "nobjects");
+                expectedTotalSize = TryGetLong(fileMetaElement, "size");
+            }
+
+            if (expectedObjectCount is null)
+            {
+                _logger.LogWarning(
+                    "filemetadata.nobjects is missing or non-numeric; object-count consistency validation will be skipped - Container: {Container}, OperationId: {OperationId}, SdPath: {SdPath}",
+                    containerName, operationId, sdPath);
+            }
+
+            if (expectedTotalSize is null)
+            {
+                _logger.LogWarning(
+                    "filemetadata.size is missing or non-numeric; total-size consistency validation will be skipped - Container: {Container}, OperationId: {OperationId}, SdPath: {SdPath}",
+                    containerName, operationId, sdPath);
             }
 
             _logger.LogInformation(
-                "Extracted {BlobCount} blob paths from metadata - Container: {Container}, OperationId: {OperationId}",
-                blobs.Count, containerName, operationId);
+                "Extracted content summary from filemetadata - ExpectedObjectCount: {ExpectedObjectCount}, ExpectedTotalSize: {ExpectedTotalSize}, Container: {Container}, OperationId: {OperationId}",
+                expectedObjectCount, expectedTotalSize, containerName, operationId);
 
             // Infer the effective access policy from the gcsurl layout instead of a second
             // Cosmos round-trip. Dataset-policy datasets get a dedicated container
@@ -165,7 +234,7 @@ public class CosmosDatasetStorageInfoProvider(
                 "Resolved dataset storage info - Container: {Container}, AccessPolicy: {AccessPolicy}, IsDeleted: {IsDeleted}, OperationId: {OperationId}",
                 containerName, accessPolicy, isDeleted, operationId);
 
-            return new DatasetStorageInfo(gcsurl, containerName, virtualFolder, blobs, accessPolicy, isDeleted);
+            return new DatasetStorageInfo(gcsurl, containerName, virtualFolder, expectedObjectCount, expectedTotalSize, accessPolicy, isDeleted);
         }
         catch (Exception ex)
         {
@@ -176,27 +245,41 @@ public class CosmosDatasetStorageInfoProvider(
         }
     }
 
-    private static SdPathParts ParseSdPath(string sdPath)
+    /// <summary>
+    /// Parses a dataset date field (ISO-8601 or JS Date.toString) on the projected record to Unix
+    /// epoch milliseconds (UTC), or null when the field is missing or unparseable.
+    /// </summary>
+    private static long? TryGetEpochMs(JsonElement root, string field)
     {
-        if (string.IsNullOrWhiteSpace(sdPath) || !sdPath.StartsWith("sd://", StringComparison.OrdinalIgnoreCase))
+        if (root.TryGetProperty(field, out var element) &&
+            element.ValueKind == JsonValueKind.String &&
+            DateTimeExtensions.TryParseFlexibleUtc(element.GetString(), out var parsed))
         {
-            throw new ArgumentException($"Invalid sdPath format: '{sdPath}'. Expected format: sd://<tenant>/<subproject>/...", nameof(sdPath));
+            return parsed.ToUnixTimeMilliseconds();
         }
 
-        var tokens = sdPath[5..].Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length < 3)
-        {
-            throw new ArgumentException($"Invalid dataset sdPath format: '{sdPath}'. Expected format: sd://<tenant>/<subproject>/<path>/<dataset>.", nameof(sdPath));
-        }
-
-        var tenant = tokens[0];
-        var subproject = tokens[1];
-        var dataset = tokens[^1];
-        var pathTokens = tokens.Skip(2).Take(tokens.Length - 3).ToArray();
-        var path = pathTokens.Length == 0 ? "/" : "/" + string.Join('/', pathTokens) + "/";
-
-        return new SdPathParts(tenant, subproject, path, dataset);
+        return null;
     }
 
-    private sealed record SdPathParts(string Tenant, string Subproject, string Path, string Dataset);
+    /// <summary>
+    /// Reads an integral field (e.g. filemetadata.nobjects or filemetadata.size) from the projected
+    /// record as a non-negative <see cref="long"/>, or null when the field is missing, non-numeric,
+    /// or negative. Accepts values encoded either as JSON numbers or numeric strings.
+    /// </summary>
+    private static long? TryGetLong(JsonElement root, string field)
+    {
+        if (!root.TryGetProperty(field, out var element))
+        {
+            return null;
+        }
+
+        long? value = element.ValueKind switch
+        {
+            JsonValueKind.Number when element.TryGetInt64(out var number) => number,
+            JsonValueKind.String when long.TryParse(element.GetString(), out var parsed) => parsed,
+            _ => null,
+        };
+
+        return value >= 0 ? value : null;
+    }
 }

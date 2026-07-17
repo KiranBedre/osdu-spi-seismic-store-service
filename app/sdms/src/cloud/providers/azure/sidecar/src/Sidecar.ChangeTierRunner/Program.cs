@@ -182,6 +182,7 @@ public class Program
         _ = services
             .AddSingleton<Cosmos>()
             .AddSingleton<IDataAccess>(sp => sp.GetRequiredService<Cosmos>())
+            .AddSingleton<IArchivedSnapshotSelector, ArchivedSnapshotSelector>()
             .AddSingleton<IArchiveService, ArchiveService>();
 
         _ = services

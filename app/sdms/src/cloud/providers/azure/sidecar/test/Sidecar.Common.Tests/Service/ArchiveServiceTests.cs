@@ -31,19 +31,26 @@ public class ArchiveServiceTests
 
     private readonly Mock<ILogger<ArchiveService>> _loggerMock;
     private readonly Mock<ICosmosClientFactory> _cosmosClientFactoryMock;
+    private readonly Mock<IArchivedSnapshotSelector> _selectorMock;
 
     public ArchiveServiceTests()
     {
         _loggerMock = new Mock<ILogger<ArchiveService>>();
         _cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
+        _selectorMock = new Mock<IArchivedSnapshotSelector>();
     }
+
+    // By default the selector reports no predecessor (Moq returns null for the unmocked
+    // Task<long?>), so versionCreatedAt falls back to the dataset's created date.
+    private ArchiveService CreateService() =>
+        new(_loggerMock.Object, _cosmosClientFactoryMock.Object, _selectorMock.Object);
 
     [Fact]
     public async Task ArchiveBeforeUpdateAsync_WhenDisabled_DoesNothing()
     {
         // Arrange
         Environment.SetEnvironmentVariable(FeatureFlagEnvVar, "false");
-        var service = new ArchiveService(_loggerMock.Object, _cosmosClientFactoryMock.Object);
+        var service = CreateService();
 
         // Act
         await service.ArchiveBeforeUpdateAsync(Tenant, "dataset-1", ArchiveOperation.change_tier);
@@ -70,8 +77,10 @@ public class ArchiveServiceTests
 
         var existingItem = JObject.Parse(
             "{\"id\":\"dataset-1\",\"data\":{\"name\":\"test\"," +
+            "\"tenant\":\"opendes\",\"subproject\":\"test-subproject\",\"path\":\"/restore/\"," +
             "\"created_date\":\"Wed Jul 08 2026 10:07:15 GMT+0000 (Coordinated Universal Time)\"," +
-            "\"last_modified_date\":\"Wed Jul 08 2026 10:14:53 GMT+0000 (Coordinated Universal Time)\"}}");
+            "\"last_modified_date\":\"Wed Jul 08 2026 10:14:53 GMT+0000 (Coordinated Universal Time)\"}," +
+            "\"_ts\":1783509999}");
         var readResponse = new Mock<ItemResponse<JObject>>();
         readResponse.Setup(r => r.Resource).Returns(existingItem);
         readResponse.Setup(r => r.StatusCode).Returns(HttpStatusCode.OK);
@@ -87,7 +96,7 @@ public class ArchiveServiceTests
             .ReturnsAsync(Mock.Of<ItemResponse<ArchivedDatasetMetadata>>());
 
         mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.DATA_CONTAINER_ID)).Returns(mockDataContainer.Object);
-        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
+        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
         mockCosmosClient.Setup(c => c.GetDatabase(Constants.CosmosDb.DATABASE_ID)).Returns(mockDatabase.Object);
 
         _cosmosClientFactoryMock
@@ -97,7 +106,7 @@ public class ArchiveServiceTests
             .Setup(f => f.GetCosmosClient(TestEndpoint))
             .Returns(mockCosmosClient.Object);
 
-        var service = new ArchiveService(_loggerMock.Object, _cosmosClientFactoryMock.Object);
+        var service = CreateService();
 
         // Act
         await service.ArchiveBeforeUpdateAsync(Tenant, "dataset-1", ArchiveOperation.change_tier);
@@ -110,11 +119,85 @@ public class ArchiveServiceTests
             c => c.CreateItemAsync(It.IsAny<ArchivedDatasetMetadata>(), It.IsAny<PartitionKey>(), null, default),
             Times.Once);
 
-        // Snapshot captures the 'data' object and JS-format dates are parsed to epoch ms
+        // Snapshot stores the sd:// path, the datasetId, and the full document ({ id, data }).
         captured.Should().NotBeNull();
-        captured!.Document!["name"]!.ToString().Should().Be("test");
-        captured.DatasetCreatedAt.Should().Be(1783505235000); // Wed Jul 08 2026 10:07:15 UTC
-        captured.VersionCreatedAt.Should().Be(1783505693000); // Wed Jul 08 2026 10:14:53 UTC
+        captured!.SdPath.Should().Be("sd://opendes/test-subproject/restore/test");
+        captured.Document!["id"]!.ToString().Should().Be("dataset-1");
+        captured.Document!["data"]!["name"]!.ToString().Should().Be("test");
+        captured.Document!["_ts"].Should().BeNull(); // system properties stripped
+        captured.DatasetCreatedAtEpochMs.Should().Be(1783505235000); // created_date: Wed Jul 08 2026 10:07:15 UTC
+        // First version of the lifecycle: the selector reports no predecessor, so versionCreatedAt
+        // falls back to the dataset's created date rather than the second-truncated _ts.
+        captured.VersionCreatedAtEpochMs.Should().Be(1783505235000);
+
+        // Cleanup
+        Environment.SetEnvironmentVariable(FeatureFlagEnvVar, null);
+    }
+
+    [Fact]
+    public async Task ArchiveBeforeUpdateAsync_WhenPredecessorExists_UsesPredecessorArchivedAtAsWindowStart()
+    {
+        // Regression for the window-overlap bug: for any version after the first, the live-window
+        // START must be the predecessor snapshot's archivedAt (millisecond-precise), NOT the live
+        // document's _ts (Unix seconds). Sourcing it from _ts truncated to the second, which made
+        // consecutive windows [versionCreatedAt, archivedAt) overlap by up to 999 ms; archive-on-write
+        // now makes them exactly contiguous so every restore point maps to exactly one version.
+        // Arrange
+        Environment.SetEnvironmentVariable(FeatureFlagEnvVar, "true");
+
+        var mockDataContainer = new Mock<Container>();
+        var mockArchiveContainer = new Mock<Container>();
+        var mockDatabase = new Mock<Database>();
+        var mockCosmosClient = new Mock<CosmosClient>();
+
+        var existingItem = JObject.Parse(
+            "{\"id\":\"dataset-1\",\"data\":{\"name\":\"test\"," +
+            "\"tenant\":\"opendes\",\"subproject\":\"test-subproject\",\"path\":\"/restore/\"," +
+            "\"created_date\":\"Wed Jul 08 2026 10:07:15 GMT+0000 (Coordinated Universal Time)\"}," +
+            "\"_ts\":1783509999}");
+        var readResponse = new Mock<ItemResponse<JObject>>();
+        readResponse.Setup(r => r.Resource).Returns(existingItem);
+        readResponse.Setup(r => r.StatusCode).Returns(HttpStatusCode.OK);
+
+        mockDataContainer
+            .Setup(c => c.ReadItemAsync<JObject>("dataset-1", It.IsAny<PartitionKey>(), null, default))
+            .ReturnsAsync(readResponse.Object);
+
+        ArchivedDatasetMetadata? captured = null;
+        mockArchiveContainer
+            .Setup(c => c.CreateItemAsync(It.IsAny<ArchivedDatasetMetadata>(), It.IsAny<PartitionKey>(), null, default))
+            .Callback<ArchivedDatasetMetadata, PartitionKey?, ItemRequestOptions?, CancellationToken>((item, pk, opts, ct) => captured = item)
+            .ReturnsAsync(Mock.Of<ItemResponse<ArchivedDatasetMetadata>>());
+
+        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.DATA_CONTAINER_ID)).Returns(mockDataContainer.Object);
+        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
+        mockCosmosClient.Setup(c => c.GetDatabase(Constants.CosmosDb.DATABASE_ID)).Returns(mockDatabase.Object);
+
+        _cosmosClientFactoryMock
+            .Setup(f => f.GetCosmosConnectionEndpointAsync(Tenant, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(TestEndpoint);
+        _cosmosClientFactoryMock
+            .Setup(f => f.GetCosmosClient(TestEndpoint))
+            .Returns(mockCosmosClient.Object);
+
+        // Predecessor version was archived at this ms-precise instant (the boundary). Note it differs
+        // from the second-truncated _ts*1000 (1783509999000), proving _ts is no longer the source.
+        const long predecessorArchivedAtEpochMs = 1783509999806;
+        _selectorMock
+            .Setup(s => s.ResolveLatestArchivedAtAsync(
+                TestEndpoint, "sd://opendes/test-subproject/restore/test", 1783505235000, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(predecessorArchivedAtEpochMs);
+
+        var service = CreateService();
+
+        // Act
+        await service.ArchiveBeforeUpdateAsync(Tenant, "dataset-1", ArchiveOperation.change_tier);
+
+        // Assert - window START equals the predecessor's archivedAt (contiguous, ms-precise),
+        // so the two windows meet exactly at the boundary with no overlap and no gap.
+        captured.Should().NotBeNull();
+        captured!.VersionCreatedAtEpochMs.Should().Be(predecessorArchivedAtEpochMs);
+        captured.DatasetCreatedAtEpochMs.Should().Be(1783505235000); // lifecycle key unchanged
 
         // Cleanup
         Environment.SetEnvironmentVariable(FeatureFlagEnvVar, null);
@@ -151,7 +234,7 @@ public class ArchiveServiceTests
             .ReturnsAsync(Mock.Of<ItemResponse<ArchivedDatasetMetadata>>());
 
         mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.DATA_CONTAINER_ID)).Returns(mockDataContainer.Object);
-        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
+        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
         mockCosmosClient.Setup(c => c.GetDatabase(Constants.CosmosDb.DATABASE_ID)).Returns(mockDatabase.Object);
 
         _cosmosClientFactoryMock
@@ -161,7 +244,7 @@ public class ArchiveServiceTests
             .Setup(f => f.GetCosmosClient(TestEndpoint))
             .Returns(mockCosmosClient.Object);
 
-        var service = new ArchiveService(_loggerMock.Object, _cosmosClientFactoryMock.Object);
+        var service = CreateService();
 
         // Act — must not throw
         await service.ArchiveBeforeUpdateAsync(Tenant, "dataset-1", ArchiveOperation.change_tier);
@@ -171,8 +254,8 @@ public class ArchiveServiceTests
         captured!.Operation.Should().Be(ArchiveOperation.change_tier);
         captured.Document.Should().NotBeNull();
         captured.Document!["name"]!.ToString().Should().Be("flat");
-        captured.DatasetCreatedAt.Should().Be(0);
-        captured.VersionCreatedAt.Should().Be(0);
+        captured.DatasetCreatedAtEpochMs.Should().Be(0);
+        captured.VersionCreatedAtEpochMs.Should().Be(0);
 
         // Cleanup
         Environment.SetEnvironmentVariable(FeatureFlagEnvVar, null);
@@ -194,7 +277,7 @@ public class ArchiveServiceTests
             .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "test", 0));
 
         mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.DATA_CONTAINER_ID)).Returns(mockDataContainer.Object);
-        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
+        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
         mockCosmosClient.Setup(c => c.GetDatabase(Constants.CosmosDb.DATABASE_ID)).Returns(mockDatabase.Object);
 
         _cosmosClientFactoryMock
@@ -204,7 +287,7 @@ public class ArchiveServiceTests
             .Setup(f => f.GetCosmosClient(TestEndpoint))
             .Returns(mockCosmosClient.Object);
 
-        var service = new ArchiveService(_loggerMock.Object, _cosmosClientFactoryMock.Object);
+        var service = CreateService();
 
         // Act
         await service.ArchiveBeforeUpdateAsync(Tenant, "dataset-1", ArchiveOperation.change_tier);
@@ -248,7 +331,7 @@ public class ArchiveServiceTests
             .ReturnsAsync(Mock.Of<ItemResponse<ArchivedDatasetMetadata>>());
 
         mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.DATA_CONTAINER_ID)).Returns(mockDataContainer.Object);
-        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
+        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
         mockCosmosClient.Setup(c => c.GetDatabase(Constants.CosmosDb.DATABASE_ID)).Returns(mockDatabase.Object);
 
         _cosmosClientFactoryMock
@@ -258,7 +341,7 @@ public class ArchiveServiceTests
             .Setup(f => f.GetCosmosClient(TestEndpoint))
             .Returns(mockCosmosClient.Object);
 
-        var service = new ArchiveService(_loggerMock.Object, _cosmosClientFactoryMock.Object);
+        var service = CreateService();
 
         // Act
         await service.ArchiveBeforeDeleteAsync(Tenant, "dataset-2");
@@ -302,7 +385,7 @@ public class ArchiveServiceTests
             .ThrowsAsync(new CosmosException("Write failed", HttpStatusCode.ServiceUnavailable, 0, "test", 0));
 
         mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.DATA_CONTAINER_ID)).Returns(mockDataContainer.Object);
-        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
+        mockDatabase.Setup(d => d.GetContainer(Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID)).Returns(mockArchiveContainer.Object);
         mockCosmosClient.Setup(c => c.GetDatabase(Constants.CosmosDb.DATABASE_ID)).Returns(mockDatabase.Object);
 
         _cosmosClientFactoryMock
@@ -312,7 +395,7 @@ public class ArchiveServiceTests
             .Setup(f => f.GetCosmosClient(TestEndpoint))
             .Returns(mockCosmosClient.Object);
 
-        var service = new ArchiveService(_loggerMock.Object, _cosmosClientFactoryMock.Object);
+        var service = CreateService();
 
         // Act & Assert
         await Assert.ThrowsAsync<CosmosException>(
@@ -327,7 +410,7 @@ public class ArchiveServiceTests
     {
         // Arrange
         Environment.SetEnvironmentVariable(FeatureFlagEnvVar, "false");
-        var service = new ArchiveService(_loggerMock.Object, _cosmosClientFactoryMock.Object);
+        var service = CreateService();
 
         // Act
         await service.ArchiveBeforeDeleteAsync(Tenant, "dataset-1");

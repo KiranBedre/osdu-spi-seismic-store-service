@@ -20,9 +20,6 @@ public static class Constants
 {
     /// <summary>
     /// Names of the secrets in the Key Vault.
-    ///
-    /// Copied from:
-    /// https://community.opengroup.org/osdu/platform/domain-data-mgmt-services/seismic/seismic-dms-suite/seismic-store-service/-/blob/master/app/sdms/src/cloud/providers/azure/keyvault.ts?ref_type=heads
     /// </summary>
     public static class SecretNames
     {
@@ -164,7 +161,7 @@ public static class Constants
         /// <summary>
         /// Container for storing archived dataset metadata snapshots
         /// </summary>
-        public const string ARCHIVE_CONTAINER_ID = "ArchiveDatasetMetadata";
+        public const string ARCHIVE_DATASET_METADATA_CONTAINER_ID = "ArchiveDatasetMetadata";
 
         /// <summary>
         /// Container for storing change tier operation status
@@ -198,10 +195,16 @@ public static class Constants
     public static class RestoreConfiguration
     {
         /// <summary>
-        /// TTL for the per-storage-account Redis concurrency lock.
-        /// Must exceed the worst-case PITR restore duration.
-        /// A pod crash auto-frees the lock after this window.
-        /// Same-operation retry (idempotent re-acquire) is unaffected by this TTL.
+        /// TTL for the per-dataset Redis write lock held during a restore operation.
+        ///
+        /// This must be greater than the worst-case work performed within a single queue delivery
+        /// (blob PITR poll up to <see cref="POLL_MAX_DURATION_HOURS"/> plus container undelete,
+        /// metadata finalize and consistency validation).
+        ///
+        /// The lock is acquired with an idempotent lock id, so each queue redelivery/retry
+        /// re-acquires it and REFRESHES this TTL (see LockManager idempotent re-acquire). That
+        /// prevents the fixed window from being consumed across retries and expiring mid-operation.
+        /// A pod crash (no further re-acquire) auto-frees the lock after this window.
         /// </summary>
         public const int LOCK_TTL_HOURS = 5;
 
@@ -222,9 +225,34 @@ public static class Constants
         public const int POLL_MAX_FALLBACK_INTERVAL_SECONDS = 60;
 
         /// <summary>
-        /// Maximum total polling duration (hours) before timing out the restore status loop.
+        /// Maximum PITR polling duration (hours) within a SINGLE queue delivery before the
+        /// status loop times out and the message is redelivered to resume polling.
+        ///
+        /// This is intentionally kept below <see cref="LOCK_TTL_HOURS"/> so the dataset lock
+        /// cannot expire mid-delivery. The TOTAL blob-restore budget across redeliveries is
+        /// approximately <see cref="DEFAULT_MAX_DEQUEUE_COUNT"/> x this value.
+        ///
+        /// Prefer raising THIS cap (kept under <see cref="LOCK_TTL_HOURS"/>) over
+        /// SDMS_RESTORE_MAX_DEQUEUE_COUNT to extend the budget: polling is cheap control-plane
+        /// ARM status GETs on exponential backoff (no blob data-plane throughput impact), whereas
+        /// each additional redelivery re-runs finalize and re-enumerates blobs for consistency
+        /// validation. Fewer, longer deliveries therefore cost less than more, shorter ones.
         /// </summary>
-        public const int POLL_MAX_DURATION_HOURS = 2;
+        public const int POLL_MAX_DURATION_HOURS = 4;
+
+        /// <summary>
+        /// Default maximum number of queue deliveries a single restore message may receive
+        /// before the queue discards it. Operator-configurable via SDMS_RESTORE_MAX_DEQUEUE_COUNT
+        /// (--maxDequeueCount).
+        ///
+        /// A dataset with millions of blobs can take many hours for Azure Point-in-Time Restore
+        /// to complete. The total budget is approximately this value x
+        /// <see cref="POLL_MAX_DURATION_HOURS"/>. Each redelivery resumes the in-flight PITR
+        /// (persisted BlobRestoreId / timeToRestore) and refreshes the dataset lock TTL, so
+        /// raising this value safely extends the budget without risking lock expiry or a healthy
+        /// long-running restore being silently dropped.
+        /// </summary>
+        public const int DEFAULT_MAX_DEQUEUE_COUNT = 20;
 
         /// <summary>
         /// Maximum exponent used by fallback exponential backoff to cap growth.
@@ -281,17 +309,5 @@ public static class Constants
         /// resource group is derived for PITR operations.
         /// </summary>
         public const string COMPUTE_RG_PREFIX = "Compute-rg-";
-    }
-
-    /// <summary>
-    /// Archive operation type values written to the archive snapshot's 'operation' field.
-    /// This is a serialized contract shared with the TypeScript archival path (which defines
-    /// the full set: patch, delete, bulk_delete, change_tier). Only the operations produced
-    /// by the .NET sidecars are declared here.
-    /// </summary>
-    public static class ArchiveOperation
-    {
-        public const string BULK_DELETE = "bulk_delete";
-        public const string CHANGE_TIER = "change_tier";
     }
 }

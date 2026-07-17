@@ -31,6 +31,7 @@ public class ArchiveService : IArchiveService
 {
     private readonly ILogger<ArchiveService> _logger;
     private readonly ICosmosClientFactory _cosmosClientFactory;
+    private readonly IArchivedSnapshotSelector _snapshotSelector;
     private readonly bool _isRestoreEnabled;
     private readonly int _archiveTtlSeconds;
 
@@ -43,14 +44,19 @@ public class ArchiveService : IArchiveService
     // Source dataset document property names, as written by the Node.js service
     private const string DataProperty = "data";
     private const string CreatedDateProperty = "created_date";
-    private const string LastModifiedDateProperty = "last_modified_date";
+    private const string TenantProperty = "tenant";
+    private const string SubprojectProperty = "subproject";
+    private const string PathProperty = "path";
+    private const string NameProperty = "name";
 
     public ArchiveService(
         ILogger<ArchiveService> logger,
-        ICosmosClientFactory cosmosClientFactory)
+        ICosmosClientFactory cosmosClientFactory,
+        IArchivedSnapshotSelector snapshotSelector)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _cosmosClientFactory = cosmosClientFactory ?? throw new ArgumentNullException(nameof(cosmosClientFactory));
+        _snapshotSelector = snapshotSelector ?? throw new ArgumentNullException(nameof(snapshotSelector));
         _isRestoreEnabled = string.Equals(
             Environment.GetEnvironmentVariable(FeatureFlagEnableRestoreEnvVar),
             "true", StringComparison.OrdinalIgnoreCase);
@@ -83,12 +89,11 @@ public class ArchiveService : IArchiveService
         // Read current state from primary data container.
         // Use JObject (Newtonsoft) because the Cosmos client serializes with Newtonsoft;
         // deserializing into System.Text.Json.JsonElement yields an empty/undefined value.
-        JToken document;
+        JObject fullDocument;
         try
         {
             var response = await dataContainer.ReadItemAsync<JObject>(id, new PartitionKey(id));
-            // Store only the 'data' property to be consistent with TypeScript archival
-            document = response.Resource[DataProperty] ?? response.Resource;
+            fullDocument = response.Resource;
         }
         catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -98,33 +103,50 @@ public class ArchiveService : IArchiveService
         }
 
         // Write snapshot to archive container
-        var archiveContainer = database.GetContainer(Constants.CosmosDb.ARCHIVE_CONTAINER_ID);
+        var archiveContainer = database.GetContainer(Constants.CosmosDb.ARCHIVE_DATASET_METADATA_CONTAINER_ID);
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        // Extract dataset timestamps from the data property and convert to epoch ms
-        long datasetCreatedAtEpochMs = 0;
-        long versionCreatedAtEpochMs = 0;
-        if (document is JObject dataObj)
-        {
-            datasetCreatedAtEpochMs = DateTimeExtensions.ParseJsDateToEpochMs(dataObj[CreatedDateProperty]?.ToString());
-            versionCreatedAtEpochMs = DateTimeExtensions.ParseJsDateToEpochMs(dataObj[LastModifiedDateProperty]?.ToString());
-        }
+        // datasetCreatedAt: lifecycle key (created_date). Every version of THIS life shares it.
+        var dataNode = fullDocument[DataProperty] as JObject;
+        var datasetCreatedAtEpochMs = dataNode is not null
+            ? DateTimeExtensions.ParseJsDateToEpochMs(dataNode[CreatedDateProperty]?.ToString())
+            : 0L;
+
+        // Partition key: must be the sd:// dataset path the restore reader queries by, not the doc id.
+        var sdPath = SdPathParser.Build(
+            dataNode?[TenantProperty]?.ToString(),
+            dataNode?[SubprojectProperty]?.ToString(),
+            dataNode?[PathProperty]?.ToString(),
+            dataNode?[NameProperty]?.ToString(),
+            id);
+
+        // versionCreatedAt: the version's live-window START = the instant this version became live =
+        // the predecessor snapshot's archivedAt (millisecond-precise, same clock as archivedAt/blob
+        // PITR). Sourcing it from the live doc's _ts (Unix SECONDS) would truncate to the second and
+        // make consecutive windows [versionCreatedAt, archivedAt) overlap by up to 999 ms. The first
+        // version of the lifecycle has no predecessor, so it falls back to the dataset's created date.
+        var predecessorArchivedAtEpochMs = await _snapshotSelector.ResolveLatestArchivedAtAsync(
+            cs, sdPath, datasetCreatedAtEpochMs, CancellationToken.None);
+        var versionCreatedAtEpochMs = predecessorArchivedAtEpochMs ?? datasetCreatedAtEpochMs;
+
+        // Store the full document ({ id, data }) so restore can read document.id and document.data.
+        var document = fullDocument.StripSystemProperties();
 
         var archiveEntry = new ArchivedDatasetMetadata
         {
-            Id = $"{id}_{datasetCreatedAtEpochMs}_{timestamp}",
-            SdPath = id,
-            ArchivedAt = timestamp,
+            Id = $"{id}__{datasetCreatedAtEpochMs}__{timestamp}",
+            SdPath = sdPath,
+            ArchivedAtEpochMs = timestamp,
             Operation = operation,
-            DatasetCreatedAt = datasetCreatedAtEpochMs,
-            VersionCreatedAt = versionCreatedAtEpochMs,
+            DatasetCreatedAtEpochMs = datasetCreatedAtEpochMs,
+            VersionCreatedAtEpochMs = versionCreatedAtEpochMs,
             Document = document,
             Ttl = _archiveTtlSeconds
         };
 
         try
         {
-            await archiveContainer.CreateItemAsync(archiveEntry, new PartitionKey(id));
+            await archiveContainer.CreateItemAsync(archiveEntry, new PartitionKey(sdPath));
             _logger.LogDebug("Archived dataset {Id} before {Operation} (OperationId: {OperationId})", id, operation, operationId);
         }
         catch (Exception ex)

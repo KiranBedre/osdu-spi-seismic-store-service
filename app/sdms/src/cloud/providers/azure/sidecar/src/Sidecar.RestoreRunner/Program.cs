@@ -70,6 +70,7 @@ public class Program
         opts.TaskStorageQueueName = Environment.GetEnvironmentVariable("SDMS_RESTORE_QUEUE") ?? opts.TaskStorageQueueName;
         opts.RedisMsiEnabled ??= Environment.GetEnvironmentVariable("AZURE_MSI_ISENABLED")!;
         opts.RedisClientId ??= Environment.GetEnvironmentVariable("REDIS_CLIENT_ID")!;
+        opts.MaxDequeueCount ??= Environment.GetEnvironmentVariable("SDMS_RESTORE_MAX_DEQUEUE_COUNT");
         opts.AzureSubscriptionId = ResolveRequiredValue(
             opts.AzureSubscriptionId,
             "AZURE_SUBSCRIPTION_ID",
@@ -89,6 +90,16 @@ public class Program
         return string.IsNullOrWhiteSpace(resolvedValue)
             ? throw new ArgumentException($"{optionName} is required and cannot be null, empty, or whitespace.")
             : resolvedValue;
+    }
+
+    private static int ResolveMaxDequeueCount(string? configured)
+    {
+        if (int.TryParse(configured, out var value) && value > 0)
+        {
+            return value;
+        }
+
+        return Constants.RestoreConfiguration.DEFAULT_MAX_DEQUEUE_COUNT;
     }
 
     private static async Task AttemptOptionsFromKeyVaultAsync(OptionsRestore opts)
@@ -213,7 +224,7 @@ public class Program
             {
                 LockDuration = TimeSpan.FromMinutes(5),
                 LockRenewalPeriod = TimeSpan.FromMinutes(3),
-                MaxDequeueCount = 5,
+                MaxDequeueCount = ResolveMaxDequeueCount(opts.MaxDequeueCount),
             });
 
         _ = services
@@ -222,6 +233,7 @@ public class Program
             .AddSingleton<IRedisConnectionFactory<RedisQueueConnectionFactory>, RedisQueueConnectionFactory>()
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IRestoreOperationStatusStorage, CosmosRestoreTaskStatusStorage>()
+            .AddSingleton<IArchivedSnapshotSelector, ArchivedSnapshotSelector>()
             .AddSingleton<IMetadataRestoreService, MetadataRestoreService>()
             .AddSingleton<IDatasetStorageInfoProvider, CosmosDatasetStorageInfoProvider>()
             .AddSingleton<IAzureStorageResourceResolver, AzureStorageResourceResolver>()

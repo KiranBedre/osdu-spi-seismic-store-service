@@ -193,7 +193,7 @@ export class Handler {
         const context = 'RestorePush';
         this.checkFeature(Feature.RESTORE);
 
-        const { sdPath, restorePointInTime, reason } = this.parseAndValidateRestoreRequest(req);
+        const { sdPath, restorePointInTime } = this.parseAndValidateRestoreRequest(req);
 
         const parsedPath = SDPath.getFromString(sdPath, true);
         if (!parsedPath || !parsedPath.tenant || !parsedPath.subproject) {
@@ -220,14 +220,14 @@ export class Handler {
                 await DatasetDAO.getByKey(journalClient, dataset) :
                 (await DatasetDAO.get(journalClient, dataset))[0];
             if (!datasetOUT) {
-                // Dataset not found in primary — check archive container for deleted datasets
-                const datasetKey = DatasetDAO.getKey(journalClient, dataset) as any;
+                // Not in primary — archive is partitioned by sd:// path, so look it up by that path.
+                const datasetSdPath = SDPath.build(
+                    dataset.tenant, dataset.subproject, dataset.path, dataset.name);
                 const archiveExists = await this.checkArchiveContainerForDataset(
-                    datasetKey.partitionKey, parsedPath.tenant);
+                    datasetSdPath, parsedPath.tenant);
                 if (!archiveExists) {
                     throw Error.make(Error.Status.NOT_FOUND,
-                        'The dataset ' + Config.SDPATHPREFIX + dataset.tenant + '/' +
-                        dataset.subproject + dataset.path + dataset.name +
+                        'The dataset ' + datasetSdPath +
                         ' does not exist and has no archived state');
                 }
             } else {
@@ -314,7 +314,6 @@ export class Handler {
                 createdBy: user,
                 sdPath,
                 restorePointInTime,
-                reason,
                 correlationId: CallContext.correlationId,
             };
 
@@ -328,7 +327,6 @@ export class Handler {
                 subproject: parsedPath.subproject,
                 sdPath,
                 restorePointInTime,
-                reason,
                 createdBy: user,
             });
         } catch (error) {
@@ -383,9 +381,8 @@ export class Handler {
     private static parseAndValidateRestoreRequest(req: expRequest): {
         sdPath: string;
         restorePointInTime: string;
-        reason?: string;
     } {
-        const { sdPath, restorePointInTime, reason } = req.body || {};
+        const { sdPath, restorePointInTime } = req.body || {};
 
         if (!sdPath || typeof sdPath !== 'string') {
             throw Error.make(Error.Status.BAD_REQUEST, 'sdPath is required and must be a string');
@@ -410,11 +407,8 @@ export class Handler {
             throw Error.make(Error.Status.BAD_REQUEST,
                 `restorePointInTime must be within the last ${maxDays} days. Point-in-time restore is only available for the past ${maxDays} days.`);
         }
-        if (reason && typeof reason !== 'string') {
-            throw Error.make(Error.Status.BAD_REQUEST, 'reason must be a string if provided');
-        }
 
-        return { sdPath, restorePointInTime, reason };
+        return { sdPath, restorePointInTime };
     }
 
     private static checkFeature(feature: Feature) {
@@ -427,12 +421,12 @@ export class Handler {
      * Checks if a deleted dataset has archived metadata entries that can be restored.
      */
     private static async checkArchiveContainerForDataset(
-        datasetId: string, tenant: string): Promise<boolean> {
+        sdPath: string, tenant: string): Promise<boolean> {
         try {
-            return await AzureArchiveService.hasArchivedEntries(datasetId, tenant);
+            return await AzureArchiveService.hasArchivedEntries(sdPath, tenant);
         } catch (error) {
             LoggerFactory.getLogger().error({
-                message: `Failed to check archive container for dataset ${datasetId}: ${(error as any)?.message}`,
+                message: `Failed to check archive container for dataset ${sdPath}: ${(error as any)?.message}`,
                 context: 'RestorePush.checkArchive'
             });
             throw Error.make(Error.Status.NOT_AVAILABLE,
@@ -467,8 +461,8 @@ export class Handler {
 
             if (!datasetOUT) {
                 throw (Error.make(Error.Status.NOT_FOUND,
-                    'The dataset ' + Config.SDPATHPREFIX + dataset.tenant + '/' +
-                    dataset.subproject + dataset.path + dataset.name + ' does not exist'));
+                    'The dataset ' + SDPath.build(
+                        dataset.tenant, dataset.subproject, dataset.path, dataset.name) + ' does not exist'));
             }
         }
 

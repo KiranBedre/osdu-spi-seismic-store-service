@@ -93,6 +93,8 @@ export class Tx {
     public static check409(val: number) { this.check(val, 409); }
     public static check423(val: number) { this.check(val, 423); }
     public static check500(val: number) { this.check(val, 500); }
+    public static check503(val: number) { this.check(val, 503); }
+    public static check410(val: number) { this.check(val, 410); }
     public static check501(val: number) { this.check(val, 501); }
     public static checkTrue(val: boolean) { this.check(val, true); }
     public static checkFalse(val: boolean) { this.check(val, false); }

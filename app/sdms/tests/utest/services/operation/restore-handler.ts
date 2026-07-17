@@ -40,6 +40,8 @@ import { TenantDAO } from '../../../../src/services/tenant';
 import { SubProjectDAO, SubprojectAuth } from '../../../../src/services/subproject';
 import { DatasetDAO } from '../../../../src/services/dataset';
 import { lockerInstance } from '../../../../src/services/dataset/locker';
+import { AzureArchiveService } from '../../../../src/cloud/providers/azure/archive-service';
+import { Config } from '../../../../src/cloud';
 import { JournalFactoryTenantClient } from '../../../../src/cloud';
 import { Tx } from '../../utils';
 
@@ -63,7 +65,118 @@ export class TestRestoreHandler {
 
             this.postRestore();
             this.postRestoreValidation();
+            this.postRestoreRemainingChecks();
             this.getRestoreStatus();
+        });
+    }
+
+    // Stubs the full restore happy path; pass overrides to drive a specific check to failure.
+    private static stubRestorePush(overrides: any = {}) {
+        const o = {
+            featureEnabled: true,
+            datasetResult: [{ name: 'dataset1', created_date: '2026-06-01T00:00:00.000Z' }, {}],
+            archiveExists: false,
+            redisHolder: null,
+            cosmosActiveOp: null,
+            acquire: true,
+            userId: 'user@example.com',
+            ...overrides,
+        };
+        this.sandbox.stub(FeatureFlags, 'isEnabled').returns(o.featureEnabled);
+        this.sandbox.stub(TenantDAO, 'get').resolves({ name: 'tenant', esd: 'tenant.esd', gcpid: '', default_acls: '' } as any);
+        this.sandbox.stub(Auth, 'isUserRegistered').resolves();
+        this.sandbox.stub(JournalFactoryTenantClient, 'get').returns({} as any);
+        this.sandbox.stub(SubProjectDAO, 'get').resolves({ name: 'subproject', acls: { admins: ['admin@group'], viewers: ['viewer@group'] } } as any);
+        this.sandbox.stub(SubprojectAuth, 'getAuthGroups').returns(['admin@group']);
+        this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
+        this.sandbox.stub(DatasetDAO, 'get').resolves(o.datasetResult as any);
+        this.sandbox.stub(AzureArchiveService, 'hasArchivedEntries').resolves(o.archiveExists);
+        this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(o.redisHolder);
+        this.sandbox.stub(restoreStatusStorage, 'getActiveRestoreOperationId').resolves(o.cosmosActiveOp);
+        this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(o.acquire);
+        this.sandbox.stub(RestoreOperationLock, 'release').resolves(true);
+        this.sandbox.stub(Utils, 'getUserId').resolves(o.userId);
+        this.sandbox.stub(restoreStatusStorage, 'createRestoreOperation').resolves();
+        const taskQueueStub = this.sandbox.createStubInstance<any>(AzureTaskQueue);
+        taskQueueStub.pushTask.resolves();
+        this.sandbox.stub(TaskQueueFactory, 'build').returns(taskQueueStub);
+    }
+
+    private static postRestoreRemainingChecks() {
+        Tx.sectionInit('POST /operation/restore - remaining checks');
+
+        // Unparseable restorePointInTime → 400
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            req.body = { sdPath: 'sd://tenant/subproject/path/dataset1', restorePointInTime: 'not-a-date' };
+            this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
+            await Handler.handle(req, res, Operation.RestorePush);
+            Tx.check400((res as any).statusCode);
+        });
+
+        // Backup retention not configured (maxDays <= 0) → 503
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            const orig = Config.SDMS_RESTORE_MAX_DAYS;
+            Config.SDMS_RESTORE_MAX_DAYS = 0;
+            try {
+                req.body = { sdPath: 'sd://tenant/subproject/path/dataset1', restorePointInTime: RESTORE_POINT_IN_TIME };
+                this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
+                await Handler.handle(req, res, Operation.RestorePush);
+                Tx.check503((res as any).statusCode);
+            } finally {
+                Config.SDMS_RESTORE_MAX_DAYS = orig;
+            }
+        });
+
+        // restorePointInTime beyond the retention window → 400
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            req.body = {
+                sdPath: 'sd://tenant/subproject/path/dataset1',
+                restorePointInTime: new Date(Date.now() - (Config.SDMS_RESTORE_MAX_DAYS + 10) * 24 * 60 * 60 * 1000).toISOString()
+            };
+            this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
+            await Handler.handle(req, res, Operation.RestorePush);
+            Tx.check400((res as any).statusCode);
+        });
+
+        // Dataset not found and no archived state → 404
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            req.body = { sdPath: 'sd://tenant/subproject/path/dataset1', restorePointInTime: RESTORE_POINT_IN_TIME };
+            this.stubRestorePush({ datasetResult: [], archiveExists: false });
+            await Handler.handle(req, res, Operation.RestorePush);
+            Tx.check404((res as any).statusCode);
+        });
+
+        // restorePointInTime at/before dataset creation → 400
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            req.body = { sdPath: 'sd://tenant/subproject/path/dataset1', restorePointInTime: RESTORE_POINT_IN_TIME };
+            // created_date is now (after the restore point 5 days ago)
+            this.stubRestorePush({ datasetResult: [{ name: 'dataset1', created_date: new Date().toISOString() }, {}] });
+            await Handler.handle(req, res, Operation.RestorePush);
+            Tx.check400((res as any).statusCode);
+        });
+
+        // No Redis lock but Cosmos shows an active operation → 409
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            req.body = { sdPath: 'sd://tenant/subproject/path/dataset1', restorePointInTime: RESTORE_POINT_IN_TIME };
+            this.stubRestorePush({ redisHolder: null, cosmosActiveOp: 'existing-op-id' });
+            await Handler.handle(req, res, Operation.RestorePush);
+            Tx.check409((res as any).statusCode);
+        });
+
+        // Lost the Redis lock acquisition race → 409
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            req.body = { sdPath: 'sd://tenant/subproject/path/dataset1', restorePointInTime: RESTORE_POINT_IN_TIME };
+            this.stubRestorePush({ acquire: false });
+            await Handler.handle(req, res, Operation.RestorePush);
+            Tx.check409((res as any).statusCode);
+        });
+
+        // Caller user id cannot be resolved → 400
+        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
+            req.body = { sdPath: 'sd://tenant/subproject/path/dataset1', restorePointInTime: RESTORE_POINT_IN_TIME };
+            this.stubRestorePush({ userId: null });
+            await Handler.handle(req, res, Operation.RestorePush);
+            Tx.check400((res as any).statusCode);
         });
     }
 
@@ -74,7 +187,6 @@ export class TestRestoreHandler {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
                 restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 'Accidental overwrite'
             };
             req.headers['data-partition-id'] = 'tenant';
 
@@ -110,7 +222,6 @@ export class TestRestoreHandler {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
                 restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(false);
 
@@ -122,7 +233,6 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
 
@@ -134,7 +244,6 @@ export class TestRestoreHandler {
         Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
-                reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
 
@@ -147,20 +256,6 @@ export class TestRestoreHandler {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
                 restorePointInTime: '2099-06-10T08:30:00.000Z',
-                reason: 'test'
-            };
-            this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
-
-            await Handler.handle(req, res, Operation.RestorePush);
-            Tx.check400((res as any).statusCode);
-        });
-
-        // Invalid reason type (must be string if provided)
-        Tx.testExpAsync(async (req: expRequest, res: expResponse) => {
-            req.body = {
-                sdPath: 'sd://tenant/subproject/path/dataset1',
-                restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 123
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
 
@@ -173,7 +268,6 @@ export class TestRestoreHandler {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
                 restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 'test'
             };
 
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
@@ -196,7 +290,6 @@ export class TestRestoreHandler {
             req.body = {
                 sdPath: 'invalid-path',
                 restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 'test'
             };
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
 
@@ -209,7 +302,6 @@ export class TestRestoreHandler {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
                 restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 'test'
             };
 
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
@@ -229,7 +321,6 @@ export class TestRestoreHandler {
             req.body = {
                 sdPath: 'sd://tenant/subproject/path/dataset1',
                 restorePointInTime: RESTORE_POINT_IN_TIME,
-                reason: 'test'
             };
 
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
@@ -273,7 +364,6 @@ export class TestRestoreHandler {
                 status: 'Succeeded',
                 sdPath: 'sd://tenant/subproject/path/dataset1',
                 restorePointInTime: '2026-06-10T08:30:00.000Z',
-                reason: 'test',
                 tenant: 'tenant',
                 subproject: 'subproject',
                 createdBy: 'user@example.com',

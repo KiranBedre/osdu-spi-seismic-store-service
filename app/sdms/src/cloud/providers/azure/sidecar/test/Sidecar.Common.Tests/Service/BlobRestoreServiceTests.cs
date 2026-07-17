@@ -18,7 +18,10 @@ namespace Sidecar.Common.Tests.Service;
 
 using System.Net;
 using System.Text;
+using Azure;
 using Azure.Core;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Sidecar.Common.Utility;
 
 /// <summary>
@@ -56,6 +59,10 @@ public class BlobRestoreServiceTests
     private const string UniformPolicyContainer = "ss-local-psmb3nw5vxy8n52";
     private const string DatasetPolicyContainer = "ss-local-psmb3nw5vxy8n52-64cc33b9-e313-4453-994f-400bda80ef96";
 
+    private const string DefaultContainer = "container1";
+    private const long DefaultExpectedObjectCount = 2;
+    private const long DefaultExpectedTotalSize = 2048;
+
     private readonly Mock<ILogger<BlobRestoreService>> _logger = new();
     private readonly Mock<IBlobClientFactory> _blobClientFactory = new();
     private readonly Mock<IAzureStorageResourceResolver> _resolver = new();
@@ -64,12 +71,12 @@ public class BlobRestoreServiceTests
 
     public BlobRestoreServiceTests()
     {
-        _resolver.SetupGet(r => r.SubscriptionId).Returns(SubscriptionId);
-        _resolver.Setup(r => r.ResolveResourceGroupName(It.IsAny<string>())).Returns(ResourceGroup);
-        _resolver
+        _ = _resolver.SetupGet(r => r.SubscriptionId).Returns(SubscriptionId);
+        _ = _resolver.Setup(r => r.ResolveResourceGroupName(It.IsAny<string>())).Returns(ResourceGroup);
+        _ = _resolver
             .Setup(r => r.ResolveStorageAccountNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(StorageAccount);
-        _credential
+        _ = _credential
             .Setup(c => c.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
             .Returns(new ValueTask<AccessToken>(new AccessToken(BearerToken, DateTimeOffset.UtcNow.AddHours(1))));
     }
@@ -81,16 +88,18 @@ public class BlobRestoreServiceTests
     // "<container>" for dataset-access datasets (no scheme prefix), e.g.
     //   ss-local-psmb3nw5vxy8n52/64cc33b9-e313-4453-994f-400bda80ef96
     private static DatasetStorageInfo StorageInfo(
-        string container = "container1",
+        string container = DefaultContainer,
         string? virtualFolder = null,
-        params string[] blobs)
+        long? expectedObjectCount = DefaultExpectedObjectCount,
+        long? expectedTotalSize = DefaultExpectedTotalSize)
         => new(
             GcsUrl: string.IsNullOrWhiteSpace(virtualFolder) ? container : $"{container}/{virtualFolder.Trim('/')}",
             ContainerName: container,
             VirtualFolder: virtualFolder,
-            BlobPaths: blobs.Length == 0 ? new List<string> { "blob1", "blob2" } : blobs.ToList());
+            ExpectedObjectCount: expectedObjectCount,
+            ExpectedTotalSize: expectedTotalSize);
 
-    private static string AccountStatusJson(string? restoreId, string? status)
+    private static string AccountStatusJson(string? restoreId, string? status, string? timeToRestore = null)
     {
         var inner = new List<string>();
         if (restoreId is not null)
@@ -101,24 +110,35 @@ public class BlobRestoreServiceTests
         {
             inner.Add($"\"status\":\"{status}\"");
         }
+        if (timeToRestore is not null)
+        {
+            inner.Add($"\"parameters\":{{\"timeToRestore\":\"{timeToRestore}\"}}");
+        }
         return $"{{\"properties\":{{\"blobRestoreStatus\":{{{string.Join(",", inner)}}}}}}}";
     }
 
     // ------------------------------------------------------------------------
-    // StartBlobRestoreAsync — nothing to do
+    // StartBlobRestoreAsync — revert-to-empty still submits
     // ------------------------------------------------------------------------
 
     [Fact]
-    public async Task StartBlobRestoreAsync_EmptyBlobList_ReturnsEmpty_AndIssuesNoRequest()
+    public async Task StartBlobRestoreAsync_ZeroExpectedCount_StillSubmitsPitr()
     {
+        // A revert-to-empty restore (the target version had 0 blobs) must STILL submit a PITR so any
+        // blobs created AFTER the restore point are removed. ExpectedObjectCount is the restore-TARGET
+        // version's count, not a measure of work to do, so it must not short-circuit the submit.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
+        _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-empty\"}");
         var sut = CreateSut();
-        var storage = new DatasetStorageInfo("container1", "container1", null, new List<string>());
+        var storage = new DatasetStorageInfo(DefaultContainer, DefaultContainer, null, 0, 0);
 
         var result = await sut.StartBlobRestoreAsync(
             DataPartition, storage, RestorePoint, OperationId, existingRestoreId: null, CancellationToken.None);
 
-        result.Should().BeEmpty();
-        _handler.Requests.Should().BeEmpty();
+        _ = result.Should().Be("restore-empty");
+        _ = _handler.Requests.Should().HaveCount(2);
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        _ = _handler.Requests[1].Method.Should().Be(HttpMethod.Post);
     }
 
     // ------------------------------------------------------------------------
@@ -128,23 +148,27 @@ public class BlobRestoreServiceTests
     [Fact]
     public async Task StartBlobRestoreAsync_Success_SubmitsPitrRequest_AndReturnsRestoreId()
     {
+        // A1 reconcile-before-submit: a fresh start first GETs account status (nothing to adopt
+        // here), then POSTs the PITR request.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-abc\"}");
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
             DataPartition, StorageInfo(), RestorePoint, OperationId, existingRestoreId: null, CancellationToken.None);
 
-        result.Should().Be("restore-abc");
+        _ = result.Should().Be("restore-abc");
 
-        _handler.Requests.Should().ContainSingle();
-        var req = _handler.Requests[0];
-        req.Method.Should().Be(HttpMethod.Post);
-        req.Uri.ToString().Should().Contain(
+        _ = _handler.Requests.Should().HaveCount(2);
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        var req = _handler.Requests[1];
+        _ = req.Method.Should().Be(HttpMethod.Post);
+        _ = req.Uri.ToString().Should().Contain(
             $"subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroup}" +
             $"/providers/Microsoft.Storage/storageAccounts/{StorageAccount}/restoreBlobRanges");
-        req.Uri.ToString().Should().Contain($"api-version={Constants.RestoreConfiguration.STORAGE_MANAGEMENT_API_VERSION}");
-        req.Authorization!.Scheme.Should().Be("Bearer");
-        req.Authorization.Parameter.Should().Be(BearerToken);
+        _ = req.Uri.ToString().Should().Contain($"api-version={Constants.RestoreConfiguration.STORAGE_MANAGEMENT_API_VERSION}");
+        _ = req.Authorization!.Scheme.Should().Be("Bearer");
+        _ = req.Authorization.Parameter.Should().Be(BearerToken);
     }
 
     [Fact]
@@ -154,10 +178,13 @@ public class BlobRestoreServiceTests
         // UUID (hyphen-joined), and there is NO virtual folder. gcsurl example:
         //   ss-local-psmb3nw5vxy8n52-64cc33b9-e313-4453-994f-400bda80ef96
         //
-        // Azure restoreBlobRanges is a half-open range [startRange, endRange): startRange is
-        // inclusive, endRange is EXCLUSIVE. The endRange sentinel "prefix/~" (0x7E, highest
-        // printable ASCII) means "restore everything lexicographically below prefix/~", capturing
-        // the entire prefix subtree without spilling into sibling prefixes.
+        // The dataset owns the WHOLE dedicated container, so a container-level range is used with
+        // NO trailing slash. Azure parses each endpoint as "<container>/<blob>" and rejects an
+        // endpoint that ends in a bare '/' (empty blob name). Per Azure guidance, the entire
+        // container "c" is covered by the half-open range [startRange "c", endRange "c-0"): the
+        // '-0' suffix sorts just after the container name and before any "c/<blob>" path, so every
+        // blob in the container is captured without spilling into sibling containers.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-abc\"}");
         var sut = CreateSut();
 
@@ -165,10 +192,10 @@ public class BlobRestoreServiceTests
             DataPartition, StorageInfo(container: DatasetPolicyContainer, virtualFolder: null),
             RestorePoint, OperationId, null, CancellationToken.None);
 
-        var body = _handler.Requests[0].Body!;
-        body.Should().Contain("\"timeToRestore\":");
-        body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}/\"");
-        body.Should().Contain($"\"endRange\":\"{DatasetPolicyContainer}/~\"");
+        var body = _handler.Requests[1].Body!;
+        _ = body.Should().Contain("\"timeToRestore\":");
+        _ = body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}\"");
+        _ = body.Should().Contain($"\"endRange\":\"{DatasetPolicyContainer}-0\"");
     }
 
     [Fact]
@@ -180,6 +207,7 @@ public class BlobRestoreServiceTests
         //
         // Half-open range [startRange, endRange) with an EXCLUSIVE endRange: the sibling-folder
         // boundary is respected because e.g. "c/aab/..." sorts ABOVE the exclusive end "c/aaa/~".
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-abc\"}");
         var sut = CreateSut();
 
@@ -188,15 +216,17 @@ public class BlobRestoreServiceTests
             StorageInfo(container: UniformPolicyContainer, virtualFolder: DatasetUuid),
             RestorePoint, OperationId, null, CancellationToken.None);
 
-        var body = _handler.Requests[0].Body!;
-        body.Should().Contain($"\"startRange\":\"{UniformPolicyContainer}/{DatasetUuid}/\"");
-        body.Should().Contain($"\"endRange\":\"{UniformPolicyContainer}/{DatasetUuid}/~\"");
+        var body = _handler.Requests[1].Body!;
+        _ = body.Should().Contain($"\"startRange\":\"{UniformPolicyContainer}/{DatasetUuid}/\"");
+        _ = body.Should().Contain($"\"endRange\":\"{UniformPolicyContainer}/{DatasetUuid}/~\"");
     }
 
     [Fact]
     public async Task StartBlobRestoreAsync_ResponseOmitsId_RecoversIdFromAccountStatus()
     {
-        // POST accepted but body carries no restoreId, then account status GET supplies it.
+        // Reconcile GET (nothing to adopt), then POST accepted but body carries no restoreId, then
+        // the omitted-id recovery GET supplies it.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.OK, string.Empty);
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("recovered-id", "InProgress"));
         var sut = CreateSut();
@@ -204,41 +234,102 @@ public class BlobRestoreServiceTests
         var result = await sut.StartBlobRestoreAsync(
             DataPartition, StorageInfo(), RestorePoint, OperationId, null, CancellationToken.None);
 
-        result.Should().Be("recovered-id");
-        _handler.Requests.Should().HaveCount(2);
-        _handler.Requests[0].Method.Should().Be(HttpMethod.Post);
-        _handler.Requests[1].Method.Should().Be(HttpMethod.Get);
+        _ = result.Should().Be("recovered-id");
+        _ = _handler.Requests.Should().HaveCount(3);
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        _ = _handler.Requests[1].Method.Should().Be(HttpMethod.Post);
+        _ = _handler.Requests[2].Method.Should().Be(HttpMethod.Get);
     }
 
     [Fact]
     public async Task StartBlobRestoreAsync_Conflict_AdoptsInFlightRestore()
     {
+        // Reconcile GET finds nothing to adopt yet, the POST races into a 409, and the follow-up
+        // account GET reports an in-flight restore whose timeToRestore matches our target — adopt it.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Conflict, string.Empty);
-        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("inflight-id", "InProgress"));
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("inflight-id", "InProgress", RestorePoint));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
             DataPartition, StorageInfo(), RestorePoint, OperationId, null, CancellationToken.None);
 
-        result.Should().Be("inflight-id");
+        _ = result.Should().Be("inflight-id");
+    }
+
+    [Fact]
+    public async Task StartBlobRestoreAsync_Conflict_NoAdoptableRestore_ThrowsRetryable()
+    {
+        // 409 Conflict, but the account status reports no restoreId to adopt. This is a transient
+        // condition (only one blob-range restore per account at a time), so it must surface as a
+        // retryable exception rather than a permanent failure.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
+        _handler.EnqueueJson(HttpStatusCode.Conflict, string.Empty);
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, "InProgress"));
+        var sut = CreateSut();
+
+        var act = async () => await sut.StartBlobRestoreAsync(
+            DataPartition, StorageInfo(), RestorePoint, OperationId, null, CancellationToken.None);
+
+        _ = await act.Should().ThrowAsync<Sidecar.Common.Exceptions.RetryableRestoreException>()
+            .WithMessage("*409*");
+    }
+
+    [Fact]
+    public async Task StartBlobRestoreAsync_Reconcile_AccountRestoreMatchesTarget_AdoptsWithoutSubmitting()
+    {
+        // Crash-before-persist window: no restoreId was ever persisted, but the account
+        // already carries a restore whose parameters.timeToRestore matches our target point-in-time.
+        // Because Azure serializes one blob-range restore per account, that restore is ours \u2014 adopt
+        // it instead of resubmitting a duplicate (potentially multi-hour) restore. Only the reconcile
+        // GET should be issued; no POST.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("adopted-id", "InProgress", RestorePoint));
+        var sut = CreateSut();
+
+        var result = await sut.StartBlobRestoreAsync(
+            DataPartition, StorageInfo(), RestorePoint, OperationId, existingRestoreId: null, CancellationToken.None);
+
+        _ = result.Should().Be("adopted-id");
+        _ = _handler.Requests.Should().ContainSingle();
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+    }
+
+    [Fact]
+    public async Task StartBlobRestoreAsync_Reconcile_AccountRestoreDifferentTarget_SubmitsNewRestore()
+    {
+        // The account carries a restore for a DIFFERENT point-in-time (timeToRestore mismatch), so it
+        // is not ours to adopt \u2014 proceed to submit a fresh PITR request.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("other-id", "InProgress", "2025-01-01T00:00:00Z"));
+        _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-new\"}");
+        var sut = CreateSut();
+
+        var result = await sut.StartBlobRestoreAsync(
+            DataPartition, StorageInfo(), RestorePoint, OperationId, existingRestoreId: null, CancellationToken.None);
+
+        _ = result.Should().Be("restore-new");
+        _ = _handler.Requests.Should().HaveCount(2);
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        _ = _handler.Requests[1].Method.Should().Be(HttpMethod.Post);
     }
 
     [Fact]
     public async Task StartBlobRestoreAsync_ManagementPlaneError_ThrowsInvalidOperation()
     {
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.InternalServerError, "boom");
         var sut = CreateSut();
 
         var act = async () => await sut.StartBlobRestoreAsync(
             DataPartition, StorageInfo(), RestorePoint, OperationId, null, CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        _ = await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*500*boom*");
     }
 
     [Fact]
     public async Task StartBlobRestoreAsync_AcceptedButNoIdAnywhere_ThrowsInvalidOperation()
     {
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.OK, string.Empty);
         _handler.EnqueueJson(HttpStatusCode.OK, "{\"properties\":{}}");
         var sut = CreateSut();
@@ -246,7 +337,7 @@ public class BlobRestoreServiceTests
         var act = async () => await sut.StartBlobRestoreAsync(
             DataPartition, StorageInfo(), RestorePoint, OperationId, null, CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        _ = await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*no restoreId*");
     }
 
@@ -264,24 +355,47 @@ public class BlobRestoreServiceTests
             DataPartition, StorageInfo(), RestorePoint, OperationId,
             existingRestoreId: "existing-id", CancellationToken.None);
 
-        result.Should().Be("existing-id");
-        _handler.Requests.Should().ContainSingle();
-        _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        _ = result.Should().Be("existing-id");
+        _ = _handler.Requests.Should().ContainSingle();
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
     }
 
     [Fact]
-    public async Task StartBlobRestoreAsync_Resume_NewerAccountId_AdoptsLatestForTracking()
+    public async Task StartBlobRestoreAsync_Resume_NewerAccountId_UnrelatedPoint_ResubmitsRestore()
     {
-        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("newer-id", "Complete"));
+        // The account's most-recent restore has a DIFFERENT id AND targets a different point-in-time,
+        // so it is an unrelated restore that superseded ours. A newer id is NOT proof our restore
+        // succeeded (it could have failed), so we must re-submit rather than assume completion.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("unrelated-id", "InProgress", "2025-01-01T00:00:00Z"));
+        _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"fresh-id\"}");
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
             DataPartition, StorageInfo(), RestorePoint, OperationId,
             existingRestoreId: "old-id", CancellationToken.None);
 
-        result.Should().Be("newer-id");
-        _handler.Requests.Should().ContainSingle();
-        _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        _ = result.Should().Be("fresh-id");
+        _ = _handler.Requests.Should().HaveCount(2);
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        _ = _handler.Requests[1].Method.Should().Be(HttpMethod.Post);
+    }
+
+    [Fact]
+    public async Task StartBlobRestoreAsync_Resume_NewerAccountId_SamePoint_AdoptsLatestId()
+    {
+        // The account's most-recent restore has a DIFFERENT id but targets OUR point-in-time, so it
+        // is our restore re-manifested. Adopt the LATEST id so the operation tracks the live restore
+        // instead of the stale tracked id \u2014 no re-submit.
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("latest-id", "InProgress", RestorePoint));
+        var sut = CreateSut();
+
+        var result = await sut.StartBlobRestoreAsync(
+            DataPartition, StorageInfo(), RestorePoint, OperationId,
+            existingRestoreId: "old-id", CancellationToken.None);
+
+        _ = result.Should().Be("latest-id");
+        _ = _handler.Requests.Should().ContainSingle();
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
     }
 
     [Fact]
@@ -295,10 +409,10 @@ public class BlobRestoreServiceTests
             DataPartition, StorageInfo(), RestorePoint, OperationId,
             existingRestoreId: "stale-id", CancellationToken.None);
 
-        result.Should().Be("fresh-id");
-        _handler.Requests.Should().HaveCount(2);
-        _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
-        _handler.Requests[1].Method.Should().Be(HttpMethod.Post);
+        _ = result.Should().Be("fresh-id");
+        _ = _handler.Requests.Should().HaveCount(2);
+        _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+        _ = _handler.Requests[1].Method.Should().Be(HttpMethod.Post);
     }
 
     // ------------------------------------------------------------------------
@@ -306,31 +420,17 @@ public class BlobRestoreServiceTests
     // ------------------------------------------------------------------------
 
     [Fact]
-    public async Task WaitForBlobRestoreAsync_NoBlobs_ReturnsImmediately_WithoutHttp()
-    {
-        var sut = CreateSut();
-        var storage = new DatasetStorageInfo("container1", "container1", null, new List<string>());
-
-        var result = await sut.WaitForBlobRestoreAsync(
-            DataPartition, storage, restoreId: "restore-abc", OperationId, CancellationToken.None);
-
-        result.TotalBlobs.Should().Be(0);
-        result.RestoredBlobs.Should().Be(0);
-        _handler.Requests.Should().BeEmpty();
-    }
-
-    [Fact]
     public async Task WaitForBlobRestoreAsync_EmptyRestoreId_ReturnsImmediately_WithoutHttp()
     {
         var sut = CreateSut();
 
         var result = await sut.WaitForBlobRestoreAsync(
-            DataPartition, StorageInfo(blobs: new[] { "b1", "b2", "b3" }),
-            restoreId: string.Empty, OperationId, CancellationToken.None);
+            DataPartition, StorageInfo(expectedObjectCount: 3),
+            restoreId: string.Empty, RestorePoint, OperationId, CancellationToken.None);
 
-        result.TotalBlobs.Should().Be(3);
-        result.RestoredBlobs.Should().Be(3);
-        _handler.Requests.Should().BeEmpty();
+        _ = result.TotalBlobs.Should().Be(3);
+        _ = result.RestoredBlobs.Should().Be(3);
+        _ = _handler.Requests.Should().BeEmpty();
     }
 
     // ------------------------------------------------------------------------
@@ -342,7 +442,7 @@ public class BlobRestoreServiceTests
     {
         var act = () => new BlobRestoreService(
             null!, _blobClientFactory.Object, _resolver.Object, new HttpClient(_handler), _credential.Object);
-        act.Should().Throw<ArgumentNullException>();
+        _ = act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -350,7 +450,7 @@ public class BlobRestoreServiceTests
     {
         var act = () => new BlobRestoreService(
             _logger.Object, _blobClientFactory.Object, _resolver.Object, null!, _credential.Object);
-        act.Should().Throw<ArgumentNullException>();
+        _ = act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -358,7 +458,7 @@ public class BlobRestoreServiceTests
     {
         var act = () => new BlobRestoreService(
             _logger.Object, _blobClientFactory.Object, _resolver.Object, new HttpClient(_handler), null!);
-        act.Should().Throw<ArgumentNullException>();
+        _ = act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -366,7 +466,217 @@ public class BlobRestoreServiceTests
     {
         var act = () => new BlobRestoreService(
             _logger.Object, _blobClientFactory.Object, null!, new HttpClient(_handler), _credential.Object);
-        act.Should().Throw<ArgumentNullException>();
+        _ = act.Should().Throw<ArgumentNullException>();
+    }
+
+    // ------------------------------------------------------------------------
+    // ValidateConsistencyAsync — filemetadata (expected) vs. actual restored blobs
+    // ------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_ZeroExpected_EmptyStore_ReturnsConsistent()
+    {
+        // Revert-to-empty: the target had 0 blobs / 0 bytes. We must STILL enumerate the store and
+        // confirm the range is actually empty (the PITR removed the newer blobs). An empty listing
+        // matching the zero expectation is consistent.
+        SetupBlobListing(new long[] { });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: 0, expectedTotalSize: 0);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeTrue();
+        _ = result.ValidationError.Should().BeNullOrEmpty();
+        // The store IS queried now, even for a zero expectation, to prove it was left empty.
+        _blobClientFactory.Verify(
+            f => f.GetBlobClientAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_ZeroExpected_ResidualBlobs_ReturnsInconsistent()
+    {
+        // The target had 0 blobs, but the store still holds residual objects (e.g. a PITR that did
+        // not remove them). This MUST be flagged as inconsistent rather than silently skipped.
+        SetupBlobListing(new long[] { 85, 85, 85 });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: 0, expectedTotalSize: 0);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeFalse();
+        _ = result.ValidationError.Should().Contain("object count mismatch")
+            .And.Contain("expected 0").And.Contain("found 3");
+        _ = result.ValidationError.Should().Contain("total size mismatch")
+            .And.Contain("expected 0 bytes").And.Contain("found 255 bytes");
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_ObjectCountAbsent_SkipsObjectCountCheck()
+    {
+        // filemetadata.nobjects was not recorded on this version (ExpectedObjectCount is null): the
+        // object-count check is skipped (and logged). The recorded size still matches, so the result
+        // is consistent even though the actual count differs from any fabricated value.
+        SetupBlobListing(new long[] { 1024, 512 });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: null, expectedTotalSize: 1536);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeTrue();
+        _ = result.ValidationError.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_TotalSizeAbsent_SkipsTotalSizeCheck()
+    {
+        // filemetadata.size was not recorded (ExpectedTotalSize is null): the total-size check is
+        // skipped. The recorded object count still matches, so the result is consistent.
+        SetupBlobListing(new long[] { 1024, 512 });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: 2, expectedTotalSize: null);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeTrue();
+        _ = result.ValidationError.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_BothFiguresAbsent_ReturnsConsistent()
+    {
+        // Neither figure was recorded: both checks are skipped (and logged). Nothing is validated,
+        // so the result is consistent regardless of what the store holds. The store is still
+        // enumerated for the informational log.
+        SetupBlobListing(new long[] { 100, 200, 300 });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: null, expectedTotalSize: null);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeTrue();
+        _ = result.ValidationError.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_CountAndSizeMatch_ReturnsConsistent()
+    {
+        SetupBlobListing(new long[] { 1024, 1024 });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: 2, expectedTotalSize: 2048);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeTrue();
+        _ = result.ValidationError.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_ObjectCountMismatch_ReturnsInconsistent()
+    {
+        SetupBlobListing(new long[] { 1024 });
+        var sut = CreateSut();
+        // expectedTotalSize matches the single blob so ONLY the object count is inconsistent.
+        var storage = StorageInfo(expectedObjectCount: 2, expectedTotalSize: 1024);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeFalse();
+        _ = result.ValidationError.Should().Contain("object count mismatch")
+            .And.Contain("expected 2").And.Contain("found 1");
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_TotalSizeMismatch_ReturnsInconsistent()
+    {
+        SetupBlobListing(new long[] { 1024, 512 });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: 2, expectedTotalSize: 2048);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeFalse();
+        _ = result.ValidationError.Should().Contain("total size mismatch")
+            .And.Contain("expected 2048").And.Contain("found 1536");
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_BothCountAndSizeMismatch_ReportsBoth()
+    {
+        SetupBlobListing(new long[] { 512 });
+        var sut = CreateSut();
+        var storage = StorageInfo(expectedObjectCount: 3, expectedTotalSize: 4096);
+
+        var result = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        _ = result.IsConsistent.Should().BeFalse();
+        _ = result.ValidationError.Should().Contain("object count mismatch").And.Contain("total size mismatch");
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_UniformPolicy_ListsWithVirtualFolderPrefix()
+    {
+        string? observedPrefix = null;
+        SetupBlobListing(new long[] { 100, 100 }, prefix => observedPrefix = prefix);
+        var sut = CreateSut();
+        var storage = StorageInfo(
+            container: UniformPolicyContainer, virtualFolder: DatasetUuid,
+            expectedObjectCount: 2, expectedTotalSize: 200);
+
+        _ = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        // Uniform access policy scopes the listing to the dataset's virtual-folder prefix.
+        _ = observedPrefix.Should().Be($"{DatasetUuid}/");
+    }
+
+    [Fact]
+    public async Task ValidateConsistencyAsync_DatasetPolicy_ListsWholeContainer_NoPrefix()
+    {
+        string? observedPrefix = "unset";
+        SetupBlobListing(new long[] { 100 }, prefix => observedPrefix = prefix);
+        var sut = CreateSut();
+        var storage = StorageInfo(
+            container: DatasetPolicyContainer, virtualFolder: null,
+            expectedObjectCount: 1, expectedTotalSize: 100);
+
+        _ = await sut.ValidateConsistencyAsync(DataPartition, storage, OperationId, CancellationToken.None);
+
+        // Dedicated-container (dataset) policy lists the whole container, so no prefix is applied.
+        _ = observedPrefix.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Wires <see cref="IBlobClientFactory"/> → <see cref="IBlobClient"/> → a mocked
+    /// <see cref="BlobContainerClient"/> whose <c>GetBlobsAsync</c> returns one page of blobs with
+    /// the given content lengths, optionally capturing the prefix the SUT lists with.
+    /// </summary>
+    private void SetupBlobListing(IReadOnlyList<long> blobSizes, Action<string?>? capturePrefix = null)
+    {
+        var containerClientMock = new Mock<BlobContainerClient>();
+        var blobClientMock = new Mock<IBlobClient>();
+
+        _ = blobClientMock
+            .Setup(c => c.GetContainerClient(It.IsAny<string>()))
+            .Returns(containerClientMock.Object);
+        _ = _blobClientFactory
+            .Setup(f => f.GetBlobClientAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(blobClientMock.Object);
+
+        var items = blobSizes
+            .Select((size, i) => BlobsModelFactory.BlobItem(
+                name: $"blob-{i}",
+                properties: BlobsModelFactory.BlobItemProperties(accessTierInferred: false, contentLength: size)))
+            .ToList();
+        var page = Page<BlobItem>.FromValues(items, continuationToken: null, new Mock<Response>().Object);
+        var pages = AsyncPageable<BlobItem>.FromPages(new[] { page });
+
+        _ = containerClientMock
+            .Setup(c => c.GetBlobsAsync(
+                It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns((BlobTraits _, BlobStates _, string prefix, CancellationToken _) =>
+            {
+                capturePrefix?.Invoke(prefix);
+                return pages;
+            });
     }
 
     // ------------------------------------------------------------------------

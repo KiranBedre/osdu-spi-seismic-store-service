@@ -69,7 +69,6 @@ export class AzureRestoreOperationStatusStorage {
         subproject: string;
         sdPath: string;
         restorePointInTime: string;
-        reason?: string;
         createdBy: string;
     }): Promise<void> {
         try {
@@ -82,10 +81,9 @@ export class AzureRestoreOperationStatusStorage {
                 subproject: params.subproject,
                 sdPath: params.sdPath,
                 restorePointInTime: params.restorePointInTime,
-                reason: params.reason || undefined,
                 createdBy: params.createdBy,
                 status: 'Enqueued',
-                error_message: '',
+                errorDetails: undefined,
                 startedAt: new Date().toISOString(),
                 lastUpdatedAt: new Date().toISOString(),
             };
@@ -118,11 +116,10 @@ export class AzureRestoreOperationStatusStorage {
             status: resource.status,
             sdPath: resource.sdPath,
             restorePointInTime: resource.restorePointInTime,
-            reason: resource.reason,
             tenant: resource.tenant,
             subproject: resource.subproject,
             createdBy: resource.createdBy,
-            error_message: resource.error_message,
+            errorDetails: resource.errorDetails,
             startedAt: resource.startedAt,
             lastUpdatedAt: resource.lastUpdatedAt,
             completedAt: resource.completedAt,
@@ -133,7 +130,7 @@ export class AzureRestoreOperationStatusStorage {
         const container = await this.getContainer(tenant);
         await container.item(operationId, operationId).patch([
             { op: 'replace', path: '/status', value: 'Failed' },
-            { op: 'replace', path: '/error_message', value: errorMessage },
+            { op: 'replace', path: '/errorDetails', value: errorMessage },
             { op: 'add', path: '/completedAt', value: new Date().toISOString() },
             { op: 'replace', path: '/lastUpdatedAt', value: new Date().toISOString() },
         ]);

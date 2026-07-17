@@ -18,6 +18,10 @@ namespace Sidecar.Common.Interface;
 
 /// <summary>
 /// Restores the Cosmos metadata document to a target point-in-time.
+///
+/// Scope: metadata only. Storage-location discovery (gcsurl, blob paths) is a storage concern
+/// owned by IDatasetStorageInfoProvider, not this service. The executor orchestrates ordering:
+/// Resolve storage info → Blob PITR → Metadata Finalize → Validate.
 /// </summary>
 public interface IMetadataRestoreService
 {

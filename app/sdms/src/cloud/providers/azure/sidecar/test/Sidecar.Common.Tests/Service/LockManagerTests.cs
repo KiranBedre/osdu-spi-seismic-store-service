@@ -32,18 +32,26 @@ public class LockManagerTests
 
         // Mock IRedisHandler to use the in-memory cache
         _redisHandlerMock = new Mock<IRedisHandler>();
-        _redisHandlerMock.Setup(r => r.GetDatabase()).Returns(dbMock.Object);
+        _ = _redisHandlerMock.Setup(r => r.GetDatabase()).Returns(dbMock.Object);
 
         // Setup SetAsync to use InMemoryCache
-        _redisHandlerMock.Setup(r => r.SetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _ = _redisHandlerMock.Setup(r => r.SetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .Returns<string, string>((key, value) =>
             {
-                _cache.StringSet(key, value);
+                _ = _cache.StringSet(key, value);
                 return Task.FromResult(true);
             });
 
+        // Setup SetAsync with TTL to use InMemoryCache (TTL is ignored in tests)
+        _ = _redisHandlerMock.Setup(r => r.SetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            .Returns<string, string, TimeSpan>((key, value, expiry) =>
+            {
+                // InMemoryCache doesn't support TTL, so we just set the value
+                _ = _cache.StringSet(key, value);
+                return Task.FromResult(true);
+            });
         // Setup GetAsync to use InMemoryCache
-        _redisHandlerMock.Setup(r => r.GetAsync(It.IsAny<string>()))
+        _ = _redisHandlerMock.Setup(r => r.GetAsync(It.IsAny<string>()))
             .Returns<string>(async key =>
             {
                 var value = await _cache.StringGetAsync(key);
@@ -51,7 +59,7 @@ public class LockManagerTests
             });
 
         // Setup DeleteAsync to use InMemoryCache
-        _redisHandlerMock.Setup(r => r.DeleteAsync(It.IsAny<string>()))
+        _ = _redisHandlerMock.Setup(r => r.DeleteAsync(It.IsAny<string>()))
             .Returns<string>(async key =>
             {
                 return await _cache.KeyDeleteAsync(key);
@@ -69,7 +77,7 @@ public class LockManagerTests
     {
         // Arrange
         var key = "/path/file.tst";
-        _cache.StringSet(key, $"{Constants.DELETE_LOCK_PREFIX}:lockValue");
+        _ = _cache.StringSet(key, $"{Constants.DELETE_LOCK_PREFIX}:lockValue");
 
         // Act
         var result = await _lockManager.AcquireDeleteLockAsync(key);
@@ -86,7 +94,7 @@ public class LockManagerTests
     {
         // Arrange
         var key = "/path/file.tst";
-        _cache.StringSet(key, lockValue);
+        _ = _cache.StringSet(key, lockValue);
 
         // Act
         var result = await _lockManager.AcquireDeleteLockAsync(key);
@@ -124,14 +132,14 @@ public class LockManagerTests
     {
         // Arrange - Create a special database mock that throws on LockTakeAsync
         var dbMockWithException = new Mock<IDatabase>();
-        dbMockWithException.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
+        _ = dbMockWithException.Setup(db => db.LockTakeAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan>(), It.IsAny<CommandFlags>()))
             .ThrowsAsync(new Exception("Lock take failed"));
 
         var redisHandlerMockWithException = new Mock<IRedisHandler>();
-        redisHandlerMockWithException.Setup(r => r.GetDatabase()).Returns(dbMockWithException.Object);
+        _ = redisHandlerMockWithException.Setup(r => r.GetDatabase()).Returns(dbMockWithException.Object);
 
         var factoryMock = new Mock<IRedisConnectionFactory<RedisLocksConnectionFactory>>();
-        factoryMock.Setup(m => m.GetRedis()).Returns(redisHandlerMockWithException.Object);
+        _ = factoryMock.Setup(m => m.GetRedis()).Returns(redisHandlerMockWithException.Object);
 
         var loggerMock = new Mock<ILogger<LockManager>>();
         var lockManager = new LockManager(loggerMock.Object, factoryMock.Object);
@@ -148,7 +156,7 @@ public class LockManagerTests
     {
         // Arrange
         var key = "/path/file.tst";
-        _cache.StringSet(key, $"{Constants.DELETE_LOCK_PREFIX}:lockValue");
+        _ = _cache.StringSet(key, $"{Constants.DELETE_LOCK_PREFIX}:lockValue");
 
         // Act
         var result = await _lockManager.RemoveDeleteLockAsync(key);
@@ -180,14 +188,14 @@ public class LockManagerTests
         var db = TestingHelpers.GetDatabase(out var cache);
 
         var redisHandlerMockWithFailure = new Mock<IRedisHandler>();
-        redisHandlerMockWithFailure.Setup(r => r.GetDatabase()).Returns(db.Object);
-        redisHandlerMockWithFailure.Setup(r => r.SetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _ = redisHandlerMockWithFailure.Setup(r => r.GetDatabase()).Returns(db.Object);
+        _ = redisHandlerMockWithFailure.Setup(r => r.SetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(false); // Override to return false
-        redisHandlerMockWithFailure.Setup(r => r.GetAsync(It.IsAny<string>()))
+        _ = redisHandlerMockWithFailure.Setup(r => r.GetAsync(It.IsAny<string>()))
             .ReturnsAsync((string?)null); // No existing lock
 
         var factoryMock = new Mock<IRedisConnectionFactory<RedisLocksConnectionFactory>>();
-        factoryMock.Setup(m => m.GetRedis()).Returns(redisHandlerMockWithFailure.Object);
+        _ = factoryMock.Setup(m => m.GetRedis()).Returns(redisHandlerMockWithFailure.Object);
 
         var loggerMock = new Mock<ILogger<LockManager>>();
         var lockManager = new LockManager(loggerMock.Object, factoryMock.Object);
@@ -208,7 +216,7 @@ public class LockManagerTests
     {
         // Arrange
         var key = "path/file.tst";
-        _cache.StringSet(key, "Some Lock");
+        _ = _cache.StringSet(key, "Some Lock");
 
         // Act
         var result = await _lockManager.AcquireWriteLockAsync(key);
@@ -225,7 +233,7 @@ public class LockManagerTests
         // Arrange
         var key = "/path/file.tst";
         var lockValue = "lockValue";
-        _cache.StringSet(key, lockValue);
+        _ = _cache.StringSet(key, lockValue);
         var writeLockSession = new WriteLockSession()
         {
             Key = key,
@@ -265,7 +273,7 @@ public class LockManagerTests
     {
         // Arrange
         var key = "/path/file.tst";
-        _cache.StringSet(key, "some lock value");
+        _ = _cache.StringSet(key, "some lock value");
         var writeLockSession = new WriteLockSession()
         {
             Key = key,
@@ -279,4 +287,240 @@ public class LockManagerTests
         // Assert
         Assert.False(result);
     }
+
+    [Fact]
+    public async Task MakeWriteLockIndefinite_MatchingLock_ReturnsTrueAndRewritesValue()
+    {
+        // Arrange
+        var key = "/path/file.tst";
+        var lockValue = "W24D0X03";
+        _ = _cache.StringSet(key, lockValue);
+        var writeLockSession = new WriteLockSession { Key = key, Wid = lockValue, Locked = true };
+
+        // Act
+        var result = await _lockManager.MakeWriteLockIndefiniteAsync(writeLockSession);
+
+        // Assert - the lock key is re-set (no TTL) using the no-expiry SetAsync overload.
+        Assert.True(result);
+        _redisHandlerMock.Verify(r => r.SetAsync(key, lockValue), Times.Once);
+        _redisHandlerMock.Verify(r => r.SetAsync(key, lockValue, It.IsAny<TimeSpan>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MakeWriteLockIndefinite_MissingLock_ReturnsFalse()
+    {
+        // Arrange - no lock in cache.
+        var writeLockSession = new WriteLockSession { Key = "/path/file.tst", Wid = "W24D0X03", Locked = true };
+
+        // Act
+        var result = await _lockManager.MakeWriteLockIndefiniteAsync(writeLockSession);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task MakeWriteLockIndefinite_DifferentLockValue_ReturnsFalse()
+    {
+        // Arrange - a different owner holds the lock.
+        var key = "/path/file.tst";
+        _ = _cache.StringSet(key, "someOtherLockValue");
+        var writeLockSession = new WriteLockSession { Key = key, Wid = "W24D0X03", Locked = true };
+
+        // Act
+        var result = await _lockManager.MakeWriteLockIndefiniteAsync(writeLockSession);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #region Idempotent Lock Tests
+
+    [Fact]
+    public async Task AcquireWriteLock_WithIdempotentLockIdAndTtl_ReturnsLockedWithIdempotentId()
+    {
+        // Arrange
+        var key = "path/file.tst";
+        var idempotentLockId = "W1234567890ABCDE";
+        var ttl = TimeSpan.FromHours(24);
+        // No existing lock in cache
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key, idempotentLockId, ttl);
+
+        // Assert
+        Assert.Equal(key, result.Key);
+        Assert.Equal(idempotentLockId, result.Wid);
+        Assert.True(result.Locked);
+        Assert.False(result.IsIdempotent);
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_WithMatchingExistingIdempotentLock_ReturnsIdempotentSuccess()
+    {
+        // Arrange
+        var key = "path/file.tst";
+        var idempotentLockId = "W1234567890ABCDE";
+        var ttl = TimeSpan.FromHours(24);
+        // Existing lock matches the idempotent lock ID
+        _ = _cache.StringSet(key, idempotentLockId);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key, idempotentLockId, ttl);
+
+        // Assert
+        Assert.Equal(key, result.Key);
+        Assert.Equal(idempotentLockId, result.Wid);
+        Assert.True(result.Locked);
+        Assert.True(result.IsIdempotent);  // Re-acquired idempotently
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_WithMatchingExistingIdempotentLock_RefreshesTtl()
+    {
+        // Arrange - a redelivery/retry re-acquiring its own lock must refresh the TTL so the fixed
+        // window is not consumed across retries and does not expire mid-operation.
+        var key = "path/file.tst";
+        var idempotentLockId = "W1234567890ABCDE";
+        var ttl = TimeSpan.FromHours(5);
+        string? capturedValue = null;
+        TimeSpan? capturedTtl = null;
+
+        // Existing lock matches the idempotent lock ID
+        _ = _cache.StringSet(key, idempotentLockId);
+
+        _ = _redisHandlerMock.Setup(r => r.SetAsync(key, It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            .Callback<string, string, TimeSpan>((redisKey, value, expiry) =>
+            {
+                capturedValue = value;
+                capturedTtl = expiry;
+                _ = _cache.StringSet(redisKey, value);
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key, idempotentLockId, ttl);
+
+        // Assert
+        Assert.True(result.Locked);
+        Assert.True(result.IsIdempotent);            // re-acquired, not a fresh lock
+        Assert.Equal(idempotentLockId, result.Wid);
+        Assert.Equal(idempotentLockId, capturedValue);  // value unchanged
+        Assert.Equal(ttl, capturedTtl);              // TTL refreshed with the requested ttl
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_WithNonMatchingExistingLock_ReturnsLockedFalse()
+    {
+        // Arrange
+        var key = "path/file.tst";
+        var idempotentLockId = "W1234567890ABCDE";
+        var existingLockId = "WDifferentLock123";
+        var ttl = TimeSpan.FromHours(24);
+        // Existing lock does NOT match the idempotent lock ID
+        _ = _cache.StringSet(key, existingLockId);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key, idempotentLockId, ttl);
+
+        // Assert
+        Assert.Equal("", result.Key);
+        Assert.Equal("", result.Wid);
+        Assert.False(result.Locked);
+        Assert.False(result.IsIdempotent);
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_WithInvalidIdempotentLockId_ReturnsLockedFalse()
+    {
+        // Arrange - idempotent lock ID must start with "W"
+        var key = "path/file.tst";
+        var invalidIdempotentLockId = "R1234567890ABCDE"; // Invalid - starts with R instead of W
+        var ttl = TimeSpan.FromHours(24);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key, invalidIdempotentLockId, ttl);
+
+        // Assert
+        Assert.Equal("", result.Key);
+        Assert.Equal("", result.Wid);
+        Assert.False(result.Locked);
+    }
+
+    #endregion Idempotent Lock Tests
+
+    #region TTL Lock Tests
+
+    [Fact]
+    public async Task AcquireWriteLock_WithTtl_SetsTtlOnLock()
+    {
+        // Arrange
+        var key = "path/file.tst";
+        var idempotentLockId = "W1234567890ABCDE";
+        var ttl = TimeSpan.FromHours(24);
+        TimeSpan? capturedTtl = null;
+
+        // Override SetAsync with TTL to capture the TTL parameter
+        _ = _redisHandlerMock.Setup(r => r.SetAsync(key, idempotentLockId, It.IsAny<TimeSpan>()))
+            .Callback<string, string, TimeSpan>((_, _, expiry) => capturedTtl = expiry)
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key, idempotentLockId, ttl);
+
+        // Assert
+        Assert.True(result.Locked);
+        Assert.Equal(ttl, capturedTtl);
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_WithoutTtl_DoesNotSetTtlOnLock()
+    {
+        // Arrange
+        var key = "path/file.tst";
+        var ttlMethodCalled = false;
+
+        // Override SetAsync with TTL to detect if it's called
+        _ = _redisHandlerMock.Setup(r => r.SetAsync(key, It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            .Callback(() => ttlMethodCalled = true)
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key);
+
+        // Assert
+        Assert.True(result.Locked);
+        Assert.False(ttlMethodCalled); // TTL method should NOT be called
+    }
+
+    [Fact]
+    public async Task AcquireWriteLock_WithIdempotentLockIdAndTtl_UsesBothParameters()
+    {
+        // Arrange
+        var key = "path/file.tst";
+        var idempotentLockId = "W1234567890ABCDE";
+        var ttl = TimeSpan.FromHours(24);
+        string? capturedValue = null;
+        TimeSpan? capturedTtl = null;
+
+        // Override SetAsync with TTL to capture both value and TTL
+        _ = _redisHandlerMock.Setup(r => r.SetAsync(key, It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            .Callback<string, string, TimeSpan>((_, value, expiry) =>
+            {
+                capturedValue = value;
+                capturedTtl = expiry;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _lockManager.AcquireWriteLockAsync(key, idempotentLockId, ttl);
+
+        // Assert
+        Assert.True(result.Locked);
+        Assert.Equal(idempotentLockId, capturedValue);
+        Assert.Equal(idempotentLockId, result.Wid);
+        Assert.Equal(ttl, capturedTtl);
+    }
+
+    #endregion TTL Lock Tests
 }

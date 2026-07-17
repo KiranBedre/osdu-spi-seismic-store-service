@@ -79,7 +79,6 @@ export class TestAzureRestoreOperationStatus {
                 subproject: 'subproject-a',
                 sdPath: 'sd://tenant-a/subproject-a/path/dataset',
                 restorePointInTime: '2026-06-20T10:00:00.000Z',
-                reason: 'recover data',
                 createdBy: 'user@example.com'
             });
 
@@ -91,10 +90,9 @@ export class TestAzureRestoreOperationStatus {
             expect(record.subproject).to.equal('subproject-a');
             expect(record.sdPath).to.equal('sd://tenant-a/subproject-a/path/dataset');
             expect(record.restorePointInTime).to.equal('2026-06-20T10:00:00.000Z');
-            expect(record.reason).to.equal('recover data');
             expect(record.createdBy).to.equal('user@example.com');
             expect(record.status).to.equal('Enqueued');
-            expect(record.error_message).to.equal('');
+            expect(record.errorDetails).to.be.undefined;
             expect(record.startedAt).to.be.a('string');
             expect(record.lastUpdatedAt).to.be.a('string');
         });
@@ -110,11 +108,10 @@ export class TestAzureRestoreOperationStatus {
                     status: 'Succeeded',
                     sdPath: 'sd://tenant-a/subproject-a/path/dataset',
                     restorePointInTime: '2026-06-20T10:00:00.000Z',
-                    reason: 'recover data',
                     tenant: 'tenant-a',
                     subproject: 'subproject-a',
                     createdBy: 'user@example.com',
-                    error_message: '',
+                    errorDetails: '',
                     startedAt: '2026-06-20T10:05:00.000Z',
                     lastUpdatedAt: '2026-06-20T10:10:00.000Z',
                     completedAt: '2026-06-20T10:15:00.000Z'
@@ -128,11 +125,10 @@ export class TestAzureRestoreOperationStatus {
                 status: 'Succeeded',
                 sdPath: 'sd://tenant-a/subproject-a/path/dataset',
                 restorePointInTime: '2026-06-20T10:00:00.000Z',
-                reason: 'recover data',
                 tenant: 'tenant-a',
                 subproject: 'subproject-a',
                 createdBy: 'user@example.com',
-                error_message: '',
+                errorDetails: '',
                 startedAt: '2026-06-20T10:05:00.000Z',
                 lastUpdatedAt: '2026-06-20T10:10:00.000Z',
                 completedAt: '2026-06-20T10:15:00.000Z'
@@ -169,7 +165,7 @@ export class TestAzureRestoreOperationStatus {
             sinon.assert.calledOnce(this.patchStub);
             const ops = this.patchStub.firstCall.args[0];
             expect(ops[0]).to.deep.equal({ op: 'replace', path: '/status', value: 'Failed' });
-            expect(ops[1]).to.deep.equal({ op: 'replace', path: '/error_message', value: 'restore failed' });
+            expect(ops[1]).to.deep.equal({ op: 'replace', path: '/errorDetails', value: 'restore failed' });
             expect(ops[2].op).to.equal('add');
             expect(ops[2].path).to.equal('/completedAt');
             expect(ops[3].op).to.equal('replace');

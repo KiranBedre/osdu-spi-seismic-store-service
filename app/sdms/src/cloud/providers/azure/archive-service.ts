@@ -19,6 +19,7 @@ import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
 import { AzureCredentials } from './credentials';
 import { LoggerFactory } from '../../logger';
+import { SDPath } from '../../../shared';
 
 export enum ArchiveOperation {
     Patch = 'patch',
@@ -93,19 +94,59 @@ export class AzureArchiveService {
     }
 
     /**
-     * Checks if the archive container has any entries for the given dataset ID.
+     * Checks if the archive container has any entries for the given dataset.
      * Used to determine if a deleted dataset can be restored.
+     * @param sdPath - The sd:// dataset path (archive partition key).
      */
-    public static async hasArchivedEntries(datasetId: string, tenant: string): Promise<boolean> {
+    public static async hasArchivedEntries(sdPath: string, tenant: string): Promise<boolean> {
         const archiveContainer = await AzureArchiveService.getContainer(tenant, AzureConfig.COSMOS_ARCHIVE_CONTAINER);
         const querySpec = {
-            query: 'SELECT VALUE COUNT(1) FROM c WHERE c.sdPath = @datasetId',
-            parameters: [{ name: '@datasetId', value: datasetId }]
+            query: 'SELECT VALUE COUNT(1) FROM c WHERE c.sdPath = @sdPath',
+            parameters: [{ name: '@sdPath', value: sdPath }]
         };
         const { resources } = await archiveContainer.items.query(querySpec, {
-            partitionKey: datasetId
+            partitionKey: sdPath
         }).fetchAll();
         return resources[0] > 0;
+    }
+
+    /**
+     * Resolves the latest archivedAt (epoch ms) recorded for the given lifecycle. This equals the
+     * live-window END of the most recently archived version, i.e. the instant the current
+     * (soon-to-be-archived) version became live. Returns null when no predecessor has been archived
+     * for this lifecycle (the current version is the first of its life).
+     * @param archiveContainer - The archive container.
+     * @param sdPath - The sd:// dataset path (archive partition key).
+     * @param lifecycleKey - The datasetCreatedAtEpochMs lifecycle key.
+     */
+    private static async resolveLatestArchivedAtEpochMs(
+        archiveContainer: any, sdPath: string, lifecycleKey: number): Promise<number | null> {
+        const querySpec = {
+            query: 'SELECT VALUE MAX(c.archivedAtEpochMs) FROM c'
+                + ' WHERE c.sdPath = @sdPath AND c.datasetCreatedAtEpochMs = @lifecycleKey',
+            parameters: [
+                { name: '@sdPath', value: sdPath },
+                { name: '@lifecycleKey', value: lifecycleKey }
+            ]
+        };
+        const { resources } = await archiveContainer.items.query(querySpec, {
+            partitionKey: sdPath
+        }).fetchAll();
+        return resources[0] ?? null;
+    }
+
+    /**
+     * Returns a shallow copy of the Cosmos document with system properties (keys prefixed with '_')
+     * removed, so the stored snapshot mirrors the { id, data } shape the restore readers expect.
+     */
+    private static stripSystemProperties(document: any): any {
+        const clone = { ...document };
+        for (const key of Object.keys(clone)) {
+            if (key.startsWith('_')) {
+                delete clone[key];
+            }
+        }
+        return clone;
     }
 
     private static async archiveCurrentState(datasetId: string, tenant: string, operation: ArchiveOperation): Promise<void> {
@@ -121,16 +162,34 @@ export class AzureArchiveService {
         // Write snapshot to archive container
         const archiveContainer = await AzureArchiveService.getContainer(tenant, AzureConfig.COSMOS_ARCHIVE_CONTAINER);
         const timestamp = Date.now();
-        const datasetCreatedAtEpochMs = resource.data?.created_date ? new Date(resource.data.created_date).getTime() : 0;
-        const versionCreatedAtEpochMs = resource.data?.last_modified_date ? new Date(resource.data.last_modified_date).getTime() : 0;
+        const data = resource.data ?? {};
+        // datasetCreatedAt: lifecycle key (created_date). Every version of THIS life shares it.
+        const parsedCreatedAtEpochMs = data.created_date ? new Date(data.created_date).getTime() : 0;
+        const datasetCreatedAtEpochMs = Number.isNaN(parsedCreatedAtEpochMs) ? 0 : parsedCreatedAtEpochMs;
+
+        // Partition key: must be the sd:// dataset path the restore reader queries by, not the doc id.
+        const sdPath = SDPath.build(data.tenant, data.subproject, data.path, data.name, datasetId);
+
+        // versionCreatedAt: the version's live-window START = the instant this version became live =
+        // the predecessor snapshot's archivedAt (millisecond-precise, same clock as archivedAt/blob
+        // PITR). Sourcing it from the live doc's _ts (Unix SECONDS) would truncate to the second and
+        // make consecutive windows [versionCreatedAt, archivedAt) overlap by up to 999 ms. The first
+        // version of the lifecycle has no predecessor, so it falls back to the dataset's created date.
+        const predecessorArchivedAtEpochMs = await AzureArchiveService.resolveLatestArchivedAtEpochMs(
+            archiveContainer, sdPath, datasetCreatedAtEpochMs);
+        const versionCreatedAtEpochMs = predecessorArchivedAtEpochMs ?? datasetCreatedAtEpochMs;
+
+        // Store the full document ({ id, data }) so restore can read document.id and document.data.
+        const document = AzureArchiveService.stripSystemProperties(resource);
+
         const archiveEntry = {
-            id: `${datasetId}_${datasetCreatedAtEpochMs}_${timestamp}`,
-            sdPath: datasetId,
+            id: `${datasetId}__${datasetCreatedAtEpochMs}__${timestamp}`,
+            sdPath,
             archivedAtEpochMs: timestamp,
             operation,
             datasetCreatedAtEpochMs,
             versionCreatedAtEpochMs,
-            document: resource.data,
+            document,
             ttl: AzureConfig.COSMOS_ARCHIVE_TTL_SECONDS
         };
 

@@ -42,7 +42,6 @@ export interface IRestoreOperationQueueTask extends IOperationQueueTask {
     createdBy: string;
     sdPath: string;
     restorePointInTime: string;
-    reason?: string;
     correlationId?: string;
 }
 
@@ -51,11 +50,10 @@ export interface IRestoreOperationStatus {
     status: string;
     sdPath: string;
     restorePointInTime: string;
-    reason?: string;
     tenant: string;
     subproject: string;
     createdBy: string;
-    error_message?: string;
+    errorDetails?: string;
     startedAt: string;
     lastUpdatedAt?: string;
     completedAt?: string;

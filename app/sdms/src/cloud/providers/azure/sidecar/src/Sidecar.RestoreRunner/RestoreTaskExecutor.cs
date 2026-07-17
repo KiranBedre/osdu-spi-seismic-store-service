@@ -18,9 +18,13 @@ namespace Sidecar.RestoreRunner;
 
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Polly;
+using Polly.Registry;
 using Serilog.Context;
+using Sidecar.Common.Exceptions;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
+using Sidecar.Common.Resilience;
 using Sidecar.Common.Service;
 using Sidecar.Common.Utility;
 
@@ -61,7 +65,8 @@ public class RestoreTaskExecutor(
     IBlobRestoreService blobRestoreService,
     IContainerRestoreService containerRestoreService,
     IDataAccess dataAccess,
-    ICosmosClientFactory cosmosClientFactory)
+    ICosmosClientFactory cosmosClientFactory,
+    ResiliencePipelineProvider<string>? resiliencePipelineProvider = null)
     : ITaskExecutor<IRestoreOperationMessage>
 {
     private readonly ILogger<RestoreTaskExecutor> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -73,6 +78,15 @@ public class RestoreTaskExecutor(
     private readonly IContainerRestoreService _containerRestoreService = containerRestoreService ?? throw new ArgumentNullException(nameof(containerRestoreService));
     private readonly IDataAccess _dataAccess = dataAccess ?? throw new ArgumentNullException(nameof(dataAccess));
     private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory ?? throw new ArgumentNullException(nameof(cosmosClientFactory));
+
+    // In-code retry for SHORT, transient blips (Cosmos 429/503/timeout, HTTP/socket) during the
+    // long-running finalize and consistency-validation stages. Swallowing a hiccup here avoids
+    // paying a whole queue redelivery (re-lock, re-read, re-validate) for a momentary fault.
+    // Deterministic failures (RestoreRejected, non-retriable auth/Cosmos 400/403) are NOT transient,
+    // so the pipeline rethrows them unchanged and the existing stage catch-blocks classify them.
+    // Falls back to a no-op pipeline when the provider is absent (e.g. unit tests).
+    private readonly ResiliencePipeline _generalPipeline =
+        resiliencePipelineProvider?.GetPipeline(ResilienceExtensions.GeneralPipeline) ?? ResiliencePipeline.Empty;
 
     public async Task ProcessAsync(IRestoreOperationMessage message, CancellationToken ct)
     {
@@ -126,7 +140,10 @@ public class RestoreTaskExecutor(
                     "Restore rejected — dataset lock is already held. DatasetLockKey: {DatasetLockKey}, OperationId: {OperationId}",
                     datasetLockKey, message.OperationId);
 
-                await SetStatusAsync(message, Common.RestoreOperationStatus.Rejected, ct);
+                var lockConflictDetails =
+                    $"Restore rejected: the dataset '{message.SdPath}' is currently locked by another in-progress write " +
+                    "operation. Wait for that operation to finish and release the lock, then retry this restore.";
+                await SetStatusAsync(message, Common.RestoreOperationStatus.Rejected, ct, lockConflictDetails);
                 return;
             }
 
@@ -183,13 +200,21 @@ public class RestoreTaskExecutor(
             {
                 storageInfo = await _datasetStorageInfoProvider.ResolveDatasetInfoAsync(
                     message.SdPath,
+                    message.RestorePointInTime,
                     message.OperationId,
                     ct);
 
                 _logger.LogInformation(
-                    "Storage location resolved - Container: {Container}, BlobCount: {BlobCount}, OperationId: {OperationId}",
-                    storageInfo.ContainerName, storageInfo.BlobPaths.Count, message.OperationId);
+                    "Storage location resolved - Container: {Container}, ExpectedObjectCount: {ExpectedObjectCount}, OperationId: {OperationId}",
+                    storageInfo.ContainerName, storageInfo.ExpectedObjectCount, message.OperationId);
 
+            }
+            catch (RestoreRejectedException)
+            {
+                // Request-level rejection (restore point out of range or a live-window no-op).
+                // Nothing has been mutated. Let the outer handler mark the operation Rejected;
+                // do NOT record it as a storage-resolution failure here.
+                throw;
             }
             catch (Exception ex)
             {
@@ -239,6 +264,19 @@ public class RestoreTaskExecutor(
                     trackedStatus.Document.BlobRestoreId,
                     ct);
             }
+            catch (Common.Exceptions.RetryableRestoreException ex)
+            {
+                // A concurrent/in-flight PITR could not yet be adopted (only one blob-range restore
+                // is allowed per account at a time). Nothing of ours has been mutated, but the
+                // correct recovery is to resume on redelivery rather than fail permanently. Keep
+                // status InProgress and retry at the queue level.
+                _logger.LogWarning(ex,
+                    "Blob restore hit a retryable condition while starting; will resume on redelivery - OperationId: {OperationId}",
+                    message.OperationId);
+                trackedStatus.Document.ErrorDetails = $"Blob restore start deferred (will retry): {ex.Message}";
+                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                throw new RestoreRetryableException("Blob restore could not be started yet", ex);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Blob restore could not be started - OperationId: {OperationId}, Error: {Error}",
@@ -267,6 +305,7 @@ public class RestoreTaskExecutor(
                     tenant,
                     storageInfo,
                     blobRestoreId,
+                    message.RestorePointInTime,
                     message.OperationId,
                     ct);
 
@@ -274,61 +313,131 @@ public class RestoreTaskExecutor(
                     "Blob restore completed successfully - Total: {Total}, Restored: {Restored}, OperationId: {OperationId}",
                     blobRestoreResult.TotalBlobs, blobRestoreResult.RestoredBlobs, message.OperationId);
             }
+            catch (BlobRestoreFailedException ex)
+            {
+                // Azure reported the PITR restore as Failed. This is terminal — the same restore
+                // parameters will fail again — so mark the operation Failed rather than retrying at
+                // the queue level. No metadata has been mutated yet (finalize is a later stage), so
+                // the locks are safe to release. The exception message is already customer-safe;
+                // internal diagnostics were logged at the throw site.
+                _logger.LogError(ex, "Blob restore failed terminally - OperationId: {OperationId}", message.OperationId);
+                trackedStatus.Document.ErrorDetails = ex.Message;
+                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                throw; // outer catch marks the operation Failed (terminal) and releases locks
+            }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                if (IsNonRetriable(ex))
+                {
+                    // Permanent, deterministic failure (e.g. 403 KeyBasedAuthenticationNotPermitted):
+                    // redelivery would fail identically and only hold the locks until dead-lettering.
+                    // Persist the specific error and rethrow so the outer handler marks Failed
+                    // (terminal) and the finally releases both locks.
+                    _logger.LogError(ex,
+                        "Blob restore hit a non-retriable error; marking Failed and releasing locks - OperationId: {OperationId}, Error: {Error}",
+                        message.OperationId, ex.Message);
+                    trackedStatus.Document.ErrorDetails = $"Blob restore did not complete (non-retriable): {ex.Message}";
+                    trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                    throw;
+                }
+
                 // Blobs may already be (partially) restored while the wait failed/timed out.
                 // Keep status InProgress and retry at the queue level.
                 _logger.LogError(ex, "Blob restore did not complete - OperationId: {OperationId}, Error: {Error}",
                     message.OperationId, ex.Message);
                 trackedStatus.Document.ErrorDetails = $"Blob restore did not complete (will retry): {ex.Message}";
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                // Best-effort: a status-write failure here must NOT escape and land in the generic
+                // catch, which would RELEASE the locks. The retain-locks RestoreRetryableException
+                // must always be what propagates. See TryPersistStatusAsync.
+                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreRetryableException("Blob restore did not complete", ex);
             }
 
             // --- 5. Finalize metadata restore (activation/commit point) ---
             try
             {
-                await _metadataRestoreService.FinalizeRestoreAsync(
-                    message.SdPath,
-                    message.RestorePointInTime,
-                    message.OperationId,
-                    ct);
+                await _generalPipeline.ExecuteAsync(
+                    async token => await _metadataRestoreService.FinalizeRestoreAsync(
+                        message.SdPath,
+                        message.RestorePointInTime,
+                        message.OperationId,
+                        token).ConfigureAwait(false),
+                    ct).ConfigureAwait(false);
 
                 _logger.LogInformation(
                     "Metadata restore finalized - OperationId: {OperationId}",
                     message.OperationId);
             }
+            catch (RestoreRejectedException)
+            {
+                // Terminal, request-level rejection (no archived snapshot covers the restore point).
+                // This is deterministic, so redelivery would reject identically: propagate unchanged
+                // to the outer handler, which marks the operation Rejected and releases the locks,
+                // rather than wrapping it as a retryable post-blob failure that retains locks and
+                // retries forever.
+                throw;
+            }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // Blob restore already succeeded but metadata could not be finalized: the dataset
-                // is potentially inconsistent. Keep status InProgress and retry at the queue level.
-                _logger.LogError(ex, "Metadata restore finalization failed - OperationId: {OperationId}, Error: {Error}",
+                if (IsNonRetriable(ex))
+                {
+                    // deterministic failure (e.g. 403 KeyBasedAuthenticationNotPermitted). Redelivery
+                    // would fail identically, so retrying only wastes attempts before dead-lettering.
+                    // The dataset is potentially inconsistent, so RETAIN both locks (it stays
+                    // inaccessible) but mark the operation terminally Failed and STOP redelivery;
+                    // recovery requires manual intervention.
+                    _logger.LogError(ex,
+                        "Metadata restore finalization hit a non-retriable error (post-blob-restore); retaining locks and marking terminal for manual recovery - OperationId: {OperationId}, Error: {Error}",
+                        message.OperationId, ex.Message);
+                    trackedStatus.Document.ErrorDetails =
+                        $"Metadata restore finalization failed (non-retriable, manual recovery required): {ex.Message}";
+                    trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                    // Best-effort: a status-write failure here must NOT escape and land in the generic
+                    // catch, which would RELEASE the locks. The retain-locks RestoreManualRecoveryException
+                    // must always be what propagates. See TryPersistStatusAsync.
+                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                    throw new RestoreManualRecoveryException("Metadata restore finalization failed (non-retriable)", ex);
+                }
+
+                // Blob restore already succeeded but metadata could not be finalized due to a
+                // transient error: the dataset is potentially inconsistent. Retain locks and retry
+                // at the queue level to allow idempotent recovery/resume (bounded by MaxDequeueCount).
+                _logger.LogError(ex,
+                    "Metadata restore finalization failed (post-blob-restore); retaining locks and retrying at queue level - OperationId: {OperationId}, Error: {Error}",
                     message.OperationId, ex.Message);
                 trackedStatus.Document.ErrorDetails = $"Metadata restore finalization failed (will retry): {ex.Message}";
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                // Best-effort: a status-write failure here must NOT escape and land in the generic
+                // catch, which would RELEASE the locks. The retain-locks RestoreRetryableException
+                // must always be what propagates. See TryPersistStatusAsync.
+                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreRetryableException("Metadata restore finalization failed", ex);
             }
 
             // --- 6. Run consistency validation ---
             try
             {
-                var validationResult = await _blobRestoreService.ValidateConsistencyAsync(
-                    tenant,
-                    storageInfo,
-                    message.OperationId,
-                    ct);
+                var validationResult = await _generalPipeline.ExecuteAsync(
+                    async token => await _blobRestoreService.ValidateConsistencyAsync(
+                        tenant,
+                        storageInfo,
+                        message.OperationId,
+                        token).ConfigureAwait(false),
+                    ct).ConfigureAwait(false);
 
                 if (!validationResult.IsConsistent)
                 {
                     _logger.LogError(
-                        "Consistency validation failed - {MissingCount} missing blobs, OperationId: {OperationId}",
-                        validationResult.MissingBlobs.Count, message.OperationId);
+                        "Consistency validation failed - {Error}, OperationId: {OperationId}",
+                        validationResult.ValidationError, message.OperationId);
 
                     // Metadata and blob state do not agree: potentially inconsistent. Keep status
                     // InProgress and retry at the queue level.
                     trackedStatus.Document.ErrorDetails =
                         $"Consistency validation failed (will retry): {validationResult.ValidationError}";
-                    trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                    // Best-effort: a status-write failure here must NOT escape and land in the generic
+                    // catch, which would RELEASE the locks. The retain-locks RestoreRetryableException
+                    // must always be what propagates. See TryPersistStatusAsync.
+                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                     throw new RestoreRetryableException(
                         $"Consistency validation failed: {validationResult.ValidationError}");
                 }
@@ -345,12 +454,29 @@ public class RestoreTaskExecutor(
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                if (IsNonRetriable(ex))
+                {
+                    // Permanent, deterministic failure (e.g. 403 KeyBasedAuthenticationNotPermitted):
+                    // redelivery would fail identically and only hold the locks until dead-lettering.
+                    // Persist the specific error and rethrow so the outer handler marks Failed
+                    // (terminal) and the finally releases both locks.
+                    _logger.LogError(ex,
+                        "Consistency validation hit a non-retriable error; marking Failed and releasing locks - OperationId: {OperationId}, Error: {Error}",
+                        message.OperationId, ex.Message);
+                    trackedStatus.Document.ErrorDetails = $"Consistency validation error (non-retriable): {ex.Message}";
+                    trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                    throw;
+                }
+
                 // Validation could not be executed after restore: cannot prove consistency.
                 // Keep status InProgress and retry at the queue level.
                 _logger.LogError(ex, "Consistency validation failed - OperationId: {OperationId}, Error: {Error}",
                     message.OperationId, ex.Message);
                 trackedStatus.Document.ErrorDetails = $"Consistency validation error (will retry): {ex.Message}";
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                // Best-effort: a status-write failure here must NOT escape and land in the generic
+                // catch, which would RELEASE the locks. The retain-locks RestoreRetryableException
+                // must always be what propagates. See TryPersistStatusAsync.
+                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreRetryableException("Consistency validation error", ex);
             }
 
@@ -358,7 +484,27 @@ public class RestoreTaskExecutor(
             if (string.Equals(trackedStatus.Document.Status, ToStatusString(Common.RestoreOperationStatus.InProgress), StringComparison.Ordinal))
             {
                 trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Succeeded);
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+
+                // The restore itself is COMPLETE and consistent here; only the terminal status record
+                // remains. Absorb short transient blips (Cosmos 429/503/timeout) in-code via the
+                // pipeline, and if the write still fails, classify it as retryable rather than letting
+                // it fall into the generic catch — that would wrongly mark a fully-successful restore
+                // as Failed and release the locks. On redelivery the executor resumes idempotently
+                // (status still InProgress, blob restore id persisted) and re-attempts this write.
+                try
+                {
+                    trackedStatus = await _generalPipeline.ExecuteAsync(
+                        async token => await _statusStorage.SaveStatusAsync(tenant, trackedStatus, token).ConfigureAwait(false),
+                        ct).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogError(ex,
+                        "Restore completed but recording the Succeeded status failed; retaining locks and retrying at queue level - OperationId: {OperationId}, Error: {Error}",
+                        message.OperationId, ex.Message);
+                    throw new RestoreRetryableException("Failed to record Succeeded status", ex);
+                }
+
                 _logger.LogInformation("Restore succeeded - OperationId: {OperationId}", message.OperationId);
             }
         }
@@ -366,6 +512,18 @@ public class RestoreTaskExecutor(
         {
             _logger.LogWarning("Restore cancelled - OperationId: {OperationId}", message.OperationId);
             throw;
+        }
+        catch (RestoreRejectedException ex)
+        {
+            // SAFE, request-level rejection raised on the read side BEFORE any blob/metadata
+            // mutation (restore point out of range, or inside the current live window where the
+            // dataset already reflects that state). Mark the operation Rejected (terminal), release
+            // locks in the finally, and swallow so the queue deletes the message instead of retrying.
+            _logger.LogWarning(ex,
+                "Restore rejected — {Reason}. OperationId: {OperationId}",
+                ex.Message, message.OperationId);
+
+            await SetStatusAsync(message, Common.RestoreOperationStatus.Rejected, ct, ex.Message);
         }
         catch (RestoreRetryableException ex)
         {
@@ -380,7 +538,22 @@ public class RestoreTaskExecutor(
             _logger.LogError(ex,
                 "Restore left in a potentially inconsistent state; retaining locks and retrying at queue level - OperationId: {OperationId}, Error: {Error}",
                 message.OperationId, ex.Message);
+            await MakeDatasetLockIndefiniteAsync(datasetLockSession, datasetLockKey, message.OperationId);
             throw;
+        }
+        catch (RestoreManualRecoveryException ex)
+        {
+            // POTENTIALLY INCONSISTENT + non-retriable failure after blobs were restored: retrying
+            // would fail identically, so we STOP redelivery (swallow so the queue deletes the
+            // message and no futile attempts are made) but RETAIN both locks so the dataset stays
+            // inaccessible until an operator completes recovery. The status was already set to
+            // terminal Failed with a manual-recovery error detail at the throw site.
+            retainLocksForRetry = true;
+            _logger.LogError(ex,
+                "Restore left in a potentially inconsistent state by a non-retriable error; retaining locks and stopping redelivery for manual recovery - OperationId: {OperationId}, Error: {Error}",
+                message.OperationId, ex.Message);
+            await MakeDatasetLockIndefiniteAsync(datasetLockSession, datasetLockKey, message.OperationId);
+            // Intentionally not rethrown: the message is deleted (no retries); locks remain held.
         }
         catch (Exception ex)
         {
@@ -410,15 +583,15 @@ public class RestoreTaskExecutor(
         }
     }
 
-    private async Task SetStatusAsync(IRestoreOperationMessage message, Common.RestoreOperationStatus status, CancellationToken ct)
+    private async Task SetStatusAsync(IRestoreOperationMessage message, Common.RestoreOperationStatus status, CancellationToken ct, string? errorDetailsOverride = null)
     {
         try
         {
             var tenant = ExtractTenantFromSdPath(message.SdPath);
             var statusText = ToStatusString(status);
-            var errorDetails = status switch
+            var errorDetails = errorDetailsOverride ?? status switch
             {
-                Common.RestoreOperationStatus.Rejected => "Restore rejected: dataset is locked by another in-progress operation.",
+                Common.RestoreOperationStatus.Rejected => "Restore rejected before any changes were made.",
                 Common.RestoreOperationStatus.Failed => "Restore operation failed.",
                 _ => null
             };
@@ -451,6 +624,36 @@ public class RestoreTaskExecutor(
         {
             _logger.LogError(ex, "Failed to update restore status to '{Status}' - OperationId: {OperationId}",
                 status, message.OperationId);
+        }
+    }
+
+    /// <summary>
+    /// Best-effort status persistence for use INSIDE a post-mutation failure handler that is about
+    /// to throw a retain-locks exception (<see cref="RestoreRetryableException"/> or
+    /// <see cref="RestoreManualRecoveryException"/>).
+    ///
+    /// At these call sites the dataset may already be partially mutated, so the outer handler relies
+    /// on the thrown exception TYPE to decide it must RETAIN the locks. If the status write itself
+    /// failed and were allowed to propagate, that raw exception would replace the intended typed one
+    /// and surface at the generic <c>catch (Exception)</c> — which is reserved for SAFE pre-mutation
+    /// failures and RELEASES the locks — silently downgrading "retain locks" into "release locks" and
+    /// exposing a potentially inconsistent dataset. To prevent that classification flip, any failure
+    /// to persist the status here is swallowed (logged only); the caller's typed exception is always
+    /// what propagates. Losing the status write is acceptable: on a retry the message is reprocessed
+    /// and the status re-read, and for the manual-recovery path the operation simply remains visible
+    /// as in-progress (still blocking new restores) with the locks retained for the operator.
+    /// </summary>
+    private async Task TryPersistStatusAsync(string tenant, TrackedRestoreStatus trackedStatus, string operationId, CancellationToken ct)
+    {
+        try
+        {
+            _ = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to persist restore status inside a post-mutation failure handler; continuing with the intended retain-locks classification - OperationId: {OperationId}",
+                operationId);
         }
     }
 
@@ -522,6 +725,44 @@ WHERE c.data.tenant = @tenant
         await ReleaseLockAsync(operationLockSession, "operation");
     }
 
+    /// <summary>
+    /// Best-effort conversion of the dataset write lock into an indefinite (no-TTL) lock when a
+    /// failure leaves the dataset potentially inconsistent. This fences the dataset off from further
+    /// writes until an operator manually recovers it: unlike the default TTL-bounded lock, an
+    /// indefinite lock will not silently expire. Failures here are logged and swallowed so they never
+    /// mask the original inconsistency failure.
+    /// </summary>
+    private async Task MakeDatasetLockIndefiniteAsync(WriteLockSession? lockSession, string datasetLockKey, string operationId)
+    {
+        if (lockSession?.Locked != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var persisted = await _lockManager.MakeWriteLockIndefiniteAsync(lockSession);
+            if (persisted)
+            {
+                _logger.LogWarning(
+                    "Dataset lock made indefinite pending manual recovery - DatasetLockKey: {DatasetLockKey}, OperationId: {OperationId}",
+                    datasetLockKey, operationId);
+            }
+            else
+            {
+                _logger.LogError(
+                    "Failed to make dataset lock indefinite; it may expire via TTL - DatasetLockKey: {DatasetLockKey}, OperationId: {OperationId}",
+                    datasetLockKey, operationId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error making dataset lock indefinite; it may expire via TTL - DatasetLockKey: {DatasetLockKey}, OperationId: {OperationId}",
+                datasetLockKey, operationId);
+        }
+    }
+
     private async Task ReleaseLockAsync(WriteLockSession? lockSession, string lockType)
     {
         if (lockSession?.Locked != true)
@@ -550,12 +791,64 @@ WHERE c.data.tenant = @tenant
     private sealed record SdPathParts(string Tenant, string Subproject, string Path, string Dataset);
 
     /// <summary>
+    /// Classifies an exception as permanently non-retriable. Some post-mutation failures — notably
+    /// storage/auth errors such as 403 <c>KeyBasedAuthenticationNotPermitted</c> — are deterministic:
+    /// the identical request fails the same way on every redelivery. Retrying them at the queue level
+    /// only keeps the dataset and operation locks held until the message is dead-lettered. Such errors
+    /// are routed to the terminal <c>Failed</c> path instead so the locks are released immediately.
+    ///
+    /// Two SDK exception families are inspected:
+    ///   - <see cref="Azure.RequestFailedException"/> from the Storage plane, scoped to specific,
+    ///     self-evidently permanent auth ErrorCodes rather than the bare HTTP status, because a plain
+    ///     403 there can be transient during RBAC role propagation for a managed identity.
+    ///   - <see cref="Microsoft.Azure.Cosmos.CosmosException"/> from the Cosmos plane, which the
+    ///     Cosmos SDK throws instead of <see cref="Azure.RequestFailedException"/>. A finalize-stage
+    ///     Cosmos 400 (malformed request) or 403 (authorization denied) is deterministic — the same
+    ///     request re-fails identically on every redelivery. By the time finalize runs, this same
+    ///     identity has already performed earlier-stage Cosmos writes successfully, so a 403 here is
+    ///     a genuine permission failure, not RBAC-propagation transience.
+    ///
+    /// One inner-exception level is inspected because the SDK call may be wrapped before it surfaces.
+    /// </summary>
+    private static bool IsNonRetriable(Exception ex)
+    {
+        var rfe = ex as Azure.RequestFailedException
+            ?? ex.InnerException as Azure.RequestFailedException;
+
+        if (rfe is not null
+            && rfe.ErrorCode is "KeyBasedAuthenticationNotPermitted"
+                             or "AuthenticationFailed"
+                             or "InsufficientAccountPermissions")
+        {
+            return true;
+        }
+
+        var cosmos = ex as Microsoft.Azure.Cosmos.CosmosException
+            ?? ex.InnerException as Microsoft.Azure.Cosmos.CosmosException;
+
+        return cosmos is not null
+            && cosmos.StatusCode is System.Net.HttpStatusCode.BadRequest
+                                 or System.Net.HttpStatusCode.Forbidden;
+    }
+
+    /// <summary>
     /// Signals a failure that may have left the dataset in a potentially inconsistent state
     /// (one restore track completed while another failed, or consistency could not be proven).
     /// When this is thrown, the executor retains the dataset and operation locks and rethrows so
     /// the queue redelivers and retries the message (bounded by MaxDequeueCount).
     /// </summary>
     private sealed class RestoreRetryableException(string message, Exception? innerException = null)
+        : Exception(message, innerException)
+    {
+    }
+
+    /// <summary>
+    /// Signals a non-retriable failure that occurred AFTER blobs were restored, leaving the dataset
+    /// potentially inconsistent. The executor retains both locks (the dataset stays inaccessible) and
+    /// marks the operation terminally Failed, but does NOT rethrow — the queue deletes the message so
+    /// no futile retries are attempted. Recovery requires manual intervention.
+    /// </summary>
+    private sealed class RestoreManualRecoveryException(string message, Exception? innerException = null)
         : Exception(message, innerException)
     {
     }

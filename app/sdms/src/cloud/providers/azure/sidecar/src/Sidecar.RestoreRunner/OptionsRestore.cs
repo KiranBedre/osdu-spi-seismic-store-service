@@ -98,4 +98,14 @@ public class OptionsRestore :
 
     [Option("storageQueueEndpoint", Required = false, HelpText = "Queue endpoint to connect to the task queue on Azure Storage")]
     public string? StorageQueueEndpoint { get; set; }
+
+    /// <summary>
+    /// Maximum number of queue deliveries a single restore message may receive before it is
+    /// discarded (env: SDMS_RESTORE_MAX_DEQUEUE_COUNT). Sizes the total blob-restore budget
+    /// (approximately MaxDequeueCount x POLL_MAX_DURATION_HOURS) for very large datasets.
+    /// Falls back to <see cref="Sidecar.Common.Utility.Constants.RestoreConfiguration.DEFAULT_MAX_DEQUEUE_COUNT"/>
+    /// when unset or invalid.
+    /// </summary>
+    [Option("maxDequeueCount", Required = false, HelpText = "Max queue deliveries per restore message before it is discarded (env: SDMS_RESTORE_MAX_DEQUEUE_COUNT).")]
+    public string? MaxDequeueCount { get; set; }
 }
