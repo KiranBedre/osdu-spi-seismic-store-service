@@ -2,7 +2,7 @@
   "info": {
     "name": "Seismic DMS (SDMS) - Single File Restore Test Collection (clean-room)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Swagger-driven + repo-mined test collection for the SDMS single-file point-in-time restore feature. Spec: OSDU-Seismic-DDMS/app/sdms/docs/api/openapi.yaml (Seismic DMS Service v3.0.0, base /seistore-svc/api/v3). Endpoints under test: POST /operation/restore, GET /operation/restore/{operationId}. Source mined statically (never executed) from app/sdms/src/services/operation (handler.ts, service.ts, restore-status.ts) + shared/error.ts, shared/featureflags.ts. Full analysis: seismic-restore.spec-vs-code.md.\n\nTEST-PLAN COVERAGE (references/seismic-single-file-restore-test-plan.md):\n- Functional: TC-RST-FUNC-01/02 (update-then-restore, uniform/dataset), TC-RST-FUNC-03/04 (delete-then-restore) - see 'EXECUTION - FUNCTIONAL SCENARIOS'.\n- Validation: TC-RST-VLD-01..09. Auth: TC-RST-AUTH-01..04. Concurrency: TC-RST-CON-01 (deterministic 409) / CON-02 (other partition). Status: TC-RST-STS-01..05. Feature flag: TC-RST-FLG-01.\n- TC-RST-REL-01/02 (dependency-outage) are infrastructure fault-injection scenarios that cannot be provoked from an API collection; run them manually with a fault harness (documented, not scripted).\n\nKEY REPO-CONFIRMED behaviour [confirmed: repo]:\n(1) POST 202 body is { operation_id, statusUrl } (snake_case, NO status field) - unlike swagger RestoreAccepted; RST-001's 'status=InProgress' in the trigger response is NOT met by code. Capture is defensive.\n(2) POST also returns 404 (dataset missing), 423 (write-locked), 503 (retention SDMS_RESTORE_MAX_DAYS unconfigured / Redis down) - none documented on the POST.\n(3) Concurrency 409 is per DATA PARTITION / tenant, NOT per dataset (RestoreOperationLock + Cosmos query keyed by tenant).\n(4) GET status: missing data-partition-id -> 400 (not 403); unknown/malformed id -> 404.\n(5) Terminal statuses Succeeded/Failed; in-flight InProgress. Failure detail is in error_message (swagger calls it 'error').\n(6) Feature gate FEATURE_FLAG_ENABLE_RESTORE off -> 403 (checkFeature runs before body validation). POST needs subproject.admin; GET needs a registered partition user.\n(7) LIMITATION: restoring a DELETED dataset returns 404 - restorePush gates on current dataset-metadata existence (createDataset sets dataset.name for a dataset-level sdPath). So RST-010 / TC-RST-FUNC-03/04 as written are NOT satisfiable via POST /operation/restore against current code; the test documents this.\n\nRUN NOTES: set base_url host, access_token (subproject.admin), tenant_esd/tenant_default_acls before running. Set a per-request delay (~poll_delay_ms) in the runner for the poll steps. RST-011 access-policy parity is covered in a single run: SETUP provisions BOTH a uniform and an access_policy=dataset subproject/dataset (Setup 2b/3b/5b/6b/7b, sharing one legal tag), the dedicated 'EXECUTION - FUNCTIONAL SCENARIOS (DATASET POLICY)' folder runs FUNC-02/04 against the *_ds variable namespace, and CLEANUP tears both down (Cleanup 1b/2b). The dataset-policy restore role is dataset.admin - the same access_token must carry it. SDMS uses sd:// path addressing + ltag header, NOT the OSDU acl/legal request envelope (seismic.md S2)."
+    "description": "Swagger-driven + repo-mined test collection for the SDMS single-file point-in-time restore feature. Spec: OSDU-Seismic-DDMS/app/sdms/docs/api/openapi.yaml (Seismic DMS Service v3.0.0, base /seistore-svc/api/v3). Endpoints under test: POST /operation/restore, GET /operation/restore/{operationId}. Source mined statically (never executed) from app/sdms/src/services/operation (handler.ts, service.ts, restore-status.ts) + shared/error.ts, shared/featureflags.ts. Full analysis: seismic-restore.spec-vs-code.md.\n\nTEST-PLAN COVERAGE (references/seismic-single-file-restore-test-plan.md):\n- Functional: TC-RST-FUNC-01/02 (update-then-restore, uniform/dataset), TC-RST-FUNC-03/04 (delete-then-restore) - see 'EXECUTION - FUNCTIONAL SCENARIOS'.\n- Validation: TC-RST-VLD-01..08. Auth: TC-RST-AUTH-01..04. Concurrency: TC-RST-CON-01 (deterministic 409) / CON-02 (other partition). Status: TC-RST-STS-01..05. Feature flag: TC-RST-FLG-01.\n- TC-RST-REL-01/02 (dependency-outage) are infrastructure fault-injection scenarios that cannot be provoked from an API collection; run them manually with a fault harness (documented, not scripted).\n\nKEY REPO-CONFIRMED behaviour [confirmed: repo]:\n(1) POST 202 body is { operation_id, statusUrl } (snake_case, NO status field) - unlike swagger RestoreAccepted; RST-001's 'status=InProgress' in the trigger response is NOT met by code. Capture is defensive.\n(2) POST also returns 404 (dataset missing), 423 (write-locked), 503 (retention SDMS_RESTORE_MAX_DAYS unconfigured / Redis down) - none documented on the POST.\n(3) Concurrency 409 is per DATA PARTITION / tenant, NOT per dataset (RestoreOperationLock + Cosmos query keyed by tenant).\n(4) GET status: missing data-partition-id -> 400 (not 403); unknown/malformed id -> 404.\n(5) Terminal statuses Succeeded/Failed; in-flight InProgress. Failure detail is in error_message (swagger calls it 'error').\n(6) Feature gate FEATURE_FLAG_ENABLE_RESTORE off -> 403 (checkFeature runs before body validation). POST needs subproject.admin; GET needs a registered partition user.\n(7) LIMITATION: restoring a DELETED dataset returns 404 - restorePush gates on current dataset-metadata existence (createDataset sets dataset.name for a dataset-level sdPath). So RST-010 / TC-RST-FUNC-03/04 as written are NOT satisfiable via POST /operation/restore against current code; the test documents this.\n\nRUN NOTES: set base_url host, access_token (subproject.admin), tenant_esd/tenant_default_acls before running. Set a per-request delay (~poll_delay_ms) in the runner for the poll steps. RST-011 access-policy parity is covered in a single run: SETUP provisions BOTH a uniform and an access_policy=dataset subproject/dataset (Setup 2b/3b/5b/6b/7b, sharing one legal tag), the dedicated 'EXECUTION - FUNCTIONAL SCENARIOS (DATASET POLICY)' folder runs FUNC-02/04 against the *_ds variable namespace, and CLEANUP tears both down (Cleanup 1b/2b). The dataset-policy restore role is dataset.admin - the same access_token must carry it. SDMS uses sd:// path addressing + ltag header, NOT the OSDU acl/legal request envelope (seismic.md S2)."
   },
   "item": [
     {
@@ -826,9 +826,9 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"Automated restore test - contract happy path\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
-            "description": "POST /operation/restore. RestoreRequest requires sdPath, restorePointInTime, reason. Role: subproject.admin. 202 -> RestoreAccepted. Holds the per-partition restore lock until it completes (drained by the poll below)."
+            "description": "POST /operation/restore. RestoreRequest requires sdPath, restorePointInTime. Role: subproject.admin. 202 -> RestoreAccepted. Holds the per-partition restore lock until it completes (drained by the poll below)."
           }
         },
         {
@@ -875,7 +875,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"concurrency probe while op1 in progress\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] RestoreOperationLock (Redis) + Cosmos in-progress query, both keyed by tenant, throw ALREADY_EXISTS(409). Runs immediately after the happy-path 202 (op1 still InProgress) so the 409 is deterministic. This request is REJECTED, so it starts no new operation and leaks no lock."
           }
@@ -1000,7 +1000,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"missing sdPath\"\n}"
+              "raw": "{\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] !sdPath -> 400 'sdPath is required and must be a string'."
           }
@@ -1046,7 +1046,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"not-a-valid-sd-path\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"bad sdpath\"\n}"
+              "raw": "{\n  \"sdPath\": \"not-a-valid-sd-path\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] SDPath.getFromString / missing tenant|subproject -> 400 'Invalid sdPath format...'."
           }
@@ -1092,7 +1092,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"reason\": \"missing timestamp\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\"\n}"
             },
             "description": "[confirmed: repo] !restorePointInTime -> 400 'restorePointInTime is required and must be an ISO-8601 string'."
           }
@@ -1138,7 +1138,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"not-a-date\",\n  \"reason\": \"bad timestamp\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"not-a-date\"\n}"
             },
             "description": "[confirmed: repo] new Date(ts) NaN -> 400 'restorePointInTime must be a valid ISO-8601 date'."
           }
@@ -1193,7 +1193,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{future_timestamp}}\",\n  \"reason\": \"future timestamp\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{future_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] ts > Date.now() -> 400 'restorePointInTime must be in the past'."
           }
@@ -1248,7 +1248,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{old_timestamp}}\",\n  \"reason\": \"outside retention\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{old_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] Date.now()-ts > maxDays -> 400. If SDMS_RESTORE_MAX_DAYS<=0 the code returns 503 NOT_AVAILABLE first (undocumented in swagger)."
           }
@@ -1303,7 +1303,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{before_creation_timestamp}}\",\n  \"reason\": \"before creation\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{before_creation_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] restoreAt <= created_date -> 400 'restorePointInTime must be after the dataset creation time ...'. Assumes SETUP created the dataset in the last ~2h."
           }
@@ -1358,55 +1358,9 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{pre_existence_timestamp}}\",\n  \"reason\": \"dataset did not exist at timestamp\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{pre_existence_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] The spec lists 'Dataset did not exist at the provided timestamp' as a distinct 400, but the code enforces it via the SAME created_date guard as VLD-07 (restoreAt <= created_date -> 400). This case uses a timestamp ~6h in the past (before the freshly-created dataset) to exercise that guard from the 'did-not-exist' angle."
-          }
-        },
-        {
-          "name": "TC-RST-VLD-09 - POST restore invalid reason type -> 400",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('rejected 400 (reason must be a string)', function () { pm.expect(pm.response.code).to.eql(400); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "data-partition-id",
-                "value": "{{data_partition_id}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/operation/restore",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "operation",
-                "restore"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": 12345\n}"
-            },
-            "description": "[confirmed: repo] reason && typeof reason !== 'string' -> 400 'reason must be a string if provided'."
           }
         },
         {
@@ -1446,7 +1400,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"no token\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "No Authorization header -> Auth.isUserRegistered rejects with 401 (security: bearer)."
           }
@@ -1502,7 +1456,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"non-admin\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "[confirmed: repo] Auth.isWriteAuthorized requires subproject.admin -> 403; unregistered user -> 403. Needs a genuinely under-privileged identity in non_admin_access_token; skipped otherwise."
           }
@@ -1551,7 +1505,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reason\": \"feature-flag gate probe (intentionally missing sdPath/restorePointInTime)\"\n}"
+              "raw": "{}"
             },
             "description": "Deliberately invalid body so the feature gate is observable without starting a restore: 403 (FEATURE_FLAG_ENABLE_RESTORE off) vs 400 (on). checkFeature precedes parseAndValidateRestoreRequest in restorePush."
           }
@@ -1754,7 +1708,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"sd://{{other_partition_id}}/{{subproject_id}}/{{dataset_id}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"cross-partition concurrency probe\"\n}"
+              "raw": "{\n  \"sdPath\": \"sd://{{other_partition_id}}/{{subproject_id}}/{{dataset_id}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "Documents that concurrency is partition-scoped: an active restore in partition A must not 409 a restore in partition B. Requires a second onboarded partition (other_partition_id) with its own tenant/subproject/dataset; skipped otherwise."
           }
@@ -2072,7 +2026,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"TC-RST-FUNC-01/02 restore to pre-update state\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "Trigger the point-in-time restore back to the pre-update timestamp. FUNC-01 = access_policy uniform; FUNC-02 = re-run with access_policy=dataset (role dataset.admin)."
           }
@@ -2467,7 +2421,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\",\n  \"reason\": \"TC-RST-FUNC-03/04 restore deleted dataset (before deletion point)\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
             "description": "Attempts to restore the just-deleted dataset to a pre-deletion timestamp. [confirmed: repo] current code returns 404 because it gates on live dataset-metadata existence, so this documents that RST-010/TC-RST-FUNC-03/04 is not currently satisfiable via this endpoint. Passes as a documented limitation; asserts 202+poll only if a deployment adds support."
           }
@@ -2979,7 +2933,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path_ds}}\",\n  \"restorePointInTime\": \"{{restore_timestamp_ds}}\",\n  \"reason\": \"TC-RST-FUNC-02 restore to pre-update state\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path_ds}}\",\n  \"restorePointInTime\": \"{{restore_timestamp_ds}}\"\n}"
             },
             "description": "Trigger the point-in-time restore back to the pre-update timestamp. FUNC-01 = access_policy uniform; FUNC-02 = re-run with access_policy=dataset (role dataset.admin)."
           }
@@ -3374,7 +3328,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sdPath\": \"{{sd_path_ds}}\",\n  \"restorePointInTime\": \"{{restore_timestamp_ds}}\",\n  \"reason\": \"TC-RST-FUNC-03/04 restore deleted dataset (before deletion point)\"\n}"
+              "raw": "{\n  \"sdPath\": \"{{sd_path_ds}}\",\n  \"restorePointInTime\": \"{{restore_timestamp_ds}}\"\n}"
             },
             "description": "Attempts to restore the just-deleted dataset to a pre-deletion timestamp. [confirmed: repo] current code returns 404 because it gates on live dataset-metadata existence, so this documents that RST-010/TC-RST-FUNC-03/04 is not currently satisfiable via this endpoint. Passes as a documented limitation; asserts 202+poll only if a deployment adds support."
           }
