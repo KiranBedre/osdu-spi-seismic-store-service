@@ -57,10 +57,10 @@
         "@azure/storage-queue": "^12.24.0",
         "@types/qs": "^6.9.7",
         "applicationinsights": "^2.7.0",
-        "axios": "^1.12.0",
+        "axios": "^1.18.1",
         "cors": "^2.8.5",
         "express": "^4.20.0",
-        "form-data": "^4.0.4",
+        "form-data": "^4.0.6",
         "hpropagate": "^1.0.1",
         "ioredis": "^5.2.4",
         "js-yaml": "^4.1.0",
@@ -102,11 +102,12 @@
     },
     "overrides": {
         "@azure/core-rest-pipeline": {
-            "form-data": "^4.0.4"
+            "form-data": "^4.0.6"
         },
         "@typescript-eslint/parser": {
             "@typescript-eslint/typescript-estree": {
-                "semver": "7.5.2"
+                "semver": "7.5.2",
+                "minimatch": "9.0.7"
             }
         },
         "applicationinsights": {
@@ -116,7 +117,7 @@
                 }
             }
         },
-        "form-data": "^4.0.4",
+        "form-data": "^4.0.6",
         "qs": "$qs",
         "json-refs": {
             "path-loader": {
@@ -137,7 +138,21 @@
             "cross-spawn": "7.0.5"
         },
         "express": {
-            "path-to-regexp": "0.1.12"
+            "path-to-regexp": "0.1.13"
+        },
+        "fast-xml-parser": "4.5.5",
+        "flatted": "^3.4.2",
+        "lodash": "^4.18.1",
+        "serialize-javascript": "^7.0.7",
+        "minimatch@<3.1.4": "3.1.5",
+        "minimatch@5.0.0 - 5.1.7": "5.1.9",
+        "picomatch@<2.3.2": "2.3.2",
+        "path-to-regexp@>=1.0.0 <1.9.0": "1.9.0",
+        "test-exclude": {
+            "minimatch": "3.1.5"
+        },
+        "readdirp": {
+            "picomatch": "2.3.2"
         }
     }
 }

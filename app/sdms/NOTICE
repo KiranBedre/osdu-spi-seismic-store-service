@@ -61,7 +61,7 @@ MIT
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- @azure/core-auth (from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-auth/README.md)
+- @azure/core-auth (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/core/core-auth/README.md)
 - @azure/core-rest-pipeline (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/core/core-rest-pipeline/README.md)
 - @azure/cosmos (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/cosmosdb/cosmos/README.md)
 - @azure/identity (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/identity/identity/README.md)

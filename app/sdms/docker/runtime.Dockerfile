@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=lts-alpine
+ARG docker_node_image_version=22-alpine3.24
 
 # -------------------------------
 # Compilation stage
