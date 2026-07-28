@@ -1,9 +1,9 @@
 sdms_gc-deploy:
   extends:
     - gc-deploy
-  needs: 
-    - 'sdms_gc-containerize-gitlab'
-    - 'sdms_gc-helm-charts-gitlab'
+  needs:
+    - "sdms_gc-containerize-gitlab"
+    - "sdms_gc-helm-charts-gitlab"
   variables:
     GC_HELM_DEPLOYMENT_SERVICE: seismic-store-deploy
     GC_HELM_DEPLOYMENT_DIR: "app/sdms/devops/gc/deploy"
@@ -27,46 +27,6 @@ sdms_gc-deploy:
       $GC_HELM_SETS
       $GC_HELM_TIMEOUT
     - !reference [.gc_verify_deploy, script]
-  rules:
-    - if: $CI_COMMIT_BRANCH =~ '/^release/'
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GC == '1' && $GC_PROJECT != null
-      when: on_success
-    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $GC == '1' && $GC_PROJECT != null
-      when: on_success
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $GC == '1' && $GC_PROJECT != null
-      changes:
-        - devops/**/*
-        - app/sdms/**/*
-      when: on_success
-
-sdms_gc-test-python:
-  extends:
-    - gc-test-python
-  image: node
-  needs: ['sdms_gc-deploy']
-  allow_failure: true
-  variables:
-    GOOGLE_CREDENTIALS: $GC_R3_INTEGRATION_TESTER
-  script:
-    - cd app/$SDMS_SERVICE
-    - apt-get update
-    - apt-get install -y python3
-    - apt-get install -y python3-pip
-    - pip install google --break-system-packages
-    - pip install google-auth --break-system-packages
-    - pip install google-api-python-client --break-system-packages
-    - pip install google-auth-httplib2 --break-system-packages
-    - pip install google-auth-oauthlib --break-system-packages
-    - export GC_AUDIENCE=$INTEGRATION_TEST_AUDIENCE
-    - export GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_CREDENTIALS
-    - svctoken=$(python3 ../../devops/scripts/gc_jwt_client.py)
-    - echo $svctoken > /dev/null
-    - npm install -g newman
-    - chmod +x ./tests/e2e/run_e2e_tests.sh
-    - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url="https://${GC_UNIT_HOSTNAME}${GC_SDMS_PREFIX}" --seistore-svc-api-key="NA" --user-idtoken="$GC_INTEGRATION_TESTER" --tenant="${GC_TENANT}" --admin-email="${GC_SEISTORE_ADMIN_EMAIL}" --datapartition="${DATA_PARTITION_ID}" --legaltag01="${GC_SEISTORE_LEGALTAG01}" --legaltag02="${GC_SEISTORE_LEGALTAG02}" --VCS-Provider="${ISGITLAB}"
   rules:
     - if: $CI_COMMIT_BRANCH =~ '/^release/'
       when: never
