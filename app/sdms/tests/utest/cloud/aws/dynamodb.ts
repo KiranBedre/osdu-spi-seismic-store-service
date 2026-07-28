@@ -281,6 +281,56 @@ export class TestAWSDynamoDB {
             Tx.checkTrue(result instanceof Object);
             Tx.checkTrue((result as any).partitionKey === expectedValue);
         });
+
+        // A hyphenated tenant name must round-trip verbatim. Namespaces are built as
+        // `SEISMIC_STORE_NS-<tenant>[-<subproject>]`, so we reference AWSConfig.SEISMIC_STORE_NS
+        // to remain robust regardless of the configured service env suffix.
+        Tx.test(() => {
+            const tenant = 'my-tenant';
+            const subproject = 'subproject';
+
+            const datasetSpecs = {
+                namespace: `${AWSConfig.SEISMIC_STORE_NS}-${tenant}-${subproject}`,
+                path: [AWSConfig.DATASETS_KIND, 'dataset'],
+            };
+            Tx.checkTrue((this.awsDynamoDb.createKey(datasetSpecs) as any).partitionKey === `${tenant}:${subproject}`);
+
+            const subprojectSpecs = {
+                namespace: `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`,
+                path: [AWSConfig.SUBPROJECTS_KIND, subproject],
+            };
+            Tx.checkTrue((this.awsDynamoDb.createKey(subprojectSpecs) as any).partitionKey === `${tenant}:${subproject}`);
+
+            const appSpecs = {
+                namespace: `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`,
+                path: [AWSConfig.APPS_KIND, 'user@example.com'],
+            };
+            Tx.checkTrue((this.awsDynamoDb.createKey(appSpecs) as any).partitionKey === `${tenant}:user@example.com`);
+        });
+
+        // A hyphen-free tenant name must produce byte-identical keys to the prior scheme.
+        Tx.test(() => {
+            const tenant = 'tenant';
+            const subproject = 'subproject';
+
+            const datasetSpecs = {
+                namespace: `${AWSConfig.SEISMIC_STORE_NS}-${tenant}-${subproject}`,
+                path: [AWSConfig.DATASETS_KIND, 'dataset'],
+            };
+            Tx.checkTrue((this.awsDynamoDb.createKey(datasetSpecs) as any).partitionKey === `${tenant}:${subproject}`);
+
+            const subprojectSpecs = {
+                namespace: `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`,
+                path: [AWSConfig.SUBPROJECTS_KIND, subproject],
+            };
+            Tx.checkTrue((this.awsDynamoDb.createKey(subprojectSpecs) as any).partitionKey === `${tenant}:${subproject}`);
+
+            const appSpecs = {
+                namespace: `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`,
+                path: [AWSConfig.APPS_KIND, 'user@example.com'],
+            };
+            Tx.checkTrue((this.awsDynamoDb.createKey(appSpecs) as any).partitionKey === `${tenant}:user@example.com`);
+        });
     }
 
     private static getTransaction() {
@@ -741,6 +791,73 @@ export class TestAWSDynamoDbQuery {
             Tx.checkTrue(result.ProjectionExpression === undefined);
             Tx.checkTrue(result.ExpressionAttributeNames === undefined);
             Tx.checkTrue(result.ExpressionAttributeValues === undefined);
+        });
+
+        // Hyphenated tenant: filter values must be the full tenant/subproject, recovered by
+        // stripping the SEISMIC_STORE_NS prefix rather than positionally splitting on '-'.
+        Tx.test(() => {
+            const tenant = 'my-tenant';
+            const subproject = 'subproject';
+            const namespace = `${AWSConfig.SEISMIC_STORE_NS}-${tenant}-${subproject}`;
+            this.awsDynamoDbQuery = new AWSDynamoDbQuery(namespace, AWSConfig.DATASETS_KIND);
+
+            const result = this.awsDynamoDbQuery.getQueryStatement(tableName, tenantTablePrefix);
+
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':tenant']?.S === tenant);
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':subproject']?.S === subproject);
+        });
+
+        Tx.test(() => {
+            const tenant = 'my-tenant';
+            const namespace = `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`;
+            this.awsDynamoDbQuery = new AWSDynamoDbQuery(namespace, AWSConfig.SUBPROJECTS_KIND);
+
+            const result = this.awsDynamoDbQuery.getQueryStatement(tableName, tenantTablePrefix);
+
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':tenant']?.S === tenant);
+        });
+
+        Tx.test(() => {
+            const tenant = 'my-tenant';
+            const namespace = `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`;
+            this.awsDynamoDbQuery = new AWSDynamoDbQuery(namespace, AWSConfig.APPS_KIND);
+
+            const result = this.awsDynamoDbQuery.getQueryStatement(tableName, tenantTablePrefix);
+
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':tenant']?.S === tenant);
+        });
+
+        // Hyphen-free tenant: filter value is unchanged from the prior scheme.
+        Tx.test(() => {
+            const tenant = 'tenant';
+            const namespace = `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`;
+            this.awsDynamoDbQuery = new AWSDynamoDbQuery(namespace, AWSConfig.SUBPROJECTS_KIND);
+
+            const result = this.awsDynamoDbQuery.getQueryStatement(tableName, tenantTablePrefix);
+
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':tenant']?.S === tenant);
+        });
+
+        Tx.test(() => {
+            const tenant = 'tenant';
+            const subproject = 'subproject';
+            const namespace = `${AWSConfig.SEISMIC_STORE_NS}-${tenant}-${subproject}`;
+            this.awsDynamoDbQuery = new AWSDynamoDbQuery(namespace, AWSConfig.DATASETS_KIND);
+
+            const result = this.awsDynamoDbQuery.getQueryStatement(tableName, tenantTablePrefix);
+
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':tenant']?.S === tenant);
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':subproject']?.S === subproject);
+        });
+
+        Tx.test(() => {
+            const tenant = 'tenant';
+            const namespace = `${AWSConfig.SEISMIC_STORE_NS}-${tenant}`;
+            this.awsDynamoDbQuery = new AWSDynamoDbQuery(namespace, AWSConfig.APPS_KIND);
+
+            const result = this.awsDynamoDbQuery.getQueryStatement(tableName, tenantTablePrefix);
+
+            Tx.checkTrue(result.ExpressionAttributeValues?.[':tenant']?.S === tenant);
         });
     }
 }

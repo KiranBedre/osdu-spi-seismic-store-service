@@ -34,6 +34,53 @@ import {
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { AWSDataEcosystemServices } from "./dataecosystem";
 
+/**
+ * Recover tenant (and subproject, for datasets) from a journal namespace.
+ *
+ * Callers build `SEISMIC_STORE_NS + '-' + tenant [+ '-' + subproject]`, and
+ * SEISMIC_STORE_NS ('seismic-store-<env>') itself contains hyphens. We strip that known
+ * prefix and treat the remainder verbatim (like Azure's cosmosdb.ts) instead of positionally
+ * splitting on '-', which truncated hyphenated tenant names. Subprojects are hyphen-free
+ * (ALLOWED_NAMES_REGEX), so for datasets the subproject is the last '-' segment. Hyphen-free
+ * tenants yield byte-identical keys/filters, so no data migration is needed.
+ *
+ * Namespaces without the prefix fall through to the legacy positional parse — still reached
+ * in production by the tenant journal (Config.ORGANIZATION_NS + TENANTS_KIND, see
+ * services/tenant/dao.ts), which ignores the returned values, so it stays a fallback rather
+ * than a throw.
+ */
+function parseNamespace(
+  namespace: string,
+  isDataset: boolean
+): { tenant: string; subproject: string } {
+  const prefix = AWSConfig.SEISMIC_STORE_NS + "-";
+  if (namespace.startsWith(prefix)) {
+    const remainder = namespace.substring(prefix.length);
+    if (isDataset) {
+      // subproject is hyphen-free, so it is the last '-' segment.
+      const lastDash = remainder.lastIndexOf("-");
+      if (lastDash < 0) {
+        // Dataset namespace must include a subproject; fail loud instead of corrupting the key.
+        throw new Error(
+          "dataset namespace missing subproject segment: " + namespace
+        );
+      }
+      return {
+        tenant: remainder.substring(0, lastDash),
+        subproject: remainder.substring(lastDash + 1),
+      };
+    }
+    return { tenant: remainder, subproject: "" };
+  }
+  // Legacy fallback (see JSDoc): tenant journal ORGANIZATION_NS/TENANTS_KIND — values unused
+  // — and pre-existing tests. Positional parse preserved so those keys/filters are unchanged.
+  const strs = namespace.split("-");
+  return {
+    tenant: isDataset ? strs[strs.length - 2] : strs[strs.length - 1],
+    subproject: strs[strs.length - 1],
+  };
+}
+
 @JournalFactory.register("aws")
 export class AWSDynamoDbDAO extends AbstractJournal {
   public KEY: any = Symbol("id");
@@ -213,15 +260,18 @@ export class AWSDynamoDbDAO extends AbstractJournal {
     const name = specs.path[1]; // our key
     let partitionKey = name; // partitionKey
 
-    const strs = specs.namespace.split("-");
+    const { tenant, subproject } = parseNamespace(
+      specs.namespace,
+      tableKind === AWSConfig.DATASETS_KIND
+    );
     if (tableKind === AWSConfig.SUBPROJECTS_KIND) {
-      partitionKey = strs[strs.length - 1] + ":" + partitionKey; // tenant:subproject for id
+      partitionKey = tenant + ":" + partitionKey; // tenant:subproject for id
     }
     if (tableKind === AWSConfig.DATASETS_KIND) {
-      partitionKey = strs[strs.length - 2] + ":" + strs[strs.length - 1]; // tenant:subproject for id
+      partitionKey = tenant + ":" + subproject; // tenant:subproject for id
     }
     if (tableKind === AWSConfig.APPS_KIND) {
-      partitionKey = strs[strs.length - 1] + ":" + name; // tenant:subproject for id
+      partitionKey = tenant + ":" + name; // tenant:subproject for id
     }
 
     const tableName =
@@ -463,7 +513,10 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
   ): ScanCommandInput {
     // since we have one table for all datasets, we need to
     // add more filters to return dataset specific for that tenant/subproject
-    const strs = this.namespace.split("-");
+    const { tenant, subproject } = parseNamespace(
+      this.namespace,
+      this.kind === AWSConfig.DATASETS_KIND
+    );
     if (
       this.kind === AWSConfig.DATASETS_KIND ||
       this.kind === AWSConfig.SUBPROJECTS_KIND
@@ -473,26 +526,21 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
         this.queryStatement.FilterExpression += " AND ";
       }
       const tProperty: string = "tenant";
-      let value = {};
-      value =
-        this.kind === AWSConfig.DATASETS_KIND
-          ? strs[strs.length - 2]
-          : strs[strs.length - 1];
+      const value: string = tenant;
       this.queryStatement.FilterExpression +=
         "#" + tProperty + "=" + ":" + tProperty;
       this.queryStatement.ExpressionAttributeNames["#" + tProperty] = tProperty;
-      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value as string };
+      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value };
     }
     if (this.kind === AWSConfig.DATASETS_KIND) {
       // one table, filter on subproject too
       this.queryStatement.FilterExpression += " AND ";
       const tProperty: string = "subproject";
-      let value = {};
-      value = strs[strs.length - 1];
+      const value: string = subproject;
       this.queryStatement.FilterExpression +=
         "#" + tProperty + "=" + ":" + tProperty;
       this.queryStatement.ExpressionAttributeNames["#" + tProperty] = tProperty;
-      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value as string };
+      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value };
     }
 
     if (this.kind === AWSConfig.APPS_KIND) {
@@ -501,12 +549,11 @@ export class AWSDynamoDbQuery implements IJournalQueryModel {
         this.queryStatement.FilterExpression += " AND ";
       }
       const tProperty: string = "tenant";
-      let value = {};
-      value = strs[strs.length - 1];
+      const value: string = tenant;
       this.queryStatement.FilterExpression +=
         "#" + tProperty + "=" + ":" + tProperty;
       this.queryStatement.ExpressionAttributeNames["#" + tProperty] = tProperty;
-      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value as string };
+      this.queryStatement.ExpressionAttributeValues[":" + tProperty] = { S: value };
     }
 
     if (this.queryStatement.FilterExpression.length === 0)

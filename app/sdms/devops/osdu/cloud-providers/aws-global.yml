@@ -81,7 +81,7 @@ sdms_aws-update-tf:
       when: on_success
 
 sdms_aws-test-newman:
-  allow_failure: true
+  allow_failure: false
   extends:
     - .aws
     - .aws_common_variables
@@ -103,7 +103,7 @@ sdms_aws-test-newman:
         --header 'accept: application/json' \
         --header 'authorization: Bearer '"$svctoken" \
         --header 'content-type: application/json' \
-        --header 'data-partition-id: opendes' \
+        --header 'data-partition-id: int-test-seismic-store' \
         --data '{
           "name": "sdmstestlegaltag",
           "description": "test legal for Seismic DMS test",
@@ -120,36 +120,25 @@ sdms_aws-test-newman:
         }'
     - echo 'Register SeismicStore.tenants before Integration Tests ...'
     - >
-      curl --insecure --location --request POST "$SEISMICSTORE_SVC_URL"'/tenant/opendes' \
+      curl --insecure --location --request POST "$SEISMICSTORE_SVC_URL"'/tenant/int-test-seismic-store' \
         --header 'accept: application/json' \
         --header 'authorization: Bearer '"$svctoken" \
         --header 'content-type: application/json' \
-        --header 'data-partition-id: opendes' \
+        --header 'data-partition-id: int-test-seismic-store' \
         --data '{
-          "default_acls": "users.datalake.admins@opendes.example.com",
-          "esd": "opendes.example.com",
+          "default_acls": "users.datalake.admins@int-test-seismic-store.example.com",
+          "esd": "int-test-seismic-store.example.com",
           "gcpid": "aws_project_id"
         }'
     - npm install -g newman
     - chmod +x ./tests/e2e/run_e2e_tests.sh
-    - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url=${AWS_BASE_URL}${AWS_SDMS_PREFIX} --seistore-svc-api-key="NA" --user-idtoken="$svctoken" --user-idtoken="$svctoken" --tenant=opendes --admin-email="${AWS_COGNITO_AUTH_PARAMS_USER}" --datapartition=opendes --legaltag01=opendes-sdmstestlegaltag --legaltag02=opendes-sdmstestlegaltag --VCS-Provider="${ISGITLAB}" --subproject=awsdemosubproject
+    - ./tests/e2e/run_e2e_tests.sh --seistore-svc-url=${AWS_BASE_URL}${AWS_SDMS_PREFIX} --seistore-svc-api-key="NA" --user-idtoken="$svctoken" --user-idtoken="$svctoken" --tenant=int-test-seismic-store --admin-email="${AWS_COGNITO_AUTH_PARAMS_USER}" --datapartition=int-test-seismic-store --legaltag01=int-test-seismic-store-sdmstestlegaltag --legaltag02=int-test-seismic-store-sdmstestlegaltag --VCS-Provider="${ISGITLAB}" --subproject=awsdemosubproject
   artifacts:
     when: always
     paths:
       - app/$SDMS_SERVICE/$INTEGRATION_TEST_DIR
     expire_in: 14 days
   only: null
-  rules:
-    - if: $CI_COMMIT_BRANCH =~ '/^release/' && $AWS == '1'
-      when: on_success
-    - if: $CI_COMMIT_TAG && $AWS == '1'
-      when: on_success
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $AWS == '1'
-      when: on_success
-    - if: $CI_COMMIT_BRANCH =~ '/^trusted-' && $AWS == '1'
-      when: on_success
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $AWS == '1'
-      changes:
-        - devops/**/*
-        - app/sdms/**/*
-      when: on_success
+  # Run exactly where the deploy dependency runs (every trusted pipeline) by reusing its
+  # rules; keeps the mandatory `needs: sdms_aws-update-tf` satisfiable and prevents drift.
+  rules: !reference [sdms_aws-update-tf, rules]
