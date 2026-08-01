@@ -31,8 +31,8 @@ sdms_cimpl-test-python:
     - cimpl-test-python
     - .cimpl-variables
   stage: integration
-  tags: ["osdu-small"]
-  image: node
+  tags: ["osdu-medium"]
+  image: node:22-bullseye
   needs: ["sdms_cimpl-deploy"]
   variables:
     CIMPL_SEISTORE_LEGALTAG01: osdu-demo-legaltag
@@ -64,6 +64,9 @@ sdms_cimpl-test-python:
       --legaltag01="${CIMPL_SEISTORE_LEGALTAG01}"
       --legaltag02="${CIMPL_SEISTORE_LEGALTAG02}"
       --VCS-Provider="${ISGITLAB}"
+      --hostname="${HOST}"
+      --domain_name="${DOMAIN:-group}"
+      --entitlements_user="${CIMPL_SEISTORE_ADMIN_EMAIL}"
       --allure-dir="cimpl/allure-results"
   after_script:
     - mkdir -pv "$CI_PROJECT_DIR/tests/cimpl"

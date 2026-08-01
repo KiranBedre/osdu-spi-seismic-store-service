@@ -62,6 +62,9 @@ export class DatasetHandler {
                 case DatasetOP.List:
                     Response.writeOK(res, await this.list(req, tenant, subproject));
                     break;
+                case DatasetOP.ListLegacy:
+                    Response.writeOK(res, await this.listLegacy(req, tenant, subproject));
+                    break;
                 case DatasetOP.Delete:
                     Response.writeOK(res, await this.delete(req, tenant, subproject));
                     break;
@@ -480,10 +483,20 @@ export class DatasetHandler {
         return datasetOUT;
     }
 
-    // List the datasets in a subproject
+    // List the datasets in a subproject using the documented POST response.
     // Required role: subproject.viewer
     private static async list(req: expRequest, tenant: TenantModel, subproject: SubProjectModel) {
+        return (await this.listDatasets(req, tenant, subproject)).output;
+    }
 
+    // List the datasets in a subproject using the legacy GET response.
+    // Required role: subproject.viewer
+    private static async listLegacy(req: expRequest, tenant: TenantModel, subproject: SubProjectModel) {
+        const result = await this.listDatasets(req, tenant, subproject);
+        return result.pagination ? result.output : result.output.datasets;
+    }
+
+    private static async listDatasets(req: expRequest, tenant: TenantModel, subproject: SubProjectModel) {
         // Retrieve the dataset path information
         const userInput = DatasetParser.list(req);
 
@@ -542,12 +555,7 @@ export class DatasetHandler {
             }
         }
 
-        // Retrieve the list of datasets metadata
-        if (pagination) {
-            return output;
-        }
-
-        return output.datasets;
+        return { output, pagination };
     }
 
     // Delete a dataset from a subproject data group

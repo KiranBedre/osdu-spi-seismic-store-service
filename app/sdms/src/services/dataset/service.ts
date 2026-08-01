@@ -39,7 +39,7 @@ router.get('/tenant/:tenantid/subproject/:subprojectid/dataset/:datasetid',
 router.get('/tenant/:tenantid/subproject/:subprojectid',
     async (req: expRequest, res: expResponse) => {
         CallContext.endpointId = 'dataset-list-get';
-        await DatasetHandler.handler(req, res, DatasetOP.List);
+        await DatasetHandler.handler(req, res, DatasetOP.ListLegacy);
     });
 
 // list all datasets in a subproject (body query params)

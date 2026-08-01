@@ -75,6 +75,12 @@
 			"enabled": true
 		},
 		{
+			"key": "domain",
+			"value": "{{datapartition}}.{{domainName}}",
+			"type": "default",
+			"enabled": true
+		},
+		{
 			"key": "entitlements_host",
 			"value": "{{HOSTNAME}}/api/entitlements/v2",
 			"type": "default",

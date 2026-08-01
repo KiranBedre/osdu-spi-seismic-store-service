@@ -1008,7 +1008,7 @@ paths:
     #         default: true
     #   responses:
     #     "200":
-    #       description: "Paginated dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content and the response is a plain array of datasets [ {dataset1}, {dataset2}, ... ]"
+    #       description: "Dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content."
     #       content:
     #         application/json:
     #           schema:
@@ -1068,7 +1068,7 @@ paths:
         description: Request body
       responses:
         "200":
-          description: "Paginated dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content and the response is a plain array of datasets [ {dataset1}, {dataset2}, ... ]"
+          description: "Dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content."
           content:
             application/json:
               schema:
@@ -3443,4 +3443,3 @@ components:
         dataset_cnt: 1000
         completed_cnt: 997
         failed_cnt: 3
-

@@ -734,8 +734,11 @@
 									"    pm.environment.set('execCounter', 1);",
 									"    ",
 									"} else {",
+									"    // Tenant missing: keep Azure ENTITLEMENTS + TENANT POST fallback unchanged.",
+									"    // Extend the same path for Anthos/CIMPL only (hostname/domain provided in CI).",
+									"    // AWS and other providers remain skipped and jump to subproject.",
 									"    const provider = pm.environment.get('serviceCloudProvider');",
-									"    if (provider !== 'azure') {",
+									"    if (provider !== 'azure' && provider !== 'anthos') {",
 									"        pm.execution.setNextRequest('SUBPROJECT REGISTER NEGATIVE: Create subproject failure scenario');",
 									"    }",
 									"",
@@ -958,11 +961,15 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n\t\"gcpid\": \"{{datapartition}}\",\r\n\t\"esd\": \"{{datapartition}}.{{domainName}}\",\r\n    \"default_acl\": \"users.datalake.admins@{{datapartition}}.{{domainName}}\"\r\n}"
+							"raw": "{\r\n\t\"gcpid\": \"{{datapartition}}\",\r\n\t\"esd\": \"{{datapartition}}.{{domainName}}\",\r\n    \"default_acls\": \"users.datalake.admins@{{datapartition}}.{{domainName}}\"\r\n}"
 						},
 						"url": {
 							"raw": "{{SVC_URL}}/tenant/{{tenant}}",
@@ -7112,6 +7119,442 @@
 			]
 		},
 		{
+			"name": "dataset list post",
+			"description": "Dedicated POST /dataset list coverage. Mirrors legacy datasets SET/REGISTER/DELETE/UNSET, asserts PaginatedDatasets on POST list, then cleans up.",
+			"item": [
+				{
+					"name": "DATASET LIST POST SET: Create test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log('Dataset list POST variables initialized');",
+									"",
+									"pm.environment.set('execCounter', 1);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_listPost(length) {",
+									"   var result           = '';",
+									"   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';",
+									"   var charactersLength = characters.length;",
+									"   for ( var i = 0; i < length - 1; i++ ) {",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));",
+									"   }",
+									"   return 'W' + result;",
+									"}",
+									"",
+									"pm.environment.set(\"listPostDsx01\", makeID_listPost(16) + \"_.ds-x\");",
+									"var path = \"/\" + makeID_listPost(8) + \"/\" + makeID_listPost(4) + \"/\" + makeID_listPost(4) + \"/\"",
+									"pm.environment.set(\"listPostPath\", path);",
+									"pm.environment.set(\"listPostPathEncoded\", encodeURIComponent(path));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET LIST POST REGISTER: Register a dataset for list coverage",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('listPostDsx01'));",
+									"    });",
+									"",
+									"    pm.test(\"tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"",
+									"    pm.test(\"subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"subproject\"));",
+									"    });",
+									"",
+									"    pm.test(\"path\", function () {",
+									"        pm.expect(jsonData.path).to.eql(pm.environment.get(\"listPostPath\"));",
+									"    });",
+									"",
+									"    pm.test(\"ltag\", function () {",
+									"        pm.expect(jsonData.ltag).to.eql(pm.environment.get(\"legaltag01\"));",
+									"    });",
+									"",
+									"    pm.test(\"Dates are present\", function () {",
+									"        pm.expect(jsonData.created_date).to.exist;",
+									"        pm.expect(jsonData.last_modified_date).to.exist;",
+									"    });",
+									"",
+									"    pm.test(\"sbit_count\", function () {",
+									"        pm.expect(jsonData.sbit_count).to.eql(1);",
+									"    });",
+									"",
+									"    pm.test(\"Check gtag\", function () {",
+									"        pm.expect(jsonData.gtags.length).to.eql(1);",
+									"        pm.expect(jsonData.gtags[0]).to.eql(\"tagA\");",
+									"    }); ",
+									"    ",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"gtags\": [\r\n    \"tagA\"\r\n  ]\r\n} \r\n \r\n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{listPostDsx01}}?path={{listPostPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{listPostDsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{listPostPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET LIST POST: Get list of datasets in a subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var responseData = pm.response.json();",
+									"    pm.test(\"POST list returns PaginatedDatasets shape\", function () {",
+									"        pm.expect(responseData).to.be.an(\"object\");",
+									"        pm.expect(Array.isArray(responseData)).to.eql(false);",
+									"        pm.expect(responseData).to.have.property(\"datasets\");",
+									"        pm.expect(responseData.datasets).to.be.an(\"array\");",
+									"        pm.expect(responseData).to.have.property(\"nextPageCursor\");",
+									"    });",
+									"    var jsonData = responseData.datasets;",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Check content type\", function () {",
+									"        pm.response.to.be.header(\"Content-Type\", \"application/json; charset=utf-8\");",
+									"    });",
+									"",
+									"    pm.test(\"Data List\", function () {",
+									"        pm.expect(jsonData.length).gte(1);",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET LIST POST DELETE: Delete list coverage dataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    // Reset environment variables if retryOnFailure function was used before",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/{{listPostDsx01}}?path={{listPostPathEncoded}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{subproject}}",
+								"dataset",
+								"{{listPostDsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{listPostPathEncoded}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DATASET LIST POST UNSET: Cleanup test environment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.unset('listPostDsx01');",
+									"pm.environment.unset('listPostPath');",
+									"pm.environment.unset('listPostPathEncoded');",
+									"pm.environment.set('execCounter', 1);",
+									"",
+									"console.log('Dataset list POST variables were removed');"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{STOKEN}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/svcstatus",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"svcstatus"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "dataset search",
 			"item": [
 				{
@@ -11953,7 +12396,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 3\", function () {",
@@ -12063,7 +12507,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 0\", function () {",
@@ -12162,7 +12607,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 3\", function () {",
@@ -12271,7 +12717,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 3\", function () {",
@@ -12380,7 +12827,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 3\", function () {",
@@ -12489,7 +12937,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 3\", function () {",
@@ -12790,7 +13239,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 2\", function () {",
@@ -12900,7 +13350,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 2\", function () {",
@@ -13009,7 +13460,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 2\", function () {",
@@ -13119,7 +13571,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 1\", function () {",
@@ -13229,7 +13682,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 3\", function () {",
@@ -13339,7 +13793,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 1\", function () {",
@@ -13635,7 +14090,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 0\", function () {",
@@ -13959,7 +14415,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"  ",
 									"    pm.test(\"Verify number of datasets returned should be 0\", function () {",
 									"        pm.expect(jsonData.length).to.equal(0);",
@@ -14057,7 +14514,8 @@
 									"    });",
 									"",
 									"    // extract the response and set next page cursor",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"   ",
 									"    // Test to compare the number of datasets returned",
 									"    pm.test(\"Verify number of datasets to be 2\", function () {",
@@ -14379,7 +14837,8 @@
 									"    }",
 									"",
 									"} else {",
-									"    var jsonData = pm.response.json();",
+									"    var responseData = pm.response.json();",
+									"    var jsonData = responseData.datasets;",
 									"",
 									"    pm.test(\"Status code is 200\", function () {",
 									"        pm.response.to.have.status(200);",
@@ -38030,7 +38489,7 @@
 						"body": {
 							"mode": "file",
 							"file": {
-							"src": "{{ds_sample_file_path}}"
+								"src": "{{ds_sample_file_path}}"
 							}
 						},
 						"url": {

@@ -311,18 +311,65 @@ export class TestDatasetSVC {
 
         Tx.sectionInit('list');
 
+        // GET legacy: no pagination -> plain dataset array
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            expReq.method = 'GET';
+            const dataset = { ...this.dataset, ctag: 'ctag' } as DatasetModel;
             this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
-            this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [{} as DatasetModel], nextPageCursor: null });
+            this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [dataset], nextPageCursor: null });
             this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
             this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
-            await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
-            Tx.check200(expRes.statusCode);
+            const responseStub = this.sandbox.stub(Response, 'writeOK');
+            responseStub.returns();
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.ListLegacy);
+            const data = responseStub.getCall(0).args[1];
+            Tx.checkTrue(Array.isArray(data));
+            Tx.checkTrue(!('datasets' in data));
+            Tx.checkTrue(data[0] === dataset);
         });
 
+        // GET legacy: with pagination -> PaginatedDatasets object
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            expReq.method = 'GET';
             expReq.query.limit = '10';
+            const dataset = { ...this.dataset, ctag: 'ctag' } as DatasetModel;
+            this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
+            this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
+            this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [dataset], nextPageCursor: 'cursor' });
+            this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
+            this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
+            const responseStub = this.sandbox.stub(Response, 'writeOK');
+            responseStub.returns();
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.ListLegacy);
+            const data = responseStub.getCall(0).args[1];
+            Tx.checkTrue(!Array.isArray(data));
+            Tx.checkTrue(Array.isArray(data.datasets));
+            Tx.checkTrue(data.datasets[0] === dataset && data.nextPageCursor === 'cursor');
+        });
+
+        // POST: always PaginatedDatasets, even without pagination params
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            expReq.method = 'POST';
+            const dataset = { ...this.dataset, ctag: 'ctag' } as DatasetModel;
+            this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
+            this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
+            this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [dataset], nextPageCursor: null });
+            this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('datapartition');
+            this.sandbox.stub(Auth, 'isLegalTagValid').resolves(true);
+            const responseStub = this.sandbox.stub(Response, 'writeOK');
+            responseStub.returns();
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
+            const data = responseStub.getCall(0).args[1];
+            Tx.checkTrue(!Array.isArray(data));
+            Tx.checkTrue(Array.isArray(data.datasets));
+            Tx.checkTrue(data.datasets[0] === dataset && data.nextPageCursor === null);
+        });
+
+        // POST: with pagination -> PaginatedDatasets object
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            expReq.method = 'POST';
+            expReq.body = { limit: '10' };
             this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [this.dataset as DatasetModel], nextPageCursor: 'cursor' });
@@ -332,11 +379,14 @@ export class TestDatasetSVC {
             responseStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
             const data = responseStub.getCall(0).args[1];
+            Tx.checkTrue(!Array.isArray(data));
+            Tx.checkTrue(Array.isArray(data.datasets));
             Tx.checkTrue(data.datasets[0] === this.dataset && data.nextPageCursor === 'cursor');
         });
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
-            expReq.query.limit = '10';
+            expReq.method = 'POST';
+            expReq.body = { limit: '10' };
             this.sandbox.define(Config, 'USER_ASSOCIATION_SVC_PROVIDER', 'ccm-internal');
             this.sandbox.stub(Auth, 'isReadAuthorized').resolves(undefined);
             this.sandbox.stub(DatasetDAO, 'list').resolves({ datasets: [this.dataset as DatasetModel], nextPageCursor: '' });
@@ -346,6 +396,8 @@ export class TestDatasetSVC {
             responseStub.returns();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.List);
             const data = responseStub.getCall(0).args[1];
+            Tx.checkTrue(!Array.isArray(data));
+            Tx.checkTrue(Array.isArray(data.datasets));
             Tx.checkTrue(data.datasets[0] === this.dataset && data.nextPageCursor === '');
         });
 
