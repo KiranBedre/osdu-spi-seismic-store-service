@@ -4,7 +4,6 @@
     - cp -Rf app/${SDMS_V4_SERVICE}/* .
     - cp -Rf app/${SDMS_V4_SERVICE}/. .
     - cp -Rf app/${SDMS_V4_SERVICE}/.fossa.yml .
-    - rm -Rf app/filemetadata
     - rm -Rf app/sdms
     - rm -Rf app/${SDMS_V4_SERVICE}/*.*
     - rm -Rf app/${SDMS_V4_SERVICE}/*

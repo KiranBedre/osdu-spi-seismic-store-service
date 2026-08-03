@@ -1,5 +1,0 @@
-variables:
-  #filemetadata service variables
-  FILEMETADATA_SERVICE: filemetadata
-  FILEMETADATA_LOCAL_SERVICE_NAME: seismic-file-metadata
-  NAMESPACE: ddms-seismic

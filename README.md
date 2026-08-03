@@ -12,4 +12,3 @@ Seismic DMS is a software suite solution compose by multiple micro services:
 
 1. [seismic store service V3](app/sdms/README.md): a DMS designed to store and manage datasets on the cloud.
 2. [seismic store service V4](app/sdms-v4/README.md): a DMS designed to store and manage seismic domain data on the cloud.
-3. [filemetadata](app/filemetadata/README.md): a microservice designed to compute, retrieve and manage seismic header data.

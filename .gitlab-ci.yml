@@ -56,9 +56,6 @@ include:
     file: "reporting/reporting.yml"
 
   # SERVICES (APPS)
-  # filemetadata
-  - local: app/filemetadata/.gitlab-ci.yml
-
   # sdms
   - local: app/sdms/.gitlab-ci.yml
 

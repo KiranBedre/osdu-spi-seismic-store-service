@@ -124,7 +124,7 @@ if [[ $automated == true ]]; then
   for f in $(git diff --cached --name-only --diff-filter=ACM); do
     if [ -f $f ]; then
       pathToScan=$(dirname "${f}")
-      if [[ "$pathToScan" == *"/sdms"* || "$pathToScan" == *"/sdms-v4"* || "$pathToScan" == *"/filemetadata"* ]]; then
+      if [[ "$pathToScan" == *"/sdms"* || "$pathToScan" == *"/sdms-v4"* ]]; then
         echo "Scanning $pathToScan"
         npx scan-for-secrets $pathToScan
         check_exit $?
@@ -154,15 +154,6 @@ else
     --exclude-files tests/e2e/models/FileCollection.Generic.1.0.0.json \
     --exclude-files tests/e2e/models/FileCollection.SEGY.1.0.0.json \
     --exclude-files tests/e2e/models/FileCollection.Slb.OpenZGY.1.0.0.json
-  check_exit $?
-  cd ../..
-  echo ""
-
-  echo "FileMetadata"
-  npx scan-for-secrets app/filemetadata/app
-  check_exit $?
-  cd app/filemetadata
-  detect-secrets-hook --baseline devops/config/detect_secrets/.secrets.baseline $(git ls-files)
   check_exit $?
   cd ../..
 fi

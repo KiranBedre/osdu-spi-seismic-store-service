@@ -1,9 +1,0 @@
-parameters:
-  createChangeManagement: false
-  environment: ''
-steps:
-  - template: manual-intervention.yml
-    parameters:
-      createChangeManagement: ${{ parameters.createChangeManagement }}
-      environment: ${{ parameters.environment }}
-    

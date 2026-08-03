@@ -1,6 +1,0 @@
-apiVersion: v2
-name: seismic-dms-file-metadata-service
-appVersion: "latest"
-description: Helm Chart for installing seismic dms file metadata service.
-version: 0.1.0
-type: application
