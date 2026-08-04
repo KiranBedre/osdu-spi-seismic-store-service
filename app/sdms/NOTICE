@@ -83,7 +83,7 @@ The following software have components provided under the terms of this license:
 - express-prometheus-middleware (from https://www.npmjs.com/package/express-prometheus-middleware)
 - form-data (from https://github.com/form-data/form-data#readme)
 - hpropagate (from https://www.npmjs.com/package/hpropagate)
-- ioredis (from https://github.com/luin/ioredis#readme)
+- ioredis (from https://github.com/redis/ioredis#readme)
 - js-yaml (from https://github.com/nodeca/js-yaml#readme)
 - json-refs (from https://www.npmjs.com/package/json-refs)
 - jsonwebtoken (from https://github.com/auth0/node-jsonwebtoken#readme)
