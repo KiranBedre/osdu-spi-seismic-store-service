@@ -776,8 +776,9 @@
                   "// Reset any operationId captured by a previous restore so a failed POST can't leave a stale id for the poll.",
                   "pm.collectionVariables.set('operation_id', '');",
                   "// restorePointInTime must be AFTER dataset creation, IN THE PAST, and within retention.",
-                  "// The SETUP dataset was just created, so 'now' is the only safe point after creation; back off 2s to stay in the past.",
-                  "pm.collectionVariables.set('restore_timestamp', new Date(Date.now() - 2000).toISOString());"
+                  "// Capture the current UTC time after setup, then wait so it is safely in the past when the request is sent.",
+                  "pm.collectionVariables.set('restore_timestamp', new Date().toISOString());",
+                  "setTimeout(function () {}, 2000);"
                 ]
               }
             },
@@ -1722,6 +1723,16 @@
           "name": "FUNC prep - GET dataset baseline v1 (capture pre-update state + timestamp)",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before reading the v1 baseline; request execution makes it safely historical.",
+                  "pm.collectionVariables.set('pre_update_timestamp', new Date().toISOString());"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -1730,8 +1741,6 @@
                   "var j = {}; try { j = pm.response.json(); } catch (e) {}",
                   "var pre = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
                   "if (pre !== undefined) { pm.collectionVariables.set('pre_update_total_size', String(pre)); }",
-                  "// pre-update point-in-time: now (v1 exists, dataset created earlier). Back off 2s to stay strictly in the past.",
-                  "pm.collectionVariables.set('pre_update_timestamp', new Date(Date.now() - 2000).toISOString());",
                   "console.log('pre_update_total_size =', pm.collectionVariables.get('pre_update_total_size'), 'pre_update_timestamp =', pm.collectionVariables.get('pre_update_timestamp'));"
                 ]
               }
@@ -2269,6 +2278,17 @@
           "name": "TC-RST-FUNC-03/04 - capture pre-delete timestamp (before deletion)",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before confirming the dataset state that will subsequently be deleted.",
+                  "pm.collectionVariables.set('pre_delete_timestamp', new Date().toISOString());",
+                  "setTimeout(function () {}, 2000);"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -2277,7 +2297,6 @@
                   "var j = {}; try { j = pm.response.json(); } catch (e) {}",
                   "var sz = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
                   "if (sz !== undefined) { pm.collectionVariables.set('pre_delete_total_size', String(sz)); }",
-                  "pm.collectionVariables.set('pre_delete_timestamp', new Date(Date.now() - 2000).toISOString());",
                   "console.log('pre_delete_total_size =', pm.collectionVariables.get('pre_delete_total_size'), 'pre_delete_timestamp =', pm.collectionVariables.get('pre_delete_timestamp'));"
                 ]
               }
@@ -2629,6 +2648,16 @@
           "name": "[dataset] FUNC prep - GET dataset baseline v1 (capture pre-update state + timestamp)",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before reading the v1 baseline; request execution makes it safely historical.",
+                  "pm.collectionVariables.set('pre_update_timestamp_ds', new Date().toISOString());"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -2637,8 +2666,6 @@
                   "var j = {}; try { j = pm.response.json(); } catch (e) {}",
                   "var pre = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
                   "if (pre !== undefined) { pm.collectionVariables.set('pre_update_total_size_ds', String(pre)); }",
-                  "// pre-update point-in-time: now (v1 exists, dataset created earlier). Back off 2s to stay strictly in the past.",
-                  "pm.collectionVariables.set('pre_update_timestamp_ds', new Date(Date.now() - 2000).toISOString());",
                   "console.log('pre_update_total_size =', pm.collectionVariables.get('pre_update_total_size_ds'), 'pre_update_timestamp =', pm.collectionVariables.get('pre_update_timestamp_ds'));"
                 ]
               }
@@ -3176,6 +3203,17 @@
           "name": "[dataset] TC-RST-FUNC-04 - capture pre-delete timestamp (before deletion)",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before confirming the dataset state that will subsequently be deleted.",
+                  "pm.collectionVariables.set('pre_delete_timestamp_ds', new Date().toISOString());",
+                  "setTimeout(function () {}, 2000);"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -3184,7 +3222,6 @@
                   "var j = {}; try { j = pm.response.json(); } catch (e) {}",
                   "var sz = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
                   "if (sz !== undefined) { pm.collectionVariables.set('pre_delete_total_size_ds', String(sz)); }",
-                  "pm.collectionVariables.set('pre_delete_timestamp_ds', new Date(Date.now() - 2000).toISOString());",
                   "console.log('pre_delete_total_size =', pm.collectionVariables.get('pre_delete_total_size_ds'), 'pre_delete_timestamp =', pm.collectionVariables.get('pre_delete_timestamp_ds'));"
                 ]
               }
