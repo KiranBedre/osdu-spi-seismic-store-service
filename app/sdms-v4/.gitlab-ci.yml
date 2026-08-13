@@ -25,7 +25,7 @@ include:
   # SCANNERS
   # fossa
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.2
     file: "scanners/fossa-npm.yml"
     rules:
       - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FOSSA_API_KEY
