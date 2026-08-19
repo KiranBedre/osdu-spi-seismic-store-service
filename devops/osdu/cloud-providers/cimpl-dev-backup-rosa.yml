@@ -1,0 +1,35 @@
+cimpl-dev-backup-deploy:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-backup-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-backup-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-backup-acceptance-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-backup-reset:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-backup-acceptance-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
