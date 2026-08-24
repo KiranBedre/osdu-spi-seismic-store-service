@@ -116,7 +116,7 @@ sdms_cimpl-prod-deploy:
     - .cimpl-prod-variables
   needs:
     - 'sdms_cimpl-containerize-gitlab'
-    - 'sdms_cimpl-helm-charts-gitlab'
+    - 'sdms_cimpl-helm-charts-release-gitlab'
   variables:
     CIMPL_SERVICE: seismic-store
     CIMPL_HELM_DEPLOYMENT_DIR: "app/sdms/devops/core-plus/deploy"
