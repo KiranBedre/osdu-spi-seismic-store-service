@@ -1,0 +1,35 @@
+cimpl-prod-deploy:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-acceptance-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-reset:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-acceptance-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never

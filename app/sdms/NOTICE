@@ -76,7 +76,7 @@ The following software have components provided under the terms of this license:
 - aws-sdk (from https://www.npmjs.com/package/aws-sdk)
 - axios (from https://axios-http.com/)
 - bull (from https://github.com/OptimalBits/bull#readme)
-- colors (from https://www.npmjs.com/package/colors)
+- colors (from https://github.com/Marak/colors.js)
 - copyfiles (from https://www.npmjs.com/package/copyfiles)
 - cors (from https://www.npmjs.com/package/cors)
 - express (from https://expressjs.com/)
