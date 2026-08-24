@@ -1,13 +1,13 @@
 include:
   # PIPELINE LOGIC
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "standard-setup.yml"
 
   # SCANNERS
   # ultimate
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "scanners/gitlab-ultimate.yml"
 
   # overwrite logic
@@ -15,13 +15,13 @@ include:
 
   # virus scan
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "scanners/virus-scan.yml"
 
   # CLOUD PROVIDERS
   # aws
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "cloud-providers/aws-global.yml"
 
   # overwrite logic
@@ -29,7 +29,7 @@ include:
 
   # azure
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "cloud-providers/azure.yml"
 
   # overwrite logic
@@ -37,7 +37,7 @@ include:
 
   # gc
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "cloud-providers/gc-global.yml"
 
   # overwrite logic
@@ -45,7 +45,7 @@ include:
 
   # cimpl
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "cloud-providers/cimpl-global.yml"
 
   # overwrite logic
@@ -53,7 +53,7 @@ include:
 
   # ibm
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "cloud-providers/ibm.yml"
 
   # overwrite logic
@@ -61,7 +61,7 @@ include:
 
   # REPORTING
   - project: "osdu/platform/ci-cd-pipelines"
-    ref: release/0.30
+    ref: v0.30.7
     file: "reporting/reporting.yml"
 
   # SERVICES (APPS)
