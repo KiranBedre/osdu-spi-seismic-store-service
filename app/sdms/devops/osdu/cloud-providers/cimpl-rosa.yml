@@ -1,3 +1,6 @@
+variables:
+  CIMPL_INT_TEST_TYPE: python
+
 sdms_cimpl-deploy:
   extends:
     - cimpl-deploy
