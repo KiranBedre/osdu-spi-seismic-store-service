@@ -8,10 +8,6 @@ Apache-2.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- @aws-sdk/client-s3 (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-s3)
-- @aws-sdk/client-secrets-manager (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-secrets-manager)
-- @aws-sdk/client-ssm (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-ssm)
-- @aws-sdk/client-sts (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts)
 - log4js (from https://log4js-node.github.io/log4js-node/)
 - typescript (from https://www.typescriptlang.org/)
 
@@ -50,7 +46,7 @@ The following software have components provided under the terms of this license:
 - express (from https://expressjs.com/)
 - form-data (from https://github.com/form-data/form-data#readme)
 - hpropagate (from https://www.npmjs.com/package/hpropagate)
-- ioredis (from https://github.com/luin/ioredis#readme)
+- ioredis (from https://github.com/redis/ioredis#readme)
 - js-yaml (from https://github.com/nodeca/js-yaml#readme)
 - json-refs (from https://www.npmjs.com/package/json-refs)
 - jsonschema (from https://github.com/tdegrunt/jsonschema#readme)

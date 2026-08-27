@@ -40,30 +40,7 @@ $ npm run build
 
 ## Run the service Locally { AWS }
 
-```bash
-# start redis server instance
-$ redis-server
-
-# set required configurations in env
-$ export CLOUD_PROVIDER=aws \
-  && export SERVICE_PORT=8080 \
-  && export OSDU_INSTANCE_NAME=main \
-  && export AWS_REGION=us-east-1 \
-  # the host url where core services, like storage service, run
-  && export CORE_SERVICE_HOST={osduaws_base_url} \
-  # the parameter mount path. Create files in dist labeled REDIS_HOST, REDIS_KEY, REDIS_PORT and populate them. REDIS_KEY you get from secret manager/the kubernetes pod
-  # REDIS_HOST example 127.0.0.1
-  # REDIS_PORT example 6379
-  && export PARAMETER_MOUNT_PATH={PARAMETER_MOUNT_PATH} \
-  # disable TLS for local running instances
-  && export REDIS_TLS_DISABLE=true \
-  # local running instances of redis does not requires password
-  && export REDIS_PWD_DISABLE=true \
-
-
-# start the service
-npm run start-service
-```
+The AWS provider has been removed from this repository.
 
 ## Run the service Locally { Azure }
 

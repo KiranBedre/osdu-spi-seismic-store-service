@@ -44,10 +44,6 @@
         "instrument": true
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.410.0",
-        "@aws-sdk/client-secrets-manager": "^3.421.0",
-        "@aws-sdk/client-ssm": "^3.421.0",
-        "@aws-sdk/client-sts": "^3.421.0",
         "@azure/core-auth": "^1.4.0",
         "@azure/core-rest-pipeline": "^1.10.1",
         "@azure/cosmos": "^4.0.0",

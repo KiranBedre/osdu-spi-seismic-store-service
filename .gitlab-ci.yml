@@ -16,13 +16,6 @@ include:
     file: "scanners/virus-scan.yml"
 
   # CLOUD PROVIDERS
-  # aws
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/aws-global.yml"
-
-  # overwrite logic
-  - local: devops/osdu/cloud-providers/aws-global.yml
-
   # azure
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure.yml"

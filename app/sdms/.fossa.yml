@@ -16,8 +16,4 @@ analyze:
     type: npm
     target: .
     path: .
-  - name: aws
-    type: pip
-    target: devops/aws
-    path: devops/aws
 

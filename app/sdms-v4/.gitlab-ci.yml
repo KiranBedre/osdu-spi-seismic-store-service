@@ -62,8 +62,5 @@ include:
   - local: "app/sdms-v4/devops/osdu/scanners/gitlab-ultimate.yml"
 
   # CLOUD PROVIDERS
-  # aws
-  - local: "app/sdms-v4/devops/osdu/cloud-providers/aws-global.yml"
-
   # azure
   - local: "app/sdms-v4/devops/osdu/cloud-providers/azure.yml"

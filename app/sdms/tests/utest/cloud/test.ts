@@ -26,16 +26,6 @@ import { TestGCSCore } from './google/gcs';
 import { TestAzureKeyVault } from './azure/keyvault';
 import { TestAzureStorage } from './azure/cloudstorage';
 import { TestDataEcoSystem } from './google/dataecosystem';
-import { TestAWSCredentials } from './aws/credentials';
-import {TestAWSSeistore} from './aws/seistore';
-import { TestAWSSSMHelper } from './aws/ssmhelper';
-import { TestAWSDataEcosystem } from './aws/dataecosystem';
-import { TestStorage } from './aws/storage';
-import { TestLogger } from './aws/logger';
-import { TestAWSDynamoDB, TestAWSDynamoDbTransactionDAO, TestAWSDynamoDbQuery } from './aws/dynamodb';
-import { TestAWSStsHelper } from './aws/stshelper';
-import { TestAwsTrace } from './aws/trace';
-import { TestAWSConfig } from './aws/config';
 import { TestTaskQueue } from "./azure/taskQueue";
 import { TestStorageFactory } from './storagefactory';
 import { TestStorageJobManager } from './shared/queue.test';
@@ -45,18 +35,6 @@ export class TestCloud {
     public static run() {
 
         describe(Tx.title('utest seismic store - cloud core'), () => {
-            TestLogger.run();
-            TestStorage.run();
-            TestAWSConfig.run();
-            TestAWSCredentials.run();
-            TestAWSDynamoDbQuery.run();
-            TestAWSDynamoDB.run();
-            TestAWSDynamoDbTransactionDAO.run();
-            TestAWSSSMHelper.run();
-            TestAWSDataEcosystem.run();
-            TestAwsTrace.run();
-            TestAWSSeistore.run();
-            TestAWSStsHelper.run();
             TestGoogleCredentials.run();
             TestGCSCore.run();
             TestGCDatastoreDAO.run();

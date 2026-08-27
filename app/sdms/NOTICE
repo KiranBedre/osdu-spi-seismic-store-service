@@ -8,12 +8,8 @@ Apache-2.0
 ========================================================================
 The following software have components provided under the terms of this license:
 
-- @aws-sdk/client-dynamodb (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-dynamodb)
 - @aws-sdk/client-s3 (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-s3)
-- @aws-sdk/client-secrets-manager (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-secrets-manager)
-- @aws-sdk/client-ssm (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-ssm)
 - @aws-sdk/client-sts (from https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts)
-- @aws-sdk/util-dynamodb (from https://github.com/aws/aws-sdk-js-v3/tree/main/packages/util-dynamodb)
 - @google-cloud/datastore (from https://github.com/googleapis/google-cloud-node/tree/main/handwritten/datastore)
 - @google-cloud/logging-winston (from https://github.com/googleapis/google-cloud-node/tree/main/handwritten/logging-winston)
 - @google-cloud/pubsub (from https://github.com/googleapis/google-cloud-node/tree/main/handwritten/pubsub)
@@ -23,7 +19,6 @@ The following software have components provided under the terms of this license:
 - @ibm-cloud/cloudant (from https://github.com/IBM/cloudant-node-sdk#readme)
 - @prisma/client (from https://www.prisma.io/)
 - aws-sdk (from https://www.npmjs.com/package/aws-sdk)
-- boto3 (from <https://github.com/boto/boto3>, https://github.com/boto/boto3)
 - google-auth-library (from https://github.com/googleapis/google-cloud-node/tree/main/core/packages/google-auth-library-nodejs)
 - keycloak-admin (from https://www.npmjs.com/package/keycloak-admin)
 - log4js (from https://log4js-node.github.io/log4js-node/)
@@ -68,7 +63,6 @@ The following software have components provided under the terms of this license:
 - @azure/keyvault-secrets (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/keyvault/keyvault-secrets/README.md)
 - @azure/storage-blob (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/storage/storage-blob/README.md)
 - @azure/storage-queue (from https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/storage/storage-queue/README.md)
-- PyJWT (from http://github.com/jpadilla/pyjwt, https://pypi.org/project/PyJWT/)
 - ajv (from https://ajv.js.org/)
 - ajv-formats (from https://github.com/ajv-validator/ajv-formats#readme)
 - applicationinsights (from https://github.com/microsoft/ApplicationInsights-node.js#readme)
