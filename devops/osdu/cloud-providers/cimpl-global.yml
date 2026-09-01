@@ -5,3 +5,4 @@ include:
   - local: devops/osdu/cloud-providers/cimpl-dev2-rosa.yml
   - local: devops/osdu/cloud-providers/cimpl-dev-rosa.yml
   - local: devops/osdu/cloud-providers/cimpl-dev-backup-rosa.yml
+  - local: devops/osdu/cloud-providers/cimpl-prod-rosa.yml

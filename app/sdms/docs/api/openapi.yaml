@@ -47,6 +47,8 @@ tags:
     description: Subproject related seismic store endpoints
   - name: Tenant
     description: Register or retrieve a tenant
+  - name: Tenant (Obsolete)
+    description: Obsolete tenant endpoints retained for backwards compatibility
   - name: Users
     description: User authorization
   - name: Apps
@@ -484,7 +486,7 @@ paths:
           name: wid
           required: false
           schema:
-            type: number
+            type: string
       responses:
         "200":
           description: "Acquired a lock and the return value is the dataset metadata with session identifier stored in the 'sbit' attribute."
@@ -638,7 +640,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/ctagcheck:
     get:
       summary: "Validate if a dataset ctag matches the pre-existing ctag in metadata catalog."
@@ -691,7 +693,7 @@ paths:
             application/json:
               schema:
                 type: boolean
-                example: "true"
+                example: true
         "400":
           description: Bad request.
         "401":
@@ -700,7 +702,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/gtags:
     put:
       summary: Upsert tags to a dataset.
@@ -770,7 +772,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/size:
     post:
       summary: Compute and retrieve the size of a dataset and the date of when the size
@@ -829,7 +831,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/size:
     get:
       summary: Retrieve the size of datasets
@@ -886,7 +888,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/readdsdirfulllist:
     get:
       summary: Content list.
@@ -948,7 +950,7 @@ paths:
     #       in: query
     #       name: select
     #       required: false
-    #       schema: 
+    #       schema:
     #         type: string
     #         default: ""
     #     - description: |
@@ -1081,7 +1083,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/exist:
     post:
       summary: Check to see if a list of datasets exists in the subproject.
@@ -1134,7 +1136,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/sizes:
     post:
       summary: Retrieve the size of datasets.
@@ -1298,11 +1300,11 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /utility/storage-tiers:
     get:
       summary: Retrieve the list of supported storage tiers
-      description: | 
+      description: |
         <ul>
           <li>Return the list of storage tiers</li>
           <li>Required roles: subproject.admin, subproject.viewer</li>
@@ -1321,7 +1323,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /utility/cp:
     post:
       summary: Copy dataset.
@@ -1388,7 +1390,7 @@ paths:
             <li>RL (Read Locked)</li>
             <li>CL (Cannot be Locked)</li>
             <li>UL (Cannot be Unlocked)</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
-  
+
   /utility/gcs-access-token:
     get:
       summary: Generate a GCS access token.
@@ -1440,7 +1442,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /utility/upload-connection-string:
     get:
       summary: Generate the upload connection credentials string
@@ -1525,7 +1527,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /utility/download-connection-string:
     get:
       summary: Generate the download connection credentials string
@@ -1609,7 +1611,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /imptoken:
     post:
       summary: Generate impersonation credentials token.
@@ -1704,7 +1706,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /impersonation-token:
     post:
       summary: Create an impersonation token credential.
@@ -1778,7 +1780,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /subproject/tenant/{tenantid}/subproject/{subprojectid}:
     post:
       summary: Create a new subproject.
@@ -1964,7 +1966,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /subproject/tenant/{tenantid}:
     get:
       summary: List subprojects in a tenant.
@@ -1996,7 +1998,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /tenant/{tenantid}:
     post:
       summary: Register a seismic-dms tenant.
@@ -2063,7 +2065,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /tenant/sdpath:
     get:
       summary: Retrieve the tenant seismic store path.
@@ -2094,7 +2096,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /user:
     put:
       summary: Add a user to a seismic store subproject authorization group.
@@ -2191,11 +2193,11 @@ paths:
           description: Forbidden.
         '404':
           description: Not found.
-  
+
   /user/roles:
     get:
       summary: Retrieve user role in all subprojects of the tenant.
-      description: "<ul><li>Retrieve user role in all subprojects of the tenant.</li><li>Required roles: none/li></ul>"
+      description: "<ul><li>Retrieve user role in all subprojects of the tenant.</li><li>Required roles: none</li></ul>"
       operationId: user-roles
       tags:
         - Users
@@ -2221,7 +2223,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /app:
     post:
       summary: Register a new application.
@@ -2291,7 +2293,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /app/trusted:
     post:
       summary: Set a registered application as a trusted application.
@@ -2362,7 +2364,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /operation/bulk-delete:
     put:
       summary: Delete all datasets in a subproject path.
@@ -2404,7 +2406,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
   /operation/bulk-delete/{operation-id}:
     get:
       summary: Get the bulk delete operation status.
@@ -2446,7 +2448,7 @@ paths:
   /operation/change-tier:
     put:
       summary: Change a storage class tier a dataset, or all datasets in a path, in a subproject.
-      description: 
+      description:
         "<ul>
           <li>Description: Change all datasets' tier in the specified sdms subproject path.</li>
           <li>Roles: subproject.admin</li></ul>"
@@ -2530,7 +2532,7 @@ paths:
           description: Forbidden.
         "404":
           description: Not found.
-  
+
 # ===========================================================================
 # Endpoints Models Section
 # ===========================================================================
@@ -2811,9 +2813,9 @@ components:
         filemetadata:
           type: object
           description: Number of objects and the size in bytes of the dataset.
-					
-					  
-												 
+
+
+
         last_modified_date:
           type: string
           description: Date when the dataset was last modified.
@@ -2868,7 +2870,7 @@ components:
           f1: v1
           f2: v2
           f3: v3
-						  
+
         last_modified_date: Thu Jul 16 2020 04:37:41 GMT+0000 (Coordinated Universal Time)
         gtags:
           - tag01
@@ -2963,7 +2965,7 @@ components:
           type: object
           description: Optional structured query filter to restrict the datasets to change its tier.
       example:
-        filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}					  
+        filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}
     AccessToken:
       required:
         - access_token
@@ -3375,12 +3377,12 @@ components:
       properties:
         computed_size:
           type: number
-          description: The size of the dataset in bytes..
+          description: The size of the dataset in bytes.
         computed_size_date:
           type: string
-          description: The date of when the dateset size was computed.
+          description: The date of when the dataset size was computed.
       example:
-        computed_size: "35461"
+        computed_size: 35461
         computed_size_date: Thu Mar 16 2023 16:16:40 GMT-0500 (Central Daylight Time)
     ComputedSize:
       required:
