@@ -3164,9 +3164,8 @@ components:
       required:
         - name
         - tenant
-        - storage_class
-        - storage_location
         - ltag
+        - gcs_bucket
         - access_policy
       properties:
         name:
@@ -3184,6 +3183,9 @@ components:
         ltag:
           type: string
           description: Legal tag for the subproject.
+        gcs_bucket:
+          type: string
+          description: Storage bucket for the subproject.
         access_policy:
           type: string
           description: Access policy for the subproject.
@@ -3211,6 +3213,7 @@ components:
         admin: test@email
         ltag: Slb-Private-USA-EHC
         gcs_bucket: subproject-bucket
+        access_policy: uniform
         acls:
           admins:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.admin@slb.p4d.cloud.slb-ds.com
