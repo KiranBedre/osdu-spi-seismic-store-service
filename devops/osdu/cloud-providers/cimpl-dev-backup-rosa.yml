@@ -33,3 +33,14 @@ cimpl-dev-backup-acceptance-test-python:
   extends: []
   rules:
     - when: never
+
+cimpl-dev-backup-check-openapi-spec:
+  stage: acceptance
+  needs: []
+  extends: []
+  script:
+    - "true"
+  rules:
+    - when: never
+
+

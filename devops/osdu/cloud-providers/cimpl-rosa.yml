@@ -23,7 +23,12 @@ cimpl-test-python:
     - when: never
 
 cimpl-check-openapi-spec:
+  stage: acceptance
   needs: []
   extends: []
+  script:
+    - "true"
   rules:
     - when: never
+
+

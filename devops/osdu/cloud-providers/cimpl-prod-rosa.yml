@@ -33,3 +33,14 @@ cimpl-prod-acceptance-test-python:
   extends: []
   rules:
     - when: never
+
+cimpl-prod-check-openapi-spec:
+  stage: acceptance
+  needs: []
+  extends: []
+  script:
+    - "true"
+  rules:
+    - when: never
+
+
