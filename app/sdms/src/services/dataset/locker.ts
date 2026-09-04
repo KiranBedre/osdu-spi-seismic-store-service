@@ -14,7 +14,7 @@
 // limitations under the License.
 // ============================================================================
 
-import Redis, { RedisOptions } from 'ioredis';
+import Redis, { Cluster, RedisOptions } from 'ioredis';
 import Redlock from 'redlock';
 import { Config, LoggerFactory } from '../../cloud';
 import { Error, Utils } from '../../shared';
@@ -35,8 +35,8 @@ export class Locker {
     private static readonly REDIS_MAX_RETRIES_PER_REQUEST = 10;
     private static readonly REDIS_COMMAND_TIMEOUT_MS = 60000; // 60 seconds
 
-    protected redisClient: Redis;
-    protected redisSubscriptionClient: Redis;
+    protected redisClient: Redis | Cluster;
+    protected redisSubscriptionClient: Redis | Cluster;
     private redlock: Redlock;
 
     public getWriteLockTTL(): number { return this.EXP_WRITE_LOCK; }

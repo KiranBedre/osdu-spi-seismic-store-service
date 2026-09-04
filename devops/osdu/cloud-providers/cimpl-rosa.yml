@@ -10,7 +10,25 @@ cimpl-test:
   rules:
     - when: never
 
+cimpl-prod-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
 cimpl-acceptance-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-acceptance-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-acceptance-test-python:
   needs: []
   extends: []
   rules:

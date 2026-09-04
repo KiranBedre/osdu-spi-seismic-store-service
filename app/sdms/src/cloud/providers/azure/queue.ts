@@ -14,11 +14,12 @@
 // limitations under the License.
 // ============================================================================
 
-import Redis, { RedisOptions } from 'ioredis';
+import Redis, { Cluster, RedisOptions } from 'ioredis';
 import { StorageJobManager } from '../../shared/queue';
-import { RedisMsiConnectionManager } from './redis-msi-connection-manager';
+import { RedisMsiConnectionManager } from './redis/redis-msi-connection-manager';
 import { AzureConfig } from './config';
 import { Config, LoggerFactory } from '../..';
+import { Utils } from '../../../shared';
 
 /**
  * Azure-specific implementation of StorageJobManager with MSI authentication support
@@ -27,11 +28,6 @@ export class AzureStorageJobManager extends StorageJobManager {
 
     private static readonly CONNECTION_NAME_PREFIX = 'sdms-copy-agent';
 
-    private get msiConnectionManager(): RedisMsiConnectionManager {
-        return RedisMsiConnectionManager.getInstance();
-    }
-
-    private readonly logger = Config.CLOUDPROVIDER ? LoggerFactory.build(Config.CLOUDPROVIDER) : console;
     private host: string = '';
     private port: number = 0;
     private disableTls: boolean = false;
@@ -73,7 +69,10 @@ export class AzureStorageJobManager extends StorageJobManager {
             this.createRedisBullClient('bclient', 3)
         ]);
 
-        this.copyJobsQueue = new Bull('copyjobqueue', {
+        // Use hash tags {name} for Redis Cluster mode (AMR) to ensure all queue keys hash to same slot
+        // Prevents CROSSSLOT errors by forcing all related keys (wait, active, paused, etc.) to same slot
+        // Hash tags work in both standalone and cluster modes (treated as literal chars in standalone)
+        this.copyJobsQueue = new Bull('{copyjobqueue}', {
             createClient: (type: 'client' | 'subscriber' | 'bclient') => {
                 switch (type) {
                     case 'client': return clientMain;
@@ -91,7 +90,10 @@ export class AzureStorageJobManager extends StorageJobManager {
         this.copyJobsQueue.process(this.COPY_QUEUE_CONCURRENCY, (input) => {
             return this.copy(input);
         }).catch(
-            (error) => { this.logger.error('[AzureStorageJobManager] Bull process error: ' + JSON.stringify(error));
+            (error) => {
+                LoggerFactory.build(Config.CLOUDPROVIDER).error(
+                    '[AzureStorageJobManager] Bull process error: ' + JSON.stringify(error)
+                );
         });
 
         // setup handlers for job events
@@ -101,7 +103,9 @@ export class AzureStorageJobManager extends StorageJobManager {
     /**
      * Creates a fully connected and authenticated Redis client for Bull
      */
-    private async createRedisBullClient(type: 'client' | 'subscriber' | 'bclient', counter: number): Promise<Redis> {
+    private async createRedisBullClient(
+        type: 'client' | 'subscriber' | 'bclient', counter: number
+    ): Promise<Redis | Cluster> {
         const connectionName = `${AzureStorageJobManager.CONNECTION_NAME_PREFIX}-${type}-${counter}`;
         const isRegularClient = type === 'client';
 
@@ -120,7 +124,9 @@ export class AzureStorageJobManager extends StorageJobManager {
         // Use centralized client initialization - handles connection, auth, event handlers, and registration
         // Note: Periodic AUTH is disabled for subscriber (pub/sub mode) and bclient (blocking on BRPOP)
         // as these clients cannot accept AUTH commands while in their special modes
-        return await this.msiConnectionManager.initializeRedisClient(
+        const msiConnectionManager = RedisMsiConnectionManager.getInstance();
+
+        return await msiConnectionManager.initializeRedisClient(
             this.host,
             this.port,
             this.disableTls,

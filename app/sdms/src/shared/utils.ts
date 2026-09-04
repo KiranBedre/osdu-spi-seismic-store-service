@@ -238,4 +238,40 @@ export class Utils {
                 throw new Error('Operator `' + operator + '` not supported');
         }
     }
+
+    public static extractErrorInfo(
+        error: unknown
+    ): { name: string; code: string | number; message: string; stack: string | undefined } {
+        if (typeof error === 'string') {
+            return { name: 'Error', code: 'unknown', message: error, stack: undefined };
+        }
+        const err = error as any;
+        return {
+            name: err?.name || 'Error',
+            code: err?.code ?? err?.statusCode ?? 'unknown',
+            message: err?.message || String(error),
+            stack: err?.stack as string | undefined
+        };
+    }
+
+    public static logError(
+        logger: any,
+        error: unknown,
+        messagePrefix: string,
+        context: string,
+        includeStack = false
+    ): void {
+        const { name: errorName, code: errorCode, message: errorMessage, stack } =
+            Utils.extractErrorInfo(error);
+        const logEntry: Record<string, any> = {
+            message:
+                `${messagePrefix} | errorName=${errorName} | errorCode=${errorCode} | ` +
+                `errorMessage=${errorMessage}`,
+            context
+        };
+        if (includeStack && stack) {
+            logEntry.stack = stack;
+        }
+        logger.error(logEntry);
+    }
 }

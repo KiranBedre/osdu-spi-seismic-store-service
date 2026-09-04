@@ -17,7 +17,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { DefaultAzureCredential } from '@azure/identity';
-import { MSITokenProvider } from '../../../../src/cloud/providers/azure/msi-token-provider';
+import { MSITokenProvider } from '../../../../src/cloud/providers/azure/redis/msi-token-provider';
 import { Tx } from '../../utils';
 
 const REDIS_SCOPE = 'https://redis.azure.com/.default';

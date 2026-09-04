@@ -19,7 +19,7 @@ import { azureLockerInstance } from './locker';
 import { azureCacheShared } from './cache';
 import { azureStorageJobManagerInstance } from './queue';
 import { azureOperationStatusStorage } from './operation-status-storage';
-import { RedisMsiConnectionManager } from './redis-msi-connection-manager';
+import { RedisMsiConnectionManager } from './redis/redis-msi-connection-manager';
 import { setLockerInstance } from '../../../services/dataset/locker';
 import { setOperationStatusStorage } from '../../../services/operation/status';
 import { setStorageJobManagerInstance } from '../../shared/queue';

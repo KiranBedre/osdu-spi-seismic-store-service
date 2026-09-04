@@ -16,7 +16,7 @@
 
 import { DefaultAzureCredential } from '@azure/identity';
 import jwt_decode from 'jwt-decode';
-import { Config, LoggerFactory } from '../..';
+import { Config, LoggerFactory } from '../../..';
 
 /**
  * Manages MSI (Managed Service Identity) token acquisition and caching for Redis authentication

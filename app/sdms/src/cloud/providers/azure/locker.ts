@@ -16,7 +16,7 @@
 
 import { Locker } from '../../../services/dataset/locker';
 import { Config } from '../..';
-import { RedisMsiConnectionManager } from './redis-msi-connection-manager';
+import { RedisMsiConnectionManager } from './redis/redis-msi-connection-manager';
 import { AzureConfig } from './config';
 
 /**
@@ -28,10 +28,6 @@ export class AzureLocker extends Locker {
     private static readonly CONNECTION_NAME_MAIN = 'sdms-locker';
     private static readonly CONNECTION_NAME_SUBSCRIPTION = 'sdms-locker-subscription';
 
-    private get msiConnectionManager(): RedisMsiConnectionManager {
-        return RedisMsiConnectionManager.getInstance();
-    }
-
     public async init() {
         // If MSI is not enabled or in unit test mode, use base Locker implementation
         if (!AzureConfig.shouldUseMsiAuth()) {
@@ -39,10 +35,11 @@ export class AzureLocker extends Locker {
         }
 
         const baseRedisOptions = this.createBaseRedisOptions();
+        const msiConnectionManager = RedisMsiConnectionManager.getInstance();
 
         // Helper to create a Redis client with shared config
         const createClient = (connectionName: string, isPeriodicAuthEnabled: boolean) =>
-            this.msiConnectionManager.initializeRedisClient(
+            msiConnectionManager.initializeRedisClient(
                 Config.LOCKSMAP_REDIS_INSTANCE_ADDRESS,
                 Config.LOCKSMAP_REDIS_INSTANCE_PORT,
                 Config.LOCKSMAP_REDIS_INSTANCE_TLS_DISABLE,

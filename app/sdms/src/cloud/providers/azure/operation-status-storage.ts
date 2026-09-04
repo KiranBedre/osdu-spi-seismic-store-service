@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { OperationStatusStorage } from '../../../services/operation/status';
-import { RedisMsiConnectionManager } from './redis-msi-connection-manager';
+import { RedisMsiConnectionManager } from './redis/redis-msi-connection-manager';
 import { AzureConfig } from './config';
 
 /**
@@ -25,10 +25,6 @@ import { AzureConfig } from './config';
 export class AzureOperationStatusStorage extends OperationStatusStorage {
 
     private static readonly CONNECTION_NAME = 'sdms-operation-status';
-
-    protected get msiConnectionManager(): RedisMsiConnectionManager {
-        return RedisMsiConnectionManager.getInstance();
-    }
 
     public async init(
         host: string,
@@ -44,8 +40,9 @@ export class AzureOperationStatusStorage extends OperationStatusStorage {
 
         if (host && port && !this.redisClient) {
             const baseOptions = this.createBaseRedisOptions(host, port, connectionName);
+            const msiConnectionManager = RedisMsiConnectionManager.getInstance();
 
-            this.redisClient = await this.msiConnectionManager.initializeRedisClient(
+            this.redisClient = await msiConnectionManager.initializeRedisClient(
                 host,
                 port,
                 disableTls,

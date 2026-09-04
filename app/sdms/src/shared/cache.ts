@@ -14,7 +14,7 @@
 // Limitations under the License.
 // ============================================================================
 
-import Redis, { RedisOptions } from 'ioredis';
+import Redis, { Cluster, RedisOptions } from 'ioredis';
 import { Config } from '../cloud';
 
 export class CacheCore {
@@ -22,7 +22,7 @@ export class CacheCore {
     protected static readonly REDIS_MAX_RETRIES_PER_REQUEST = 5;
     protected static readonly REDIS_COMMAND_TIMEOUT_MS = 5000;
 
-    protected redisClient: Redis;
+    protected redisClient: Redis | Cluster;
 
     public async init(
         host: string,

@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { Cache } from '../../../shared/cache';
-import { RedisMsiConnectionManager } from './redis-msi-connection-manager';
+import { RedisMsiConnectionManager } from './redis/redis-msi-connection-manager';
 import { AzureConfig } from './config';
 
 /**
@@ -25,10 +25,6 @@ import { AzureConfig } from './config';
 export class AzureCache extends Cache {
 
     private static readonly CONNECTION_NAME = 'sdms-shared-cache';
-
-    protected get msiConnectionManager(): RedisMsiConnectionManager {
-        return RedisMsiConnectionManager.getInstance();
-    }
 
     public async init(
         host: string,
@@ -44,8 +40,9 @@ export class AzureCache extends Cache {
 
         if (host && port && !this.redisClient) {
             const baseOptions = this.createBaseRedisOptions(host, port, connectionName);
+            const msiConnectionManager = RedisMsiConnectionManager.getInstance();
 
-            this.redisClient = await this.msiConnectionManager.initializeRedisClient(
+            this.redisClient = await msiConnectionManager.initializeRedisClient(
                 host,
                 port,
                 disableTls,
