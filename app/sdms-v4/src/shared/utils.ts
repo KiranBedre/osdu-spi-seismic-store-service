@@ -17,11 +17,24 @@
 import JsYaml from 'js-yaml';
 import JsonRefs from 'json-refs';
 import crypto from 'crypto';
+import fs from 'fs';
+
+// Swagger UI's data-definitions $refs are fetched over the network from
+// community.opengroup.org at runtime. A degraded remote once made the underlying
+// JsonRefs.resolveRefsAt call hang ~169s, which — when this ran on the port-bind path —
+// blew the 155s startupProbe and got the pod SIGKILLed. This resolution is now invoked OFF
+// the bind path (see server-start.ts); the timeout below is defense in depth so a
+// slow/hanging remote can never wedge the resolver indefinitely.
+const SWAGGER_RESOLUTION_TIMEOUT_MS = 30000;
 
 export class Utils {
-    public static async resolveJsonReferences(location: string): Promise<object> {
+    public static async resolveJsonReferences(
+        location: string,
+        timeoutMs: number = SWAGGER_RESOLUTION_TIMEOUT_MS
+    ): Promise<object> {
         JsonRefs.clearCache();
-        const result = await JsonRefs.resolveRefsAt(location, {
+        // Keep resolving both relative and remote refs so Swagger UI renders exactly as before.
+        const resolution = JsonRefs.resolveRefsAt(location, {
             filter: ['relative', 'remote'],
             loaderOptions: {
                 processContent(res: any, callback: any) {
@@ -29,8 +42,30 @@ export class Utils {
                 },
             },
             resolveCirculars: true,
+        }).then(result => result.resolved);
+
+        let timer: NodeJS.Timeout | undefined;
+        const timeout = new Promise<never>((_, reject) => {
+            timer = setTimeout(
+                () => reject(new Error(`swagger ref resolution timed out after ${timeoutMs}ms`)),
+                timeoutMs
+            );
         });
-        return result.resolved;
+
+        try {
+            return await Promise.race([resolution, timeout]);
+        } catch (error) {
+            console.error('- Failed to resolve swagger ui references; serving unresolved document', error);
+            try {
+                return (JsYaml.load(fs.readFileSync(location, 'utf8')) as object) ?? {};
+            } catch {
+                return {};
+            }
+        } finally {
+            if (timer) {
+                clearTimeout(timer);
+            }
+        }
     }
 
     public static PreBearerToken(token: string): string {

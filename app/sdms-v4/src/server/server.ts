@@ -28,8 +28,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class Server {
     private app: express.Express;
+    private swaggerDocument?: swaggerUi.JsonObject;
 
-    constructor(swaggerDocument: swaggerUi.JsonObject) {
+    constructor() {
         this.app = express();
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(express.json(), (error, req, res, next) => {
@@ -45,17 +46,22 @@ export class Server {
         });
         this.app.disable('x-powered-by');
         this.app.use(cors(corsOptions));
-        if (swaggerDocument) {
-            this.app.use(
-                Config.APIS_BASE_PATH + '/swagger-ui.html',
-                swaggerUi.serve,
-                swaggerUi.setup(swaggerDocument, {
-                    customCss: '.swagger-ui .topbar { display: none }',
-                })
-            );
-        }
+        this.app.use(Config.APIS_BASE_PATH + '/swagger-ui.html', swaggerUi.serve, (req, res, next) => {
+            if (!this.swaggerDocument) {
+                res.status(503).send('Swagger UI is still initializing');
+                return;
+            }
+            swaggerUi.setup(this.swaggerDocument, {
+                customCss: '.swagger-ui .topbar { display: none }',
+            })(req, res, next);
+        });
         this.app.use(this.sdmsMiddleware);
         this.app.use(ServiceRouter);
+    }
+
+    // Inject the resolved swagger document once background resolution completes (server-start.ts).
+    public setSwaggerDocument(swaggerDocument: swaggerUi.JsonObject) {
+        this.swaggerDocument = swaggerDocument;
     }
 
     // Set of operations to perform before serving the request

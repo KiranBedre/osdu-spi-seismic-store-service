@@ -16,7 +16,28 @@
 
 import { SharedCache, Utils } from '../shared';
 import { Config } from '../cloud/config';
+import type { Server } from './server';
 import path from 'path';
+
+// Bind the port FIRST, before touching swagger. Swagger UI is documentation-only and its
+// data-definitions $refs are fetched at runtime from community.opengroup.org; resolving them
+// here (as this used to) put a blocking network call on the bind path, and a degraded remote
+// hung it ~169s — past the 155s startupProbe — so kubelet SIGKILLed the pod. A try/catch would
+// not have helped: a hang never throws in time. Keeping resolution strictly off the bind path
+// is the fix, so a down/slow remote can never delay the listener or crashloop the service.
+export function startServerAndResolveSwaggerInBackground(server: Server): void {
+    server.start();
+
+    console.log(`- Initializing swagger ui in the background`);
+    Utils.resolveJsonReferences(path.join(__dirname, '..', 'docs', 'openapi.yaml'))
+        .then(swaggerDocument => {
+            server.setSwaggerDocument(swaggerDocument);
+            console.log('- Swagger ui initialized');
+        })
+        .catch(error => {
+            console.error('- Swagger ui initialization failed; service continues without it', error);
+        });
+}
 
 async function ServerStart() {
     try {
@@ -38,14 +59,14 @@ async function ServerStart() {
               })
             : hpropagate();
 
-        console.log(`- Initializing swagger ui`);
-        const swaggerDocument = await Utils.resolveJsonReferences(path.join(__dirname, '..', 'docs', 'openapi.yaml'));
-
-        new (await import('./server')).Server(swaggerDocument).start();
+        const server = new (await import('./server')).Server();
+        startServerAndResolveSwaggerInBackground(server);
     } catch (error) {
         console.error(error);
         process.exit(1);
     }
 }
 
-ServerStart();
+if (require.main === module) {
+    ServerStart();
+}
