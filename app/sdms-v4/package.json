@@ -59,7 +59,7 @@
         "form-data": "^4.0.6",
         "hpropagate": "^1.0.1",
         "ioredis": "^5.2.4",
-        "js-yaml": "^4.1.0",
+        "js-yaml": "^4.3.2",
         "json-refs": "^3.0.15",
         "jsonschema": "^1.4.1",
         "log4js": "^6.9.1",
@@ -140,6 +140,10 @@
         "flatted": "^3.4.2",
         "lodash": "^4.18.1",
         "serialize-javascript": "^7.0.7",
+        "js-yaml@<3.15.2": "3.15.2",
+        "mocha": {
+            "js-yaml": "4.3.2"
+        },
         "minimatch@<3.1.4": "3.1.5",
         "minimatch@5.0.0 - 5.1.7": "5.1.9",
         "picomatch@<2.3.2": "2.3.2",

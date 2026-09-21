@@ -22,12 +22,6 @@ cimpl-prod-acceptance-test:
   rules:
     - when: never
 
-cimpl-prod-reset:
-  needs: []
-  extends: []
-  rules:
-    - when: never
-
 cimpl-prod-acceptance-test-python:
   needs: []
   extends: []

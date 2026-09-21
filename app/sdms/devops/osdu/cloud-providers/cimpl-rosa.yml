@@ -28,7 +28,7 @@ sdms_cimpl-dev-test-python:
     - .cimpl-dev-variables
   stage: integration
   tags: ["osdu-medium"]
-  image: node:22-bullseye
+  image: node:22-bookworm
   needs: ["sdms_cimpl-dev-deploy"]
   variables:
     CIMPL_SEISTORE_LEGALTAG01: osdu-demo-legaltag
@@ -109,7 +109,7 @@ sdms_cimpl-dev-backup-test-python:
     - .cimpl-dev-backup-variables
   stage: integration
   tags: ["osdu-medium"]
-  image: node:22-bullseye
+  image: node:22-bookworm
   needs: ["sdms_cimpl-dev-deploy"]
   variables:
     CIMPL_SEISTORE_LEGALTAG01: osdu-demo-legaltag
@@ -188,7 +188,7 @@ sdms_cimpl-prod-test-python:
     - .cimpl-prod-variables
   stage: integration
   tags: ["osdu-medium"]
-  image: node:22-bullseye
+  image: node:22-bookworm
   needs: ["sdms_cimpl-prod-deploy"]
   variables:
     CIMPL_SEISTORE_LEGALTAG01: osdu-demo-legaltag
