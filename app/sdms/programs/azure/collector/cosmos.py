@@ -16,6 +16,7 @@
 
 import sys
 import time
+from datetime import datetime, timezone
 from azure.cosmos import CosmosClient
 
 class Subproject:
@@ -32,11 +33,13 @@ class Job:
         self.statistics = statistics
 
 class Dataset:
-    def __init__(self, name: str, path: str, storage_uri: str, created_by: str):
+    def __init__(self, name: str, path: str, storage_uri: str, created_by: str,
+                 last_modified_date: str = ''):
         self.name = name
         self.path = path
         self.storage_uri = storage_uri
         self.created_by = created_by
+        self.last_modified_date = last_modified_date
 
 def get_subproject(subproject_name: str, cosmos_cs: str) -> Subproject:
     client = CosmosClient.from_connection_string(cosmos_cs)
@@ -72,27 +75,70 @@ def list_subproject(cosmos_cs: str):
         sys.stdout.flush()
     return results
 
-def list_datasets(subproject_name: str, cosmos_cs: str) -> list([Dataset]):
+_JS_DATE_FORMATS = [
+    "%a %b %d %Y %H:%M:%S GMT%z",
+    "%a %b %d %Y %H:%M:%S GMT+0000",
+]
+
+def _parse_last_modified_date(date_str: str):
+    #Parse a JS Date.toString() string into a UTC-aware datetime, or None on failure
+    if not date_str:
+        return None
+    # Strip trailing parenthetical, e.g. " (Coordinated Universal Time)"
+    clean = date_str.split(' (')[0].strip()
+    for fmt in _JS_DATE_FORMATS:
+        try:
+            return datetime.strptime(clean, fmt).astimezone(timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+def list_datasets(subproject_name: str, cosmos_cs: str, since: str = None) -> list:
     client = CosmosClient.from_connection_string(cosmos_cs)
     database = client.get_database_client('sdms-db')
     container_client = database.get_container_client('data')
-    query = f'SELECT c.data.path, c.data.name, c.data.gcsurl, c.data.created_by FROM c WHERE c.data.subproject = "{subproject_name}"'
+    query = (f'SELECT c.data.path, c.data.name, c.data.gcsurl, c.data.created_by, '
+             f'c.data.last_modified_date '
+             f'FROM c WHERE c.data.subproject = "{subproject_name}"')
     query_iterable = container_client.query_items(
         query=query,
         max_item_count=-1,
         enable_cross_partition_query=True
     )
+
+    since_dt = datetime.fromisoformat(since).astimezone(timezone.utc) if since else None
+    mode = 'INCREMENTAL' if since_dt is not None else 'FULL'
+
     results: list[Dataset] = []
-    count = 0
+    count = 0            # datasets kept (new/modified)
+    total = 0            # datasets seen in cosmos for this subproject
+    skipped_old = 0      # datasets filtered out because unchanged since last run
+    skipped_no_date = 0  # datasets with an unparsable/missing last_modified_date
     start_time = time.time()
     for page in query_iterable.by_page():
         for item in page:
-            count = count + 1
+            total += 1
+            lmd = item.get('last_modified_date', '')
+            if since_dt is not None:
+                item_dt = _parse_last_modified_date(lmd)
+                if item_dt is None:
+                    # can't determine age -> keep it to be safe, but flag it for tracing
+                    skipped_no_date += 1
+                elif item_dt <= since_dt:
+                    skipped_old += 1
+                    continue
+            count += 1
             results.append(
-                Dataset(item['name'], item['path'], item['gcsurl'], item['created_by']))
-        print(
-            f'> {count} datasets retrieved in {(time.time() - start_time)} seconds')
+                Dataset(item['name'], item['path'], item['gcsurl'], item['created_by'], lmd))
         sys.stdout.flush()
+    elapsed = time.time() - start_time
+    if since_dt is not None:
+        print(f'> [datasets] seen={total}, kept={count}, skipped={skipped_old}'
+              + (f', missing_date={skipped_no_date}' if skipped_no_date else '')
+              + f' in {elapsed:.2f}s')
+    else:
+        print(f'> [datasets] seen={total}, kept={count} in {elapsed:.2f}s')
+    sys.stdout.flush()
     return results
 
 def get_subproject_jobs(cosmos_cs: str) -> list([Job]):

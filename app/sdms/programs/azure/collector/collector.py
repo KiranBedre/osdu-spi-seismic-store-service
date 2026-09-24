@@ -17,6 +17,7 @@
 import time
 import os
 import sys
+import json
 import threading
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
@@ -199,6 +200,48 @@ def push_report(container):
     except Exception as e:
         print(f'Error: {e.status_code} - {e.message}')
 
+STATE_BLOB_PATH = '{partition_id}/last_run_state.json'
+
+def load_last_run_state(storage_cs: str, partition_id: str) -> dict:
+    # Reads last-run timestamps per subproject from blob storage ({} if first run)
+    blob_name = STATE_BLOB_PATH.format(partition_id=partition_id)
+    state_uri = f'{STORAGE_CONTAINER_RESULTS}/{blob_name}'
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
+        container = blob_service_client.get_container_client(STORAGE_CONTAINER_RESULTS)
+        blob_client = container.get_blob_client(blob_name)
+        data = blob_client.download_blob().readall()
+        state = json.loads(data)
+        print(f'> [state] loaded last_run_state from "{state_uri}" '
+              f'({len(state)} subproject(s) with prior runs)')
+        state_local_path = f'./results/{partition_id}/last_run_state.json'
+        os.makedirs(os.path.dirname(state_local_path), exist_ok=True)
+        with open(state_local_path, 'w') as f:
+            json.dump(state, f, indent=2)
+        print(f'> [state] contents written to "{state_local_path}"')
+        return state
+    except Exception as e:
+        print(f'> [state] no last_run_state found at "{state_uri}" ({type(e).__name__}); '
+              f'every subproject in {partition_id} will be FULL scanned (first run)')
+        return {}
+
+def save_last_run_state(storage_cs: str, partition_id: str, state: dict) -> None:
+    #Persists the updated per-subproject last-run timestamps back to blob storage
+    blob_name = STATE_BLOB_PATH.format(partition_id=partition_id)
+    state_uri = f'{STORAGE_CONTAINER_RESULTS}/{blob_name}'
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
+        container = blob_service_client.get_container_client(STORAGE_CONTAINER_RESULTS)
+        if not container.exists():
+            container.create_container()
+        blob_client = container.get_blob_client(blob_name)
+        blob_client.upload_blob(json.dumps(state, indent=2).encode('utf-8'), overwrite=True)
+        print(f'> [state] saved last_run_state to "{state_uri}" '
+              f'({len(state)} subproject(s) tracked)')
+    except Exception as e:
+        print(f'> [state] WARNING: could not save last_run_state to "{state_uri}" '
+              f'({type(e).__name__}: {e}); next run may re-scan this subproject fully')
+
 def collect_subproject_jobs():
     try:
         return cosmos.get_subproject_jobs(cosmos_cs)
@@ -258,6 +301,9 @@ if __name__ == "__main__":
             cosmos_cs = partition.get_cosmos_connection_string(partition_configurations)
             storage_cs = partition.get_storage_connection_string(partition_configurations)
 
+            # load per-subproject last-run timestamps (empty dict on first run)
+            last_run = load_last_run_state(storage_cs, partition_id)
+
             # jobs = collect_jobs()
             jobs = []
             subproject_list = []
@@ -290,10 +336,15 @@ if __name__ == "__main__":
                         print(
                             f'> storage uri: {subproject.storage_url}{"-*" if subproject.policy != "uniform" else ""}')
 
-                        # list all datasets in a subproject
+                        # list datasets in a subproject — incremental if last_run known, full scan otherwise
                         print(f'\n# list datasets in {subproject_name}\n')
                         sys.stdout.flush()
-                        datasets = cosmos.list_datasets(subproject_name, cosmos_cs)
+                        last_run_ts = last_run.get(subproject_name)
+                        scan_type = 'FULL' if not last_run_ts else 'INCREMENTAL'
+                        scan_detail = f'since {last_run_ts}' if last_run_ts else 'no prior run recorded'
+                        print(f'> [scan] {subproject_name}: {scan_type} ({scan_detail})')
+                        sys.stdout.flush()
+                        datasets = cosmos.list_datasets(subproject_name, cosmos_cs, since=last_run_ts)
 
                         print('\n# collect statistics from storage\n')
                         now = datetime.now(timezone.utc)
@@ -318,6 +369,16 @@ if __name__ == "__main__":
                             print('\n# sort and push report to sdms')
                             utils.sort_csv_file(report_name)
                             push_report(STORAGE_CONTAINER_RESULTS)
+                            # persist timestamp so next run only scans modified datasets
+                            previous_ts = last_run.get(subproject_name)
+                            last_run[subproject_name] = now.isoformat()
+                            print(f'> [state] {subproject_name}: advancing last_run '
+                                  f'{previous_ts or "(none)"} -> {now.isoformat()}')
+                            save_last_run_state(storage_cs, partition_id, last_run)
+                        else:
+                            # no new/modified datasets this run — last_run is intentionally left unchanged
+                            print(f'> [state] {subproject_name}: no datasets collected, '
+                                  f'last_run left unchanged at {last_run.get(subproject_name) or "(none)"}')
 
                         if CLEANUP:
                             utils.clean_up_local(f'./results/{partition_id}/{subproject_name}/')
@@ -327,6 +388,9 @@ if __name__ == "__main__":
                         print(f"\n# Task execution completed in {formatted_execution_time}")
                 except Exception as e:
                     print(f'Error: {e}')
+            if CLEANUP:
+                utils.clean_up_local(f'./results/{partition_id}/')
+
             execution_time = time.time() - partition_start_time
             formatted_execution_time = utils.format_execution_time(execution_time)
             print(f"\n# {partition_id} execution completed in {formatted_execution_time}")
