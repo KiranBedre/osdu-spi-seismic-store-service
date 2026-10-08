@@ -268,6 +268,19 @@ public class RestoreTaskExecutorTests
     }
 
     [Fact]
+    public async Task ProcessAsync_SuccessLockReleaseFails_RethrowsForRedelivery()
+    {
+        _ = _lockManagerMock
+            .Setup(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()))
+            .ThrowsAsync(new InvalidOperationException("Redis unavailable"));
+        var message = CreateMessage();
+
+        _ = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _executor.ProcessAsync(message.Object, CancellationToken.None));
+        _ = _recordedStatuses.Last().Should().Be(nameof(StatusEnum.Succeeded));
+    }
+
+    [Fact]
     public async Task ProcessAsync_AcquiresDatasetLock_WithIdempotentWidFormat()
     {
         var message = CreateMessage();

@@ -822,7 +822,7 @@ WHERE c.data.tenant = @tenant
     }
 
     /// <summary>
-    /// Best-effort conversion of the dataset and partition operation locks into indefinite locks.
+    /// Converts the dataset and account operation locks into indefinite locks.
     /// The lock manager verifies each lock's current owner before removing its TTL.
     /// </summary>
     private async Task MakeLocksIndefiniteAsync(
@@ -857,28 +857,15 @@ WHERE c.data.tenant = @tenant
             return;
         }
 
-        try
+        var persisted = await _lockManager.MakeWriteLockIndefiniteAsync(lockSession);
+        if (!persisted)
         {
-            var persisted = await _lockManager.MakeWriteLockIndefiniteAsync(lockSession);
-            if (persisted)
-            {
-                _logger.LogWarning(
-                    "Restore {LockType} lock made indefinite pending retry or recovery - LockKey: {LockKey}, OperationId: {OperationId}",
-                    lockType, lockKey, operationId);
-            }
-            else
-            {
-                _logger.LogError(
-                    "Failed to make restore {LockType} lock indefinite; it may expire via TTL - LockKey: {LockKey}, OperationId: {OperationId}",
-                    lockType, lockKey, operationId);
-            }
+            throw new InvalidOperationException(
+                $"Failed to make restore {lockType} lock '{lockKey}' indefinite.");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Error making restore {LockType} lock indefinite; it may expire via TTL - LockKey: {LockKey}, OperationId: {OperationId}",
-                lockType, lockKey, operationId);
-        }
+        _logger.LogWarning(
+            "Restore {LockType} lock made indefinite pending retry or recovery - LockKey: {LockKey}, OperationId: {OperationId}",
+            lockType, lockKey, operationId);
     }
 
     private async Task ReleaseLockAsync(WriteLockSession? lockSession, string lockType)
@@ -888,21 +875,14 @@ WHERE c.data.tenant = @tenant
             return;
         }
 
-        try
+        var released = await _lockManager.RemoveWriteLockAsync(lockSession);
+        if (released)
         {
-            var released = await _lockManager.RemoveWriteLockAsync(lockSession);
-            if (released)
-            {
-                _logger.LogInformation("Restore {LockType} lock released - LockKey: {LockKey}", lockType, lockSession.Key);
-            }
-            else
-            {
-                _logger.LogInformation("No matching restore {LockType} lock to release - LockKey: {LockKey}", lockType, lockSession.Key);
-            }
+            _logger.LogInformation("Restore {LockType} lock released - LockKey: {LockKey}", lockType, lockSession.Key);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogWarning(ex, "Failed to release restore {LockType} lock — will expire via TTL. LockKey: {LockKey}", lockType, lockSession.Key);
+            _logger.LogInformation("No matching restore {LockType} lock to release - LockKey: {LockKey}", lockType, lockSession.Key);
         }
     }
 

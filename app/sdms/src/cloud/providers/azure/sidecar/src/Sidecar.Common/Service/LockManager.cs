@@ -240,33 +240,33 @@ public class LockManager : ILockManager
     public async Task<bool> RemoveWriteLockAsync(WriteLockSession session)
     {
         var mutex = Utils.RandomMutex();
+        await AcquireMutexAsync(session.Key, mutex);
         try
         {
-            await AcquireMutexAsync(session.Key, mutex);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Cannot acquire mutex {key}. ", session.Key);
-            return false;
-        }
-
-        var lockValue = await GetLockAsync(session.Key);
-        if (lockValue is string s)
-        {
-            if (s.Equals(session.Wid))
+            var lockValue = await GetLockAsync(session.Key);
+            if (lockValue is string s)
             {
-                var deleteStatus = await _locksRedis.DeleteAsync(session.Key);
-                await ReleaseMutexAsync(session.Key, mutex);
-                _logger.LogInformation("Write Lock for {key} removed.", session.Key);
-                return deleteStatus;
+                if (s.Equals(session.Wid))
+                {
+                    var deleteStatus = await _locksRedis.DeleteAsync(session.Key);
+                    if (!deleteStatus)
+                    {
+                        throw new InvalidOperationException(
+                            $"Redis did not delete the owned write lock '{session.Key}'.");
+                    }
+                    _logger.LogInformation("Write Lock for {key} removed.", session.Key);
+                    return true;
+                }
+                _logger.LogError("Could not delete lock for {key}. {value} is not a current lock value.", session.Key, lockValue);
+                return false;
             }
-            _logger.LogError("Could not delete lock for {key}. {value} is not a current lock value.", session.Key, lockValue);
+            _logger.LogDebug("Write Lock for {key} not found. Lock not removed.", session.Key);
             return false;
-
         }
-        _logger.LogDebug("Write Lock for {key} not found. Lock not removed.", session.Key);
-        await ReleaseMutexAsync(session.Key, mutex);
-        return false;
+        finally
+        {
+            await ReleaseMutexAsync(session.Key, mutex);
+        }
     }
 
     /// <inheritdoc cref="ILockManager.MakeWriteLockIndefiniteAsync"/>

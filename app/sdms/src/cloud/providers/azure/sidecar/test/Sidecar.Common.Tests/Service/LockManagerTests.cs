@@ -289,6 +289,24 @@ public class LockManagerTests
     }
 
     [Fact]
+    public async Task RemoveWriteLock_OwnedLockDeleteFails_Throws()
+    {
+        var key = "/path/file.tst";
+        var lockValue = "lockValue";
+        _ = _cache.StringSet(key, lockValue);
+        _ = _redisHandlerMock.Setup(r => r.DeleteAsync(key)).ReturnsAsync(false);
+        var writeLockSession = new WriteLockSession
+        {
+            Key = key,
+            Wid = lockValue,
+            Locked = true
+        };
+
+        _ = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _lockManager.RemoveWriteLockAsync(writeLockSession));
+    }
+
+    [Fact]
     public async Task MakeWriteLockIndefinite_MatchingLock_ReturnsTrueAndRewritesValue()
     {
         // Arrange
