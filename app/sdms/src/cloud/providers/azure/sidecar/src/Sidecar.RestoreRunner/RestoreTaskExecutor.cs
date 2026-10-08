@@ -35,7 +35,7 @@ using Sidecar.Common.Utility;
 ///   - Dataset lock key: {tenant}/{subproject}/{path}/{dataset}
 ///     Acquired unconditionally at operation start.
 ///   - Operation lock is created upstream by Node.js and is never acquired here.
-///     Sidecar only releases operation lock key restore-op-lock:{dataPartitionId}
+///     Sidecar only releases operation lock key restore-op-lock:{storageAccountName}
 ///     with lock value operationId.
 ///   Dataset lock value uses operationId-based idempotent format.
 ///   A conflicting dataset lock results in status "Rejected", message discarded.
@@ -112,7 +112,7 @@ public class RestoreTaskExecutor(
         // exists. This prevents a race where restoring a deleted dataset makes it visible to
         // writers before restore is complete (no existing document = no existing lock = race).
         // Operation lock is acquired upstream by Node.js and only released by this executor.
-        var operationLockKey = $"restore-op-lock:{tenant}";
+        var operationLockKey = $"restore-op-lock:{message.StorageAccountName}";
         var operationLockId = message.OperationId;
         var datasetLockKey = GetDatasetLockKey(sdPathParts);
         var datasetLockId = $"{Constants.WRITE_LOCK_PREFIX}{message.OperationId}:{datasetLockKey}";

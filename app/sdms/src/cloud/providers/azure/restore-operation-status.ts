@@ -77,6 +77,7 @@ export class AzureRestoreOperationStatusStorage {
         sdPath: string;
         restorePointInTime: string;
         createdBy: string;
+        storageAccountName: string;
     }): Promise<void> {
         try {
             const container = await this.getContainer(params.tenant);
@@ -89,6 +90,7 @@ export class AzureRestoreOperationStatusStorage {
                 sdPath: params.sdPath,
                 restorePointInTime: params.restorePointInTime,
                 createdBy: params.createdBy,
+                storageAccountName: params.storageAccountName,
                 status: 'Enqueued',
                 errorDetails: undefined,
                 requiresManualRecovery: false,

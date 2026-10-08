@@ -19,9 +19,9 @@ import { lockerInstance } from '../dataset/locker';
 
 /**
  * Distributed lock for restore operations using Redis SET NX.
- * Ensures only one restore operation runs per data partition at a time.
+ * Ensures only one restore operation runs per Azure Storage account at a time.
  *
- * Lock key: restore-op-lock:{dataPartitionId}
+ * Lock key: restore-op-lock:{storageAccountName}
  * Lock value: operationId (for idempotent re-acquisition by the worker)
  * TTL: Configurable via SDMS_RESTORE_LOCK_TTL_SECONDS (default 2 hours)
  */
@@ -32,19 +32,19 @@ export class RestoreOperationLock {
     private static readonly CONTEXT = 'RestoreOperationLock';
 
     /**
-     * Attempts to acquire the restore lock for a data partition.
-     * @param tenant - The data partition ID
+     * Attempts to acquire the restore lock for a storage account.
+     * @param storageAccountName - The resolved Azure Storage account name
      * @param operationId - The restore operation ID (used as lock value for idempotency)
      * @returns true if lock was acquired, false if another operation holds it
      */
-    public static async acquire(tenant: string, operationId: string): Promise<boolean> {
-        const key = this.getLockKey(tenant);
+    public static async acquire(storageAccountName: string, operationId: string): Promise<boolean> {
+        const key = this.getLockKey(storageAccountName);
         const ttl = Config.SDMS_RESTORE_LOCK_TTL_SECONDS;
 
         const result = await lockerInstance.setNX(key, operationId, ttl);
         if (result === 'OK') {
             this.logger.info({
-                message: `Restore lock acquired for partition ${tenant}`,
+                message: `Restore lock acquired for storage account ${storageAccountName}`,
                 context: this.CONTEXT,
                 operationId,
                 ttl
@@ -53,7 +53,7 @@ export class RestoreOperationLock {
         }
 
         this.logger.info({
-            message: `Restore lock not acquired for partition ${tenant} - already held`,
+            message: `Restore lock not acquired for storage account ${storageAccountName} - already held`,
             context: this.CONTEXT,
             operationId
         });
@@ -62,17 +62,17 @@ export class RestoreOperationLock {
 
     /**
      * Releases the restore lock only if the value matches the operationId (safe release).
-     * @param tenant - The data partition ID
+     * @param storageAccountName - The resolved Azure Storage account name
      * @param operationId - The operation ID that holds the lock
      * @returns true if lock was released, false if value didn't match or lock expired
      */
-    public static async release(tenant: string, operationId: string): Promise<boolean> {
-        const key = this.getLockKey(tenant);
+    public static async release(storageAccountName: string, operationId: string): Promise<boolean> {
+        const key = this.getLockKey(storageAccountName);
         const released = await lockerInstance.delIfMatch(key, operationId);
 
         if (released) {
             this.logger.info({
-                message: `Restore lock released for partition ${tenant}`,
+                message: `Restore lock released for storage account ${storageAccountName}`,
                 context: this.CONTEXT,
                 operationId
             });
@@ -84,13 +84,13 @@ export class RestoreOperationLock {
      * Gets the current lock holder (operationId) for a data partition.
      * @returns The operationId holding the lock, or null if no lock is held
      */
-    public static async getHolder(tenant: string): Promise<string | null> {
-        const key = this.getLockKey(tenant);
+    public static async getHolder(storageAccountName: string): Promise<string | null> {
+        const key = this.getLockKey(storageAccountName);
         const value = await lockerInstance.getLock(key);
         return typeof value === 'string' ? value : null;
     }
 
-    private static getLockKey(tenant: string): string {
-        return `${this.LOCK_KEY_PREFIX}${tenant}`;
+    private static getLockKey(storageAccountName: string): string {
+        return `${this.LOCK_KEY_PREFIX}${storageAccountName}`;
     }
 }

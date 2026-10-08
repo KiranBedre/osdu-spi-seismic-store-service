@@ -42,6 +42,7 @@ export interface IRestoreOperationQueueTask extends IOperationQueueTask {
     createdBy: string;
     sdPath: string;
     restorePointInTime: string;
+    storageAccountName: string;
     correlationId?: string;
 }
 

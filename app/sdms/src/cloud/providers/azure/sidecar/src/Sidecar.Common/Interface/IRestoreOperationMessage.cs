@@ -22,5 +22,6 @@ public interface IRestoreOperationMessage : IQueueMessage
     string CreatedBy { get; set; }
     string SdPath { get; set; }
     string RestorePointInTime { get; set; }
+    string StorageAccountName { get; set; }
     string? CorrelationId { get; set; }
 }

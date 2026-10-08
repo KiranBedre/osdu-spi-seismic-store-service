@@ -86,7 +86,8 @@ export class TestAzureRestoreOperationStatus {
                 subproject: 'subproject-a',
                 sdPath: 'sd://tenant-a/subproject-a/path/dataset',
                 restorePointInTime: '2026-06-20T10:00:00.000Z',
-                createdBy: 'user@example.com'
+                createdBy: 'user@example.com',
+                storageAccountName: 'storage-a'
             });
 
             sinon.assert.calledOnce(this.createStub);
@@ -98,6 +99,7 @@ export class TestAzureRestoreOperationStatus {
             expect(record.sdPath).to.equal('sd://tenant-a/subproject-a/path/dataset');
             expect(record.restorePointInTime).to.equal('2026-06-20T10:00:00.000Z');
             expect(record.createdBy).to.equal('user@example.com');
+            expect(record.storageAccountName).to.equal('storage-a');
             expect(record.status).to.equal('Enqueued');
             expect(record.errorDetails).to.be.undefined;
             expect(record.requiresManualRecovery).to.equal(false);

@@ -37,6 +37,7 @@ import { TaskQueueFactory } from '../../cloud/taskQueue';
 import { SqlParameter } from '@azure/cosmos';
 import { ISDPathModel } from '../../shared/sdpath';
 import { AzureArchiveService } from '../../cloud/providers/azure/archive-service';
+import { AzureDataEcosystemServices } from '../../cloud/providers/azure/dataecosystem';
 import { ITenantModel } from '../tenant/model';
 
 export class Handler {
@@ -244,10 +245,22 @@ export class Handler {
             }
         }
 
-        // Step 1: Check if Redis lock exists (fast check, no acquisition)
         const operationId = uuidv4();
+        let storageAccountName: string;
         try {
-            const currentHolder = await RestoreOperationLock.getHolder(parsedPath.tenant);
+            storageAccountName = await AzureDataEcosystemServices.getStorageResourceName(parsedPath.tenant);
+        } catch (error) {
+            this.logger.error({
+                message: `Failed to resolve storage account for restore: ${(error as any).message}`,
+                context, operationId
+            });
+            throw Error.make(Error.Status.NOT_AVAILABLE,
+                'Restore service temporarily unavailable. Please try again later.');
+        }
+
+        // Step 1: Check if the storage-account Redis lock exists (fast check, no acquisition)
+        try {
+            const currentHolder = await RestoreOperationLock.getHolder(storageAccountName);
             if (currentHolder) {
                 this.logger.info({
                     message: `Restore rejected: Redis lock held by operationId ${currentHolder}`,
@@ -281,7 +294,7 @@ export class Handler {
 
         // Step 3: Acquire Redis lock now that both checks passed
         try {
-            const lockAcquired = await RestoreOperationLock.acquire(parsedPath.tenant, operationId);
+            const lockAcquired = await RestoreOperationLock.acquire(storageAccountName, operationId);
             if (!lockAcquired) {
                 this.logger.info({
                     message: `Restore rejected: Redis lock race condition lost`,
@@ -304,7 +317,7 @@ export class Handler {
         const user = await Utils.getUserId(
             req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
         if (!user) {
-            await RestoreOperationLock.release(parsedPath.tenant, operationId);
+            await RestoreOperationLock.release(storageAccountName, operationId);
             throw Error.make(Error.Status.BAD_REQUEST, 'User not found');
         }
 
@@ -317,6 +330,7 @@ export class Handler {
                 createdBy: user,
                 sdPath,
                 restorePointInTime,
+                storageAccountName,
                 correlationId: CallContext.correlationId,
             };
 
@@ -327,6 +341,7 @@ export class Handler {
                 sdPath,
                 restorePointInTime,
                 createdBy: user,
+                storageAccountName,
             });
 
             const taskQueue = TaskQueueFactory.build(Config.CLOUDPROVIDER);
@@ -336,7 +351,7 @@ export class Handler {
                 message: `Failed to create/enqueue restore operation: ${(error as any).message}`,
                 context, operationId
             });
-            await RestoreOperationLock.release(parsedPath.tenant, operationId);
+            await RestoreOperationLock.release(storageAccountName, operationId);
             try {
                 await restoreStatusStorage.markRestoreOperationFailed(
                     operationId, parsedPath.tenant,

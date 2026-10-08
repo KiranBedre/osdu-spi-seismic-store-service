@@ -23,7 +23,7 @@ using Sidecar.Common.Interface;
 /// <summary>
 /// Queue message contract for a dataset restore operation.
 /// The requested target is the full dataset sd-path, while the Redis concurrency lock
-/// is scoped at the tenant/data-partition level derived from sdPath.
+/// is scoped to the resolved Azure Storage account.
 /// </summary>
 public class RestoreOperationMessage : IRestoreOperationMessage
 {
@@ -52,6 +52,14 @@ public class RestoreOperationMessage : IRestoreOperationMessage
     [JsonProperty("restorePointInTime")]
     [System.Text.Json.Serialization.JsonRequired]
     public string RestorePointInTime { get; set; } = "";
+
+    /// <summary>
+    /// Azure Storage account used as the account-level PITR serialization scope.
+    /// </summary>
+    [JsonPropertyName("storageAccountName")]
+    [JsonProperty("storageAccountName")]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StorageAccountName { get; set; } = "";
 
     /// <summary>
     /// Correlation ID propagated from the originating HTTP request for distributed tracing.

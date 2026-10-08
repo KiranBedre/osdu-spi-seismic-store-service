@@ -30,7 +30,7 @@ public class RestoreJsonDeserializerTests
 {
     private const string ValidTask =
         /*lang=json,strict*/
-        "{\"operation_id\":\"op-123\",\"createdBy\":\"user@example.com\",\"sdPath\":\"sd://tenant1/subproject1/pathA/dataset1\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\",\"correlationId\":\"corr-9\"}";
+        "{\"operation_id\":\"op-123\",\"createdBy\":\"user@example.com\",\"sdPath\":\"sd://tenant1/subproject1/pathA/dataset1\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\",\"storageAccountName\":\"storage-a\",\"correlationId\":\"corr-9\"}";
 
     [Fact]
     public void Deserialize_ValidTask_ReturnsRestoreOperationMessage()
@@ -45,6 +45,7 @@ public class RestoreJsonDeserializerTests
         _ = result.CreatedBy.Should().Be("user@example.com");
         _ = result.SdPath.Should().Be("sd://tenant1/subproject1/pathA/dataset1");
         _ = result.RestorePointInTime.Should().Be("2026-06-01T00:00:00Z");
+        _ = result.StorageAccountName.Should().Be("storage-a");
         _ = result.CorrelationId.Should().Be("corr-9");
     }
 
@@ -53,7 +54,7 @@ public class RestoreJsonDeserializerTests
     {
         var task =
             /*lang=json,strict*/
-            "{\"operation_id\":\"op-123\",\"createdBy\":\"user@example.com\",\"sdPath\":\"sd://t/s/p/d\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\"}";
+            "{\"operation_id\":\"op-123\",\"createdBy\":\"user@example.com\",\"sdPath\":\"sd://t/s/p/d\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\",\"storageAccountName\":\"storage-a\"}";
         var deserializer = new RestoreJsonDeserializer();
 
         var result = deserializer.Deserialize(task);
@@ -73,9 +74,10 @@ public class RestoreJsonDeserializerTests
     }
 
     [Theory]
-    [InlineData(/*lang=json,strict*/ "{\"createdBy\":\"u\",\"sdPath\":\"sd://t/s/p/d\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\"}")] // no operation_id
-    [InlineData(/*lang=json,strict*/ "{\"operation_id\":\"op-1\",\"createdBy\":\"u\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\"}")]   // no sdPath
-    [InlineData(/*lang=json,strict*/ "{\"operation_id\":\"op-1\",\"createdBy\":\"u\",\"sdPath\":\"sd://t/s/p/d\"}")]                        // no restorePointInTime
+    [InlineData(/*lang=json,strict*/ "{\"createdBy\":\"u\",\"sdPath\":\"sd://t/s/p/d\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\",\"storageAccountName\":\"storage-a\"}")] // no operation_id
+    [InlineData(/*lang=json,strict*/ "{\"operation_id\":\"op-1\",\"createdBy\":\"u\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\",\"storageAccountName\":\"storage-a\"}")]   // no sdPath
+    [InlineData(/*lang=json,strict*/ "{\"operation_id\":\"op-1\",\"createdBy\":\"u\",\"sdPath\":\"sd://t/s/p/d\",\"storageAccountName\":\"storage-a\"}")]                       // no restorePointInTime
+    [InlineData(/*lang=json,strict*/ "{\"operation_id\":\"op-1\",\"createdBy\":\"u\",\"sdPath\":\"sd://t/s/p/d\",\"restorePointInTime\":\"2026-06-01T00:00:00Z\"}")]            // no storageAccountName
     public void Deserialize_MissingRequiredField_ThrowsJsonException(string task)
     {
         var deserializer = new RestoreJsonDeserializer();

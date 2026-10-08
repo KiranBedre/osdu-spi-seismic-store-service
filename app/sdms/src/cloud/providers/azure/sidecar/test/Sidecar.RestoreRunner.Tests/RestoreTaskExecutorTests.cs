@@ -43,6 +43,7 @@ public class RestoreTaskExecutorTests
     private const string TestOperationId = "op-12345";
     private const string TestCreatedBy = "user@example.com";
     private const string TestCorrelationId = "corr-99";
+    private const string TestStorageAccountName = "storagetest";
 
     // Restore point is deliberately computed relative to "now" (always ~1 year in the past) rather
     // than a fixed calendar literal. The executor treats the restore point as an opaque pass-through
@@ -979,6 +980,7 @@ public class RestoreTaskExecutorTests
         var rawTask =
             $"{{\"operation_id\":\"{TestOperationId}\",\"createdBy\":\"{TestCreatedBy}\"," +
             $"\"sdPath\":\"{DefaultSdPath}\",\"restorePointInTime\":\"{TestRestorePoint}\"," +
+            $"\"storageAccountName\":\"{TestStorageAccountName}\"," +
             $"\"correlationId\":\"{TestCorrelationId}\"}}";
 
         var message = new Sidecar.Common.TaskQueue.RestoreJsonDeserializer().Deserialize(rawTask);
@@ -1014,6 +1016,7 @@ public class RestoreTaskExecutorTests
         _ = m.SetupGet(x => x.SdPath).Returns(sdPath);
         _ = m.SetupGet(x => x.RestorePointInTime).Returns(restorePoint ?? TestRestorePoint);
         _ = m.SetupGet(x => x.CreatedBy).Returns(TestCreatedBy);
+        _ = m.SetupGet(x => x.StorageAccountName).Returns(TestStorageAccountName);
         _ = m.SetupGet(x => x.CorrelationId).Returns(TestCorrelationId);
         return m;
     }
@@ -1056,5 +1059,5 @@ public class RestoreTaskExecutorTests
 
     private static string DatasetLockKey() => $"{TestTenant}/{TestSubproject}/pathA/{TestDataset}";
 
-    private static string OperationLockKey() => $"restore-op-lock:{TestTenant}";
+    private static string OperationLockKey() => $"restore-op-lock:{TestStorageAccountName}";
 }

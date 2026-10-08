@@ -77,6 +77,7 @@ public class CosmosRestoreTaskStatusStorageTests
               "sdPath": "sd://opendes/subproj1/pathA/datasetX",
               "restorePointInTime": "2026-01-01T00:00:00Z",
               "createdBy": "user@example.com",
+              "storageAccountName": "storagetest",
               "status": "Enqueued",
               "startedAt": "2026-01-01T00:01:00Z",
               "completedAt": "2026-01-01T00:02:00Z",
@@ -92,6 +93,7 @@ public class CosmosRestoreTaskStatusStorageTests
         _ = status.CompletedAt.Should().Be("2026-01-01T00:02:00Z");
         _ = saved["tenant"]!.Value<string>().Should().Be("opendes");
         _ = saved["subproject"]!.Value<string>().Should().Be("subproj1");
+        _ = saved["storageAccountName"]!.Value<string>().Should().Be("storagetest");
         _ = saved.ContainsKey("startedAt").Should().BeTrue();
         _ = saved.ContainsKey("completedAt").Should().BeTrue();
     }

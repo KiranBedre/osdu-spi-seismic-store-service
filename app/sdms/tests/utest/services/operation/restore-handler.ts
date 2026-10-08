@@ -39,6 +39,7 @@ import { SubProjectDAO, SubprojectAuth } from '../../../../src/services/subproje
 import { DatasetDAO } from '../../../../src/services/dataset';
 import { lockerInstance } from '../../../../src/services/dataset/locker';
 import { AzureArchiveService } from '../../../../src/cloud/providers/azure/archive-service';
+import { AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure/dataecosystem';
 import { Config } from '../../../../src/cloud';
 import { JournalFactoryTenantClient } from '../../../../src/cloud';
 import { Tx } from '../../utils';
@@ -91,6 +92,7 @@ export class TestRestoreHandler {
         this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
         this.sandbox.stub(DatasetDAO, 'get').resolves(o.datasetResult as any);
         this.sandbox.stub(AzureArchiveService, 'hasArchivedEntries').resolves(o.archiveExists);
+        this.sandbox.stub(AzureDataEcosystemServices, 'getStorageResourceName').resolves('storage-a');
         this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(o.redisHolder);
         this.sandbox.stub(restoreStatusStorage, 'getActiveRestoreOperationId').resolves(o.cosmosActiveOp);
         this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(o.acquire);
@@ -198,10 +200,11 @@ export class TestRestoreHandler {
             this.sandbox.stub(SubprojectAuth, 'getAuthGroups').returns(['admin@group']);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ name: 'dataset1', created_date: '2026-06-01T00:00:00.000Z' }, {}] as any);
+            this.sandbox.stub(AzureDataEcosystemServices, 'getStorageResourceName').resolves('storage-a');
             this.sandbox.stub(lockerInstance, 'getLock').resolves(null);
-            this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(null);
+            const getHolderStub = this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(null);
             this.sandbox.stub(restoreStatusStorage, 'getActiveRestoreOperationId').resolves(null);
-            this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(true);
+            const acquireStub = this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(true);
             this.sandbox.stub(Utils, 'getUserId').resolves('user@example.com');
             this.sandbox.stub(restoreStatusStorage, 'createRestoreOperation').resolves();
 
@@ -211,6 +214,11 @@ export class TestRestoreHandler {
 
             await Handler.handle(req, res, Operation.RestorePush);
             Tx.check202((res as any).statusCode);
+            sinon.assert.calledOnceWithExactly(getHolderStub, 'storage-a');
+            sinon.assert.calledOnceWithExactly(acquireStub, 'storage-a', sinon.match.string);
+            sinon.assert.calledWith(taskQueueStub.pushTask, sinon.match({
+                storageAccountName: 'storage-a'
+            }));
         });
     }
 
@@ -278,6 +286,7 @@ export class TestRestoreHandler {
             this.sandbox.stub(SubprojectAuth, 'getAuthGroups').returns(['admin@group']);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ name: 'dataset1', created_date: '2026-06-01T00:00:00.000Z' }, {}] as any);
+            this.sandbox.stub(AzureDataEcosystemServices, 'getStorageResourceName').resolves('storage-a');
             this.sandbox.stub(lockerInstance, 'getLock').resolves(null);
             this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves('existing-op-id');
 
@@ -331,6 +340,7 @@ export class TestRestoreHandler {
             this.sandbox.stub(SubprojectAuth, 'getAuthGroups').returns(['admin@group']);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'get').resolves([{ name: 'dataset1', created_date: '2026-06-01T00:00:00.000Z' }, {}] as any);
+            this.sandbox.stub(AzureDataEcosystemServices, 'getStorageResourceName').resolves('storage-a');
             this.sandbox.stub(lockerInstance, 'getLock').resolves(null);
             this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(null);
             this.sandbox.stub(restoreStatusStorage, 'getActiveRestoreOperationId').resolves(null);
