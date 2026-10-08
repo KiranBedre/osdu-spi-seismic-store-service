@@ -267,8 +267,8 @@ export class Handler {
                     context, rejectionSource: 'redis-lock',
                 });
                 throw Error.make(Error.Status.ALREADY_EXISTS,
-                    `A restore operation is already in progress for this data partition `
-                    + `(operationId: ${currentHolder}). Only one restore can run at a time per data partition.`);
+                    `A restore operation is already in progress for this Azure Storage account `
+                    + `(operationId: ${currentHolder}). Only one restore can run at a time per storage account.`);
             }
         } catch (error) {
             if ((error as any)?.error?.code === 409) throw error;
@@ -289,8 +289,8 @@ export class Handler {
                 context, rejectionSource: 'cosmos-fallback',
             });
             throw Error.make(Error.Status.ALREADY_EXISTS,
-                `A restore operation is already in progress for this data partition `
-                + `(operationId: ${inProgressOperationId}). Only one restore can run at a time per data partition.`);
+                `A restore operation is already in progress for this Azure Storage account `
+                + `(operationId: ${inProgressOperationId}). Only one restore can run at a time per storage account.`);
         }
 
         // Step 3: Acquire Redis lock now that both checks passed
@@ -302,8 +302,8 @@ export class Handler {
                     context, rejectionSource: 'redis-race',
                 });
                 throw Error.make(Error.Status.ALREADY_EXISTS,
-                    'A restore operation is already in progress for this data partition. '
-                    + 'Only one restore can run at a time per data partition.');
+                    'A restore operation is already in progress for this Azure Storage account. '
+                    + 'Only one restore can run at a time per storage account.');
             }
         } catch (error) {
             if ((error as any)?.error?.code === 409) throw error;

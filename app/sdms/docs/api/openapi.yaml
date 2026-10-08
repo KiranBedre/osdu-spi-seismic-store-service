@@ -2541,7 +2541,7 @@ paths:
           <li><b>Preview:</b> This feature is available on request for the Standard SKU. To enable it, create a support request in the Azure portal for Azure Data Manager for Energy. See the <a href="https://learn.microsoft.com/en-us/azure/energy-data-services/faq-energy-data-services#how-do-i-raise-a-support-request-for-azure-data-manager-for-energy">official support guidance</a>.</li>
           <li><b>Description:</b> Initiates a point-in-time restore for the specified dataset. The request is validated synchronously, then the restore job is enqueued for asynchronous processing and the endpoint returns immediately with an operation id to poll. The dataset metadata and its blob storage are restored to the state they were in at <code>restorePointInTime</code>.</li>
           <li><b>Required role:</b> Subproject admin (write authorization on the target subproject).</li>
-          <li><b>Concurrency:</b> Only one restore operation can be in progress per data partition at a time.</li>
+          <li><b>Concurrency:</b> Only one restore operation can be in progress per Azure Storage account at a time. Data partitions that share an account block each other's restore requests.</li>
           <li><b>Constraints:</b> <code>restorePointInTime</code> must be in the past, within the configured retention window (<code>SDMS_RESTORE_MAX_DAYS</code>), and after the dataset creation time.</li>
           <li><b>Note:</b> A <code>202</code> only means the request was accepted and enqueued. The dataset write-lock check and the actual restore run asynchronously; poll <code>GET /operation/restore/{operationId}</code> for the terminal outcome (including a rejection reason in <code>errorDetails</code>).</li>
         </ul>
@@ -2585,8 +2585,8 @@ paths:
           description: The dataset does not exist and has no archived state to restore from.
         "409":
           description: |-
-            Conflict. A restore operation is already in progress for this data partition;
-            only one restore can run at a time per data partition.
+            Conflict. A restore operation is already in progress for this Azure Storage account;
+            only one restore can run at a time per storage account.
         "501":
           description: The restore feature flag is disabled.
         "503":
