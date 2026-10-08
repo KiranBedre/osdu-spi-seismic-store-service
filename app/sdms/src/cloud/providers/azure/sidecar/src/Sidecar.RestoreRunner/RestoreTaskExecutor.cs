@@ -719,6 +719,7 @@ public class RestoreTaskExecutor(
         {
             _logger.LogError(ex, "Failed to update restore status to '{Status}' - OperationId: {OperationId}",
                 status, message.OperationId);
+            throw;
         }
     }
 

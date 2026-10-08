@@ -235,6 +235,23 @@ public class RestoreTaskExecutorTests
     }
 
     [Fact]
+    public async Task ProcessAsync_DatasetLockRejectionStatusSaveFails_Rethrows()
+    {
+        SetupExistingStatus(StatusEnum.InProgress);
+        _ = _lockManagerMock
+            .Setup(m => m.AcquireWriteLockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            .ReturnsAsync(new WriteLockSession { Locked = false });
+        _ = _statusStorageMock
+            .Setup(m => m.SaveStatusAsync(
+                It.IsAny<string>(), It.IsAny<TrackedRestoreStatus>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Cosmos unavailable"));
+        var message = CreateMessage();
+
+        _ = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _executor.ProcessAsync(message.Object, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ProcessAsync_Success_ReleasesBothLocks()
     {
         var message = CreateMessage();
