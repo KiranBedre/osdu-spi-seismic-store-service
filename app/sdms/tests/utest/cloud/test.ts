@@ -32,6 +32,7 @@ import { TestStorageJobManager } from './shared/queue.test';
 import { TestMSITokenProvider } from './azure/msi-token-provider';
 import { TestAzureArchiveService } from './azure/archive-service';
 import { TestAzureRestoreOperationStatus } from './azure/restore-operation-status';
+import { TestAzureDataEcosystemServices } from './azure/dataecosystem';
 export class TestCloud {
 
     public static run() {
@@ -54,6 +55,7 @@ export class TestCloud {
             TestStorageFactory.run();
             TestStorageJobManager.run();
             TestMSITokenProvider.run();
+            TestAzureDataEcosystemServices.run();
             TestAzureArchiveService.run();
             TestAzureRestoreOperationStatus.run();
         });
