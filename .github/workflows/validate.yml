@@ -415,7 +415,7 @@ jobs:
     needs: [check-initialization, check-repo-state, java-build, node-build, docker-build]
     # Trust boundary (ADR-036): push to GHCR only on trusted events.
     if: |
-      (
+      always() && (
         (needs.java-build.outputs.build_result == 'success' ||
          needs.node-build.outputs.build_result == 'success') &&
         github.actor != 'dependabot[bot]' &&

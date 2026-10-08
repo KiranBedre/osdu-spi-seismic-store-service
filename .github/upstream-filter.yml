@@ -1,0 +1,92 @@
+# Per-service upstream filter config (ADR-038), planted at fork initialization
+# with seismic-store-service substituted from the upstream repository name.
+# Every upstream top-level entry, testing/ entry, root pom profile, and
+# .fossa.yml module must appear here: the engine halts rather than guess.
+# Entries absent from a given upstream tree are inert, so this file carries the
+# superset of the conventional OSDU service shape. A service that deviates
+# maintains its own copy of this file on the fork's main branch.
+service: seismic-store-service
+
+top_level:
+  .config: keep
+  .dockerignore: keep
+  .editorconfig: keep
+  .envrc.template: keep
+  .fossa.yml: keep
+  .gitattributes: keep
+  .gitignore: keep
+  .gitlab: strip
+  .gitlab-ci.yml: strip
+  .mvn: keep
+  .sonarlint: keep
+  .trufflehog-exclude: strip
+  LICENSE: keep
+  NOTICE: keep
+  README.md: strip
+  docs: keep
+  pom.xml: keep
+  publish.yml: strip
+  seismic-store-service-acceptance-test: keep
+  seismic-store-service-core: keep
+  seismic-store-service-core-plus: strip
+
+testing:
+  INTEGRATION-TESTS.md: keep
+  README.md: keep
+  maven: keep
+  pom.xml: keep
+  seismic-store-service-test-core: keep
+  seismic-store-service-test-azure: fork
+  seismic-store-service-test-aws: strip
+  seismic-store-service-test-baremetal: strip
+  seismic-store-service-test-core-plus: strip
+  seismic-store-service-test-gc: strip
+  seismic-store-service-test-gcp: strip
+  seismic-store-service-test-ibm: strip
+  seismic-store-service-test-jdbc: strip
+
+profiles:
+  Default: keep
+  core: keep
+  azure: inject
+  aws: strip
+  gc: strip
+  gcp: strip
+  ibm: strip
+
+fossa_modules:
+  seismic-store-service: keep
+  seismic-store-service-service: keep
+  seismic-store-service-core: keep
+  seismic-store-service-core-plus: strip
+  seismic-store-service-azure: strip
+  seismic-store-service-aws: strip
+  seismic-store-service-gc: strip
+  seismic-store-service-gcp: strip
+  seismic-store-service-ibm: strip
+  seismic-store-service-jdbc: strip
+
+expected_kept:
+  - pom.xml
+  - seismic-store-service-core
+  - testing/seismic-store-service-test-core
+
+expected_absent:
+  - provider
+  - devops
+  - seismic-store-service-core-plus
+  - .gitlab-ci.yml
+  - testing/seismic-store-service-test-azure
+  - testing/seismic-store-service-test-aws
+  - testing/seismic-store-service-test-core-plus
+
+inject_root_pom_azure_profile: |
+      <profile>
+        <id>azure</id>
+        <modules>
+          <module>provider/seismic-store-service-azure</module>
+        </modules>
+      </profile>
+
+inject_testing_pom_azure_module: |
+      <module>seismic-store-service-test-azure</module>
