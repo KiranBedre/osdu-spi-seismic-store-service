@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.24.0@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
-# Canonical script-suite image for schema v4 Node/TypeScript services.
+# Canonical script-suite image for schema v4 Node/TypeScript services that declare Node 24.
 FROM docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 AS select
 ARG SUITE_DIRS
 COPY . /src/
@@ -9,7 +9,7 @@ RUN set -eu; mkdir -p /suite; \
     done; \
     printf '%s' "${SUITE_DIRS%% *}" > /suite/.default-suite-dir
 
-FROM docker.io/library/node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392
+FROM docker.io/library/node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
 
 ARG SUITE_DIRS
 ARG NPM_VERSION=11.19.0

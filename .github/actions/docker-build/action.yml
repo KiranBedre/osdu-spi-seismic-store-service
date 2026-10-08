@@ -28,6 +28,10 @@ inputs:
     description: 'Name of the GitHub Actions artifact that contains the built JARs'
     required: false
     default: 'build-artifacts'
+  source_artifact_name:
+    description: 'Name of the GitHub Actions artifact containing a prebuilt Node runtime'
+    required: false
+    default: 'node-runtime-artifacts'
   build_args:
     description: 'Optional --build-arg values (newline-separated KEY=VALUE). Never pass GITHUB_TOKEN here.'
     required: false
@@ -95,6 +99,21 @@ runs:
         name: ${{ inputs.jar_artifact_name }}
         # Download into the build context so resolve-jar.sh and the context-relative COPY agree.
         path: ${{ inputs.build_context }}
+
+    - name: "Download Node runtime artifact"
+      if: ${{ inputs.build_kind == 'source' }}
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+      with:
+        name: ${{ inputs.source_artifact_name }}
+        path: ${{ runner.temp }}/node-runtime-artifact
+
+    - name: "Restore Node runtime artifact"
+      if: ${{ inputs.build_kind == 'source' }}
+      shell: bash
+      env:
+        BUILD_CONTEXT: ${{ inputs.build_context }}
+        RUNTIME_ARCHIVE: ${{ runner.temp }}/node-runtime-artifact/node-runtime.tar.gz
+      run: "$GITHUB_ACTION_PATH/restore-node-runtime.sh"
 
     - name: "Resolve service JAR path"
       id: jar
@@ -171,7 +190,8 @@ runs:
         # Multi-arch only on the push path; validate-only builds skip the QEMU cost on every PR.
         # provenance:false keeps the pushed index to the two real platforms: the unknown/unknown
         # attestation manifest makes a bare docker pull miss on arm64.
-        platforms: ${{ inputs.push == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+        # Source artifacts are built on the amd64 Node runner and can contain native modules.
+        platforms: ${{ inputs.build_kind == 'source' && 'linux/amd64' || (inputs.push == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64') }}
         provenance: false
         tags: ${{ steps.tags.outputs.docker_tags }}
         build-args: |

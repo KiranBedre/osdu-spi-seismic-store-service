@@ -62,8 +62,8 @@ print(json.load(open(sys.argv[1]))['service_config']['node_version'])" "$REPORT"
   SOURCE="descriptor"
 fi
 
-if [[ "$TEST_TYPE" == "script" && "$NODE_VERSION" != "22" ]]; then
-  echo "::error::Script acceptance images currently require nodeVersion 22, got '$NODE_VERSION'"
+if [[ "$TEST_TYPE" == "script" && ! "$NODE_VERSION" =~ ^(22|24)$ ]]; then
+  echo "::error::Script acceptance images currently require nodeVersion 22 or 24, got '$NODE_VERSION'"
   exit 2
 fi
 

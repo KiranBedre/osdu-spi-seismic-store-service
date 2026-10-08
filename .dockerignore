@@ -2,4 +2,9 @@
 **/*.yml
 **/*.yaml
 **/Dockerfile*
+**/node_modules
+**/dist
+**/coverage
+**/test-results.xml
+**/newman
 .*

@@ -16,6 +16,7 @@
 set -euo pipefail
 
 cd "$WORKING_DIRECTORY"
+npm install --global npm@11.19.0
 npm ci
 npm run "$LINT_SCRIPT"
 npm run "$BUILD_SCRIPT"

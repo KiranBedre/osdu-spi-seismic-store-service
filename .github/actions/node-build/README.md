@@ -7,7 +7,7 @@ The action:
 
 1. requires `package.json` and either `package-lock.json` or
    `npm-shrinkwrap.json`;
-2. installs with `npm ci`;
+2. pins npm 11.19.0 on the Node 22 runtime, then installs with `npm ci`;
 3. runs the declared lint, build, and test scripts as individual npm argv
    values;
 4. requires a readable JUnit report with at least one executed test and no
