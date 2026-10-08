@@ -79,6 +79,10 @@ public class RestoreOperationStatus : RestoreOperationMessage, IRestoreOperation
     [JsonProperty("errorDetails")]
     public string? ErrorDetails { get; set; }
 
+    [JsonPropertyName("requiresManualRecovery")]
+    [JsonProperty("requiresManualRecovery")]
+    public bool RequiresManualRecovery { get; set; }
+
     /// <summary>
     /// Azure Storage Point-in-Time Restore (PITR) identifier for the blob-range restore.
     /// Persisted as soon as the restore is accepted so a redelivered message resumes the

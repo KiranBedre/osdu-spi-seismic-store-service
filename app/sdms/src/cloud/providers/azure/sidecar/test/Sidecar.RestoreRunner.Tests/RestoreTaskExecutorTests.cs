@@ -264,6 +264,25 @@ public class RestoreTaskExecutorTests
         _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Exactly(2));
     }
 
+    [Fact]
+    public async Task ProcessAsync_ManualRecoveryStatus_ReassertsAndRetainsLocks()
+    {
+        SetupExistingStatus(StatusEnum.Failed, requiresManualRecovery: true);
+        var message = CreateMessage();
+
+        await _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(
+            It.IsAny<WriteLockSession>()), Times.Never);
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
+            It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())), Times.Once);
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
+            It.Is<WriteLockSession>(s => s.Key == OperationLockKey())), Times.Once);
+        _blobRestoreServiceMock.Verify(m => m.StartBlobRestoreAsync(
+            It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // ------------------------------------------------------------------------
     // Dataset-lock rejection
     // ------------------------------------------------------------------------
@@ -922,7 +941,7 @@ public class RestoreTaskExecutorTests
         return m;
     }
 
-    private void SetupExistingStatus(StatusEnum status)
+    private void SetupExistingStatus(StatusEnum status, bool requiresManualRecovery = false)
     {
         var doc = new Common.Model.RestoreOperationStatus
         {
@@ -930,6 +949,7 @@ public class RestoreTaskExecutorTests
             SdPath = DefaultSdPath,
             RestorePointInTime = TestRestorePoint,
             Status = status.ToString(),
+            RequiresManualRecovery = requiresManualRecovery,
         };
         _ = _statusStorageMock
             .Setup(m => m.GetRestoreOperationStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))

@@ -185,6 +185,12 @@ public class RestoreTaskExecutor(
                 {
                     _logger.LogInformation("Restore already in terminal state ({Status}), skipping re-execution - OperationId: {OperationId}",
                         trackedStatus.Document.Status, message.OperationId);
+                    if (trackedStatus.Document.RequiresManualRecovery)
+                    {
+                        retainLocksForRetry = true;
+                        await MakeLocksIndefiniteAsync(
+                            datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
+                    }
                     return;
                 }
 
@@ -333,6 +339,7 @@ public class RestoreTaskExecutor(
                 _logger.LogError(ex, "Blob restore failed terminally - OperationId: {OperationId}", message.OperationId);
                 trackedStatus.Document.ErrorDetails = ex.Message;
                 trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                trackedStatus.Document.RequiresManualRecovery = true;
                 trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
                 await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreManualRecoveryException(
@@ -347,6 +354,7 @@ public class RestoreTaskExecutor(
                         message.OperationId, ex.Message);
                     trackedStatus.Document.ErrorDetails = $"Blob restore did not complete (non-retriable): {ex.Message}";
                     trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                    trackedStatus.Document.RequiresManualRecovery = true;
                     trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
                     await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                     throw new RestoreManualRecoveryException(
@@ -385,6 +393,7 @@ public class RestoreTaskExecutor(
                 trackedStatus.Document.ErrorDetails =
                     $"Metadata restore was rejected after blob restore completed; manual recovery required: {ex.Message}";
                 trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                trackedStatus.Document.RequiresManualRecovery = true;
                 trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
                 await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreManualRecoveryException(
@@ -405,6 +414,7 @@ public class RestoreTaskExecutor(
                     trackedStatus.Document.ErrorDetails =
                         $"Metadata restore finalization failed (non-retriable, manual recovery required): {ex.Message}";
                     trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                    trackedStatus.Document.RequiresManualRecovery = true;
                     trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
                     // Best-effort: a status-write failure here must NOT escape and land in the generic
                     // catch, which would RELEASE the locks. The retain-locks RestoreManualRecoveryException
@@ -474,6 +484,7 @@ public class RestoreTaskExecutor(
                         message.OperationId, ex.Message);
                     trackedStatus.Document.ErrorDetails = $"Consistency validation error (non-retriable): {ex.Message}";
                     trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                    trackedStatus.Document.RequiresManualRecovery = true;
                     trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
                     await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                     throw new RestoreManualRecoveryException(

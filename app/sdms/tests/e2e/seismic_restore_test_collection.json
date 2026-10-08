@@ -2,7 +2,7 @@
   "info": {
     "name": "Seismic DMS (SDMS) - Single File Restore Test Collection (clean-room)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Swagger-driven + repo-mined test collection for the SDMS single-file point-in-time restore feature. Spec: OSDU-Seismic-DDMS/app/sdms/docs/api/openapi.yaml (Seismic DMS Service v3.0.0, base /seistore-svc/api/v3). Endpoints under test: POST /operation/restore, GET /operation/restore/{operationId}. Source mined statically (never executed) from app/sdms/src/services/operation (handler.ts, service.ts, restore-status.ts) + shared/error.ts, shared/featureflags.ts. Full analysis: seismic-restore.spec-vs-code.md.\n\nTEST-PLAN COVERAGE (references/seismic-single-file-restore-test-plan.md):\n- Functional: TC-RST-FUNC-01/02 (update-then-restore, uniform/dataset), TC-RST-FUNC-03/04 (delete-then-restore) - see 'EXECUTION - FUNCTIONAL SCENARIOS'.\n- Validation: TC-RST-VLD-01..08. Auth: TC-RST-AUTH-01..04. Concurrency: TC-RST-CON-01 (deterministic 409) / CON-02 (other partition). Status: TC-RST-STS-01..05. Feature flag: TC-RST-FLG-01.\n- TC-RST-REL-01/02 (dependency-outage) are infrastructure fault-injection scenarios that cannot be provoked from an API collection; run them manually with a fault harness (documented, not scripted).\n\nKEY REPO-CONFIRMED behaviour [confirmed: repo]:\n(1) POST 202 body is { operation_id, statusUrl } (snake_case, NO status field) - unlike swagger RestoreAccepted; RST-001's 'status=InProgress' in the trigger response is NOT met by code. Capture is defensive.\n(2) POST also returns 404 (dataset missing), 423 (write-locked), 503 (retention SDMS_RESTORE_MAX_DAYS unconfigured / Redis down) - none documented on the POST.\n(3) Concurrency 409 is per DATA PARTITION / tenant, NOT per dataset (RestoreOperationLock + Cosmos query keyed by tenant).\n(4) GET status: missing data-partition-id -> 400 (not 403); unknown/malformed id -> 404.\n(5) Terminal statuses Succeeded/Failed; in-flight InProgress. Failure detail is in error_message (swagger calls it 'error').\n(6) Feature gate FEATURE_FLAG_ENABLE_RESTORE off -> 403 (checkFeature runs before body validation). POST needs subproject.admin; GET needs a registered partition user.\n(7) LIMITATION: restoring a DELETED dataset returns 404 - restorePush gates on current dataset-metadata existence (createDataset sets dataset.name for a dataset-level sdPath). So RST-010 / TC-RST-FUNC-03/04 as written are NOT satisfiable via POST /operation/restore against current code; the test documents this.\n\nRUN NOTES: set base_url host, access_token (subproject.admin), tenant_esd/tenant_default_acls before running. Set a per-request delay (~poll_delay_ms) in the runner for the poll steps. RST-011 access-policy parity is covered in a single run: SETUP provisions BOTH a uniform and an access_policy=dataset subproject/dataset (Setup 2b/3b/5b/6b/7b, sharing one legal tag), the dedicated 'EXECUTION - FUNCTIONAL SCENARIOS (DATASET POLICY)' folder runs FUNC-02/04 against the *_ds variable namespace, and CLEANUP tears both down (Cleanup 1b/2b). The dataset-policy restore role is dataset.admin - the same access_token must carry it. SDMS uses sd:// path addressing + ltag header, NOT the OSDU acl/legal request envelope (seismic.md S2)."
+    "description": "Swagger-driven + repo-mined test collection for the SDMS single-file point-in-time restore feature. Spec: OSDU-Seismic-DDMS/app/sdms/docs/api/openapi.yaml (Seismic DMS Service v3.0.0, base /seistore-svc/api/v3). Endpoints under test: POST /operation/restore, GET /operation/restore/{operationId}. Source mined statically (never executed) from app/sdms/src/services/operation (handler.ts, service.ts, restore-status.ts) + shared/error.ts, shared/featureflags.ts. Full analysis: seismic-restore.spec-vs-code.md.\n\nTEST-PLAN COVERAGE (references/seismic-single-file-restore-test-plan.md):\n- Functional: TC-RST-FUNC-01/02 (update-then-restore, uniform/dataset), TC-RST-FUNC-03/04 (delete-then-restore) - see 'EXECUTION - FUNCTIONAL SCENARIOS'.\n- Validation: TC-RST-VLD-01..08. Auth: TC-RST-AUTH-01..04. Concurrency: TC-RST-CON-01 (deterministic 409) / CON-02 (other partition). Status: TC-RST-STS-01..05. Feature flag: TC-RST-FLG-01.\n- TC-RST-REL-01/02 (dependency-outage) are infrastructure fault-injection scenarios that cannot be provoked from an API collection; run them manually with a fault harness (documented, not scripted).\n\nKEY REPO-CONFIRMED behaviour [confirmed: repo]:\n(1) POST 202 body is { operation_id, statusUrl } (snake_case, NO status field) - unlike swagger RestoreAccepted; RST-001's 'status=InProgress' in the trigger response is NOT met by code. Capture is defensive.\n(2) POST also returns 404 (dataset missing without an archive), 423 (write-locked), 503 (retention SDMS_RESTORE_MAX_DAYS unconfigured / Redis down) - none documented on the POST.\n(3) Concurrency 409 is per DATA PARTITION / tenant, NOT per dataset (RestoreOperationLock + Cosmos query keyed by tenant).\n(4) GET status: missing data-partition-id -> 400 (not 403); unknown/malformed id -> 404.\n(5) Terminal statuses Succeeded/Failed; in-flight InProgress. Failure detail is in error_message (swagger calls it 'error').\n(6) Feature gate FEATURE_FLAG_ENABLE_RESTORE off -> 501 (checkFeature runs before body validation). POST needs subproject.admin; GET needs a registered partition user.\n(7) Deleted datasets are accepted for restore when archive metadata exists; TC-RST-FUNC-03/04 require POST /operation/restore to return 202.\n\nRUN NOTES: set base_url host, access_token (subproject.admin), tenant_esd/tenant_default_acls before running. Set a per-request delay (~poll_delay_ms) in the runner for the poll steps. RST-011 access-policy parity is covered in a single run: SETUP provisions BOTH a uniform and an access_policy=dataset subproject/dataset (Setup 2b/3b/5b/6b/7b, sharing one legal tag), the dedicated 'EXECUTION - FUNCTIONAL SCENARIOS (DATASET POLICY)' folder runs FUNC-02/04 against the *_ds variable namespace, and CLEANUP tears both down (Cleanup 1b/2b). The dataset-policy restore role is dataset.admin - the same access_token must carry it. SDMS uses sd:// path addressing + ltag header, NOT the OSDU acl/legal request envelope (seismic.md S2)."
   },
   "item": [
     {
@@ -17,16 +17,16 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Probe the GET status endpoint with a dummy operation id to detect whether the restore feature is enabled.",
-                  "// [confirmed: repo] checkFeature runs before the lookup: FEATURE_FLAG_ENABLE_RESTORE off -> 403 'feature is not enabled'.",
+                  "// [confirmed: repo] checkFeature runs before the lookup: FEATURE_FLAG_ENABLE_RESTORE off -> 501 'feature is not enabled'.",
                   "// When the feature is ON, an unknown operation id resolves to 404.",
                   "var code = pm.response.code;",
                   "var body = pm.response.text() || '';",
                   "console.log('[PRECHECK] HTTP ' + code + ' body: ' + body);",
-                  "if (code === 403 && /feature is not enabled/i.test(body)) {",
+                  "if (code === 501 && /feature is not enabled/i.test(body)) {",
                   "  // Feature disabled: nothing has been provisioned yet, so stop the run entirely (skips SETUP/EXECUTION/CLEANUP).",
                   "  pm.collectionVariables.set('restore_feature_enabled', 'false');",
                   "  pm.test('SKIP: restore feature is disabled - skipping the entire collection', function () { pm.expect(true).to.be.true; });",
-                  "  console.log('[PRECHECK] Restore feature is DISABLED (403 feature is not enabled). Skipping the entire collection.');",
+                  "  console.log('[PRECHECK] Restore feature is DISABLED (501 feature is not enabled). Skipping the entire collection.');",
                   "  pm.execution.setNextRequest(null);",
                   "} else if (code === 404) {",
                   "  // Feature enabled: unknown operation id yields 404. Proceed with the rest of the collection.",
@@ -34,7 +34,7 @@
                   "  pm.test('restore feature enabled (GET status returns 404 for an unknown operation id)', function () { pm.expect(code).to.eql(404); });",
                   "} else {",
                   "  // Anything else is inconclusive (e.g. auth/registration issue) - surface it rather than silently continuing.",
-                  "  pm.test('PRECHECK inconclusive - expected 404 (enabled) or 403 feature-not-enabled (disabled), got ' + code, function () { pm.expect([403, 404]).to.include(code); });",
+                  "  pm.test('PRECHECK inconclusive - expected 404 (enabled) or 501 feature-not-enabled (disabled), got ' + code, function () { pm.expect([404, 501]).to.include(code); });",
                   "}"
                 ]
               }
@@ -2397,16 +2397,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// [confirmed: repo] restorePush checks current dataset-metadata existence (createDataset sets dataset.name for a",
-                  "// dataset-level sdPath). A deleted dataset yields datasetOUT=null -> 404 'The dataset ... does not exist'.",
-                  "// So RST-010 (restore a DELETED dataset) is NOT satisfiable via POST /operation/restore in the current code.",
+                  "pm.test('deleted-dataset restore is accepted (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
                   "if (pm.response.code === 202) {",
                   "  var j = {}; try { j = pm.response.json(); } catch (e) {}",
                   "  var opId = j.operationId || j.operation_id; if (opId) { pm.collectionVariables.set('operation_id', opId); }",
                   "  pm.collectionVariables.set('func34_accepted', 'true');",
-                  "  pm.test('deployment supports deleted-dataset restore (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
-                  "} else {",
-                  "  pm.test('KNOWN LIMITATION: deleted-dataset restore rejected with 404 (RST-010 not supported by current code)', function () { pm.expect(pm.response.code).to.eql(404); });",
                   "}"
                 ]
               }
@@ -3322,16 +3317,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// [confirmed: repo] restorePush checks current dataset-metadata existence (createDataset sets dataset.name for a",
-                  "// dataset-level sdPath). A deleted dataset yields datasetOUT=null -> 404 'The dataset ... does not exist'.",
-                  "// So RST-010 (restore a DELETED dataset) is NOT satisfiable via POST /operation/restore in the current code.",
+                  "pm.test('deleted-dataset restore is accepted (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
                   "if (pm.response.code === 202) {",
                   "  var j = {}; try { j = pm.response.json(); } catch (e) {}",
                   "  var opId = j.operationId || j.operation_id; if (opId) { pm.collectionVariables.set('operation_id_ds', opId); }",
                   "  pm.collectionVariables.set('func34_accepted_ds', 'true');",
-                  "  pm.test('deployment supports deleted-dataset restore (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
-                  "} else {",
-                  "  pm.test('KNOWN LIMITATION: deleted-dataset restore rejected with 404 (RST-010 not supported by current code)', function () { pm.expect(pm.response.code).to.eql(404); });",
                   "}"
                 ]
               }
