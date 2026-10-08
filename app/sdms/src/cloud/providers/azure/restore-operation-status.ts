@@ -155,8 +155,10 @@ export class AzureRestoreOperationStatusStorage {
         const container = await this.getContainer(tenant);
 
         const query = {
-            query: 'SELECT TOP 1 c.operationId FROM c WHERE c.status IN (@enqueued, @inProgress)',
+            query: 'SELECT TOP 1 c.operationId FROM c ' +
+                'WHERE c.tenant = @tenant AND c.status IN (@enqueued, @inProgress)',
             parameters: [
+                { name: '@tenant', value: tenant },
                 { name: '@enqueued', value: 'Enqueued' },
                 { name: '@inProgress', value: 'InProgress' }
             ]

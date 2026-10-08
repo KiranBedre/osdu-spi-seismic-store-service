@@ -142,17 +142,20 @@ public class StorageQueueWorker<T, TD, TE>(
             _logger.LogInformation("Received message {MessageId}", message.MessageId);
             if (message.DequeueCount > _maxDequeueCount)
             {
-                _logger.LogWarning(
-                    "Moving message {MessageId} to the poison queue after exceeding max dequeue count ({DequeueCount} > {MaxDequeueCount})",
-                    message.MessageId, message.DequeueCount, _maxDequeueCount);
-
-                if (_poisonQueueClient is null)
+                if (_poisonQueueClient is not null)
                 {
-                    throw new InvalidOperationException(
-                        "A poison queue must be configured before messages can be removed after exhausting retries.");
+                    _logger.LogWarning(
+                        "Moving message {MessageId} to the poison queue after exceeding max dequeue count ({DequeueCount} > {MaxDequeueCount})",
+                        message.MessageId, message.DequeueCount, _maxDequeueCount);
+                    _ = await _poisonQueueClient.SendMessageAsync(message.MessageText, ct);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Deleting message {MessageId} after exceeding max dequeue count because no poison queue is configured ({DequeueCount} > {MaxDequeueCount})",
+                        message.MessageId, message.DequeueCount, _maxDequeueCount);
                 }
 
-                _ = await _poisonQueueClient.SendMessageAsync(message.MessageText, ct);
                 await DeleteFromQueueAsync(message, ct);
                 continue;
             }
