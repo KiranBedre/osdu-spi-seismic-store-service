@@ -23,6 +23,8 @@ import { SDPath } from '../../../shared';
 
 export enum ArchiveOperation {
     Patch = 'patch',
+    Delete = 'delete',
+    Rename = 'rename',
     BulkDelete = 'bulk_delete',
     ChangeTier = 'change_tier'
 }
@@ -86,6 +88,11 @@ export class AzureArchiveService {
      */
     public static async archiveBeforeSave(datasetId: string, tenant: string): Promise<void> {
         await AzureArchiveService.archiveCurrentState(datasetId, tenant, ArchiveOperation.Patch);
+    }
+
+    public static async archiveBeforeDelete(
+        datasetId: string, tenant: string, operation: ArchiveOperation): Promise<void> {
+        await AzureArchiveService.archiveCurrentState(datasetId, tenant, operation);
     }
 
     /**

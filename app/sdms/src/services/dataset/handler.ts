@@ -19,6 +19,7 @@ import { DatasetModel, DatasetUtils, QueryFilter } from '.';
 import { Auth, AuthRoles } from '../../auth';
 import { Config, IJournal, JournalFactoryTenantClient, LoggerFactory, StorageFactory } from '../../cloud';
 import { DatasetPostProcessorFactoryClient } from '../../cloud/postprocessor';
+import { ArchiveOperation, AzureArchiveService } from '../../cloud/providers/azure/archive-service';
 import { SeistoreFactory } from '../../cloud/seistore';
 import { DESStorage, DESUtils, UserAssociationServiceFactory } from '../../dataecosystem';
 import { Error, ErrorModel, Feature, FeatureFlags, Response, Utils } from '../../shared';
@@ -604,6 +605,11 @@ export class DatasetHandler {
 
         if (Config.FALLBACK_DATASET_DELETE) {
 
+            if (FeatureFlags.isEnabled(Feature.RESTORE)) {
+                await AzureArchiveService.archiveBeforeDelete(
+                    datasetKey.partitionKey, dataset.tenant, ArchiveOperation.Delete);
+            }
+
             // Delete the dataset metadata on DEStorage
             await DatasetDAO.delete(journalClient, dataset);
 
@@ -683,6 +689,7 @@ export class DatasetHandler {
         let datasetOUTKey: any;
         datasetOUT = await this.findDataset(subproject, journalClient, datasetIN);
         datasetOUTKey = await this.findDatasetKey(subproject, journalClient, datasetIN);
+        const originalDatasetOUTKey = datasetOUTKey;
 
         // check if the dataset does not exist
         if (!datasetOUT) {
@@ -816,6 +823,10 @@ export class DatasetHandler {
         }
 
         if (newName) {
+            if (FeatureFlags.isEnabled(Feature.RESTORE)) {
+                await AzureArchiveService.archiveBeforeDelete(
+                    originalDatasetOUTKey.partitionKey, datasetOUT.tenant, ArchiveOperation.Rename);
+            }
             await Promise.all([
                 DatasetDAO.delete(journalClient, datasetOUT),
                 DatasetDAO.register(journalClient, { key: datasetOUTKey, data: datasetOUT })]);
