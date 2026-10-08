@@ -24,6 +24,7 @@ public interface IRedisHandler
     IDatabase GetDatabase();
     Task<string?> GetAsync(string key);
     Task<bool> SetAsync(string key, string value);
+    Task<bool> SetAsync(string key, string value, TimeSpan expiry);
     long HashIncrement(string key, string field, long? incBy = 1);
     Task<long> HashIncrementAsync(string key, string field, long? incBy = 1);
     long HashDecrement(string key, string field, long? decBy = 1);

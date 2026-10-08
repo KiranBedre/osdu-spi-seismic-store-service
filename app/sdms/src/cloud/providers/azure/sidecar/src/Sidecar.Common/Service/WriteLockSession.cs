@@ -21,4 +21,5 @@ public class WriteLockSession
     public string Key { get; set; } = "";
     public string Wid { get; set; } = "";
     public bool Locked { get; set; }
+    public bool IsIdempotent { get; set; }
 }

@@ -35,6 +35,7 @@ public class MetadataTierUpdater : IMetadataTierUpdater
     // Cosmos patch paths for dataset tier metadata (used only by this updater)
     private const string TierClassPatchPath = "/data/filemetadata/tier_class";
     private const string FileMetadataPatchPath = "/data/filemetadata";
+    private const int MaxRetries = 5;
 
     public MetadataTierUpdater(
         ILogger<MetadataTierUpdater> logger,
@@ -51,9 +52,15 @@ public class MetadataTierUpdater : IMetadataTierUpdater
     /// <summary>
     /// Updates the tier_class metadata for a dataset.
     /// Uses a two-phase approach: first tries direct path update, then creates missing path structure if needed.
-    /// Retry logic is handled by the caller (Polly General pipeline) and Cosmos SDK.
     /// </summary>
-    public async Task UpdateTier(string dataPartitionId, string id, string tier, string? operationId = null)
+    public Task UpdateTier(string dataPartitionId, string id, string tier) =>
+        UpdateTier(dataPartitionId, id, tier, null);
+
+    public async Task UpdateTier(
+        string dataPartitionId,
+        string id,
+        string tier,
+        string? operationId)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -67,37 +74,61 @@ public class MetadataTierUpdater : IMetadataTierUpdater
             { TierClassPatchPath, tier }
         };
 
-        try
+        for (var attempt = 1; attempt <= MaxRetries; attempt++)
         {
-            await _dataAccess.UpdateMetadataAsync(cs, id, directUpdate, operationId);
+            try
+            {
+                if (await _dataAccess.UpdateMetadataAsync(cs, id, directUpdate, operationId))
+                {
+                    _logger.LogDebug(
+                        "Metadata tier updated - Dataset: {DatasetId}, Tier: {Tier}, Duration: {DurationMs}ms",
+                        id,
+                        tier,
+                        stopwatch.ElapsedMilliseconds);
+                    return;
+                }
+            }
+            catch (CosmosException ex) when (
+                ex.Message.Contains("no path found beyond: 'filemetadata'"))
+            {
+                var createPath = new Dictionary<string, object> {
+                    { FileMetadataPatchPath, new { tier_class = tier } }
+                };
 
-            _logger.LogDebug("Metadata tier updated - Dataset: {DatasetId}, Tier: {Tier}, Duration: {DurationMs}ms",
-                id, tier, stopwatch.ElapsedMilliseconds);
-            return;
-        }
-        catch (CosmosException ex) when (ex.Message.Contains("no path found beyond: 'filemetadata'"))
-        {
-            // Expected case: filemetadata path doesn't exist yet, will create it below
-            _logger.LogInformation("Creating filemetadata path for Dataset: {DatasetId}", id);
+                try
+                {
+                    if (await _dataAccess.UpdateMetadataAsync(cs, id, createPath, operationId))
+                    {
+                        _logger.LogDebug(
+                            "Metadata tier updated (created path) - Dataset: {DatasetId}, Tier: {Tier}, Duration: {DurationMs}ms",
+                            id,
+                            tier,
+                            stopwatch.ElapsedMilliseconds);
+                        return;
+                    }
+                }
+                catch (CosmosException createException) when (attempt < MaxRetries)
+                {
+                    _logger.LogWarning(
+                        createException,
+                        "Could not create tier metadata for dataset {DatasetId}, attempt {Attempt}/{MaxRetries}",
+                        id,
+                        attempt,
+                        MaxRetries);
+                }
+            }
+            catch (CosmosException ex) when (attempt < MaxRetries)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Could not update tier metadata for dataset {DatasetId}, attempt {Attempt}/{MaxRetries}",
+                    id,
+                    attempt,
+                    MaxRetries);
+            }
         }
 
-        // Create filemetadata object with tier_class (path doesn't exist)
-        var createPath = new Dictionary<string, object> {
-            { FileMetadataPatchPath, new { tier_class = tier } }
-        };
-
-        try
-        {
-            await _dataAccess.UpdateMetadataAsync(cs, id, createPath, operationId);
-
-            _logger.LogDebug("Metadata tier updated (created path) - Dataset: {DatasetId}, Tier: {Tier}, Duration: {DurationMs}ms",
-                id, tier, stopwatch.ElapsedMilliseconds);
-        }
-        catch (CosmosException ex)
-        {
-            _logger.LogError(ex, "Metadata tier update failed - Dataset: {DatasetId}, Tier: {Tier}, StatusCode: {StatusCode}, Duration: {DurationMs}ms",
-                id, tier, ex.StatusCode, stopwatch.ElapsedMilliseconds);
-            throw;
-        }
+        throw new InvalidOperationException(
+            $"Tier metadata update exhausted {MaxRetries} attempts without an exception.");
     }
 }

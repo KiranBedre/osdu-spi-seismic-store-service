@@ -27,7 +27,7 @@ import { lockerInstance } from '../dataset/locker';
  */
 export class RestoreOperationLock {
 
-    private static get logger() { return LoggerFactory.getLogger(); }
+    private static get logger() { return LoggerFactory.build(Config.CLOUDPROVIDER); }
     private static readonly LOCK_KEY_PREFIX = 'restore-op-lock:';
     private static readonly CONTEXT = 'RestoreOperationLock';
 

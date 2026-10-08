@@ -28,17 +28,17 @@ public class BlobClientFactory(
     IDesClient desClient,
     SecretClient secretClient,
     TokenCredential credential,
-    IOptionsStorageAccount options) : IBlobClientFactory
+    IOptionsStorageAccount? options = null) : IBlobClientFactory
 {
     private readonly ILogger<BlobClientFactory> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IDesClient _desClient = desClient;
     private readonly SecretClient _secretClient = secretClient;
     private readonly TokenCredential _credential = credential;
-    private readonly IOptionsStorageAccount _options = options;
+    private readonly IOptionsStorageAccount? _options = options;
 
     public async Task<IBlobClient> GetBlobClientAsync(string dataPartitionId, CancellationToken ct = default)
     {
-        if (!string.IsNullOrEmpty(_options.StorageAccountConnectionString))
+        if (!string.IsNullOrEmpty(_options?.StorageAccountConnectionString))
         {
             return new BlobClient(new(_options.StorageAccountConnectionString));
         }

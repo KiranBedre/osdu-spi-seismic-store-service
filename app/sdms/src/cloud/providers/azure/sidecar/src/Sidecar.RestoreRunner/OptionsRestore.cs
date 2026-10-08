@@ -26,8 +26,7 @@ using Sidecar.Common.Interface;
 /// The queue name is read from SDMS_RESTORE_QUEUE env var.
 /// </summary>
 public class OptionsRestore :
-    IOptionsRestore,
-    IOptionsConfig
+    IOptionsRestore
 {
     [Option("port", Required = false, Default = "6000")]
     public string WebHostPort { get; set; }
@@ -37,18 +36,6 @@ public class OptionsRestore :
 
     [Option("desUrl", Required = false)]
     public string DesUrl { get; set; }
-
-    [Option("cosmosUrl", Required = false)]
-    public string CosmosEndpoint { get; set; }
-
-    [Option("cosmosPrimaryKey", Required = false)]
-    public string CosmosKey { get; set; }
-
-    [Option("storageAccountName", Required = false)]
-    public string StorageAccountName { get; set; }
-
-    [Option("storageAccountConnectionString", Required = false)]
-    public string StorageAccountConnectionString { get; set; }
 
     [Option("redisQueueHostname", Required = false)]
     public string RedisQueueHostname { get; set; }

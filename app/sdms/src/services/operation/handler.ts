@@ -41,7 +41,7 @@ import { ITenantModel } from '../tenant/model';
 
 export class Handler {
 
-    private static get logger() { return LoggerFactory.getLogger(); }
+    private static get logger() { return LoggerFactory.build(Config.CLOUDPROVIDER); }
 
     // handler for the [ /operation ] endpoints
     public static async handle(req: expRequest, res: expResponse, op: Operation) {
@@ -254,7 +254,8 @@ export class Handler {
                     context, rejectionSource: 'redis-lock',
                 });
                 throw Error.make(Error.Status.ALREADY_EXISTS,
-                    `A restore operation is already in progress for this data partition (operationId: ${currentHolder}). Only one restore can run at a time per data partition.`);
+                    `A restore operation is already in progress for this data partition `
+                    + `(operationId: ${currentHolder}). Only one restore can run at a time per data partition.`);
             }
         } catch (error) {
             if ((error as any)?.error?.code === 409) throw error;
@@ -274,7 +275,8 @@ export class Handler {
                 context, rejectionSource: 'cosmos-fallback',
             });
             throw Error.make(Error.Status.ALREADY_EXISTS,
-                `A restore operation is already in progress for this data partition (operationId: ${inProgressOperationId}). Only one restore can run at a time per data partition.`);
+                `A restore operation is already in progress for this data partition `
+                + `(operationId: ${inProgressOperationId}). Only one restore can run at a time per data partition.`);
         }
 
         // Step 3: Acquire Redis lock now that both checks passed
@@ -286,7 +288,8 @@ export class Handler {
                     context, rejectionSource: 'redis-race',
                 });
                 throw Error.make(Error.Status.ALREADY_EXISTS,
-                    'A restore operation is already in progress for this data partition. Only one restore can run at a time per data partition.');
+                    'A restore operation is already in progress for this data partition. '
+                    + 'Only one restore can run at a time per data partition.');
             }
         } catch (error) {
             if ((error as any)?.error?.code === 409) throw error;
@@ -405,7 +408,8 @@ export class Handler {
         const maxAgeMs = maxDays * 24 * 60 * 60 * 1000;
         if (Date.now() - ts.getTime() > maxAgeMs) {
             throw Error.make(Error.Status.BAD_REQUEST,
-                `restorePointInTime must be within the last ${maxDays} days. Point-in-time restore is only available for the past ${maxDays} days.`);
+                `restorePointInTime must be within the last ${maxDays} days. `
+                + `Point-in-time restore is only available for the past ${maxDays} days.`);
         }
 
         return { sdPath, restorePointInTime };
@@ -425,7 +429,7 @@ export class Handler {
         try {
             return await AzureArchiveService.hasArchivedEntries(sdPath, tenant);
         } catch (error) {
-            LoggerFactory.getLogger().error({
+            LoggerFactory.build(Config.CLOUDPROVIDER).error({
                 message: `Failed to check archive container for dataset ${sdPath}: ${(error as any)?.message}`,
                 context: 'RestorePush.checkArchive'
             });

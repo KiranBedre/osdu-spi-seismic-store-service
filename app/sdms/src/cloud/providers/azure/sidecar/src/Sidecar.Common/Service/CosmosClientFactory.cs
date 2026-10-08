@@ -36,28 +36,28 @@ public class CosmosClientFactory(
 
     public async Task<string> GetCosmosConnectionEndpointAsync(string dataPartitionId, CancellationToken ct = default)
     {
-        logger.LogInformation("Getting cosmos connection string");
+        logger.LogInformation("Getting Cosmos endpoint");
         var desConfig = await desClient.GetPartitionConfigurationAsync(dataPartitionId, ct);
         var endpoint = await desConfig.CosmosEndpoint.GetActualValueAsync(secretClient, ct);
         return $"{endpoint}";
     }
 
     /// <summary>
-    /// Gets or creates a cached CosmosClient for the given connection string.
+    /// Gets or creates a cached CosmosClient for the given endpoint.
     /// Uses AAD authentication with DefaultAzureCredential.
     /// Configures SDK-level retry for transient errors (429 rate limiting, etc.).
     /// </summary>
-    public CosmosClient GetCosmosClient(string connectionString)
+    public CosmosClient GetCosmosClient(string endpoint)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         try
         {
-            logger.LogInformation("Initializing Cosmos client for endpoint: {ConnectionString}", connectionString);
+            logger.LogInformation("Initializing Cosmos client for endpoint: {Endpoint}", endpoint);
             return _cosmosClients.GetOrAdd(
-                connectionString,
-                connStr => new CosmosClient(
-                    connStr,
+                endpoint,
+                cosmosEndpoint => new CosmosClient(
+                    cosmosEndpoint,
                     new DefaultAzureCredential(), // CodeQL [SM05141] In production, set AZURE_TOKEN_CREDENTIALS=prod to disable "Developer tool" credentials.
                     new CosmosClientOptions
                     {

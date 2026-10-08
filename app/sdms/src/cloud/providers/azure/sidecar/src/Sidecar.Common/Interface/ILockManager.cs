@@ -37,6 +37,18 @@ public interface ILockManager
     Task<WriteLockSession> AcquireWriteLockAsync(string key);
 
     /// <summary>
+    /// Attempts to acquire a write lock with an operation-stable ID and TTL.
+    /// </summary>
+    /// <param name="key">The dataset to be locked.</param>
+    /// <param name="idempotentLockId">The operation-stable lock ID.</param>
+    /// <param name="ttl">Time-to-live for the lock.</param>
+    /// <returns>The acquired lock session, or an unlocked session when acquisition fails.</returns>
+    Task<WriteLockSession> AcquireWriteLockAsync(
+        string key,
+        string idempotentLockId,
+        TimeSpan ttl);
+
+    /// <summary>
     /// Attempts to remove a delete lock.
     /// </summary>
     /// <param name="key">The dataset to be unlocked</param>

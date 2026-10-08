@@ -18,7 +18,7 @@ import { Container, CosmosClient } from '@azure/cosmos';
 import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
 import { AzureCredentials } from './credentials';
-import { LoggerFactory } from '../../logger';
+import { Config, LoggerFactory } from '../..';
 import { SDPath } from '../../../shared';
 
 export enum ArchiveOperation {
@@ -29,7 +29,7 @@ export enum ArchiveOperation {
 
 export class AzureArchiveService {
 
-    private static get logger() { return LoggerFactory.getLogger(); }
+    private static get logger() { return LoggerFactory.build(Config.CLOUDPROVIDER); }
 
     private static cosmosClientCache = new Map<string, Promise<CosmosClient>>();
     private static containerCache = new Map<string, Promise<Container>>();
@@ -37,9 +37,9 @@ export class AzureArchiveService {
     private static getCosmosClient(tenant: string): Promise<CosmosClient> {
         if (!AzureArchiveService.cosmosClientCache.has(tenant)) {
             const clientPromise = (async () => {
-                const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(tenant);
+                const endpoint = await AzureDataEcosystemServices.getCosmosConnectionEndpoint(tenant);
                 return new CosmosClient({
-                    endpoint: connectionParams.endpoint,
+                    endpoint,
                     aadCredentials: AzureCredentials.defaultAzureCredential
                 });
             })().catch((err) => {
@@ -86,7 +86,8 @@ export class AzureArchiveService {
         if (failures.length > 0) {
             const firstError = (failures[0] as PromiseRejectedResult).reason;
             AzureArchiveService.logger.error({
-                message: `Archival batch failed: ${failures.length}/${datasetIds.length} items failed. First error: ${firstError?.message || firstError}`,
+                message: `Archival batch failed: ${failures.length}/${datasetIds.length} items failed. `
+                    + `First error: ${firstError?.message || firstError}`,
                 context: 'ArchiveService.archiveBatch'
             });
             throw firstError;
@@ -149,7 +150,9 @@ export class AzureArchiveService {
         return clone;
     }
 
-    private static async archiveCurrentState(datasetId: string, tenant: string, operation: ArchiveOperation): Promise<void> {
+    private static async archiveCurrentState(
+        datasetId: string, tenant: string, operation: ArchiveOperation
+    ): Promise<void> {
         const dataContainer = await AzureArchiveService.getContainer(tenant, AzureConfig.COSMOS_DATA_CONTAINER);
 
         // Read current state from primary data container

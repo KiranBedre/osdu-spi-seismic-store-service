@@ -28,6 +28,8 @@ public class BlobClient(BlobServiceClient client) : IBlobClient
 {
     private readonly BlobServiceClient _client = client;
 
+    public Uri Uri => _client.Uri;
+
     public BlobContainerClient GetContainerClient(string containerName) => _client.GetBlobContainerClient(containerName);
 
     public BlobBatchClient GetBatchClient() =>

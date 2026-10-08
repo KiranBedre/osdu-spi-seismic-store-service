@@ -65,14 +65,14 @@ export class AzureConfig extends Config {
     public static COSMOS_CHANGE_TIER_FAILURE_CONTAINER = 'ChangeTierFailure';
     public static COSMOS_RESTORE_STATUS_CONTAINER = 'RestoreOperationStatus';
     public static COSMOS_ARCHIVE_CONTAINER = 'ArchiveDatasetMetadata';
-    
+
     // Archive TTL derived from restore max days (Config.SDMS_RESTORE_MAX_DAYS)
     public static get COSMOS_ARCHIVE_TTL_SECONDS(): number {
         const maxDays = Config.SDMS_RESTORE_MAX_DAYS;
         const validDays = Number.isInteger(maxDays) && maxDays > 0 ? maxDays : 30;
         return validDays * 24 * 60 * 60;
     }
-    
+
     // Dataset entity ID prefix — only entities with this prefix are archived
     public static DATASET_ENTITY_PREFIX = 'ds-';
 

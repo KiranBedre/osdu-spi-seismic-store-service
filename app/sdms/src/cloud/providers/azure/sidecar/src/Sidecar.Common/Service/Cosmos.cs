@@ -21,17 +21,18 @@ using Interface;
 using Model;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 
-public class Cosmos(ILogger<Cosmos> logger) : IDataAccess
+public class Cosmos(
+    ILogger<Cosmos> logger,
+    ICosmosClientFactory cosmosClientFactory) : IDataAccess
 {
     private const string DATABASE_ID = "sdms-db";
     private const string CONTAINER_ID = "data";
     private const int MAX_ITEM_COUNT = 1000;
     private const int MAX_CONCURRENCY = 32;
 
-    private static readonly ConcurrentDictionary<string, CosmosClient> _cosmosClients = new();
     private readonly ILogger<Cosmos> _logger = logger;
+    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
 
     /// <param name="cs">Connection string for the target Cosmos instance</param>
     /// <param name="sql">SQL query to send to Cosmos</param>
@@ -39,15 +40,44 @@ public class Cosmos(ILogger<Cosmos> logger) : IDataAccess
     /// <param name="ctoken">Continuation token</param>
     /// <param name="limit">Results limit</param>
     /// <returns>JSON containing results and new continuation token</returns>
-    public async Task<string> QueryAsync(string cs, string sql, string? jsonParameters, string? ctoken, int? limit)
+    public Task<string> QueryAsync(
+        string endpoint,
+        string sql,
+        string? jsonParameters,
+        string? ctoken,
+        int? limit) =>
+        QueryAsync(endpoint, sql, jsonParameters, ctoken, limit, null);
+
+    public async Task<string> QueryAsync(
+        string endpoint,
+        string sql,
+        string? jsonParameters,
+        string? ctoken,
+        int? limit,
+        string? operationId)
     {
-        var paginatedRecords = await GetRecordsAsync(cs, sql, jsonParameters, ctoken, limit);
+        var paginatedRecords = await GetRecordsAsync(
+            endpoint, sql, jsonParameters, ctoken, limit, operationId);
         return JsonConvert.SerializeObject(paginatedRecords);
     }
 
-    public async Task<IPaginatedRecords> GetRecordsAsync(string cs, string sql, string? jsonParameters, string? ctoken, int? limit)
+    public Task<IPaginatedRecords> GetRecordsAsync(
+        string endpoint,
+        string sql,
+        string? jsonParameters,
+        string? ctoken,
+        int? limit) =>
+        GetRecordsAsync(endpoint, sql, jsonParameters, ctoken, limit, null);
+
+    public async Task<IPaginatedRecords> GetRecordsAsync(
+        string endpoint,
+        string sql,
+        string? jsonParameters,
+        string? ctoken,
+        int? limit,
+        string? operationId)
     {
-        var client = getCosmosClient(cs);
+        var client = _cosmosClientFactory.GetCosmosClient(endpoint);
         var database = client.GetDatabase(DATABASE_ID);
         var container = database.GetContainer(CONTAINER_ID);
         var records = new List<object>();
@@ -131,18 +161,34 @@ public class Cosmos(ILogger<Cosmos> logger) : IDataAccess
         }
     }
 
-    public async Task<bool> DeleteMetadataAsync(string cs, string id)
+    public Task<bool> DeleteMetadataAsync(string endpoint, string id) =>
+        DeleteMetadataAsync(endpoint, id, null);
+
+    public async Task<bool> DeleteMetadataAsync(
+        string endpoint,
+        string id,
+        string? operationId)
     {
-        var client = getCosmosClient(cs);
+        var client = _cosmosClientFactory.GetCosmosClient(endpoint);
         var database = client.GetDatabase(DATABASE_ID);
         var container = database.GetContainer(CONTAINER_ID);
         var itemResponse = await container.DeleteItemAsync<object>(id, new PartitionKey(id));
         return itemResponse.StatusCode == System.Net.HttpStatusCode.NoContent;
     }
 
-    public async Task<bool> UpdateMetadataAsync(string cs, string id, Dictionary<string, object> updates)
+    public Task<bool> UpdateMetadataAsync(
+        string endpoint,
+        string id,
+        Dictionary<string, object> updates) =>
+        UpdateMetadataAsync(endpoint, id, updates, null);
+
+    public async Task<bool> UpdateMetadataAsync(
+        string endpoint,
+        string id,
+        Dictionary<string, object> updates,
+        string? operationId)
     {
-        var client = getCosmosClient(cs);
+        var client = _cosmosClientFactory.GetCosmosClient(endpoint);
         var database = client.GetDatabase(DATABASE_ID);
         var container = database.GetContainer(CONTAINER_ID);
         var patchOperations = new List<PatchOperation>();
@@ -169,26 +215,4 @@ public class Cosmos(ILogger<Cosmos> logger) : IDataAccess
 
     private int GetItemLimit(int? limit) => limit is null or < 0 ? MAX_ITEM_COUNT : limit > MAX_ITEM_COUNT ? MAX_ITEM_COUNT : limit.Value;
 
-    public static CosmosClient getCosmosClient(string connectionString)
-    {
-        try
-        {
-            return _cosmosClients.GetOrAdd(connectionString, connStr => new CosmosClient(connStr, new CosmosClientOptions()
-            {
-                SerializerOptions = new CosmosSerializationOptions()
-                {
-                    IgnoreNullValues = true
-                },
-                ConnectionMode = ConnectionMode.Direct,
-            }));
-        }
-        catch (CosmosException)
-        {
-            throw new InvalidOperationException("An error occurred while initializing the CosmosClient.", new Exception("CosmosDB error."));
-        }
-        catch (Exception)
-        {
-            throw new InvalidOperationException("An error occurred while initializing the CosmosClient.", new Exception("General error."));
-        }
-    }
 }

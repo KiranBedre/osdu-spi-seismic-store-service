@@ -17,14 +17,29 @@
 namespace Sidecar.Common.Service;
 
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Registry;
 using Sidecar.Common.Interface;
+using Sidecar.Common.Resilience;
 using Sidecar.Common.Utility;
 
-public class LockManager(ILogger<LockManager> logger, IRedisConnectionFactory<RedisLocksConnectionFactory> redisConnectionFactory) : ILockManager
+public class LockManager : ILockManager
 {
     private static readonly TimeSpan _ttl = TimeSpan.FromSeconds(6);
-    private readonly IRedisHandler _locksRedis = redisConnectionFactory.GetRedis();
-    private readonly ILogger<LockManager> _logger = logger;
+    private readonly IRedisHandler _locksRedis;
+    private readonly ILogger<LockManager> _logger;
+    private readonly ResiliencePipeline _redisPipeline;
+
+    public LockManager(
+        ILogger<LockManager> logger,
+        IRedisConnectionFactory<RedisLocksConnectionFactory> redisConnectionFactory,
+        ResiliencePipelineProvider<string>? resiliencePipelineProvider = null)
+    {
+        _logger = logger;
+        _locksRedis = redisConnectionFactory.GetRedis();
+        _redisPipeline = resiliencePipelineProvider
+            ?.GetPipeline(ResilienceExtensions.RedisPipeline) ?? ResiliencePipeline.Empty;
+    }
 
     private async Task<object?> GetLockAsync(string key)
     {

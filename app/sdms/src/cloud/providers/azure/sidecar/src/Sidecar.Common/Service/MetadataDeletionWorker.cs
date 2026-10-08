@@ -29,7 +29,6 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
     private readonly ICosmosClientFactory _cosmosClientFactory;
     private readonly IArchiveService _archiveService;
 
-    private int _consecutiveFailures = 0;
     private const int MAX_RETRIES = 5;
 
     public MetadataDeletionWorker(
@@ -49,24 +48,28 @@ public class MetadataDeletionWorker : IMetadataDeletionWorker
         // Archive current state before deletion
         await _archiveService.ArchiveBeforeDeleteAsync(dataPartitionId, id);
 
-        var success = false;
-        do
+        for (var attempt = 1; attempt <= MAX_RETRIES; attempt++)
         {
             try
             {
                 var cs = await _cosmosClientFactory.GetCosmosConnectionEndpointAsync(dataPartitionId);
-                success = await _dataAccess.DeleteMetadataAsync(cs, id);
-                _consecutiveFailures = 0;
-            }
-            catch (CosmosException ex)
-            {
-                _consecutiveFailures++;
-                _logger.LogWarning("Could not delete metadata for dataset {id}, Attempt {a}", id, _consecutiveFailures / MAX_RETRIES);
-                if (_consecutiveFailures == MAX_RETRIES)
+                if (await _dataAccess.DeleteMetadataAsync(cs, id, null))
                 {
-                    throw ex;
+                    return;
                 }
             }
-        } while (!success && _consecutiveFailures < MAX_RETRIES);
+            catch (CosmosException ex) when (attempt < MAX_RETRIES)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Could not delete metadata for dataset {DatasetId}, attempt {Attempt}/{MaxRetries}",
+                    id,
+                    attempt,
+                    MAX_RETRIES);
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Metadata deletion exhausted {MAX_RETRIES} attempts without an exception.");
     }
 }

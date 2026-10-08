@@ -20,11 +20,11 @@ import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
 import { AzureCredentials } from './credentials';
 import { Error } from '../../../shared';
-import { LoggerFactory } from '../../logger';
+import { Config, LoggerFactory } from '../..';
 
 export class AzureRestoreOperationStatusStorage {
 
-    private get logger() { return LoggerFactory.getLogger(); }
+    private get logger() { return LoggerFactory.build(Config.CLOUDPROVIDER); }
 
     private static cosmosClientCache = new Map<string, Promise<CosmosClient>>();
     private static containerCache = new Map<string, Promise<Container>>();
@@ -33,9 +33,9 @@ export class AzureRestoreOperationStatusStorage {
     private getCosmosClient(tenant: string): Promise<CosmosClient> {
         if (!AzureRestoreOperationStatusStorage.cosmosClientCache.has(tenant)) {
             const clientPromise = (async () => {
-                const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(tenant);
+                const endpoint = await AzureDataEcosystemServices.getCosmosConnectionEndpoint(tenant);
                 return new CosmosClient({
-                    endpoint: connectionParams.endpoint,
+                    endpoint,
                     aadCredentials: AzureCredentials.defaultAzureCredential
                 });
             })().catch((err) => {

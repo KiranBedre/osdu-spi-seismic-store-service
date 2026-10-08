@@ -27,7 +27,8 @@ public class MetadataUpdaterTest
         var updateDate = "Tue, 31 Oct 2023 12:12:12 GMT";
         var cancellationToken = new CancellationToken();
         _ = dateFormatterMock.Setup(_ => _.FormatDate(It.IsAny<DateTime>())).Returns(updateDate);
-        _ = cosmosClientFactoryMock.Setup(_ => _.GetCosmosConnectionStringAsync(dataPartitionId, cancellationToken)).ReturnsAsync(cs);
+        _ = cosmosClientFactoryMock.Setup(_ =>
+            _.GetCosmosConnectionEndpointAsync(dataPartitionId, cancellationToken)).ReturnsAsync(cs);
 
         // Act
         await metadataUpdater.UpdateComputeSize(dataPartitionId, metadataId, size, cancellationToken);
@@ -57,7 +58,8 @@ public class MetadataUpdaterTest
         var metadataId = "metadataID";
         var size = 1024L;
         var cancellationToken = new CancellationToken();
-        _ = cosmosClientFactoryMock.Setup(_ => _.GetCosmosConnectionStringAsync(dataPartitionId, cancellationToken))
+        _ = cosmosClientFactoryMock.Setup(_ =>
+            _.GetCosmosConnectionEndpointAsync(dataPartitionId, cancellationToken))
             .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act

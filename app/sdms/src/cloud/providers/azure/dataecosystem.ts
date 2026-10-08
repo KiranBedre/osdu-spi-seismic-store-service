@@ -138,4 +138,27 @@ export class AzureDataEcosystemServices extends AbstractDataEcosystemCore {
         return { endpoint: cosmosEndpointConfigs.value, key: cosmosKeyConfigs.value };
     }
 
+    public static async getCosmosConnectionEndpoint(dataPartitionID: string): Promise<string> {
+        const cache = getInMemoryCacheInstance();
+        const cacheKey = 'azure-cosmos-endpoint-' + dataPartitionID;
+        const cachedEndpoint = cache.get<string>(cacheKey);
+        if (cachedEndpoint !== undefined) {
+            return cachedEndpoint;
+        }
+
+        const partitionConfiguration =
+            await AzureDataEcosystemServices.getPartitionConfiguration(dataPartitionID);
+        const endpointConfiguration = partitionConfiguration[KeyVault.DATA_PARTITION_COSMOS_ENDPOINT] as {
+            sensitive: boolean;
+            value: string;
+        };
+        if (endpointConfiguration.sensitive) {
+            endpointConfiguration.value = (await KeyVault.CreateSecretClient()
+                .getSecret(endpointConfiguration.value)).value;
+        }
+
+        cache.set<string>(cacheKey, endpointConfiguration.value, 3600);
+        return endpointConfiguration.value;
+    }
+
 }

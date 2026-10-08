@@ -50,6 +50,11 @@ public static class Constants
         public const string APP_RESOURCE_ID = "aad-client-id";
 
         /// <summary>
+        /// Instrumentation key of Application Insights.
+        /// </summary>
+        public const string APP_INSIGHTS_INSTRUMENTATION_KEY = "appinsights-key";
+
+        /// <summary>
         /// Endpoint for working with Azure Storage Queues on the central storage account.
         /// </summary>
         public const string CENTRAL_STORAGE_QUEUE_ENDPOINT = "queue-storage-endpoint";
@@ -81,6 +86,7 @@ public static class Constants
     {
         public const string LAST_UPDATED_AT = "LastUpdatedAt";
         public const string STATUS = "Status";
+        public const string STATUS_DESCRIPTION = "StatusDescription";
         public const string DATASETS_CNT = "DatasetsCnt";
         public const string COMPLETED_CNT = "CompletedCnt";
         public const string FAILED_CNT = "FailedCnt";

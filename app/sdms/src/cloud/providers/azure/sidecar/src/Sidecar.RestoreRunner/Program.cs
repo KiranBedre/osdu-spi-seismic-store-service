@@ -55,10 +55,6 @@ public class Program
         _logger?.LogWarning("Checking environment variables for options...");
 
         opts.WebHostPort ??= Environment.GetEnvironmentVariable("HOST_PORT")!;
-        opts.CosmosEndpoint ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_ENDPOINT")!;
-        opts.CosmosKey ??= Environment.GetEnvironmentVariable("SDMS_COSMOS_KEY")!;
-        opts.StorageAccountName ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_ACCOUNT_NAME")!;
-        opts.StorageAccountConnectionString ??= Environment.GetEnvironmentVariable("SDMS_STORAGE_CONNSTR")!;
         opts.RedisQueueHostname ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_HOSTNAME")!;
         opts.RedisQueuePassword ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_PASSWORD")!;
         opts.RedisQueuePort ??= Environment.GetEnvironmentVariable("SDMS_REDIS_QUEUE_PORT")!;
@@ -206,14 +202,11 @@ public class Program
 
         _ = services
             .AddSingleton<IOptionsRestore>(opts)
-            .AddSingleton<IOptionsCosmos>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
-            .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsQueueNameRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptionsRestore>())
-            .AddSingleton<IOptionsConfig>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsAzureResourceScope>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsRedisMsi>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton(new TaskQueueBackgroundServiceOptions
@@ -239,7 +232,11 @@ public class Program
             .AddSingleton<IAzureStorageResourceResolver, AzureStorageResourceResolver>()
             .AddSingleton<IContainerRestoreService, ContainerRestoreService>()
             .AddSingleton<IBlobRestoreService, BlobRestoreService>()
-            .AddSingleton<IBlobClientFactory, BlobClientFactory>()
+            .AddSingleton<IBlobClientFactory>(sp => new BlobClientFactory(
+                sp.GetRequiredService<ILogger<BlobClientFactory>>(),
+                sp.GetRequiredService<IDesClient>(),
+                sp.GetRequiredService<SecretClient>(),
+                sp.GetRequiredService<TokenCredential>()))
             .AddSingleton<QueueClientFactory>()
             .AddSingleton<QueueClient>(sp => sp.GetRequiredService<QueueClientFactory>().Build())
             .AddSingleton<RestoreJsonDeserializer>()

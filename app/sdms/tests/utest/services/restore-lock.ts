@@ -37,7 +37,7 @@ export class TestRestoreOperationLock {
                     metric: this.sandbox.stub(),
                     buildTraceInfo: this.sandbox.stub()
                 };
-                this.sandbox.stub(LoggerFactory, 'getLogger').returns(this.mockLogger);
+                this.sandbox.stub(LoggerFactory, 'build').returns(this.mockLogger);
                 this.sandbox.stub(Config, 'SDMS_RESTORE_LOCK_TTL_SECONDS').value(7200);
             });
 

@@ -23,7 +23,7 @@ import { AbstractJournal, AbstractJournalTransaction, IJournalExtendedQueryModel
 import { TenantModel } from '../../../services/tenant';
 import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
-import { Config } from '../..';
+import { Config, LoggerFactory } from '../..';
 import { CallContext, Error, Feature, FeatureFlags, Utils } from '../../../shared';
 import { Operator } from '../../../services/dataset/model';
 import { DatasetUtils } from '../../../services/dataset';
@@ -39,6 +39,7 @@ import { DatasetModel, ListDatasetsParams, QueryFilter, QueryFilterVisitor, AndQ
 export class AzureCosmosDbDAO extends AbstractJournal {
 
     public KEY = Symbol('id');
+    private get logger() { return LoggerFactory.build(Config.CLOUDPROVIDER); }
     private dataPartition: string;
     private tenant: TenantModel;
     private static containerCache: { [key: string]: Container; } = {};
@@ -124,12 +125,16 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 item.data[this.KEY.toString()] = entity.key;}
             try {
                 // Archive only dataset entities (prefix 'ds-') before mutation
-                if (FeatureFlags.isEnabled(Feature.RESTORE) && item.id.startsWith(AzureConfig.DATASET_ENTITY_PREFIX)) {
+                if (FeatureFlags.isEnabled(Feature.RESTORE)
+                    && item.id.startsWith(AzureConfig.DATASET_ENTITY_PREFIX)) {
                     await AzureArchiveService.archiveBeforeSave(item.id, this.dataPartition);
                 }
                 await container.items.upsert(item);
             } catch (error) {
-                this.logger.error({ message: `Cosmos save failed for id: ${item.id}: ${error?.message || error}`, context: 'CosmosDB.save' });
+                this.logger.error({
+                    message: `Cosmos save failed for id: ${item.id}: ${error?.message || error}`,
+                    context: 'CosmosDB.save'
+                });
                 throw error;
             }
         }
@@ -283,7 +288,10 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             // Bulk delete (deleteMulti) archives separately since it skips the status update.
             await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).delete();
         } catch (error) {
-            this.logger.error({ message: `Cosmos delete failed for key: ${key.partitionKey}: ${error?.message || error}`, context: 'CosmosDB.delete' });
+            this.logger.error({
+                message: `Cosmos delete failed for key: ${key.partitionKey}: ${error?.message || error}`,
+                context: 'CosmosDB.delete'
+            });
             throw error;
         }
     }

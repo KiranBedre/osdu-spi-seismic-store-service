@@ -21,21 +21,25 @@ import { AzureArchiveService } from '../../../../src/cloud/providers/azure/archi
 import { AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure/dataecosystem';
 import { AzureCredentials } from '../../../../src/cloud/providers/azure/credentials';
 import { AzureConfig } from '../../../../src/cloud/providers/azure/config';
+import { LoggerFactory } from '../../../../src/cloud';
 import { Tx } from '../../utils';
 
 export class TestAzureArchiveService {
     private static sandbox: sinon.SinonSandbox;
-    
 
     public static run() {
         describe(Tx.testInit('azure archive service tests'), () => {
             this.sandbox = sinon.createSandbox();
-            
 
             beforeEach(() => {
-                this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionParams').resolves({
-                    endpoint: 'https://test-cosmos.documents.azure.com:443/'
+                this.sandbox.stub(LoggerFactory, 'build').returns({
+                    info: this.sandbox.stub(),
+                    error: this.sandbox.stub(),
+                    metric: this.sandbox.stub(),
+                    buildTraceInfo: this.sandbox.stub()
                 });
+                this.sandbox.stub(AzureDataEcosystemServices, 'getCosmosConnectionEndpoint')
+                    .resolves('https://test-cosmos.documents.azure.com:443/');
                 this.sandbox.stub(AzureCredentials, 'defaultAzureCredential').value({});
                 this.sandbox.stub(AzureConfig, 'COSMOS_DATABASE_ID').value('sdms-db');
                 this.sandbox.stub(AzureConfig, 'COSMOS_DATA_CONTAINER').value('data');
@@ -206,4 +210,3 @@ export class TestAzureArchiveService {
         });
     }
 }
-

@@ -16,7 +16,10 @@
 
 namespace Sidecar.Common.Interface;
 
+using Microsoft.Azure.Cosmos;
+
 public interface ICosmosClientFactory
 {
-    Task<string> GetCosmosConnectionStringAsync(string dataPartitionId, CancellationToken ct = default);
+    Task<string> GetCosmosConnectionEndpointAsync(string dataPartitionId, CancellationToken ct = default);
+    CosmosClient GetCosmosClient(string endpoint);
 }

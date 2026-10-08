@@ -22,11 +22,9 @@ import { ILogger } from '../../../../src/cloud/logger';
 const testLogger: ILogger = {
     info: () => { return; },
     error: () => { return; },
-    debug: () => { return; },
     metric: () => { return; },
     buildTraceInfo: () => '[MOCK_TRACE]'
 };
-const loggerStub = sinon.stub(LoggerFactory, 'build').returns(testLogger);
 
 import { Auth } from '../../../../src/auth';
 import { FeatureFlags, Feature, Utils } from '../../../../src/shared';
@@ -45,8 +43,6 @@ import { Config } from '../../../../src/cloud';
 import { JournalFactoryTenantClient } from '../../../../src/cloud';
 import { Tx } from '../../utils';
 
-loggerStub.restore();
-
 // Relative dates keep these tests independent of the calendar: the restore point is
 // recent (within SDMS_RESTORE_MAX_DAYS) and safely after the dataset creation time.
 const RESTORE_POINT_IN_TIME = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
@@ -58,6 +54,10 @@ export class TestRestoreHandler {
     public static run() {
 
         describe(Tx.testInit('restore-handler'), () => {
+
+            beforeEach(() => {
+                this.sandbox.stub(LoggerFactory, 'build').returns(testLogger);
+            });
 
             afterEach(() => {
                 this.sandbox.restore();
@@ -226,7 +226,7 @@ export class TestRestoreHandler {
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(false);
 
             await Handler.handle(req, res, Operation.RestorePush);
-            Tx.check403((res as any).statusCode);
+            Tx.check501((res as any).statusCode);
         });
 
         // Missing sdPath
@@ -405,7 +405,7 @@ export class TestRestoreHandler {
             this.sandbox.stub(FeatureFlags, 'isEnabled').returns(false);
 
             await Handler.handle(req, res, Operation.RestoreStatus);
-            Tx.check403((res as any).statusCode);
+            Tx.check501((res as any).statusCode);
         });
     }
 }

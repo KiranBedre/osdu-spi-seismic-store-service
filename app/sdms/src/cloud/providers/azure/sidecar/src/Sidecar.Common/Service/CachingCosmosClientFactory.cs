@@ -17,6 +17,7 @@
 namespace Sidecar.Common.Service;
 
 using Interface;
+using Microsoft.Azure.Cosmos;
 using Sidecar.Common.Utility;
 
 public class CachingCosmosClientFactory(ICosmosClientFactory factory) : ICosmosClientFactory
@@ -24,8 +25,12 @@ public class CachingCosmosClientFactory(ICosmosClientFactory factory) : ICosmosC
     private readonly AsyncCache<string, string> _cache = new();
     private readonly ICosmosClientFactory _factory = factory;
 
-    public Task<string> GetCosmosConnectionStringAsync(string dataPartitionId, CancellationToken ct = default) => _cache.GetValueAsync(
-            dataPartitionId,
-            () => _factory.GetCosmosConnectionStringAsync(dataPartitionId, ct)
+    public Task<string> GetCosmosConnectionEndpointAsync(
+        string dataPartitionId,
+        CancellationToken ct = default) => _cache.GetValueAsync(
+            $"cosmos-{dataPartitionId}-endpoint",
+            () => _factory.GetCosmosConnectionEndpointAsync(dataPartitionId, ct)
         );
+
+    public CosmosClient GetCosmosClient(string endpoint) => _factory.GetCosmosClient(endpoint);
 }

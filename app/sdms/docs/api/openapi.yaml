@@ -47,24 +47,21 @@ tags:
     description: Subproject related seismic store endpoints
   - name: Tenant
     description: Register or retrieve a tenant
+  - name: Tenant (Obsolete)
+    description: Obsolete tenant endpoints retained for backwards compatibility
   - name: Users
     description: User authorization
   - name: Apps
     description: Application related seismic store endpoints
   - name: Operations
     description: Requests can handle datasets in bulk
-  - name: Analytics
-    description: Manage analytics job configurations and generated reports
 paths:
   /svcstatus:
     get:
       summary: Seismic store service status (fast check).
-      description: |-
-        <ul>
-          <li>Return the seismic store service status.</li>
-          <li>No authentication required</li>
-        </ul>
-      security: []
+      description: "<ul><li>Return the seismic store service status.</li><li>Required roles: none</li></ul>"
+      security:
+        - bearer: []
       operationId: service-status
       tags:
         - General
@@ -80,11 +77,7 @@ paths:
   /svcstatus/access:
     get:
       summary: Seismic store service access check.
-      description: |-
-        <ul>
-          <li>Validates if the token audience is allowed</li>
-          <li>Required roles: any authenticated caller</li>
-        </ul>
+      description: "<ul><li>Validates if the token audience is allowed</li><li>Required roles: none</li></ul>"
       operationId: service-status-check
       tags:
         - General
@@ -96,19 +89,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Status"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
 
   /info:
     get:
       summary: Seismic store service info.
-      description: |-
-        <ul>
-          <li>Return the seismic store service deployment information.</li>
-          <li>No authentication required</li>
-        </ul>
-      security: []
+      description: "<ul><li>Return the seismic store service deployment information.</li><li>Required roles: none</li></ul>"
+      security:
+        - bearer: []
       operationId: service-info
       tags:
         - General
@@ -123,26 +113,48 @@ paths:
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}:
     post:
       summary: Register a new dataset.
-      description: |-
-        <ul>
-          <li>Register a new dataset in the seismic store.</li>
-          <li>Required roles: subproject.admin</li>
-        </ul>
+      description: "<ul><li>Register a new dataset in the seismic store.</li><li>Required roles: subproject.admin</li></ul>"
       operationId: dataset-register
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
         - description: Legal tag of the dataset.
           in: header
           name: ltag
           required: false
           schema:
             type: string
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetPath"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -157,46 +169,83 @@ paths:
               schema:
                 $ref: "#/components/schemas/Dataset"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
         "409":
-          $ref: "#/components/responses/Conflict"
+          description: Conflict.
         "423":
-          $ref: "#/components/responses/Locked"
+          description: |
+            Locked. The error message contains the Reason in the form <b>[RCODE:REASON(2-char-code)TTL(sec-number)]</b>. Possible Reasons code are:
+            <li> WL (Write Locked). </li>
+            <li> RL (Read Locked). </li>
+            <li>CL (Cannot be Locked).</li>
+            <li>UL (Cannot be Unlocked).</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
     get:
       summary: Retrieve the dataset metadata.
-      description: |-
-        <ul>
-          <li>Return the dataset metadata from seismic store.</li>
-          <li>Required roles:
-            <ul>
-              <li>subproject.admin, subproject.viewer: if the applied subproject policy is 'uniform'</li>
-              <li>dataset.admin, dataset.viewer: if the applied subproject policy is 'dataset'</li>
-            </ul>
-          </li>
-        </ul>
+      description: "<ul>
+        <li>Return the dataset metadata from seismic store.</li>
+        <li>Required roles:
+          <ul>
+            <li>subproject.admin, subproject.viewer: if the applied subproject policy is 'uniform'</li>
+            <li>dataset.admin, dataset.viewer: if the applied subproject policy is 'dataset'</li>
+          </ul>
+        </li></ul>"
       operationId: dataset-get
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetPath"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
         - description: Include the seismic storage metadata record if it exists.
           in: query
           name: seismicmeta
           required: false
           schema:
             type: boolean
-        - $ref: "#/components/parameters/TranslateUserInfo"
+        - description: translate the user-id to a more human readable user info
+          name: translate-user-info
+          in: query
+          schema:
+            type: boolean
+            enum:
+              - true
+              - false
+            default: true
         - description: Retrieve a specific version of the seismic storage metadata record
           in: query
           name: record-version
@@ -211,45 +260,69 @@ paths:
               schema:
                 $ref: "#/components/schemas/Dataset"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     delete:
       summary: Delete a dataset.
-      description: |-
-        <ul>
-          <li>Delete a dataset in the seismic store.</li>
-          <li>Required roles:
-            <ul>
-              <li>subproject.admin: if the applied subproject policy is 'uniform'</li>
-              <li>dataset.admin: if the applied subproject policy is 'dataset'</li>
-            </ul>
-          </li>
-        </ul>
+      description: "<ul>
+        <li>Delete a dataset in the seismic store.</li>
+        <li>Required roles:
+          <ul>
+            <li>subproject.admin: if the applied subproject policy is 'uniform'</li>
+            <li>dataset.admin: if the applied subproject policy is 'dataset'</li>
+          </ul>
+        </li></ul>"
       operationId: dataset-delete
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetPath"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: The resource was deleted successfully.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     patch:
       summary: Patch the dataset metadata.
       description: |
@@ -264,45 +337,51 @@ paths:
           <li>Patchable fields:
             <ul>
               <li><b>dataset_new_name:</b> new name to use for the dataset (rename).</li>
-              <li><b>filemetadata:</b> Seismic-store specific field describing how the physical data is stored in cloud storage (GCS / Azure Container / S3). Primarily used by client libraries to reconstruct the dataset. Example for a truncated dataset of N objects of 64 MB each: <pre>{nObject: N, totalSize: 1024, objsize: 64, sizeUnit: MB}</pre>
-                <ul>
-                  <li>The nested field <b>filemetadata.tier_class</b> is <b>read-only</b>. Any value supplied for it is dropped when the patch is applied, and it cannot be used on its own to trigger a tier change.</li>
-                </ul>
-              </li>
-              <li><b>change_tier:</b> Requests a storage-tier change for the dataset. Accepted values: <code>Hot</code>, <code>Cool</code>, <code>Cold</code>. See the NOTE below and the feature-flag and validation sections for behavior details.</li>
-              <li><b>gtags:</b> Upsert tags to an existing dataset metadata. If the dataset metadata already has gtags, the new gtags are appended to the existing list.</li>
+              <li><b>filemetadata:</b> This is a seismic store specific field and describes how the physical data is stored in the cloud storage system (GCS/AzureContainer etc.). This metadata is mainly used by client libraries to correctly reconstruct the dataset. For example, you can store a dataset as truncated in multiple objects of 64MB each, name them from 0 to N and save the filemetadata as: <pre>{nObject: N, totalSize: 1024, objsize: 64, sizeUnit: MB}</pre>If filemetadata.tier_class is passed, change will be ignored. filemetadata.tier_class is 'readOnly' and can only be updated via a change tier operation.</li>
+              <li><b>change_tier:</b> tier to update the storage tier of a dataset.</li>
+              <li><b>gtags:</b> Upsert tags to an existing dataset metadata. If the dataset metadata already has gtags, then new gtags are appended to this list.</li>
               <li><b>ltag:</b> Update the existing legalTag value.</li>
               <li><b>readonly:</b> Update the dataset mode to readonly (true) or to read/write (false).</li>
               <li><b>status:</b> Update the dataset status.</li>
             </ul>
           </li>
-          <li><b>Feature flags affecting this endpoint:</b>
-            <ul>
-              <li><b>FEATURE_FLAG_ENABLE_CHANGE_TIER</b> &mdash; when disabled, any PATCH supplying <b>change_tier</b> is rejected with <code>403 PERMISSION_DENIED</code>.</li>
-              <li><b>FEATURE_FLAG_SEISMICMETA_STORAGE</b> &mdash; controls persistence of the storage-record body field (<b>seismicmeta</b>, or one of the supported alternates such as <b>openzgy_v1</b> / <b>segy_v1</b>). When disabled, the field is still validated and reflected in the dataset metadata, but the record is <i>not</i> persisted to the underlying storage service.</li>
-            </ul>
-          </li>
-          <li><b>Validation rules for <code>change_tier</code> and <code>filemetadata.tier_class</code>:</b>
-            <ul>
-              <li>If only <b>change_tier</b> is supplied, the tier change proceeds and the response <b>filemetadata.tier_class</b> reflects the requested tier.</li>
-              <li>If both <b>change_tier</b> and <b>filemetadata.tier_class</b> are supplied and they have the <i>same</i> value, the tier change proceeds.</li>
-              <li>If both are supplied and the values <i>differ</i>, the request is rejected with <code>400 BAD_REQUEST</code>.</li>
-              <li>If only <b>filemetadata.tier_class</b> is supplied (without <b>change_tier</b>), the value is dropped when copying <b>filemetadata</b> to the stored record &mdash; no tier change is triggered. To change the tier, use <b>change_tier</b>.</li>
-            </ul>
-          </li>
-          <li><b>NOTE:</b> <code>last_modified_date</code> is updated automatically on every metadata change made through this endpoint.</li>
-          <li><b>NOTE:</b> the <b>change_tier</b> field on this endpoint is fire-and-forget. A successful <code>200 OK</code> indicates that the metadata patch succeeded; it does <i>not</i> indicate that the underlying cloud-storage tier transition has completed. After the call, issue a <code>GET</code> on the dataset to observe the eventual <b>filemetadata.tier_class</b>.</li>
-          <li><b>Recommended approach for tier changes:</b> for production workloads that need an observable, long-running operation with progress tracking, use the change-tier operation (<code>PUT /operation/change-tier</code>) and poll its status with <code>GET /operation/change-tier</code> instead of the fire-and-forget <b>change_tier</b> field on this endpoint.</li>
+          <li><b>NOTE:</b> last_modified_date is updated automatically with each metadata change through Patch endpoint calling.</li>
         </ul>
       operationId: dataset-patch
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetPath"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
         - description: Non null sbit value of the dataset. Using this value here will close
             the dataset.
           in: query
@@ -315,75 +394,31 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/DatasetPatch"
-            examples:
-              rename:
-                summary: Rename a dataset
-                description: |
-                  Rename only. No other side-effects. Returns the updated dataset
-                  metadata synchronously.
-                value:
-                  dataset_new_name: dataset-renamed
-              tags:
-                summary: Add gtags to a dataset
-                description: |
-                  Appends `gtags` to the existing list (upsert semantics).
-                value:
-                  gtags:
-                    - basin-north-sea
-                    - vintage-2024
-              legalTag:
-                summary: Update legal tag
-                value:
-                  ltag: opendes-public-usa-dataset-1
-              readonlyToggle:
-                summary: Mark dataset readonly
-                value:
-                  readonly: true
-              changeTier:
-                summary: Request a storage-tier change (fire-and-forget)
-                description: |
-                  The `change_tier` field is honored only when the
-                  `FEATURE_FLAG_ENABLE_CHANGE_TIER` server flag is enabled;
-                  otherwise the request is rejected with `403 PERMISSION_DENIED`.
-                  The API returns `200 OK` as soon as the metadata patch
-                  succeeds; the underlying cloud-storage tier transition runs in
-                  the background with no operation id and no progress polling.
-                  For tier changes that need progress tracking, use the
-                  change-tier operation: `PUT /operation/change-tier`.
-                value:
-                  change_tier: Cool
-              renameAndChangeTier:
-                summary: Combined rename + tier change
-                description: |
-                  Rename is applied synchronously; tier change is dispatched
-                  fire-and-forget as described above.
-                value:
-                  dataset_new_name: dataset-renamed
-                  change_tier: Cold
         description: Request body
       responses:
         "200":
-          description: |
-            Metadata of the patched dataset. Note that when `change_tier` is
-            supplied, this response is returned *before* the cloud-storage tier
-            transition has completed; the response body reflects the metadata
-            patch only, not the eventual tier state.
+          description: Metadata of the patched dataset.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dataset"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
         "409":
-          $ref: "#/components/responses/Conflict"
+          description: Conflict.
         "423":
-          $ref: "#/components/responses/Locked"
+          description: |
+            Locked. The error message contains the Reason in the form <b>[RCODE:REASON(2-char-code)TTL(sec-number)]</b>. Possible Reasons code are: <ul>
+            <li>WL (Write Locked).</li>
+            <li>RL (Read Locked).</li>
+            <li>CL (Cannot be Locked).</li>
+            <li>UL (Cannot be Unlocked).</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/lock:
     put:
@@ -408,11 +443,37 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetPath"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
         - description: Type of the lock which can be set to 'read' (default) or 'write'.
           in: query
           name: openmode
@@ -425,7 +486,7 @@ paths:
           name: wid
           required: false
           schema:
-            type: number
+            type: string
       responses:
         "200":
           description: "Acquired a lock and the return value is the dataset metadata with session identifier stored in the 'sbit' attribute."
@@ -434,15 +495,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/Dataset"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
         "423":
-          $ref: "#/components/responses/Locked"
+          description: |
+            Locked. The error message contains the Reason in the form <b>[RCODE:REASON(2-char-code)TTL(sec-number)]</b>. Possible Reasons code are: <ul>
+            <li>WL (Write Locked).</li>
+            <li>RL (Read Locked).</li>
+            <li>CL (Cannot be Locked).</li>
+            <li>UL (Cannot be Unlocked).</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/unlock:
     put:
@@ -461,29 +527,55 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
         - description: Hierarchical path for the dataset.
           in: query
           name: path
           required: false
           schema:
             type: string
-        - $ref: "#/components/parameters/DatasetId"
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Removed the lock value associated with dataset id.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
         "423":
-          $ref: "#/components/responses/Locked"
+          description: |
+            Locked. The error message contains the Reason in the form <b>[RCODE:REASON(2-char-code)TTL(sec-number)]</b>. Possible Reasons code are: <ul>
+            <li>WL (Write Locked).</li>
+            <li>RL (Read Locked).</li>
+            <li>CL (Cannot be Locked).</li>
+            <li>UL (Cannot be Unlocked).</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/permission:
     get:
@@ -502,16 +594,37 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
         - description: Hierarchical path for the dataset.
           in: query
           name: path
           required: false
           schema:
             type: string
-        - $ref: "#/components/parameters/DatasetId"
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: User access permission on the dataset.
@@ -520,31 +633,53 @@ paths:
               schema:
                 $ref: "#/components/schemas/DatasetPermission"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/ctagcheck:
     get:
       summary: "Validate if a dataset ctag matches the pre-existing ctag in metadata catalog."
-      description: |-
-        <ul>
-          <li>Check if the provided dataset cTag match the one stored in the metadata catalog.</li>
-          <li>Required roles: subproject.admin, subproject.viewer</li>
-        </ul>
+      description: "<ul><li>Check if the provided dataset cTag match the one stored in the metadata catalog.</li><li>Required roles: subproject.admin, subproject.viewer</li></ul>"
       operationId: dataset-ctag-check
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetPath"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
         - description: Ctag to be validated.
           in: query
           name: ctag
@@ -558,15 +693,15 @@ paths:
             application/json:
               schema:
                 type: boolean
-                example: "true"
+                example: true
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/gtags:
     put:
@@ -585,11 +720,37 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetPath"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
         - description: Gtags array list.
           in: query
           name: gtag
@@ -604,13 +765,13 @@ paths:
         "200":
           description: Gtags were upserted to the dataset metadata.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/dataset/{datasetid}/size:
     post:
@@ -624,10 +785,31 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/DatasetId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the dataset.
+          in: path
+          name: datasetid
+          required: true
+          schema:
+            type: string
         - description: Hierarchical path of the dataset.
           in: query
           name: path
@@ -642,13 +824,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/DatasetSize"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/size:
     get:
@@ -660,16 +842,37 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
         - description: Name of the dataset.
           in: query
           name: datasetid
           required: false
           schema:
             type: string
-        - $ref: "#/components/parameters/DatasetPath"
+        - description: Hierarchical path of the dataset.
+          in: query
+          name: path
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: Size of the dataset and the date of when the size was computed
@@ -678,13 +881,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ComputedSize"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/readdsdirfulllist:
     get:
@@ -697,9 +900,25 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: The tenant project name.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: The sub-project name.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
         - description: The hierarchy path.
           in: query
           name: path
@@ -715,9 +934,98 @@ paths:
                 $ref: "#/components/schemas/DatasetAndDirectories"
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}:
+    # This has been marked for later removal. Please utilize the 'post' version instead.
+    # get:
+    #   summary: Get the list of datasets in a subproject.
+    #   description: |
+    #     <ul>
+    #       <li>Return the list of datasets in a sub-project. The list can be filtered by gtags. Support pagination.</li>
+    #       <li>Required roles: subproject.admin, subproject.viewer</li>
+    #     </ul>
+    #   operationId: dataset-list-get
+    #   tags:
+    #     - Dataset
+    #   parameters:
+    #     - description: "Select multiple fields that belong to a dataset's metadata. (ex: select=[name,subproject...])"
+    #       in: query
+    #       name: select
+    #       required: false
+    #       schema:
+    #         type: string
+    #         default: ""
+    #     - description: |
+    #         Select single SQL like search parameter example: search=name=file%
+    #         Supported fields: name, tenant, subproject, path, ltag, created_by, gcsurl
+    #       in: query
+    #       name: search
+    #       required: false
+    #       schema:
+    #         type: string
+    #         default: ""
+    #     - description: "The impersonation token context (required only with impersonation token credentials)"
+    #       in: header
+    #       name: impersonation-token-context
+    #       required: false
+    #       schema:
+    #         type: string
+    #         default: ""
+    #     - description: Name of the tenant.
+    #       in: path
+    #       name: tenantid
+    #       required: true
+    #       schema:
+    #         type: string
+    #     - description: Name of the subproject.
+    #       in: path
+    #       name: subprojectid
+    #       required: true
+    #       schema:
+    #         type: string
+    #     - description: Gtags associated with dataset metadata.
+    #       in: query
+    #       name: gtag
+    #       explode: true
+    #       schema:
+    #         type: array
+    #         items:
+    #           type: string
+    #     - description: Limit the number of datasets in the response
+    #       in: query
+    #       name: limit
+    #       schema:
+    #         type: string
+    #     - description: Cursor for pagination on the datasets list
+    #       in: query
+    #       name: cursor
+    #       schema:
+    #         type: string
+    #     - description: translate the user-id to a more human readable user info
+    #       name: translate-user-info
+    #       in: query
+    #       schema:
+    #         type: boolean
+    #         enum:
+    #           - true
+    #           - false
+    #         default: true
+    #   responses:
+    #     "200":
+    #       description: "Dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content."
+    #       content:
+    #         application/json:
+    #           schema:
+    #             $ref: "#/components/schemas/PaginatedDatasets"
+    #     "400":
+    #       description: Bad request.
+    #     "401":
+    #       description: Unauthorized.
+    #     "403":
+    #       description: Forbidden.
+    #     "404":
+    #       description: Not found.
     post:
       summary: Get the list of datasets in a subproject.
-      description: |
+      description:  |
         <ul>
           <li>Return the list of datasets in a sub-project. The list can be filtered by gtags. Support pagination.</li>
           <li>Required roles: subproject.admin, subproject.viewer</li>
@@ -726,10 +1034,34 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/TranslateUserInfo"
+        - description: The impersonation token context (required only with impersonation token credentials)
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: translate the user-id to a more human readable user info
+          name: translate-user-info
+          in: query
+          schema:
+            type: boolean
+            enum:
+              - true
+              - false
+            default: true
       requestBody:
         content:
           application/json:
@@ -738,19 +1070,19 @@ paths:
         description: Request body
       responses:
         "200":
-          description: "Paginated dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content and the response is a plain array of datasets [ {dataset1}, {dataset2}, ... ]"
+          description: "Dataset list with nextPageCursor. If the request does not provide limit or cursor the results will be the whole path content."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaginatedDatasets"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/exist:
     post:
@@ -763,9 +1095,25 @@ paths:
       tags:
         - Dataset
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
       requestBody:
         $ref: "#/components/requestBodies/DatasetCheckList"
       responses:
@@ -781,13 +1129,13 @@ paths:
                   - true
                   - false
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /dataset/tenant/{tenantid}/subproject/{subprojectid}/sizes:
     post:
@@ -802,9 +1150,25 @@ paths:
       tags:
         - Dataset(Deprecated)
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
+        - description: Name of the tenant
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
       requestBody:
         $ref: "#/components/requestBodies/DatasetCheckList"
       responses:
@@ -820,13 +1184,13 @@ paths:
                   - 1024
                   - -1
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /utility/ls:
     get:
@@ -840,7 +1204,13 @@ paths:
       tags:
         - Utility
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
         - description: Seismic store path, sd://tenant/sub-project/path.
           in: query
           name: sdpath
@@ -879,13 +1249,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/LsPaginatedDatasets"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     post:
       summary: Retrieve the list of datasets and sub-directories inside a seismic store
         path.
@@ -897,7 +1267,13 @@ paths:
       tags:
         - Utility
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
       requestBody:
         content:
           application/json:
@@ -917,13 +1293,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/LsPaginatedDatasets"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /utility/storage-tiers:
     get:
@@ -940,13 +1316,13 @@ paths:
         "200":
           description: Supported storage tiers
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /utility/cp:
     post:
@@ -965,7 +1341,13 @@ paths:
       tags:
         - Utility
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
         - description: Seismic store source dataset path.
           in: query
           name: sdpath_from
@@ -992,17 +1374,22 @@ paths:
               schema:
                 type: object
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
         "409":
-          $ref: "#/components/responses/Conflict"
+          description: Conflict.
         "423":
-          $ref: "#/components/responses/Locked"
+          description: |
+            Locked. The error message contains the Reason in the form <b>[RCODE:REASON(2-char-code)TTL(sec-number)]</b>. Possible Reasons code are: <ul>
+            <li>WL (Write Locked)</li>
+            <li>RL (Read Locked)</li>
+            <li>CL (Cannot be Locked)</li>
+            <li>UL (Cannot be Unlocked)</ul>\nFor example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
 
   /utility/gcs-access-token:
     get:
@@ -1021,7 +1408,13 @@ paths:
       tags:
         - Utility
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
         - description: Seismic store path in the format sd://tenant/sub-project.
           in: query
           name: sdpath
@@ -1042,70 +1435,76 @@ paths:
               schema:
                 $ref: "#/components/schemas/AccessToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /utility/upload-connection-string:
     get:
       summary: Generate the upload connection credentials string
-      description: |-
-        <ul>
-          <li>Generate the upload connection credential string for a subproject collection or a dataset, depending of the applied access policy (uniform/dataset).</li>
-          <li>These credentials can be used via CSP SDK, on client side, to perform bulk upload.</li>
-          <li>
-            The endpoint response is CSP (Cloud Solution Provider) dependent:
-            <ul>
-              <br/><li><b>Azure</b>: shared access signature (SaS) Url token
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'https://{accountName}.blob.core.windows.net/{containerName}?{SASQueryParameters}`'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'SasUrl'
-                <br/>}
-              <br/><br/></li>
-              <li><b>Google</b>: standard access token credential signed and down-scoped by google
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'google_signed_access_token'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3600
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                <br/>}
-              <br/><br/></li>
-              <li><b>AWS</b>: double column separated string containing access key id, the access key secret and the session token
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                <br/>}
-              <br/><br/></li>
-              <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                <br/>}
-              <br/><br/></li>
-            </ul>
-          </li>
-          <li>Required roles:
-            <ul>
-              <li>subproject.admin: if the applied subproject policy is 'uniform'</li>
-              <li>dataset.admin: if the applied subproject policy is 'dataset'</li>
-            </ul>
-          </li>
-        </ul>
+      description: "<ul>
+                      <li>Generate the upload connection credential string for a subproject collection or a dataset, depending of the applied access policy (uniform/dataset).
+                      <li>These credentials can be used via CSP SDK, on client side, to perform bulk upload.</li>
+                      <li>
+                        The endpoint response is CSP (Cloud Solution Provider) dependent:
+                        <ul>
+                          <br/><li><b>Azure</b>: shared access signature (SaS) Url token
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'https://{accountName}.blob.core.windows.net/{containerName}?{SASQueryParameters}`'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'SasUrl'
+                            <br/>}
+                          <br/><br/></li>
+                          <li><b>Google</b>: standard access token credential signed and down-scoped by google
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'google_signed_access_token'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3600
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
+                            <br/>}
+                          <br/><br/></li>
+                          <li><b>AWS</b>: double column separated string containing access key id, the access key secret and the session token
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
+                            <br/>}
+                          <br/><br/></li>
+                          <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
+                            <br/>}
+                          <br/><br/></li>
+                        </ul>
+                      </li>
+                      <li>Required roles:
+                        <ul>
+                          <li>subproject.admin: if the applied subproject policy is 'uniform'</li>
+                          <li>dataset.admin: if the applied subproject policy is 'dataset'</li>
+                        </ul>
+                      </li>
+                    </ul>"
       operationId: utility-upload-connection-string
       tags:
         - Utility
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
+        - description: The impersonation token context (required only with impersonation
+            token credentials)
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
         - description: "Seismic store path in the format sd://tenant/subproject (for uniform applied policies) or sd://tenant/subproject/dataset (for dataset applied policies)"
           in: query
           name: sdpath
@@ -1121,70 +1520,75 @@ paths:
               schema:
                 $ref: "#/components/schemas/AccessToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /utility/download-connection-string:
     get:
       summary: Generate the download connection credentials string
-      description: |-
-        <ul>
-          <li>Generate the download connection credential string for a subproject collection or a dataset, depending of the applied access policy (uniform/dataset).</li>
-          <li>These credentials can be used via CSP SDK, on client side, to perform bulk download.</li>
-          <li>
-            The endpoint response is CSP (Cloud Solution Provider) dependent:
-            <ul>
-              <br/><li><b>Azure</b>: shared access signature (SaS) Url token
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'https://{accountName}.blob.core.windows.net/{containerName}?{SASQueryParameters}`'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'SasUrl'
-                <br/>}
-              <br/><br/></li>
-              <li><b>Google</b>: standard access token credential signed and down-scoped by google
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'google_signed_access_token'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3600
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                <br/>}
-              <br/><br/></li>
-              <li><b>AWS</b>: double column separated string containing access key id, the access key secret and the session token
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                <br/>}
-              <br/><br/></li>
-              <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
-              <br/>
-                <br/>{
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
-                  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                <br/>}
-              <br/><br/></li>
-            </ul>
-          </li>
-          <li>Required roles:
-            <ul>
-              <li>subproject.admin, subproject.viewer: if the applied subproject policy is 'uniform'</li>
-              <li>dataset.admin, dataset.viewer: if the applied subproject policy is 'dataset'</li>
-            </ul>
-          </li>
-        </ul>
+      description: "<ul>
+                      <li>Generate the download connection credential string for a subproject collection or a dataset, depending of the applied access policy (uniform/dataset).
+                      <li>These credentials can be used via CSP SDK, on client side, to perform bulk download.</li>
+                      <li>
+                        The endpoint response is CSP (Cloud Solution Provider) dependent:
+                        <ul>
+                          <br/><li><b>Azure</b>: shared access signature (SaS) Url token
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'https://{accountName}.blob.core.windows.net/{containerName}?{SASQueryParameters}`'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'SasUrl'
+                            <br/>}
+                          <br/><br/></li>
+                          <li><b>Google</b>: standard access token credential signed and down-scoped by google
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'google_signed_access_token'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3600
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
+                            <br/>}
+                          <br/><br/></li>
+                          <li><b>AWS</b>: double column separated string containing access key id, the access key secret and the session token
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
+                            <br/>}
+                          <br/><br/></li>
+                          <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
+                          <br/>
+                            <br/>{
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
+                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
+                            <br/>}
+                          <br/><br/></li>
+                        </ul>
+                      </li>
+                      <li>Required roles:
+                        <ul>
+                          <li>subproject.admin, subproject.viewer: if the applied subproject policy is 'uniform'</li>
+                          <li>dataset.admin, dataset.viewer: if the applied subproject policy is 'dataset'</li>
+                        </ul>
+                      </li>
+                    </ul>"
       operationId: utility-download-connection-string
       tags:
         - Utility
       parameters:
-        - $ref: "#/components/parameters/ImpersonationTokenContext"
+        - description: "The impersonation token context (required only with impersonation token credentials)"
+          in: header
+          name: impersonation-token-context
+          required: false
+          schema:
+            type: string
+            default: ""
         - description: "Seismic store path in the format sd://tenant/subproject (for uniform applied policies) or sd://tenant/subproject/dataset (for dataset applied policies)"
           in: query
           name: sdpath
@@ -1200,13 +1604,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/AccessToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /imptoken:
     post:
@@ -1233,21 +1637,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ImpersonationToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     put:
       summary: Refresh an impersonation credential token.
-      description: |-
-        <ul>
-          <li>Refresh an impersonation credential token.</li>
-          <li>No authentication required</li>
-        </ul>
-      security: []
+      description: "<ul><li>Refresh an impersonation credential token.</li><li>Required roles: none</li></ul>"
+      security:
+        - bearer: []
       operationId: imptoken-refresh
       tags:
         - Impersonation Token (Obsolete)
@@ -1266,19 +1667,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/ImpersonationToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     patch:
       summary: "Patch an impersonation credential token's refresh url and generate a new impersonation token."
       description: |
         <ul>
         <li>Patch an impersonation credential token's refresh url and generate a new impersonation token.</li>
-        <li>Required roles: any authenticated caller</li></ul>
+        <li>Required roles: none</li></ul>
       operationId: imptoken-patch
       tags:
         - Impersonation Token (Obsolete)
@@ -1298,24 +1699,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ImpersonationToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /impersonation-token:
     post:
       summary: Create an impersonation token credential.
-      deprecated: true
-      description: |-
-        <ul>
-          <li><b>Deprecated and no longer available.</b> This API is not supported on Azure Data Manager for Energy (ADME) and now returns <b>410 Gone</b>.</li>
-          <li>Generate a credential token to impersonate user access for a set of subproject resources.</li>
-          <li>Required roles: app.trusted</li>
-        </ul>
+      description: "<ul><li>Generate a credential token to impersonate user access for a set of subproject resources.</li><li>Required roles: app.trusted</li></ul>"
       operationId: impersonation-token-generate
       tags:
         - Impersonation Token
@@ -1335,25 +1730,23 @@ paths:
         description: Request body.
         required: true
       responses:
+        "200":
+          description: The impersonation token has been successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpersonationToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
-        "410":
-          $ref: "#/components/responses/Gone"
+          description: Not found.
     put:
       summary: Refresh the impersonation credential token.
-      deprecated: true
-      description: |-
-        <ul>
-          <li><b>Deprecated and no longer available.</b> This API is not supported on Azure Data Manager for Energy (ADME) and now returns <b>410 Gone</b>.</li>
-          <li>Refresh an impersonation credential token.</li>
-          <li>Required roles: app.trusted</li>
-        </ul>
+      description: "<ul><li>Refresh an impersonation credential token.</li><li>Required roles: app.trusted</li></ul>"
       operationId: impersonation-token-refresh
       tags:
         - Impersonation Token
@@ -1373,16 +1766,20 @@ paths:
             type: string
             default: ""
       responses:
+        "200":
+          description: Refreshed impersonation credential token successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpersonationToken"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
-        "410":
-          $ref: "#/components/responses/Gone"
+          description: Not found.
 
   /subproject/tenant/{tenantid}/subproject/{subprojectid}:
     post:
@@ -1406,7 +1803,12 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: "#/components/parameters/TenantId"
+        - description: The tenant name - In OSDU this match the data-partition-id
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -1422,29 +1824,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubProject"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
         "409":
-          $ref: "#/components/responses/Conflict"
+          description: Conflict.
     get:
       summary: Retrieve the subproject metadata.
-      description: |-
-        <ul>
-          <li>Return the metadata for a requested sub-project.</li>
-          <li>Required roles: subproject.admin</li>
-        </ul>
+      description: "<ul><li>Return the metadata for a requested sub-project.</li><li>Required roles: subproject.admin</li></ul>"
       operationId: subproject-get
       tags:
         - SubProject
       parameters:
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/TranslateUserInfo"
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: translate the user-id to a more human readable user info
+          name: translate-user-info
+          in: query
+          schema:
+            type: boolean
+            enum:
+              - true
+              - false
+            default: true
       responses:
         "200":
           description: Retrieved subproject metadata successfully.
@@ -1453,37 +1869,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubProject"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     delete:
       summary: Delete a subproject.
-      description: |-
-        <ul>
-          <li>Delete a subproject in seismic store.</li>
-          <li>Required roles: subproject.admin</li>
-        </ul>
+      description: "<ul><li>Delete a subproject in seismic store.</li><li>Required roles: subproject.admin</li></ul>"
       operationId: subproject-delete
       tags:
         - SubProject
       parameters:
-        - $ref: "#/components/parameters/SubProjectId"
-        - $ref: "#/components/parameters/TenantId"
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Deletion of the subproject completed.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     patch:
       summary: Patch a subproject's metadata.
       description: |
@@ -1505,8 +1927,18 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: "#/components/parameters/TenantId"
-        - $ref: "#/components/parameters/SubProjectId"
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
+        - description: Name of the subproject.
+          in: path
+          name: subprojectid
+          required: true
+          schema:
+            type: string
         - description: "True if the legal tags of all datasets in a subproject needs to be updated."
           in: query
           name: recursive
@@ -1527,27 +1959,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubProject"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /subproject/tenant/{tenantid}:
     get:
       summary: List subprojects in a tenant.
-      description: |-
-        <ul>
-          <li>Return the list of sub-projects in a tenant.</li>
-          <li>Required roles: tenant.admin</li>
-        </ul>
+      description: "<ul><li>Return the list of sub-projects in a tenant.</li><li>Required roles: tenant.admin</li></ul>"
       operationId: subproject-list
       tags:
         - SubProject
       parameters:
-        - $ref: "#/components/parameters/TenantId"
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Retrieved the list of subprojects in the tenant successfully.
@@ -1558,27 +1991,28 @@ paths:
                 items:
                   $ref: "#/components/schemas/SubProject"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /tenant/{tenantid}:
     post:
       summary: Register a seismic-dms tenant.
-      description: |-
-        <ul>
-          <li>Register a data partition in seismic-dms.</li>
-          <li>Required roles: tenant.admin, users.datalake.ops</li>
-        </ul>
+      description: "<ul><li>Register a data partition in seismic-dms.</li><li>Required roles: tenant.admin, users.datalake.ops</li></ul>"
       operationId: tenant-create
       tags:
         - Tenant
       parameters:
-        - $ref: "#/components/parameters/TenantId"
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -1594,27 +2028,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/Tenant"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
         "409":
-          $ref: "#/components/responses/Conflict"
+          description: Conflict.
     get:
       summary: Retrieve the tenant metadata.
-      description: |-
-        <ul>
-          <li>Return the tenant metadata.</li>
-          <li>Required roles: tenant.admin</li>
-        </ul>
+      description: "<ul><li>Return the tenant metadata.</li><li>Required roles: tenant.admin</li></ul>"
       operationId: tenant-get
       tags:
         - Tenant
       parameters:
-        - $ref: "#/components/parameters/TenantId"
+        - description: Name of the tenant.
+          in: path
+          name: tenantid
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Retrieved subproject metadata successfully.
@@ -1623,22 +2058,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/Tenant"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /tenant/sdpath:
     get:
       summary: Retrieve the tenant seismic store path.
-      description: |-
-        <ul>
-          <li>Return the seistore path to a tenant associated with the data partition.</li>
-          <li>Required roles: any authenticated registered user in the partition</li>
-        </ul>
+      description: "<ul><li>Return the seistore path to a tenant associated with the data partition.</li><li>Required roles: none</li></ul>"
       operationId: tenant-sdpath
       tags:
         - Tenant (Obsolete)
@@ -1658,22 +2089,18 @@ paths:
                 type: string
                 example: sd://tenant01
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /user:
     put:
       summary: Add a user to a seismic store subproject authorization group.
-      description: |-
-        <ul>
-          <li>Add a user to a subproject default authorization group if it exists, otherwise, add the user to the first group.</li>
-          <li>Required roles: subproject.admin</li>
-        </ul>
+      description: "<ul><li>Add a user to a subproject default authorization group if it exists, otherwise, add the user to the first group.</li><li>Required roles: subproject.admin</li></ul>"
       operationId: user-add
       tags:
         - Users
@@ -1688,20 +2115,16 @@ paths:
         "200":
           description: User was successfully added to a sub-project authorization group.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     get:
       summary: List users in a subproject's role-based authorization groups.
-      description: |-
-        <ul>
-          <li>List users in subproject's role-based authorization groups.</li>
-          <li>Required roles: subproject.admin</li>
-        </ul>
+      description: "<ul><li>List users in subproject's role-based authorization groups.</li><li>Required roles: subproject.admin</li></ul>"
       operationId: user-list
       tags:
         - Users
@@ -1733,20 +2156,16 @@ paths:
                   - - userB@email
                     - viewer
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     delete:
       summary: Remove a user from a subproject.
-      description: |-
-        <ul>
-          <li>Remove a user from subproject default authorization groups if exists, otherwise, remove it from the first authorization group.</li>
-          <li>Required roles: subproject.admin</li>
-        </ul>
+      description: "<ul><li>Remove a user from subproject default authorization groups if exists, otherwise, remove it from the first authorization group.</li><li>Required roles: subproject.admin</li></ul>"
       operationId: user-remove
       tags:
         - Users
@@ -1764,25 +2183,21 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deletion of user from a subproject.
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden.
+        '404':
+          description: Not found.
 
   /user/roles:
     get:
       summary: Retrieve user role in all subprojects of the tenant.
-      description: |-
-        <ul>
-          <li>Retrieve user role in all subprojects of the tenant.</li>
-          <li>Required roles: any authenticated registered user in the partition</li>
-        </ul>
+      description: "<ul><li>Retrieve user role in all subprojects of the tenant.</li><li>Required roles: none</li></ul>"
       operationId: user-roles
       tags:
         - Users
@@ -1801,22 +2216,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserRoles"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /app:
     post:
       summary: Register a new application.
-      description: |-
-        <ul>
-          <li>Register a new application in the seismic store.</li>
-          <li>Required roles: tenant.admin</li>
-        </ul>
+      description: "<ul><li>Register a new application in the seismic store.</li>
+                    <li>Required roles: tenant.admin</li></ul>"
       operationId: app-register
       tags:
         - Apps
@@ -1837,13 +2249,13 @@ paths:
         "200":
           description: Registration of the application was successful.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     get:
       summary: Retrieve the list of registered applications.
       description: |
@@ -1874,13 +2286,13 @@ paths:
                   - app01@email
                   - app02@email
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /app/trusted:
     post:
@@ -1909,13 +2321,13 @@ paths:
         "200":
           description: Marking the application as a trusted application was successful.
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
     get:
       summary: List the trusted applications in a seismic store tenant.
       description: |
@@ -1945,23 +2357,20 @@ paths:
                   - app01@email
                   - app02@email
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /operation/bulk-delete:
     put:
-      summary: Delete all datasets in a subproject path. (Preview)
-      description: |-
-        <ul>
-          <li><b>Preview:</b> This feature is available on request. To enable it, create a support request in the Azure portal for Azure Data Manager for Energy. See the <a href="https://learn.microsoft.com/en-us/azure/energy-data-services/faq-energy-data-services#how-do-i-raise-a-support-request-for-azure-data-manager-for-energy">official support guidance</a>.</li>
-          <li>Description: Delete all datasets in the specified sdms subproject path.</li>
-          <li>Roles: subproject.admin</li>
-        </ul>
+      summary: Delete all datasets in a subproject path.
+      description: "<ul>
+                      <li>Description: Delete all datasets in the specified sdms subproject path.</li>
+                      <li>Roles: subproject.admin</li></ul>"
       operationId: operation-bulk-delete-push
       tags:
         - Operations
@@ -1990,23 +2399,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/Operation"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /operation/bulk-delete/{operation-id}:
     get:
-      summary: Get the bulk delete operation status. (Preview)
-      description: |-
-        <ul>
-          <li><b>Preview:</b> This feature is available on request. To enable it, create a support request in the Azure portal for Azure Data Manager for Energy. See the <a href="https://learn.microsoft.com/en-us/azure/energy-data-services/faq-energy-data-services#how-do-i-raise-a-support-request-for-azure-data-manager-for-energy">official support guidance</a>.</li>
-          <li>Description: Get the bulk delete operation status.</li>
-          <li>Roles: any (registered user in partition)</li>
-        </ul>
+      summary: Get the bulk delete operation status.
+      description: "<ul>
+                      <li>Description: Get the bulk delete operation status.</li>
+                      <li>Roles: any (registered user in partition)</li></ul>"
       operationId: operation-bulk-delete-get
       tags:
         - Operations
@@ -2031,23 +2437,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/OperationStatus"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /operation/change-tier:
     put:
       summary: Change a storage class tier a dataset, or all datasets in a path, in a subproject.
-      description: |-
-        <ul>
-          <li><b>Description:</b> Change all datasets' tier in the specified SDMS subproject path.</li>
-          <li><b>Required role:</b> subproject.admin for both 'uniform' and 'dataset' subproject access policies.</li>
-          <li><b>Important:</b> When the applied subproject access policy is 'dataset', each matching dataset is also validated against dataset.admin ACL membership during execution. Datasets failing the ACL check are reported as failures and are not updated.</li>
-        </ul>
+      description:
+        "<ul>
+          <li>Description: Change all datasets' tier in the specified sdms subproject path.</li>
+          <li>Roles: subproject.admin</li></ul>"
       operationId: operation-change-tier-push
       tags:
         - Operations
@@ -2083,22 +2487,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/Operation"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /operation/change-tier/{operation-id}:
     get:
       summary: Get the change tier operation status.
-      description: |-
-        <ul>
-          <li>Description: Get the change tier operation status.</li>
-          <li>Roles: any (registered user in partition)</li>
-        </ul>
+      description: "<ul>
+                      <li>Description: Get the change tier operation status.</li>
+                      <li>Roles: any (registered user in partition)</li></ul>"
       operationId: operation-change-tier-get
       tags:
         - Operations
@@ -2115,100 +2517,21 @@ paths:
           required: true
           schema:
             type: string
-        - description: "Include detailed failure information for failed datasets. Set to 'true' to retrieve the failures array."
-          in: query
-          name: show_details
-          required: false
-          schema:
-            type: boolean
-            default: false
-        - description: "Maximum number of failed datasets to return per page (1-1000). Only applicable when show_details is true."
-          in: query
-          name: limit
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-        - description: "Base64 URL-safe encoded cursor from a previous response to retrieve the next page of failures. Only applicable when show_details is true."
-          in: query
-          name: cursor
-          required: false
-          schema:
-            type: string
       responses:
         "200":
           description: Retrieved the change tier operation successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChangeTierOperationStatus"
-              examples:
-                in-progress:
-                  summary: Operation in progress
-                  value:
-                    operation_id: 9a8f2e31-4c67-4b8a-b123-abcdef123456
-                    created_at: '2026-03-10T08:00:00Z'
-                    created_by: user_oid
-                    last_updated_at: '2026-03-10T08:15:00Z'
-                    status: InProgress
-                    dataset_cnt: 2000
-                    completed_cnt: 850
-                    failed_cnt: 0
-                    target_tier: Cool
-                completed-success:
-                  summary: Completed successfully (no failures)
-                  value:
-                    operation_id: 9a8f2e31-4c67-4b8a-b123-abcdef123456
-                    created_at: '2026-03-10T08:00:00Z'
-                    created_by: user_oid
-                    last_updated_at: '2026-03-10T08:45:00Z'
-                    status: Completed
-                    dataset_cnt: 2000
-                    completed_cnt: 2000
-                    failed_cnt: 0
-                    target_tier: Cool
-                completed-with-errors:
-                  summary: Completed with errors (show_details=true)
-                  value:
-                    operation_id: 9a8f2e31-4c67-4b8a-b123-abcdef123456
-                    created_at: '2026-03-10T08:00:00Z'
-                    created_by: user_oid
-                    last_updated_at: '2026-03-10T08:45:00Z'
-                    status: CompletedWithErrors
-                    dataset_cnt: 2000
-                    completed_cnt: 1994
-                    failed_cnt: 6
-                    target_tier: Cold
-                    failed_datasets:
-                      - sdpath: sd://opendes/project-alpha/seismic/survey-2024-001
-                        error: 'Failed to change tier for 12 blob(s)'
-                      - sdpath: sd://opendes/project-alpha/seismic/survey-2024-002
-                        error: 'Access denied: user is not authorized to modify this dataset'
-                      - sdpath: sd://opendes/project-alpha/seismic/survey-2024-003
-                        error: 'Failed to acquire lock'
-                    cursor: ZXlKamIyNTBhVzUxWVhScGIyNVViMnRsYmlJNkltVjRZVzF3YkdVaWZRPT0
-                completed-with-errors-no-details:
-                  summary: Completed with errors (show_details=false, default)
-                  value:
-                    operation_id: 9a8f2e31-4c67-4b8a-b123-abcdef123456
-                    created_at: '2026-03-10T08:00:00Z'
-                    created_by: user_oid
-                    last_updated_at: '2026-03-10T08:45:00Z'
-                    status: CompletedWithErrors
-                    dataset_cnt: 2000
-                    completed_cnt: 1994
-                    failed_cnt: 6
-                    target_tier: Cold
+                $ref: "#/components/schemas/OperationStatus"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
-          $ref: "#/components/responses/NotFound"
+          description: Not found.
 
   /operation/restore:
     post:
@@ -2250,12 +2573,11 @@ paths:
               <li>restorePointInTime must be after the dataset creation time.</li>
             </ul>
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
           description: |-
             Forbidden. Possible reasons:
             <ul>
-              <li>The restore feature flag is disabled.</li>
               <li>The user is not registered in the data partition.</li>
               <li>The user does not have the subproject admin role.</li>
             </ul>
@@ -2265,6 +2587,8 @@ paths:
           description: |-
             Conflict. A restore operation is already in progress for this data partition;
             only one restore can run at a time per data partition.
+        "501":
+          description: The restore feature flag is disabled.
         "503":
           description: |-
             Service Unavailable. Possible reasons:
@@ -2306,410 +2630,23 @@ paths:
               schema:
                 $ref: "#/components/schemas/RestoreOperationStatus"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          description: Unauthorized.
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: Forbidden.
         "404":
           description: No restore operation was found for the given operationId.
-
-  # =========================================================================
-  # Analytics Endpoints
-  # =========================================================================
-
-  /analytics/job:
-    get:
-      summary: List all analytics job configurations.
-      description: |-
-        <ul>
-          <li>Description: List all analytics job configurations. Each configuration defines which report metrics are generated and how often reports are produced. Tenant admins see all configurations; subproject admins see only their subproject configurations.</li>
-          <li>Roles: tenant.admin, data.manager, or subproject.admin</li>
-        </ul>
-      operationId: analytics-list-schedules
-      tags:
-        - Analytics
-      parameters:
-        - $ref: "#/components/parameters/DataPartitionId"
-      responses:
-        "200":
-          description: List of analytics job configurations.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AnalyticsJob"
-              example:
-                - name: "north-sea-survey"
-                  type: "subproject"
-                  statistics: "sz,th"
-                  first_execution: 1775260800000
-                  freq_execution: 1
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-    put:
-      summary: Create or update an analytics job configuration.
-      description: |-
-        <ul>
-          <li>Description: Create or update an analytics job configuration. The configuration defines which metrics to include in the analytics report and how often the job runs. The request body must be a single-element array. If the element name is empty, it creates a tenant-level configuration; otherwise it creates a subproject-level configuration.</li>
-          <li>The request field <code>first_execution</code> is a weekday selector (1-7). The response field <code>first_execution</code> is the computed next execution time in UTC milliseconds.</li>
-          <li>Roles: tenant.admin or data.manager (tenant-level configuration), subproject.admin (subproject-level configuration)</li>
-        </ul>
-      operationId: analytics-create-schedule
-      tags:
-        - Analytics
-      parameters:
-        - $ref: "#/components/parameters/DataPartitionId"
-      requestBody:
-        required: true
-        description: Single-element array containing the analytics job configuration.
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/AnalyticsJobInput"
-              minItems: 1
-              maxItems: 1
-            example:
-              - name: "north-sea-survey"
-                statistics: "SZ"
-                first_execution: 7
-                freq_execution: 7
-      responses:
-        "200":
-          description: Analytics job configuration created or updated successfully.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AnalyticsJob"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-  /analytics/job/{subprojectid}:
-    get:
-      summary: List available analytics reports for a subproject.
-      description: |-
-        <ul>
-          <li>Description: List available analytics report files for a specific subproject.</li>
-          <li>Roles: subproject.admin, tenant.admin, or data.manager</li>
-        </ul>
-      operationId: analytics-list-reports
-      tags:
-        - Analytics
-      parameters:
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - $ref: "#/components/parameters/DataPartitionId"
-        - description: "Filter reports by date. Supported formats: YYYY, YYYY-MM, or YYYY-MM-DD."
-          in: query
-          name: filter-date
-          required: false
-          schema:
-            type: string
-            pattern: '^\d{4}(-\d{2}(-\d{2})?)?$'
-        - description: "Extension appended to the analytics container name."
-          in: query
-          name: extension
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: List of available report blob names.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-              example:
-                - "2026/03/28/report.csv"
-                - "2026/03/29/report.csv"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    delete:
-      summary: Delete the analytics job configuration for a subproject.
-      description: |-
-        <ul>
-          <li>Description: Delete the analytics job configuration for a specific subproject.</li>
-          <li>Roles: subproject.admin, tenant.admin, or data.manager</li>
-        </ul>
-      operationId: analytics-delete-schedule
-      tags:
-        - Analytics
-      parameters:
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - $ref: "#/components/parameters/DataPartitionId"
-      responses:
-        "200":
-          description: Analytics job configuration deleted successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /analytics/job/{subprojectid}/connection-string:
-    get:
-      summary: Get download connection string for subproject analytics reports.
-      description: |-
-        <ul>
-          <li>Description: Generate storage credentials to download analytics report files for a subproject.</li>
-          <li>Roles: subproject.admin, tenant.admin, or data.manager</li>
-        </ul>
-      operationId: analytics-report-download-connection-string
-      tags:
-        - Analytics
-      parameters:
-        - description: Name of the subproject.
-          in: path
-          name: subprojectid
-          required: true
-          schema:
-            type: string
-        - $ref: "#/components/parameters/DataPartitionId"
-        - description: "Filter reports by date. Supported formats: YYYY, YYYY-MM, or YYYY-MM-DD."
-          in: query
-          name: filter-date
-          required: false
-          schema:
-            type: string
-            pattern: '^\d{4}(-\d{2}(-\d{2})?)?$'
-        - description: "Extension appended to the analytics container name."
-          in: query
-          name: extension
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Storage credentials for downloading reports.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AnalyticsConnectionString"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  /analytics/tenant/job:
-    get:
-      summary: List available analytics reports for the tenant.
-      description: |-
-        <ul>
-          <li>Description: List available analytics report files across the entire tenant.</li>
-          <li>Roles: tenant.admin or data.manager</li>
-        </ul>
-      operationId: analytics-list-reports-tenant
-      tags:
-        - Analytics
-      parameters:
-        - $ref: "#/components/parameters/DataPartitionId"
-        - description: "Filter reports by date. Supported formats: YYYY, YYYY-MM, or YYYY-MM-DD."
-          in: query
-          name: filter-date
-          required: false
-          schema:
-            type: string
-            pattern: '^\d{4}(-\d{2}(-\d{2})?)?$'
-        - description: "Extension appended to the analytics container name."
-          in: query
-          name: extension
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: List of available report blob names for the tenant.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-    delete:
-      summary: Delete the tenant-level analytics job configuration.
-      description: |-
-        <ul>
-          <li>Description: Delete the tenant-level analytics job configuration.</li>
-          <li>Roles: tenant.admin or data.manager</li>
-        </ul>
-      operationId: analytics-delete-schedule-tenant
-      tags:
-        - Analytics
-      parameters:
-        - $ref: "#/components/parameters/DataPartitionId"
-      responses:
-        "200":
-          description: Tenant-level analytics job configuration deleted successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-  /analytics/tenant/job/connection-string:
-    get:
-      summary: Get download connection string for tenant analytics reports.
-      description: |-
-        <ul>
-          <li>Description: Generate storage credentials to download analytics report files at the tenant level.</li>
-          <li>Roles: tenant.admin or data.manager</li>
-        </ul>
-      operationId: analytics-report-download-connection-string-tenant
-      tags:
-        - Analytics
-      parameters:
-        - $ref: "#/components/parameters/DataPartitionId"
-        - description: "Filter reports by date. Supported formats: YYYY, YYYY-MM, or YYYY-MM-DD."
-          in: query
-          name: filter-date
-          required: false
-          schema:
-            type: string
-            pattern: '^\d{4}(-\d{2}(-\d{2})?)?$'
-        - description: "Extension appended to the analytics container name."
-          in: query
-          name: extension
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Storage credentials for downloading tenant reports.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AnalyticsConnectionString"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        "501":
+          description: The restore feature flag is disabled.
 
 # ===========================================================================
-# Components Section
+# Endpoints Models Section
 # ===========================================================================
 
 security:
   - bearer: []
 components:
-  # =========================================================================
-  # Reusable Parameters
-  # =========================================================================
-  parameters:
-    TenantId:
-      description: Name of the tenant.
-      in: path
-      name: tenantid
-      required: true
-      schema:
-        type: string
-    SubProjectId:
-      description: Name of the subproject.
-      in: path
-      name: subprojectid
-      required: true
-      schema:
-        type: string
-    DatasetId:
-      description: Name of the dataset.
-      in: path
-      name: datasetid
-      required: true
-      schema:
-        type: string
-    ImpersonationTokenContext:
-      description: "The impersonation token context (required only with impersonation token credentials)"
-      in: header
-      name: impersonation-token-context
-      required: false
-      schema:
-        type: string
-        default: ""
-    DataPartitionId:
-      description: "Data partition identifier."
-      in: header
-      name: data-partition-id
-      required: true
-      schema:
-        type: string
-    DatasetPath:
-      description: Hierarchical path of the dataset.
-      in: query
-      name: path
-      required: false
-      schema:
-        type: string
-    TranslateUserInfo:
-      description: Translate the user-id to a more human readable user info.
-      name: translate-user-info
-      in: query
-      schema:
-        type: boolean
-        enum:
-          - true
-          - false
-        default: true
-
-  # =========================================================================
-  # Reusable Responses
-  # =========================================================================
-  responses:
-    BadRequest:
-      description: Bad request.
-    Unauthorized:
-      description: Unauthorized.
-    Forbidden:
-      description: Forbidden.
-    NotFound:
-      description: Not found.
-    Gone:
-      description: |
-        Gone. The requested API is deprecated and no longer available.
-    Conflict:
-      description: Conflict.
-    Locked:
-      description: |
-        Locked. The error message contains the Reason in the form <b>[RCODE:REASON(2-char-code)TTL(sec-number)]</b>. Possible Reasons code are: <ul>
-        <li>WL (Write Locked).</li>
-        <li>RL (Read Locked).</li>
-        <li>CL (Cannot be Locked).</li>
-        <li>UL (Cannot be Unlocked).</ul>
-        For example the reason code <b>[RCODE:RL3600]</b> indicates the dataset is Read Locked with a TTL of 3600 seconds.
-
-  # =========================================================================
-  # Reusable Request Bodies
-  # =========================================================================
   requestBodies:
     DatasetCheckList:
       content:
@@ -2718,516 +2655,13 @@ components:
             $ref: "#/components/schemas/DatasetCheckList"
       description: Request body
       required: true
-
-  # =========================================================================
-  # Security Schemes
-  # =========================================================================
   securitySchemes:
     bearer:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-  # =========================================================================
-  # Schemas
-  # =========================================================================
+      type: apiKey
+      name: Authorization
+      in: header
   schemas:
-    # -----------------------------------------------------------------------
-    # Shared / reusable sub-schemas (extracted from inline definitions)
-    # -----------------------------------------------------------------------
-    Acls:
-      type: object
-      description: ACLs with admin groups and viewer groups.
-      properties:
-        admins:
-          type: array
-          items:
-            type: string
-        viewers:
-          type: array
-          items:
-            type: string
-
-    AccessControlList:
-      additionalProperties: false
-      description: The access control tags associated with this entity.
-      properties:
-        owners:
-          description: The list of owners of this data record.
-          items:
-            pattern: ^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$
-            type: string
-          title: List of Owners
-          type: array
-        viewers:
-          description: The list of viewers to which this data record is accessible.
-          items:
-            pattern: ^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$
-            type: string
-          title: List of Viewers
-          type: array
-      required:
-        - owners
-        - viewers
-      title: Access Control List
-      type: object
-
-    LegalParentList:
-      additionalProperties: false
-      description: A list of entity IDs in the data ecosystem, which act as legal parents to the current entity.
-      properties:
-        parents:
-          description: An array of entity references identifying the source of data.
-          example: []
-          items:
-            pattern: ^[\w\.\-]+:[\w\.\-]+:[\w\-\.:%]+:[0-9]+$
-            type: string
-          title: Parents
-          type: array
-      title: Parent List
-      type: object
-
-    LegalTags:
-      additionalProperties: false
-      description: Legal meta data like legal tags, relevant other countries, legal status.
-      properties:
-        legaltags:
-          description: The list of legal tags.
-          items:
-            type: string
-          title: Legal Tags
-          type: array
-        otherRelevantDataCountries:
-          description: The list of other relevant data countries.
-          items:
-            pattern: ^[A-Z]{2}$
-            type: string
-          title: Other Relevant Data Countries
-          type: array
-        status:
-          description: The legal status.
-          pattern: ^(compliant|uncompliant)$
-          title: Legal Status
-          type: string
-      required:
-        - legaltags
-        - otherRelevantDataCountries
-      title: Legal Meta Data
-      type: object
-
-    CommonResources:
-      description: Common resources to be injected at root 'data' level.
-      properties:
-        ExistenceKind:
-          description: Where does this data resource sit in the cradle-to-grave span of its existence?
-          pattern: ^[\w\.\-]+:reference-data--ExistenceKind:[\w\.\-:%]+:[0-9]*$
-          title: Existence Kind
-          type: string
-        ResourceCurationStatus:
-          description: Describes the current Curation status.
-          pattern: ^[\w\.\-]+:reference-data--ResourceCurationStatus:[\w\.\-:%]+:[0-9]*$
-          title: Resource Curation Status
-          type: string
-        ResourceHomeRegionID:
-          description: The name of the home region for this OSDU resource object.
-          pattern: ^[\w\.\-]+:reference-data--OSDURegion:[\w\.\-:%]+:[0-9]*$
-          title: Resource Home Region ID
-          type: string
-        ResourceHostRegionIDs:
-          description: The name of the host region(s) for this OSDU resource object.
-          items:
-            pattern: ^[\w\.\-]+:reference-data--OSDURegion:[\w\.\-:%]+:[0-9]*$
-            type: string
-          title: Resource Host Region ID
-          type: array
-        ResourceLifecycleStatus:
-          description: Describes the current Resource Lifecycle status.
-          pattern: ^[\w\.\-]+:reference-data--ResourceLifecycleStatus:[\w\.\-:%]+:[0-9]*$
-          title: Resource Lifecycle Status
-          type: string
-        ResourceSecurityClassification:
-          description: Classifies the security level of the resource.
-          pattern: ^[\w\.\-]+:reference-data--ResourceSecurityClassification:[\w\.\-:%]+:[0-9]*$
-          title: Resource Security Classification
-          type: string
-        Source:
-          description: The entity that produced the record.
-          title: Data Source
-          type: string
-      title: OSDU Common Resources
-      type: object
-
-    AbstractDataset:
-      description: Schema fragment holding properties common for all datasets.
-      properties:
-        DatasetProperties:
-          description: Placeholder for a specialization.
-          example: {}
-          title: Dataset Properties
-          type: object
-        Description:
-          description: An optional, textual description of the dataset.
-          example: As originally delivered by ACME.com.
-          title: Description
-          type: string
-        EncodingFormatTypeID:
-          description: EncodingFormatType ID reference value relationship.
-          example: "namespace:reference-data--EncodingFormatType:text%2Fcsv:"
-          pattern: ^[\w\.\-]+:reference-data--EncodingFormatType:[\w\.\-:%]+:[0-9]*$
-          title: Encoding Format Type ID
-          type: string
-        Endian:
-          description: 'Endianness of binary value. Enumeration: "BIG", "LITTLE".'
-          enum:
-            - BIG
-            - LITTLE
-          type: string
-        Name:
-          description: An optional name of the dataset.
-          example: Dataset X221/15
-          title: Name
-          type: string
-        SchemaFormatTypeID:
-          description: Relationship to the SchemaFormatType reference value.
-          example: "namespace:reference-data--SchemaFormatType:CWLS%20LAS3:"
-          pattern: ^[\w\.\-]+:reference-data--SchemaFormatType:[\w\.\-:%]+:[0-9]*$
-          title: Schema Format Type ID
-          type: string
-        TotalSize:
-          description: Total size of the dataset in bytes.
-          example: "13245217273"
-          pattern: "[0-9]+"
-          title: Total Size
-          type: string
-      required:
-        - DatasetProperties
-      title: AbstractDataset
-      type: object
-
-    FileSourceInfo:
-      description: A schema fragment to describe file source information.
-      properties:
-        Checksum:
-          description: Checksum of file bytes.
-          pattern: ^([0-9a-fA-F]{2})+$
-          title: Checksum
-          type: string
-        ChecksumAlgorithm:
-          description: The name of the checksum algorithm.
-          example: SHA-256
-          title: Checksum Algorithm
-          type: string
-        FileSize:
-          description: Length of file in bytes.
-          example: "95463"
-          pattern: ^[0-9]+$
-          title: File Size
-          type: string
-        FileSource:
-          description: The location of the file.
-          example: s3://default_bucket/r1/data/provided/documents/1000.witsml
-          title: File Source
-          type: string
-        Name:
-          description: Optional, user-friendly file name.
-          example: 1000.witsml
-          title: Name
-          type: string
-        PreloadFileCreateDate:
-          description: Optional create date and time of the file.
-          example: "2019-12-16T11:46:20.163Z"
-          format: date-time
-          title: Preload File Create Date
-          type: string
-        PreloadFileCreateUser:
-          description: Optional user name who created the file.
-          example: somebody@acme.org
-          title: Preload File Create User
-          type: string
-        PreloadFileModifyDate:
-          description: Optional last modified date of the file.
-          example: "2019-12-20T17:20:05.356Z"
-          format: date-time
-          title: Preload File Modify Date
-          type: string
-        PreloadFileModifyUser:
-          description: Optional user who last modified the file.
-          example: somebody.else@acme.org
-          title: Preload File Modify User
-          type: string
-        PreloadFilePath:
-          description: File system path to the data file before loading.
-          example: s3://staging-area/r7/raw-data/provided/documents/1000.witsml
-          title: Preload File Path
-          type: string
-      required:
-        - FileSource
-      title: FileSourceInfo
-      type: object
-
-    AbstractFileCollection:
-      description: The schema fragment representing file collections.
-      properties:
-        DatasetProperties:
-          description: The dataset properties for a file collection.
-          properties:
-            Checksum:
-              description: MD5 checksum of file bytes.
-              pattern: ^[0-9a-fA-F]{32}
-              title: MD5 Checksum
-              type: string
-            FileCollectionPath:
-              description: The mandatory path to the file collection.
-              example: s3://default_bucket/opendes/data/vds-dataset/
-              title: File Collection Path
-              type: string
-            FileSourceInfos:
-              description: Array of file collection members as FileSourceInfo.
-              items:
-                $ref: "#/components/schemas/FileSourceInfo"
-              title: File Source Info Array
-              type: array
-            IndexFilePath:
-              description: An optional path to an index file.
-              example: s3://default_bucket/opendes/data/vds-dataset/vds-dataset.index
-              title: Index File Path
-              type: string
-          required:
-            - FileCollectionPath
-          title: Dataset Properties
-          type: object
-      required:
-        - DatasetProperties
-      title: AbstractFileCollection
-      type: object
-
-    VectorHeaderMapping:
-      description: Array of objects which define the meaning and format of a tabular structure used in a binary file as a header.
-      properties:
-        VectorHeaderMapping:
-          description: Array of objects defining header structure.
-          items:
-            description: Header mapping object.
-            properties:
-              KeyName:
-                description: Relationship to a reference value for a name of a property header.
-                pattern: ^[\w\-\.]+:reference-data--HeaderKeyName:[\w\-\.:%]+:[0-9]*$
-                title: Key Name
-                type: string
-              Position:
-                description: Beginning byte position of header value, 1 indexed.
-                type: integer
-              ScalarIndicator:
-                description: Enumerated string indicating scalar handling.
-                enum:
-                  - STANDARD
-                  - NOSCALE
-                  - OVERRIDE
-                title: Scalar Indicator
-                type: string
-              ScalarOverride:
-                description: Scalar value when override is needed.
-                title: Scalar Override
-                type: number
-              UoM:
-                description: Relationship to units of measure reference.
-                pattern: ^[\w\-\.]+:reference-data--UnitOfMeasure:[\w\-\.:%]+:[0-9]*$
-                title: Unit of Measure
-                type: string
-              WordFormat:
-                description: Relationship to a reference value for binary data types.
-                pattern: ^[\w\-\.]+:reference-data--WordFormatType:[\w\-\.:%]+:[0-9]*$
-                title: Word Format
-                type: string
-              WordWidth:
-                description: Size of the word in bytes.
-                title: Word Width
-                type: integer
-            type: object
-          type: array
-      title: AbstractVectorHeaderMapping
-      type: object
-
-    # -----------------------------------------------------------------------
-    # FileCollection schemas (previously external $ref and inline)
-    # -----------------------------------------------------------------------
-    FileCollectionOpenZGY:
-      additionalProperties: false
-      description: The dataset representation for optimized seismic access to the OpenZGY framework developed by Schlumberger, storing seismic 3D data for seismic interpretation.
-      properties:
-        acl:
-          $ref: "#/components/schemas/AccessControlList"
-        ancestry:
-          $ref: "#/components/schemas/LegalParentList"
-        createTime:
-          description: Timestamp of the time at which initial version of this OSDU resource object was created.
-          example: "2020-12-16T11:46:20.163Z"
-          format: date-time
-          title: Resource Object Creation DateTime
-          type: string
-        createUser:
-          description: The user reference, which created the first version of this resource object.
-          example: some-user@some-company-cloud.com
-          title: Resource Object Creation User Reference
-          type: string
-        data:
-          allOf:
-            - $ref: "#/components/schemas/CommonResources"
-            - $ref: "#/components/schemas/AbstractDataset"
-            - $ref: "#/components/schemas/AbstractFileCollection"
-            - type: object
-              properties: {}
-              title: IndividualProperties
-            - type: object
-              properties:
-                ExtensionProperties:
-                  type: object
-              title: ExtensionProperties
-        id:
-          description: Previously called ResourceID or SRN which identifies this OSDU resource object without version.
-          example: "namespace:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb474"
-          pattern: '[\w\.\-]+:dataset--FileCollection.Slb.OpenZGY:[\w\.\-:%]+$'
-          title: Entity ID
-          type: string
-        kind:
-          description: The schema identification for the OSDU resource object.
-          example: "osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0"
-          pattern: "osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0"
-          title: Entity Kind
-          type: string
-        legal:
-          $ref: "#/components/schemas/LegalTags"
-        meta:
-          description: The Frame of Reference meta data section.
-          items:
-            description: A meta data item for Unit/Measurement/CRS/Azimuth/Time context.
-            title: Frame of Reference Meta Data Item
-          title: Frame of Reference Meta Data
-          type: array
-        modifyTime:
-          description: Timestamp of the time at which this version of the OSDU resource object was created.
-          example: "2020-12-16T11:52:24.477Z"
-          format: date-time
-          title: Resource Object Version Creation DateTime
-          type: string
-        modifyUser:
-          description: The user reference, which created this version of this resource object.
-          example: some-user@some-company-cloud.com
-          title: Resource Object Version Creation User Reference
-          type: string
-        tags:
-          additionalProperties:
-            type: string
-          description: A generic dictionary of string keys mapping to string value.
-          example:
-            NameOfKey: String value
-          title: Tag Dictionary
-          type: object
-        version:
-          description: The version number of this OSDU resource; set by the framework.
-          example: 1562066009929332
-          format: int64
-          title: Version Number
-          type: integer
-      required:
-        - kind
-      title: FileCollection.Slb.OpenZGY
-      type: object
-
-    FileCollectionSEGY:
-      additionalProperties: false
-      description: A generic representation for SEGY dataset represented as set of files.
-      properties:
-        acl:
-          $ref: "#/components/schemas/AccessControlList"
-        ancestry:
-          $ref: "#/components/schemas/LegalParentList"
-        createTime:
-          description: Timestamp of the time at which initial version of this OSDU resource object was created.
-          example: "2020-12-16T11:46:20.163Z"
-          format: date-time
-          title: Resource Object Creation DateTime
-          type: string
-        createUser:
-          description: The user reference, which created the first version of this resource object.
-          example: some-user@some-company-cloud.com
-          title: Resource Object Creation User Reference
-          type: string
-        data:
-          allOf:
-            - $ref: "#/components/schemas/CommonResources"
-            - $ref: "#/components/schemas/AbstractDataset"
-            - $ref: "#/components/schemas/AbstractFileCollection"
-            - $ref: "#/components/schemas/VectorHeaderMapping"
-            - type: object
-              properties:
-                SEGYRevision:
-                  description: The SEG-Y standard revision the SEG-Y file set is conforming to.
-                  example: rev 0
-                  title: SEG-Y Revision
-                  type: string
-              title: IndividualProperties
-            - type: object
-              properties:
-                ExtensionProperties:
-                  type: object
-              title: ExtensionProperties
-        id:
-          description: Previously called ResourceID or SRN which identifies this OSDU resource object without version.
-          example: "namespace:dataset--FileCollection.SEGY:b47f793a-dc9c-5d11-8d59-6cc611a98926"
-          pattern: ^[\w\.\-]+:dataset--FileCollection.SEGY:[\w\-\.:%]+$
-          title: Entity ID
-          type: string
-        kind:
-          description: The schema identification for the OSDU resource object.
-          example: "osdu:wks:dataset--FileCollection.SEGY:1.0.0"
-          pattern: ^[\w\-\.]+:[\w\-\.]+:[\w\-\.]+:[0-9]+.[0-9]+.[0-9]+$
-          title: Entity Kind
-          type: string
-        legal:
-          $ref: "#/components/schemas/LegalTags"
-        meta:
-          description: The Frame of Reference meta data section.
-          items:
-            description: A meta data item for Unit/Measurement/CRS/Azimuth/Time context.
-            title: Frame of Reference Meta Data Item
-          title: Frame of Reference Meta Data
-          type: array
-        modifyTime:
-          description: Timestamp of the time at which this version of the OSDU resource object was created.
-          example: "2020-12-16T11:52:24.477Z"
-          format: date-time
-          title: Resource Object Version Creation DateTime
-          type: string
-        modifyUser:
-          description: The user reference, which created this version of this resource object.
-          example: some-user@some-company-cloud.com
-          title: Resource Object Version Creation User Reference
-          type: string
-        tags:
-          additionalProperties:
-            type: string
-          description: A generic dictionary of string keys mapping to string value.
-          example:
-            NameOfKey: String value
-          title: Tag Dictionary
-          type: object
-        version:
-          description: The version number of this OSDU resource; set by the framework.
-          example: 1562066009929332
-          format: int64
-          title: Version Number
-          type: integer
-      required:
-        - kind
-      title: FileCollection.SEGY
-      type: object
-
-    # -----------------------------------------------------------------------
-    # API schemas
-    # -----------------------------------------------------------------------
     Status:
-      type: object
       required:
         - status
       properties:
@@ -3236,7 +2670,6 @@ components:
       example:
         status: running
     Info:
-      type: object
       required:
         - info
       properties:
@@ -3248,8 +2681,6 @@ components:
           type: string
         connected_outer_services:
           type: array
-          items:
-            type: string
       example:
         info:
           group_id: org.opengroup.osdu.sdms.v3
@@ -3325,11 +2756,21 @@ components:
               properties: {}
           description: Seismic metadata to be stored as dataecosystem storage record.
         openzgy_v1:
-          $ref: "#/components/schemas/FileCollectionOpenZGY"
+          $ref: ../schemas/openzgy/FileCollection.Slb.OpenZGY.1.0.0.json
         segy_v1:
-          $ref: "#/components/schemas/FileCollectionSEGY"
+          $ref: ../schemas/segy/FileCollection.SEGY.1.0.0.json
         acls:
-          $ref: "#/components/schemas/Acls"
+          type: object
+          properties:
+            admins:
+              type: array
+              items:
+                type: string
+            viewers:
+              type: array
+              items:
+                type: string
+          description: ACLs with admin groups and viewer groups for the dataset.
       example:
         gtags:
           - tagA
@@ -3344,13 +2785,16 @@ components:
               - US
           data:
             msg: sample data
+        openzgy_v1:
+          $ref: ../schemas/openzgy/example.json
+        segy_v1:
+          $ref: ../schemas/segy/example.json
         acls:
           admins:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.admin@slb.p4d.cloud.slb-ds.com
           viewers:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.viewer@slb.p4d.cloud.slb-ds.com
     Dataset:
-      type: object
       required:
         - name
         - tenant
@@ -3424,9 +2868,9 @@ components:
             data:
               type: object
         openzgy_v1:
-          $ref: "#/components/schemas/FileCollectionOpenZGY"
+          $ref: ../schemas/openzgy/FileCollection.Slb.OpenZGY.1.0.0.json
         segy_v1:
-          $ref: "#/components/schemas/FileCollectionSEGY"
+          $ref: ../schemas/segy/FileCollection.SEGY.1.0.0.json
       example:
         name: dsx01
         tenant: geosolution
@@ -3462,135 +2906,23 @@ components:
           data:
             msg: sample data
         openzgy_v1:
-          data:
-            ResourceHomeRegionID: "opendes:reference-data--OSDURegion:AWSEastUSA:"
-            ResourceHostRegionIDs:
-              - "opendes:reference-data--OSDURegion:AWSEastUSA:"
-            Name: Dataset X221/15
-            Description: As originally delivered by ACME.com.
-            TotalSize: "13245217273"
-            DatasetProperties:
-              FileCollectionPath: s3://default_bucket/opendes/data/vds-dataset/
-              FileSourceInfos:
-                - FileSource: s3://default_bucket/opendes/data/vds-dataset/vds-file-1
-                  Name: vds-file-1
-                  FileSize: "439452464"
-          id: "opendes:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb474"
-          kind: "osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0"
-          acl:
-            viewers:
-              - data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com
-            owners:
-              - data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com
-          legal:
-            legaltags:
-              - opendes-seistore-test-01
-            otherRelevantDataCountries:
-              - US
-            status: compliant
+          $ref: ../schemas/openzgy/example.json
         segy_v1:
-          id: "osdu:dataset--FileCollection.SEGY:b47f793a-dc9c-5d11-8d59-6cc611a98926"
-          kind: "osdu:wks:dataset--FileCollection.SEGY:1.0.0"
-          version: 1562066009929332
-          acl:
-            owners:
-              - someone@company.com
-            viewers:
-              - someone@company.com
-          legal:
-            legaltags:
-              - Example legaltags
-            otherRelevantDataCountries:
-              - US
-            status: compliant
-          data:
-            Name: Dataset X221/15
-            Description: As originally delivered by ACME.com.
-            DatasetProperties:
-              FileCollectionPath: s3://default_bucket/opendes/data/vds-dataset/
-              FileSourceInfos:
-                - FileSource: s3://default_bucket/opendes/data/vds-dataset/vds-file-1
-                  Name: vds-file-1
-            SEGYRevision: rev 0
-    Filemetadata:
-      type: object
-      description: |
-        Seismic-store specific descriptor of how the dataset is laid out in cloud
-        storage. Used by client libraries to reconstruct multi-object datasets.
-      properties:
-        nObject:
-          type: integer
-          description: Number of physical objects that make up the dataset.
-        totalSize:
-          type: integer
-          description: Total size of the dataset across all physical objects.
-        objsize:
-          type: integer
-          description: Size of each individual physical object (except possibly the last one).
-        sizeUnit:
-          type: string
-          description: Unit for objsize and totalSize (e.g. B, KB, MB, GB).
-        tier_class:
-          type: string
-          readOnly: true
-          description: |
-            Read-only label reflecting the current storage tier of the dataset's
-            underlying blobs (for example `Hot`, `Cool`, `Cold`, `Archive`). The
-            service populates this field; it is never updated by a PATCH and any
-            value supplied for it in a PATCH body is ignored. To change the
-            storage tier use the `change_tier` field on `PATCH /dataset/...`
-            (fire-and-forget) or the asynchronous `PUT /operation/change-tier`
-            and poll `GET /operation/change-tier`.
+          $ref: ../schemas/segy/example.json
     DatasetPatch:
-      type: object
-      description: |
-        Request body for the PATCH dataset operation. At least one field is required
-        unless the `close` query parameter is used. Most fields are independent, but:
-          - `dataset_new_name` and `change_tier` may be combined in a single request;
-            the rename is applied synchronously while the tier change is dispatched
-            as a fire-and-forget background operation.
-          - `filemetadata.tier_class` is read-only and is ignored if supplied.
       properties:
         dataset_new_name:
           type: string
-          description: New name for the dataset (rename).
+          description: New name for the dataset.
         metadata:
           type: object
           description: Generic information about the dataset stored as key value pairs.
         filemetadata:
-          allOf:
-            - $ref: "#/components/schemas/Filemetadata"
-          description: |
-            Seismic-store specific physical layout descriptor. The nested
-            `tier_class` field is read-only and informational; supplying it in
-            a PATCH body has no effect.
-        change_tier:
-          type: string
-          writeOnly: true
-          enum:
-            - Hot
-            - Cool
-            - Cold
-          description: |
-            Actionable, write-only field that requests a storage-tier change for
-            the dataset.
+          type: object
+          description: Number of objects and the size in bytes of the dataset.
 
-            Behavior:
-              - **Fire-and-forget**: the API returns `200 OK` with the updated
-                metadata as soon as the metadata patch succeeds, *before* the
-                underlying cloud-storage tier transition has completed.
-              - No operation id, no progress polling, no per-blob failure detail
-                through this endpoint. Failures are visible only in server logs.
-              - Honored only when `FEATURE_FLAG_ENABLE_CHANGE_TIER` is enabled;
-                when disabled the request is rejected with
-                `403 PERMISSION_DENIED`.
-              - Write-only: the response body never echoes it back. The current
-                tier of the dataset is exposed as the read-only
-                `filemetadata.tier_class` field on the GET response.
 
-            For tier changes that need progress tracking, use the change-tier
-            operation (`PUT /operation/change-tier`) and poll its status with
-            `GET /operation/change-tier`.
+
         last_modified_date:
           type: string
           description: Date when the dataset was last modified.
@@ -3620,11 +2952,21 @@ components:
             data:
               type: object
         openzgy_v1:
-          $ref: "#/components/schemas/FileCollectionOpenZGY"
+          $ref: ../schemas/openzgy/FileCollection.Slb.OpenZGY.1.0.0.json
         segy_v1:
-          $ref: "#/components/schemas/FileCollectionSEGY"
+          $ref: ../schemas/segy/FileCollection.SEGY.1.0.0.json
         acls:
-          $ref: "#/components/schemas/Acls"
+          type: object
+          description: ACLs with admin groups and viewer groups for the dataset.
+          properties:
+            admins:
+              type: array
+              items:
+                type: string
+            viewers:
+              type: array
+              items:
+                type: string
       example:
         dataset_new_name: dsx02
         metadata:
@@ -3635,6 +2977,7 @@ components:
           f1: v1
           f2: v2
           f3: v3
+
         last_modified_date: Thu Jul 16 2020 04:37:41 GMT+0000 (Coordinated Universal Time)
         gtags:
           - tag01
@@ -3652,27 +2995,15 @@ components:
           data:
             msg: sample data
         openzgy_v1:
-          data:
-            Name: Dataset X221/15
-            DatasetProperties:
-              FileCollectionPath: s3://default_bucket/opendes/data/vds-dataset/
-          id: "opendes:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb474"
-          kind: "osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0"
+          $ref: ../schemas/openzgy/example.json
         segy_v1:
-          id: "osdu:dataset--FileCollection.SEGY:b47f793a-dc9c-5d11-8d59-6cc611a98926"
-          kind: "osdu:wks:dataset--FileCollection.SEGY:1.0.0"
-          data:
-            Name: Dataset X221/15
-            DatasetProperties:
-              FileCollectionPath: s3://default_bucket/opendes/data/vds-dataset/
-            SEGYRevision: rev 0
+          $ref: ../schemas/segy/example.json
         acls:
           admins:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.admin@slb.p4d.cloud.slb-ds.com
           viewers:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.viewer@slb.p4d.cloud.slb-ds.com
     DatasetPermission:
-      type: object
       required:
         - read
         - write
@@ -3692,7 +3023,6 @@ components:
         write: false
         delete: false
     DatasetAndDirectories:
-      type: object
       required:
         - datasets
         - directories
@@ -3715,7 +3045,6 @@ components:
           - /a/b/c/d
           - /a/b/c/e
     DatasetCheckList:
-      type: object
       required:
         - datasets
       properties:
@@ -3728,6 +3057,14 @@ components:
         datasets:
           - a/b/c/dsx01
           - a/b/c/dsx02
+    DatasetBulkDeleteBody:
+      type: object
+      properties:
+        filter:
+          type: object
+          description: Optional structured query filter to restrict the datasets to be deleted.
+      example:
+        filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}
     OperationBody:
       type: object
       properties:
@@ -3737,7 +3074,6 @@ components:
       example:
         filter: {"and":[{"or": [{"property":"gtags","operator":"CONTAINS","value":"tagA"}, {"property":"gtags","operator":"CONTAINS","value":"tagC"}]},{"property":"name","operator":"LIKE","value":"W%"}, {"not": {"property":"gtags","operator":"CONTAINS","value":"tagB"}}]}
     AccessToken:
-      type: object
       required:
         - access_token
         - token_type
@@ -3758,7 +3094,6 @@ components:
         token_type: Bearer
         expires_in: 3600
     ImpersonationToken:
-      type: object
       required:
         - impersonation_token
         - token_type
@@ -3783,7 +3118,6 @@ components:
         expires_in: 3600
         context: string
     Resource:
-      type: object
       required:
         - resource
       properties:
@@ -3792,7 +3126,6 @@ components:
         readonly:
           type: boolean
     ImpersonationTokenRequest:
-      type: object
       required:
         - resources
       properties:
@@ -3813,7 +3146,6 @@ components:
         metadata:
           jobId: 1234
     ImpTokenRequest:
-      type: object
       required:
         - token
         - resources
@@ -3840,7 +3172,6 @@ components:
           - resource: sd://tnx01/spx03
         refresh-url: https://httpstat.us/200
     ImpTokenPatchRequest:
-      type: object
       required:
         - token
         - refresh-url
@@ -3856,7 +3187,6 @@ components:
         token: string
         refresh-url: https://httpstat.us/200
     RefreshTokenRequest:
-      type: object
       required:
         - token
       properties:
@@ -3866,7 +3196,6 @@ components:
       example:
         token: string
     SubProjectCreateBody:
-      type: object
       properties:
         admin:
           type: string
@@ -3888,7 +3217,19 @@ components:
             - uniform
             - dataset
         acls:
-          $ref: "#/components/schemas/Acls"
+          type: object
+          description: The entitlement groups to enable subproject access as admin or
+            viewer. If not specified, default entitlement data groups will be
+            created.
+          properties:
+            admins:
+              type: array
+              items:
+                type: string
+            viewers:
+              type: array
+              items:
+                type: string
       example:
         admin: admin@email
         storage_class: MULTI_REGIONAL
@@ -3900,14 +3241,24 @@ components:
           viewers:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.viewer@slb.p4d.cloud.slb-ds.com
     SubProjectPatchBody:
-      type: object
       properties:
         access_policy:
           type: string
           description: Access Policy for the subproject.
           default: dataset
         acls:
-          $ref: "#/components/schemas/Acls"
+          type: object
+          description: ACLs with admin groups and viewer groups. Existing acls will be
+            replaced with the provided acls.
+          properties:
+            admins:
+              type: array
+              items:
+                type: string
+            viewers:
+              type: array
+              items:
+                type: string
       example:
         access_policy: dataset
         acls:
@@ -3917,13 +3268,11 @@ components:
           viewers:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.viewer@slb.p4d.cloud.slb-ds.com
     SubProject:
-      type: object
       required:
         - name
         - tenant
-        - storage_class
-        - storage_location
         - ltag
+        - gcs_bucket
         - access_policy
       properties:
         name:
@@ -3941,6 +3290,9 @@ components:
         ltag:
           type: string
           description: Legal tag for the subproject.
+        gcs_bucket:
+          type: string
+          description: Storage bucket for the subproject.
         access_policy:
           type: string
           description: Access policy for the subproject.
@@ -3949,7 +3301,17 @@ components:
             - uniform
             - dataset
         acls:
-          $ref: "#/components/schemas/Acls"
+          type: object
+          description: ACLs with admin groups and viewer groups for the subproject.
+          properties:
+            admins:
+              type: array
+              items:
+                type: string
+            viewers:
+              type: array
+              items:
+                type: string
       example:
         name: spx01
         tenant: tnx01
@@ -3958,13 +3320,13 @@ components:
         admin: test@email
         ltag: Slb-Private-USA-EHC
         gcs_bucket: subproject-bucket
+        access_policy: uniform
         acls:
           admins:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.admin@slb.p4d.cloud.slb-ds.com
           viewers:
             - data.sdms.tenant.subproject.1b1417e5-fb0e-402a-b725-606723e50b76.viewer@slb.p4d.cloud.slb-ds.com
     TenantCreateBody:
-      type: object
       required:
         - gcpid
         - esd
@@ -3989,7 +3351,6 @@ components:
         esd: "{datapartition}.{domain}.com"
         default_acls: users.datalake.admins@{datapartition}.{domain}.com
     Tenant:
-      type: object
       required:
         - name
         - esd
@@ -4019,7 +3380,6 @@ components:
         gcpid: datapartition
         default_acls: users.datalake.admins@{datapartition}.{domain}.com
     UserAddRequest:
-      type: object
       required:
         - email
         - path
@@ -4044,8 +3404,24 @@ components:
         email: test@slb.com
         path: sd://slb/test_project
         group: admin
+    UserRemoveRequest:
+      required:
+        - email
+        - path
+      properties:
+        email:
+          type: string
+          description: Email address of the user. Note that this field is used as a
+            principal identifier for entitlements-svc and can be configured using the
+            env variable USER_ID_CLAIM_FOR_ENTITLEMENTS_SVC in the Seismic DMS
+            runtime.
+        path:
+          type: string
+          description: Seismic store path in the format sd://tenant/subproject.
+      example:
+        email: test@email
+        path: sd://slb/test_project
     UserRoles:
-      type: object
       required:
         - roles
       properties:
@@ -4077,7 +3453,6 @@ components:
         - dataset02
         - dataset03
     LsPaginatedDatasets:
-      type: object
       required:
         - datasets
         - nextPageCursor
@@ -4097,7 +3472,6 @@ components:
           - dataset01
         nextPageCursor: abc1234
     PaginatedDatasets:
-      type: object
       properties:
         datasets:
           type: array
@@ -4107,22 +3481,20 @@ components:
           type: string
           example: next-page-token-3rt431v41-4515351
     DatasetSize:
-      type: object
       required:
         - computed_size
         - computed_size_date
       properties:
         computed_size:
           type: number
-          description: The size of the dataset in bytes..
+          description: The size of the dataset in bytes.
         computed_size_date:
           type: string
-          description: The date of when the dateset size was computed.
+          description: The date of when the dataset size was computed.
       example:
-        computed_size: "35461"
+        computed_size: 35461
         computed_size_date: Thu Mar 16 2023 16:16:40 GMT-0500 (Central Daylight Time)
     ComputedSize:
-      type: object
       required:
         - size_bytes
         - dataset_count
@@ -4137,7 +3509,6 @@ components:
         size_bytes: 35461
         dataset_count: 2
     Operation:
-      type: object
       required:
         - operation_id
       properties:
@@ -4145,9 +3516,8 @@ components:
           type: string
           description: Operation id of the operation job.
       example:
-        operation_id: 9a8f2e31-4c67-4b8a-b123-abcdef123456
+        operation_id: c3d282e6-e7d1-40d8-8ac2-edc15b6d174c
     OperationStatus:
-      type: object
       required:
         - operation_id
         - status
@@ -4168,13 +3538,13 @@ components:
           type: string
           description: Status of the operation job.
         dataset_cnt:
-          type: integer
+          type: number
           description: Total number of datasets to process.
         completed_cnt:
-          type: integer
+          type: number
           description: Number of datasets correctly processed.
         failed_cnt:
-          type: integer
+          type: number
           description: Number of datasets which processing failed.
       example:
         operation_id: c3d282e6-e7d1-40d8-8ac2-edc15b6d174c
@@ -4185,177 +3555,6 @@ components:
         dataset_cnt: 1000
         completed_cnt: 997
         failed_cnt: 3
-    ChangeTierOperationStatus:
-      type: object
-      required:
-        - operation_id
-        - status
-      properties:
-        operation_id:
-          type: string
-          description: Operation id of the operation job.
-        created_at:
-          type: string
-          description: Time when the operation was initiated.
-        created_by:
-          type: string
-          description: User who initiated the operation job.
-        last_updated_at:
-          type: string
-          description: Time when the operation status was last updated.
-        status:
-          type: string
-          description: |
-            Status of the operation job. Possible values:
-            - **NotStarted**: The operation has been accepted and is waiting to be processed.
-            - **InProgress**: The operation is currently being processed.
-            - **Completed**: The operation has finished successfully with all datasets processed.
-            - **CompletedWithErrors**: The operation has finished but some datasets failed to process.
-          enum:
-            - NotStarted
-            - InProgress
-            - Completed
-            - CompletedWithErrors
-        dataset_cnt:
-          type: integer
-          description: Total number of datasets to process.
-        completed_cnt:
-          type: integer
-          description: Number of datasets correctly processed.
-        failed_cnt:
-          type: integer
-          description: Number of datasets which processing failed.
-        target_tier:
-          type: string
-          description: |
-            Target storage tier for change-tier operations. Supported tiers:
-            - **Hot**: Optimized for frequent access. Highest storage cost, lowest access cost.
-            - **Cool**: Optimized for infrequent access. Lower storage cost, higher access cost.
-            - **Cold**: Optimized for rare access. Lowest storage cost, highest access cost.
-          enum:
-            - Hot
-            - Cool
-            - Cold
-        failed_datasets:
-          type: array
-          description: Array of failed datasets with error details. Only included when show_details=true and failed_cnt > 0.
-          items:
-            $ref: "#/components/schemas/DatasetFailure"
-        cursor:
-          type: string
-          description: Base64 URL-safe encoded cursor to retrieve the next page of failed datasets. Present only if there are more failures to fetch.
-      example:
-        operation_id: 9a8f2e31-4c67-4b8a-b123-abcdef123456
-        created_at: '2026-03-10T08:00:00Z'
-        created_by: user_oid
-        last_updated_at: '2026-03-10T08:45:00Z'
-        status: CompletedWithErrors
-        dataset_cnt: 2000
-        completed_cnt: 1994
-        failed_cnt: 6
-        target_tier: Cool
-        failed_datasets:
-          - sdpath: sd://opendes/project-alpha/seismic/survey-2024-001
-            error: Failed to change tier for 12 blob(s)
-          - sdpath: sd://opendes/project-alpha/seismic/survey-2024-002
-            error: 'Access denied: user is not authorized to modify this dataset (ACL validation failed)'
-          - sdpath: sd://opendes/project-alpha/seismic/survey-2024-003
-            error: Failed to acquire lock
-          - sdpath: sd://opendes/project-alpha/seismic/survey-2024-004
-            error: Dataset has no associated storage location
-          - sdpath: sd://opendes/project-alpha/seismic/survey-2024-005
-            error: Dataset storage location has invalid format
-          - sdpath: sd://opendes/project-alpha/seismic/survey-2024-006
-            error: Tier changed but metadata update failed after retries
-        cursor: ZXlKamIyNTBhVzUxWVhScGIyNVViMnRsYmlJNkltVjRZVzF3YkdVaWZRPT0
-    DatasetFailure:
-      type: object
-      required:
-        - sdpath
-        - error
-      properties:
-        sdpath:
-          type: string
-          description: The SDMS path of the dataset that failed (format sd://tenant/subproject/path/dataset).
-        error:
-          type: string
-          description: Error message describing why the dataset operation failed.
-      example:
-        sdpath: sd://opendes/project-alpha/seismic/survey-2024-001
-        error: Failed to change tier for 12 blob(s)
-    AnalyticsJobInput:
-      type: object
-      required:
-        - statistics
-      properties:
-        name:
-          type: string
-          description: "Subproject name. If empty or omitted, the analytics job configuration is created at the tenant level."
-        statistics:
-          type: string
-          description: "Comma-separated statistics codes. Supported values: OB=object count, SZ=total size, TH=hot tier size, TC=cool tier size, TD=cold tier size, TA=archive tier size, TU=unknown tier size, HN=touched object count, HS=touched object size, CB=created_by, CT=creation time, LA=last accessed time, LM=last modified time, LT=last modified tier time. Example: OB,SZ."
-        first_execution:
-          type: integer
-          minimum: 1
-          maximum: 7
-          description: "Requested weekday for the first execution using the current implementation mapping (1=Sunday, 2=Monday, ..., 7=Saturday). The service converts this value to the next scheduled UTC timestamp before persisting and returning the schedule. Defaults to today."
-        freq_execution:
-          type: integer
-          minimum: 1
-          description: "Number of days between analytics job executions. Defaults to 7 (weekly)."
-      example:
-        name: "north-sea-survey"
-        statistics: "SZ"
-        first_execution: 7
-        freq_execution: 7
-    AnalyticsJob:
-      type: object
-      properties:
-        name:
-          type: string
-          description: "Subproject name for a subproject-level configuration, or tenant partition ID for a tenant-level configuration."
-        type:
-          type: string
-          description: "Scope of the analytics job configuration."
-          enum:
-            - subproject
-            - partition
-        statistics:
-          type: string
-          description: "Comma-separated metric codes to include in the analytics report."
-        first_execution:
-          type: integer
-          format: int64
-          description: "UTC timestamp (milliseconds) of the next planned execution. This value is computed from AnalyticsJobInput.first_execution when the analytics job configuration is created or updated."
-        freq_execution:
-          type: integer
-          description: "Number of days between analytics job executions."
-      example:
-        name: "north-sea-survey"
-        type: "subproject"
-        statistics: "sz,th"
-        first_execution: 1775260800000
-        freq_execution: 1
-    AnalyticsConnectionString:
-      type: object
-      required:
-        - access_token
-        - expires_in
-        - token_type
-      properties:
-        access_token:
-          type: string
-          description: "Storage access token or SAS connection string for downloading analytics reports."
-        expires_in:
-          type: number
-          description: "Expiration time for the returned storage credentials in seconds."
-        token_type:
-          type: string
-          description: "Credential type returned by the cloud provider, for example Bearer or SasUrl."
-      example:
-        access_token: "sv=2021-06-08&ss=b&srt=sco&sp=rl&se=..."
-        expires_in: 3599
-        token_type: "SasUrl"
     RestoreRequest:
       type: object
       required:

@@ -286,7 +286,11 @@ public class BulkChangeTierWorkerTests
             .Returns(mockedBlobsPages);
 
         _ = metadataChangeTierWorkerMock
-              .Setup(container => container.UpdateTier(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+              .Setup(container => container.UpdateTier(
+                  It.IsAny<string>(),
+                  It.IsAny<string>(),
+                  It.IsAny<string>(),
+                  It.IsAny<string?>()))
               .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act

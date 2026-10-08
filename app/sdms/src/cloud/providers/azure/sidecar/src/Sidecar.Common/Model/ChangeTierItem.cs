@@ -19,6 +19,15 @@ namespace Sidecar.Common.Model;
 using System.Text.Json.Serialization;
 using Sidecar.Common.Utility;
 
+public class DatasetAcl
+{
+    [JsonPropertyName("admins")]
+    public List<string> Admins { get; set; } = [];
+
+    [JsonPropertyName("viewers")]
+    public List<string> Viewers { get; set; } = [];
+}
+
 public class ChangeTierItem
 {
     [JsonPropertyName("id")]

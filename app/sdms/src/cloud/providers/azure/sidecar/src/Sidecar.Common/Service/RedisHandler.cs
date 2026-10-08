@@ -175,6 +175,11 @@ public class RedisHandler(ILogger<RedisHandler> logger, IConnectionMultiplexer c
 
     public async Task<bool> SetAsync(string key, string value) => await GetDatabase().StringSetAsync(key, value);
 
+    public async Task<bool> SetAsync(
+        string key,
+        string value,
+        TimeSpan expiry) => await GetDatabase().StringSetAsync(key, value, expiry);
+
     public async Task SetAsync(RedisKey key, HashEntry[] hash) => await GetDatabase().HashSetAsync(key, hash);
 
     public long ListLeftPush(RedisKey key, RedisValue val) => GetDatabase().ListLeftPush(key, new RedisValue(val!));
