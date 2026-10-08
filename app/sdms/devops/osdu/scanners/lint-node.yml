@@ -5,6 +5,7 @@ sdms_lint:
   tags: ['osdu-medium']
   before_script:
     - cd app/$SDMS_SERVICE
+    - npm install --global npm@${SDMS_NPM_VERSION}
   script:
     - >
       npm install -g eslint

@@ -4,6 +4,7 @@ sdms_compile-and-unit-test:
   stage: build
   before_script:
     - cd app/$SDMS_SERVICE
+    - npm install --global npm@${SDMS_NPM_VERSION}
   script:
     - chmod +x devops/scripts/utest_build_run.sh
     - devops/scripts/utest_build_run.sh
