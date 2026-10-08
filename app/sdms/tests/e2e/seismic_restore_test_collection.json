@@ -1660,22 +1660,27 @@
           }
         },
         {
-          "name": "TC-RST-CON-02 - POST restore in another partition while one active (per-partition isolation)",
+          "name": "TC-RST-CON-02 - POST restore in another partition while one active (storage-account scope)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// [confirmed: repo] the lock/in-progress check is keyed by tenant, so a DIFFERENT partition is NOT blocked by",
-                  "// an active restore in another partition. Expected behaviour: NOT a cross-partition 409.",
-                  "// (No second partition is provisioned here, so the request typically fails on tenant/dataset resolution.)",
-                  "if (pm.collectionVariables.get('other_partition_id')) {",
-                  "  pm.test('other partition not blocked by first partition (no cross-partition 409)', function () {",
-                  "    pm.expect(pm.response.code).to.not.eql(409);",
+                  "const otherPartition = pm.collectionVariables.get('other_partition_id');",
+                  "const storageAccount = pm.collectionVariables.get('storage_account_name');",
+                  "const otherStorageAccount = pm.collectionVariables.get('other_storage_account_name');",
+                  "if (otherPartition && storageAccount && otherStorageAccount) {",
+                  "  const sharesAccount = storageAccount.toLowerCase() === otherStorageAccount.toLowerCase();",
+                  "  pm.test(sharesAccount ? 'partition sharing storage account is blocked' : 'partition on distinct storage account is not blocked', function () {",
+                  "    if (sharesAccount) {",
+                  "      pm.expect(pm.response.code).to.eql(409);",
+                  "    } else {",
+                  "      pm.expect(pm.response.code).to.not.eql(409);",
+                  "    }",
                   "  });",
                   "} else {",
-                  "  pm.test('SKIPPED - set other_partition_id (a second onboarded partition) to exercise CON-02', function () { pm.expect(true).to.be.true; });",
+                  "  pm.test('SKIPPED - set other_partition_id and both DES-resolved storage account names to exercise CON-02', function () { pm.expect(true).to.be.true; });",
                   "}"
                 ]
               }
@@ -1711,7 +1716,7 @@
               "mode": "raw",
               "raw": "{\n  \"sdPath\": \"sd://{{other_partition_id}}/{{subproject_id}}/{{dataset_id}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
             },
-            "description": "Documents that concurrency is partition-scoped: an active restore in partition A must not 409 a restore in partition B. Requires a second onboarded partition (other_partition_id) with its own tenant/subproject/dataset; skipped otherwise."
+            "description": "Verifies storage-account-scoped concurrency across partitions. Set other_partition_id plus storage_account_name and other_storage_account_name to the DES-resolved account names. Partitions sharing an account expect 409; partitions on distinct accounts do not."
           }
         }
       ]
@@ -3775,6 +3780,8 @@
     { "key": "access_token", "value": "", "type": "string" },
     { "key": "non_admin_access_token", "value": "random", "type": "string" },
     { "key": "other_partition_id", "value": "", "type": "string" },
+    { "key": "storage_account_name", "value": "", "type": "string" },
+    { "key": "other_storage_account_name", "value": "", "type": "string" },
     { "key": "domain", "value": "dataservices.energy", "type": "string" },
     { "key": "tenant_id", "value": "{{data_partition_id}}", "type": "string" },
     { "key": "tenant_esd", "value": "{{data_partition_id}}.{{domain}}", "type": "string" },
