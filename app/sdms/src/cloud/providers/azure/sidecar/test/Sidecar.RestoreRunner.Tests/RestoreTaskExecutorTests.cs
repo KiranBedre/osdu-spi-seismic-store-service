@@ -217,6 +217,20 @@ public class RestoreTaskExecutorTests
     // ------------------------------------------------------------------------
 
     [Fact]
+    public async Task ProcessAsync_MissingStatusFallbackCopiesStorageAccountName()
+    {
+        var message = CreateMessage();
+
+        await _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _statusStorageMock.Verify(m => m.CreateStatusAsync(
+            TestTenant,
+            It.Is<Common.Model.RestoreOperationStatus>(
+                status => status.StorageAccountName == TestStorageAccountName),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ProcessAsync_NewOperation_RunsAllStagesAndSucceeds()
     {
         var message = CreateMessage();
@@ -714,13 +728,8 @@ public class RestoreTaskExecutorTests
     }
 
     [Fact]
-    public async Task ProcessAsync_NonRetriableFinalizeAndStatusSaveAlsoFails_StillRetainsLocksAndStopsRetry()
+    public async Task ProcessAsync_NonRetriableFinalizeAndStatusSaveAlsoFails_RetainsLocksAndRetries()
     {
-        // Post-blob-restore, non-retriable finalize failure (Cosmos 403) whose manual-recovery
-        // handler ALSO fails to persist status. The best-effort save must swallow that failure so the
-        // RestoreManualRecoveryException still governs: message swallowed (no retry) and both locks
-        // retained. Without it, the SaveStatusAsync exception would hit the generic catch and RELEASE
-        // the locks on a potentially inconsistent dataset.
         SetupResumeStatusWithBlobRestoreId();
         _ = _metadataRestoreServiceMock
             .Setup(m => m.FinalizeRestoreAsync(
@@ -735,9 +744,8 @@ public class RestoreTaskExecutorTests
 
         var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
 
-        // Non-retriable path is swallowed: no exception propagates (queue deletes the message).
-        _ = await act.Should().NotThrowAsync();
-        // Critical: locks retained despite the failed status write.
+        var exception = await Assert.ThrowsAnyAsync<Exception>(act);
+        _ = exception.GetType().Name.Should().Be("RestoreRetryableException");
         _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
     }
 

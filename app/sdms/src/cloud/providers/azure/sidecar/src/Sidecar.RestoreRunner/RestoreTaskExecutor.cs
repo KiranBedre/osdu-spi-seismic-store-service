@@ -181,6 +181,7 @@ public class RestoreTaskExecutor(
                     Subproject = sdPathParts.Subproject,
                     RestorePointInTime = message.RestorePointInTime,
                     CorrelationId = message.CorrelationId,
+                    StorageAccountName = message.StorageAccountName,
                     Status = ToStatusString(Common.RestoreOperationStatus.InProgress),
                 };
                 existingStatus = await _statusStorage.CreateStatusAsync(tenant, newStatus, ct);
@@ -381,7 +382,7 @@ public class RestoreTaskExecutor(
                 trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
                 trackedStatus.Document.RequiresManualRecovery = true;
                 trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
-                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                await PersistManualRecoveryStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreManualRecoveryException(
                     "Blob restore failed after Azure began mutating the account", ex);
             }
@@ -396,7 +397,7 @@ public class RestoreTaskExecutor(
                     trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
                     trackedStatus.Document.RequiresManualRecovery = true;
                     trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
-                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                    await PersistManualRecoveryStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                     throw new RestoreManualRecoveryException(
                         "Blob restore did not complete because of a non-retriable error", ex);
                 }
@@ -435,7 +436,7 @@ public class RestoreTaskExecutor(
                 trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
                 trackedStatus.Document.RequiresManualRecovery = true;
                 trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
-                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                await PersistManualRecoveryStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreManualRecoveryException(
                     "Metadata restore was rejected after blob restore completed", ex);
             }
@@ -456,10 +457,8 @@ public class RestoreTaskExecutor(
                     trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
                     trackedStatus.Document.RequiresManualRecovery = true;
                     trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
-                    // Best-effort: a status-write failure here must NOT escape and land in the generic
-                    // catch, which would RELEASE the locks. The retain-locks RestoreManualRecoveryException
-                    // must always be what propagates. See TryPersistStatusAsync.
-                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                    await PersistManualRecoveryStatusAsync(
+                        tenant, trackedStatus, message.OperationId, ct);
                     throw new RestoreManualRecoveryException("Metadata restore finalization failed (non-retriable)", ex);
                 }
 
@@ -526,7 +525,8 @@ public class RestoreTaskExecutor(
                     trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
                     trackedStatus.Document.RequiresManualRecovery = true;
                     trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
-                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                    await PersistManualRecoveryStatusAsync(
+                        tenant, trackedStatus, message.OperationId, ct);
                     throw new RestoreManualRecoveryException(
                         "Consistency validation failed because of a non-retriable error", ex);
                 }
@@ -724,20 +724,18 @@ public class RestoreTaskExecutor(
     }
 
     /// <summary>
-    /// Best-effort status persistence for use INSIDE a post-mutation failure handler that is about
-    /// to throw a retain-locks exception (<see cref="RestoreRetryableException"/> or
-    /// <see cref="RestoreManualRecoveryException"/>).
+    /// Best-effort status persistence for use inside a post-mutation failure handler that is about
+    /// to throw <see cref="RestoreRetryableException"/>.
     ///
     /// At these call sites the dataset may already be partially mutated, so the outer handler relies
     /// on the thrown exception TYPE to decide it must RETAIN the locks. If the status write itself
     /// failed and were allowed to propagate, that raw exception would replace the intended typed one
-    /// and surface at the generic <c>catch (Exception)</c> — which is reserved for SAFE pre-mutation
-    /// failures and RELEASES the locks — silently downgrading "retain locks" into "release locks" and
-    /// exposing a potentially inconsistent dataset. To prevent that classification flip, any failure
-    /// to persist the status here is swallowed (logged only); the caller's typed exception is always
-    /// what propagates. Losing the status write is acceptable: on a retry the message is reprocessed
-    /// and the status re-read, and for the manual-recovery path the operation simply remains visible
-    /// as in-progress (still blocking new restores) with the locks retained for the operator.
+    /// and surface at the generic <c>catch (Exception)</c>, which is reserved for SAFE pre-mutation
+    /// failures and RELEASES the locks, silently downgrading "retain locks" into "release locks" and
+    /// exposing a potentially inconsistent dataset. To prevent that classification flip, failures
+    /// here are logged and the caller's retryable exception remains what propagates. Manual-recovery
+    /// paths use <see cref="PersistManualRecoveryStatusAsync"/> because the queue message must not be
+    /// deleted until that terminal status is durable.
     /// </summary>
     private async Task TryPersistStatusAsync(string tenant, TrackedRestoreStatus trackedStatus, string operationId, CancellationToken ct)
     {
@@ -750,6 +748,23 @@ public class RestoreTaskExecutor(
             _logger.LogError(ex,
                 "Failed to persist restore status inside a post-mutation failure handler; continuing with the intended retain-locks classification - OperationId: {OperationId}",
                 operationId);
+        }
+    }
+
+    private async Task PersistManualRecoveryStatusAsync(
+        string tenant, TrackedRestoreStatus trackedStatus, string operationId, CancellationToken ct)
+    {
+        try
+        {
+            _ = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to persist manual-recovery status; retaining locks and retrying at queue level - OperationId: {OperationId}",
+                operationId);
+            throw new RestoreRetryableException(
+                "Manual-recovery status could not be persisted", ex);
         }
     }
 
