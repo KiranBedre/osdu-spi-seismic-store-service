@@ -302,6 +302,22 @@ public class RestoreTaskExecutorTests
     }
 
     [Fact]
+    public async Task ProcessAsync_DatasetLockHeldOnTerminalReplay_DoesNotOverwriteStatus()
+    {
+        SetupExistingStatus(StatusEnum.Succeeded);
+        _ = _lockManagerMock
+            .Setup(m => m.AcquireWriteLockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            .ReturnsAsync(new WriteLockSession { Locked = false });
+        var message = CreateMessage();
+
+        await _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _ = _recordedStatuses.Should().BeEmpty();
+        _statusStorageMock.Verify(m => m.SaveStatusAsync(
+            It.IsAny<string>(), It.IsAny<TrackedRestoreStatus>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task ProcessAsync_Rejected_ReleasesOnlyOperationLock()
     {
         // The dataset lock session is not owned (Locked=false), so only the operation lock is removed.

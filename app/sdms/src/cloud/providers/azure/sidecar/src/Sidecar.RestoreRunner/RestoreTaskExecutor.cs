@@ -220,9 +220,9 @@ public class RestoreTaskExecutor(
             }
             catch (RestoreRejectedException)
             {
-                // Request-level rejection (restore point out of range or a live-window no-op).
-                // Nothing has been mutated. Let the outer handler mark the operation Rejected;
-                // do NOT record it as a storage-resolution failure here.
+                // Request-level rejection for an out-of-range restore point. Nothing has been
+                // mutated. Let the outer handler mark the operation Rejected; do not record it
+                // as a storage-resolution failure here.
                 throw;
             }
             catch (Exception ex)
@@ -554,9 +554,9 @@ public class RestoreTaskExecutor(
         catch (RestoreRejectedException ex)
         {
             // SAFE, request-level rejection raised on the read side BEFORE any blob/metadata
-            // mutation (restore point out of range, or inside the current live window where the
-            // dataset already reflects that state). Mark the operation Rejected (terminal), release
-            // locks in the finally, and swallow so the queue deletes the message instead of retrying.
+            // mutation because the restore point is out of range. Mark the operation Rejected
+            // (terminal), release locks in the finally, and swallow so the queue deletes the
+            // message instead of retrying.
             _logger.LogWarning(ex,
                 "Restore rejected — {Reason}. OperationId: {OperationId}",
                 ex.Message, message.OperationId);
@@ -641,6 +641,14 @@ public class RestoreTaskExecutor(
 
             if (existing is not null)
             {
+                if (IsTerminalStatus(existing.Document.Status))
+                {
+                    _logger.LogInformation(
+                        "Restore status is already terminal ({ExistingStatus}); refusing transition to {RequestedStatus} - OperationId: {OperationId}",
+                        existing.Document.Status, statusText, message.OperationId);
+                    return;
+                }
+
                 existing.Document.Status = statusText;
                 existing.Document.ErrorDetails = existing.Document.ErrorDetails ?? errorDetails;
                 if (IsTerminalStatus(statusText))
