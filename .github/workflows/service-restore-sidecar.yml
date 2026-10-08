@@ -5,13 +5,13 @@ on:
     branches: [main]
     paths:
       - '.github/actions/docker-build/**'
-      - '.github/workflows/restore-sidecar.yml'
+      - '.github/workflows/service-restore-sidecar.yml'
       - 'app/sdms/src/cloud/providers/azure/sidecar/**'
   push:
     branches: [main]
     paths:
       - '.github/actions/docker-build/**'
-      - '.github/workflows/restore-sidecar.yml'
+      - '.github/workflows/service-restore-sidecar.yml'
       - 'app/sdms/src/cloud/providers/azure/sidecar/**'
   workflow_dispatch:
     inputs:

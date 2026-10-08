@@ -440,8 +440,8 @@ public class BlobRestoreService(
 
         if (string.IsNullOrWhiteSpace(restoreId))
         {
-            throw new InvalidOperationException(
-                $"PITR request accepted but no restoreId could be determined. OperationId: {operationId}");
+            throw new RetryableRestoreException(
+                $"PITR request was accepted but its restoreId is not visible yet. OperationId: {operationId}");
         }
 
         _logger.LogInformation(
@@ -452,13 +452,13 @@ public class BlobRestoreService(
 
     /// <summary>
     /// Builds the half-open PITR range <c>[startRange, endRange)</c> for a dataset: dataset policy
-    /// uses the whole container <c>["c", "c-0")</c>; uniform policy uses <c>["c/folder/", "c/folder/~")</c>.
+    /// uses the whole container <c>["c/", "c0")</c>; uniform policy uses <c>["c/folder/", "c/folder/~")</c>.
     /// </summary>
     private static (string StartRange, string EndRange) BuildBlobRestoreRange(DatasetStorageInfo storageInfo)
     {
         if (string.IsNullOrWhiteSpace(storageInfo.VirtualFolder))
         {
-            return (storageInfo.ContainerName, $"{storageInfo.ContainerName}-0");
+            return ($"{storageInfo.ContainerName}/", $"{storageInfo.ContainerName}0");
         }
 
         var folderPrefix = $"{storageInfo.ContainerName}/{storageInfo.VirtualFolder.Trim('/')}/";

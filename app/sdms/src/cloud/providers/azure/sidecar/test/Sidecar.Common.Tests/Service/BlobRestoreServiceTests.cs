@@ -180,10 +180,9 @@ public class BlobRestoreServiceTests
         //
         // The dataset owns the WHOLE dedicated container, so a container-level range is used with
         // NO trailing slash. Azure parses each endpoint as "<container>/<blob>" and rejects an
-        // endpoint that ends in a bare '/' (empty blob name). Per Azure guidance, the entire
-        // container "c" is covered by the half-open range [startRange "c", endRange "c-0"): the
-        // '-0' suffix sorts just after the container name and before any "c/<blob>" path, so every
-        // blob in the container is captured without spilling into sibling containers.
+        // container is covered by the half-open range [startRange "c/", endRange "c0"):
+        // '/' sorts immediately before '0', so every "c/<blob>" key is captured without spilling
+        // into sibling containers.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-abc\"}");
         var sut = CreateSut();
@@ -194,8 +193,8 @@ public class BlobRestoreServiceTests
 
         var body = _handler.Requests[1].Body!;
         _ = body.Should().Contain("\"timeToRestore\":");
-        _ = body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}\"");
-        _ = body.Should().Contain($"\"endRange\":\"{DatasetPolicyContainer}-0\"");
+        _ = body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}/\"");
+        _ = body.Should().Contain($"\"endRange\":\"{DatasetPolicyContainer}0\"");
     }
 
     [Fact]
@@ -327,7 +326,7 @@ public class BlobRestoreServiceTests
     }
 
     [Fact]
-    public async Task StartBlobRestoreAsync_AcceptedButNoIdAnywhere_ThrowsInvalidOperation()
+    public async Task StartBlobRestoreAsync_AcceptedButNoIdAnywhere_ThrowsRetryable()
     {
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.OK, string.Empty);
@@ -337,8 +336,8 @@ public class BlobRestoreServiceTests
         var act = async () => await sut.StartBlobRestoreAsync(
             DataPartition, StorageInfo(), RestorePoint, OperationId, null, CancellationToken.None);
 
-        _ = await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*no restoreId*");
+        _ = await act.Should().ThrowAsync<Sidecar.Common.Exceptions.RetryableRestoreException>()
+            .WithMessage("*restoreId is not visible yet*");
     }
 
     // ------------------------------------------------------------------------

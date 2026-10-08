@@ -1,5 +1,7 @@
 namespace Sidecar.Common.Config;
 
+using Azure.Storage.Queues;
+
 public class StorageQueueWorkerOptions
 {
     /// <summary>
@@ -13,7 +15,12 @@ public class StorageQueueWorkerOptions
     public TimeSpan LockRenewalPeriod { get; init; }
 
     /// <summary>
-    /// Messages that were failed to be executed MaxDequeueCount times will be discarded from the queue.
+    /// Messages that failed more than MaxDequeueCount times are moved to the poison queue.
     /// </summary>
     public int MaxDequeueCount { get; init; }
+
+    /// <summary>
+    /// Queue that preserves messages which exceeded MaxDequeueCount for manual recovery.
+    /// </summary>
+    public QueueClient? PoisonQueueClient { get; init; }
 }

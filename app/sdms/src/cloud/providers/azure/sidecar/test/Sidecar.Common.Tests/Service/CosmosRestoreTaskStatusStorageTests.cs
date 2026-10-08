@@ -18,6 +18,8 @@ namespace Sidecar.Common.Tests.Service;
 
 using System.Net;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Sidecar.Common.Utility;
 using ModelStatus = Sidecar.Common.Model.RestoreOperationStatus;
 
@@ -62,6 +64,37 @@ public class CosmosRestoreTaskStatusStorageTests
         RestorePointInTime = "2026-01-01T00:00:00Z",
         Status = status,
     };
+
+    [Fact]
+    public void RestoreStatusRoundTrip_PreservesApiOwnedFields()
+    {
+        const string json = """
+            {
+              "id": "op-12345",
+              "operationId": "op-12345",
+              "tenant": "opendes",
+              "subproject": "subproj1",
+              "sdPath": "sd://opendes/subproj1/pathA/datasetX",
+              "restorePointInTime": "2026-01-01T00:00:00Z",
+              "createdBy": "user@example.com",
+              "status": "Enqueued",
+              "startedAt": "2026-01-01T00:01:00Z",
+              "completedAt": "2026-01-01T00:02:00Z",
+              "lastUpdatedAt": "2026-01-01T00:02:00Z"
+            }
+            """;
+
+        var status = JsonConvert.DeserializeObject<ModelStatus>(json)!;
+        status.Status = "Succeeded";
+        var saved = JObject.Parse(JsonConvert.SerializeObject(status));
+
+        _ = status.StartedAt.Should().Be("2026-01-01T00:01:00Z");
+        _ = status.CompletedAt.Should().Be("2026-01-01T00:02:00Z");
+        _ = saved["tenant"]!.Value<string>().Should().Be("opendes");
+        _ = saved["subproject"]!.Value<string>().Should().Be("subproj1");
+        _ = saved.ContainsKey("startedAt").Should().BeTrue();
+        _ = saved.ContainsKey("completedAt").Should().BeTrue();
+    }
 
     [Fact]
     public async Task CreateStatusAsync_WhenCreateSucceeds_ReturnsCreatedDoc()

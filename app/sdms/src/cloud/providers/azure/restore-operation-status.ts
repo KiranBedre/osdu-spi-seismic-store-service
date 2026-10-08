@@ -130,7 +130,7 @@ export class AzureRestoreOperationStatusStorage {
         const container = await this.getContainer(tenant);
         await container.item(operationId, operationId).patch([
             { op: 'replace', path: '/status', value: 'Failed' },
-            { op: 'replace', path: '/errorDetails', value: errorMessage },
+            { op: 'set', path: '/errorDetails', value: errorMessage },
             { op: 'add', path: '/completedAt', value: new Date().toISOString() },
             { op: 'replace', path: '/lastUpdatedAt', value: new Date().toISOString() },
         ]);

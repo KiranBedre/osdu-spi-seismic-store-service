@@ -71,7 +71,7 @@ public class OptionsRestore :
     public string AzureResourceGroup { get; set; }
 
     /// <summary>Storage Queue name for restore tasks (env: SDMS_RESTORE_QUEUE).</summary>
-    [Option("taskStorageQueueName", Required = false, Default = "restore-queue")]
+    [Option("taskStorageQueueName", Required = false, Default = "sdms-queue-restore")]
     public string TaskStorageQueueName { get; set; }
 
     [Option("statusRedisQueueName", Required = false)]

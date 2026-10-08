@@ -38,9 +38,25 @@ public class RestoreOperationStatus : RestoreOperationMessage, IRestoreOperation
         set => OperationId = value;
     }
 
+    [JsonPropertyName("tenant")]
+    [JsonProperty("tenant")]
+    public string? Tenant { get; set; }
+
+    [JsonPropertyName("subproject")]
+    [JsonProperty("subproject")]
+    public string? Subproject { get; set; }
+
+    [JsonPropertyName("startedAt")]
+    [JsonProperty("startedAt")]
+    public string StartedAt { get; set; } = DateTimeExtensions.UtcNowISOString();
+
+    [JsonPropertyName("completedAt")]
+    [JsonProperty("completedAt")]
+    public string? CompletedAt { get; set; }
+
     [JsonPropertyName("createdAt")]
     [JsonProperty("createdAt")]
-    public string CreatedAt { get; set; } = DateTimeExtensions.UtcNowISOString();
+    public string? CreatedAt { get; set; }
 
     [JsonPropertyName("lastUpdatedAt")]
     [JsonProperty("lastUpdatedAt")]

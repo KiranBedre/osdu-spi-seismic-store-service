@@ -165,7 +165,7 @@ export class TestAzureRestoreOperationStatus {
             sinon.assert.calledOnce(this.patchStub);
             const ops = this.patchStub.firstCall.args[0];
             expect(ops[0]).to.deep.equal({ op: 'replace', path: '/status', value: 'Failed' });
-            expect(ops[1]).to.deep.equal({ op: 'replace', path: '/errorDetails', value: 'restore failed' });
+            expect(ops[1]).to.deep.equal({ op: 'set', path: '/errorDetails', value: 'restore failed' });
             expect(ops[2].op).to.equal('add');
             expect(ops[2].path).to.equal('/completedAt');
             expect(ops[3].op).to.equal('replace');

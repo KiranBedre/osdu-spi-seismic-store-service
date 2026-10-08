@@ -308,9 +308,9 @@ export class Handler {
             throw Error.make(Error.Status.BAD_REQUEST, 'User not found');
         }
 
-        // Enqueue first, then create status record — release lock on any failure
+        // Persist the status before publishing the queue message so a fast consumer cannot create
+        // a competing fallback record for the same operation.
         try {
-            // Enqueue restore job
             const task: IRestoreOperationQueueTask = {
                 type: OperationType.RESTORE,
                 operation_id: operationId,
@@ -320,10 +320,6 @@ export class Handler {
                 correlationId: CallContext.correlationId,
             };
 
-            const taskQueue = TaskQueueFactory.build(Config.CLOUDPROVIDER);
-            await taskQueue.pushTask(task);
-
-            // Create operation record after successful enqueue
             await restoreStatusStorage.createRestoreOperation({
                 operationId,
                 tenant: parsedPath.tenant,
@@ -332,6 +328,9 @@ export class Handler {
                 restorePointInTime,
                 createdBy: user,
             });
+
+            const taskQueue = TaskQueueFactory.build(Config.CLOUDPROVIDER);
+            await taskQueue.pushTask(task);
         } catch (error) {
             this.logger.error({
                 message: `Failed to create/enqueue restore operation: ${(error as any).message}`,

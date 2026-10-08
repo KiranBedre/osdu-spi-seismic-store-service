@@ -16,23 +16,35 @@
 
 namespace Sidecar.Common.Service;
 
+using System.Collections.Concurrent;
 using Microsoft.Azure.Cosmos;
 using Interface;
 using Model;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 
-public class Cosmos(
-    ILogger<Cosmos> logger,
-    ICosmosClientFactory cosmosClientFactory) : IDataAccess
+public class Cosmos : IDataAccess
 {
     private const string DATABASE_ID = "sdms-db";
     private const string CONTAINER_ID = "data";
     private const int MAX_ITEM_COUNT = 1000;
     private const int MAX_CONCURRENCY = 32;
 
-    private readonly ILogger<Cosmos> _logger = logger;
-    private readonly ICosmosClientFactory _cosmosClientFactory = cosmosClientFactory;
+    private static readonly ConcurrentDictionary<string, CosmosClient> LegacyCosmosClients = new();
+
+    private readonly ILogger<Cosmos> _logger;
+    private readonly ICosmosClientFactory? _cosmosClientFactory;
+
+    public Cosmos(ILogger<Cosmos> logger)
+    {
+        _logger = logger;
+    }
+
+    public Cosmos(ILogger<Cosmos> logger, ICosmosClientFactory cosmosClientFactory)
+        : this(logger)
+    {
+        _cosmosClientFactory = cosmosClientFactory;
+    }
 
     /// <param name="cs">Connection string for the target Cosmos instance</param>
     /// <param name="sql">SQL query to send to Cosmos</param>
@@ -77,7 +89,9 @@ public class Cosmos(
         int? limit,
         string? operationId)
     {
-        var client = _cosmosClientFactory.GetCosmosClient(endpoint);
+        var client = _cosmosClientFactory is null
+            ? LegacyCosmosClients.GetOrAdd(endpoint, value => new CosmosClient(value))
+            : _cosmosClientFactory.GetCosmosClient(endpoint);
         var database = client.GetDatabase(DATABASE_ID);
         var container = database.GetContainer(CONTAINER_ID);
         var records = new List<object>();

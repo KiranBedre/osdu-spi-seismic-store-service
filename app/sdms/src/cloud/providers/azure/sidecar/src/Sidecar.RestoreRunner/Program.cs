@@ -201,6 +201,7 @@ public class Program
             .AddSingleton<IDataAccess>(sp => sp.GetRequiredService<Cosmos>());
 
         _ = services
+            .AddSingleton<QueueClientFactory>()
             .AddSingleton<IOptionsRestore>(opts)
             .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
@@ -213,11 +214,13 @@ public class Program
             {
                 DelayWhenTaskNotFound = TimeSpan.FromSeconds(5),
             })
-            .AddSingleton(new StorageQueueWorkerOptions
+            .AddSingleton(sp => new StorageQueueWorkerOptions
             {
                 LockDuration = TimeSpan.FromMinutes(5),
                 LockRenewalPeriod = TimeSpan.FromMinutes(3),
                 MaxDequeueCount = ResolveMaxDequeueCount(opts.MaxDequeueCount),
+                PoisonQueueClient = sp.GetRequiredService<QueueClientFactory>()
+                    .Build($"{opts.TaskStorageQueueName}-poison"),
             });
 
         _ = services
@@ -237,7 +240,6 @@ public class Program
                 sp.GetRequiredService<IDesClient>(),
                 sp.GetRequiredService<SecretClient>(),
                 sp.GetRequiredService<TokenCredential>()))
-            .AddSingleton<QueueClientFactory>()
             .AddSingleton<QueueClient>(sp => sp.GetRequiredService<QueueClientFactory>().Build())
             .AddSingleton<RestoreJsonDeserializer>()
             .AddSingleton<RestoreTaskExecutor>()

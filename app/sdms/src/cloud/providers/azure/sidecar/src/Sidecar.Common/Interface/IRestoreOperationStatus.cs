@@ -19,7 +19,11 @@ namespace Sidecar.Common.Interface;
 public interface IRestoreOperationStatus : IRestoreOperationMessage
 {
     string Id { get; set; }
-    string CreatedAt { get; set; }
+    string? Tenant { get; set; }
+    string? Subproject { get; set; }
+    string StartedAt { get; set; }
+    string? CompletedAt { get; set; }
+    string? CreatedAt { get; set; }
     string LastUpdatedAt { get; set; }
     /// <summary>
     /// Values: "Enqueued" | "InProgress" | "Succeeded" | "Failed" | "Rejected".

@@ -162,6 +162,8 @@ public class RestoreTaskExecutor(
                     OperationId = message.OperationId,
                     CreatedBy = message.CreatedBy,
                     SdPath = message.SdPath,
+                    Tenant = sdPathParts.Tenant,
+                    Subproject = sdPathParts.Subproject,
                     RestorePointInTime = message.RestorePointInTime,
                     CorrelationId = message.CorrelationId,
                     Status = ToStatusString(Common.RestoreOperationStatus.InProgress),
@@ -293,7 +295,17 @@ public class RestoreTaskExecutor(
                 !string.Equals(blobRestoreId, trackedStatus.Document.BlobRestoreId, StringComparison.Ordinal))
             {
                 trackedStatus.Document.BlobRestoreId = blobRestoreId;
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                try
+                {
+                    trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogError(ex,
+                        "Blob restore started but recording its restore id failed; retaining locks and retrying - RestoreId: {RestoreId}, OperationId: {OperationId}",
+                        blobRestoreId, message.OperationId);
+                    throw new RestoreRetryableException("Failed to record the blob restore id", ex);
+                }
                 _logger.LogInformation("Blob restore id persisted - RestoreId: {RestoreId}, OperationId: {OperationId}",
                     blobRestoreId, message.OperationId);
             }
@@ -315,30 +327,27 @@ public class RestoreTaskExecutor(
             }
             catch (BlobRestoreFailedException ex)
             {
-                // Azure reported the PITR restore as Failed. This is terminal — the same restore
-                // parameters will fail again — so mark the operation Failed rather than retrying at
-                // the queue level. No metadata has been mutated yet (finalize is a later stage), so
-                // the locks are safe to release. The exception message is already customer-safe;
-                // internal diagnostics were logged at the throw site.
                 _logger.LogError(ex, "Blob restore failed terminally - OperationId: {OperationId}", message.OperationId);
                 trackedStatus.Document.ErrorDetails = ex.Message;
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
-                throw; // outer catch marks the operation Failed (terminal) and releases locks
+                trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
+                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                throw new RestoreManualRecoveryException(
+                    "Blob restore failed after Azure began mutating the account", ex);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 if (IsNonRetriable(ex))
                 {
-                    // Permanent, deterministic failure (e.g. 403 KeyBasedAuthenticationNotPermitted):
-                    // redelivery would fail identically and only hold the locks until dead-lettering.
-                    // Persist the specific error and rethrow so the outer handler marks Failed
-                    // (terminal) and the finally releases both locks.
                     _logger.LogError(ex,
-                        "Blob restore hit a non-retriable error; marking Failed and releasing locks - OperationId: {OperationId}, Error: {Error}",
+                        "Blob restore hit a non-retriable error after PITR started; retaining locks for manual recovery - OperationId: {OperationId}, Error: {Error}",
                         message.OperationId, ex.Message);
                     trackedStatus.Document.ErrorDetails = $"Blob restore did not complete (non-retriable): {ex.Message}";
-                    trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
-                    throw;
+                    trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                    trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
+                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                    throw new RestoreManualRecoveryException(
+                        "Blob restore did not complete because of a non-retriable error", ex);
                 }
 
                 // Blobs may already be (partially) restored while the wait failed/timed out.
@@ -368,14 +377,15 @@ public class RestoreTaskExecutor(
                     "Metadata restore finalized - OperationId: {OperationId}",
                     message.OperationId);
             }
-            catch (RestoreRejectedException)
+            catch (RestoreRejectedException ex)
             {
-                // Terminal, request-level rejection (no archived snapshot covers the restore point).
-                // This is deterministic, so redelivery would reject identically: propagate unchanged
-                // to the outer handler, which marks the operation Rejected and releases the locks,
-                // rather than wrapping it as a retryable post-blob failure that retains locks and
-                // retries forever.
-                throw;
+                trackedStatus.Document.ErrorDetails =
+                    $"Metadata restore was rejected after blob restore completed; manual recovery required: {ex.Message}";
+                trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
+                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                throw new RestoreManualRecoveryException(
+                    "Metadata restore was rejected after blob restore completed", ex);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -392,6 +402,7 @@ public class RestoreTaskExecutor(
                     trackedStatus.Document.ErrorDetails =
                         $"Metadata restore finalization failed (non-retriable, manual recovery required): {ex.Message}";
                     trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                    trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
                     // Best-effort: a status-write failure here must NOT escape and land in the generic
                     // catch, which would RELEASE the locks. The retain-locks RestoreManualRecoveryException
                     // must always be what propagates. See TryPersistStatusAsync.
@@ -446,7 +457,6 @@ public class RestoreTaskExecutor(
                     "Consistency validation succeeded - OperationId: {OperationId}",
                     message.OperationId);
 
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
             }
             catch (RestoreRetryableException)
             {
@@ -456,16 +466,15 @@ public class RestoreTaskExecutor(
             {
                 if (IsNonRetriable(ex))
                 {
-                    // Permanent, deterministic failure (e.g. 403 KeyBasedAuthenticationNotPermitted):
-                    // redelivery would fail identically and only hold the locks until dead-lettering.
-                    // Persist the specific error and rethrow so the outer handler marks Failed
-                    // (terminal) and the finally releases both locks.
                     _logger.LogError(ex,
-                        "Consistency validation hit a non-retriable error; marking Failed and releasing locks - OperationId: {OperationId}, Error: {Error}",
+                        "Consistency validation hit a non-retriable error after restore; retaining locks for manual recovery - OperationId: {OperationId}, Error: {Error}",
                         message.OperationId, ex.Message);
                     trackedStatus.Document.ErrorDetails = $"Consistency validation error (non-retriable): {ex.Message}";
-                    trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
-                    throw;
+                    trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
+                    trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
+                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                    throw new RestoreManualRecoveryException(
+                        "Consistency validation failed because of a non-retriable error", ex);
                 }
 
                 // Validation could not be executed after restore: cannot prove consistency.
@@ -484,6 +493,7 @@ public class RestoreTaskExecutor(
             if (string.Equals(trackedStatus.Document.Status, ToStatusString(Common.RestoreOperationStatus.InProgress), StringComparison.Ordinal))
             {
                 trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Succeeded);
+                trackedStatus.Document.CompletedAt = DateTimeExtensions.UtcNowISOString();
 
                 // The restore itself is COMPLETE and consistent here; only the terminal status record
                 // remains. Absorb short transient blips (Cosmos 429/503/timeout) in-code via the
@@ -603,19 +613,29 @@ public class RestoreTaskExecutor(
             {
                 existing.Document.Status = statusText;
                 existing.Document.ErrorDetails = existing.Document.ErrorDetails ?? errorDetails;
+                if (IsTerminalStatus(statusText))
+                {
+                    existing.Document.CompletedAt ??= DateTimeExtensions.UtcNowISOString();
+                }
                 _ = await _statusStorage.SaveStatusAsync(tenant, existing, ct);
             }
             else
             {
+                var path = ParseSdPath(message.SdPath);
                 var newStatus = new Common.Model.RestoreOperationStatus
                 {
                     OperationId = message.OperationId,
                     CreatedBy = message.CreatedBy,
                     SdPath = message.SdPath,
+                    Tenant = path.Tenant,
+                    Subproject = path.Subproject,
                     RestorePointInTime = message.RestorePointInTime,
                     CorrelationId = message.CorrelationId,
                     Status = statusText,
                     ErrorDetails = errorDetails,
+                    CompletedAt = IsTerminalStatus(statusText)
+                        ? DateTimeExtensions.UtcNowISOString()
+                        : null,
                 };
                 _ = await _statusStorage.CreateStatusAsync(tenant, newStatus, ct);
             }

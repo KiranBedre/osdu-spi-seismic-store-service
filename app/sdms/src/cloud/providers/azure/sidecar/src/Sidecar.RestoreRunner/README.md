@@ -44,13 +44,9 @@ and fill in the values for your deployment.
 | __SDMS_KEYVAULT_URL__ | Required. Key Vault URL that stores secret values for all partitions (Cosmos, Redis, storage account) and the Application Resource Id. Redis hostnames/passwords and the central storage-queue endpoint are read from here when not supplied as env vars. | `https://kv-4e37ckkpdir6i.vault.azure.net/` |
 | __AZURE_SUBSCRIPTION_ID__ | Required. Subscription that hosts the SDMS storage accounts. Used by the resource resolver (ARM) to discover the storage account for a data partition. | `00000000-0000-0000-0000-000000000000` |
 | __AZURE_RESOURCE_GROUP__ | Required. Resource group that holds the SDMS storage accounts. Used together with the subscription id to resolve the storage account. | `rg-sdms-xxxxx` |
-| __DES_SERVICE_HOST__ | If supplied, the service calls the DES instance to retrieve the deployment/tenant (data-partition-id) connection values. If omitted, provide the Cosmos and storage connection values directly (see below). | `https://sdmstest00.oep.ppe.azure-int.net` |
-| __SDMS_RESTORE_QUEUE__ | The name of the Azure Storage Queue used for submitting restore tasks. Optional; defaults to `restore-queue`. | `restore-queue` |
+| __DES_SERVICE_HOST__ | Required. DES instance used to retrieve the data-partition Cosmos endpoint and storage account name. | `https://sdmstest00.oep.ppe.azure-int.net` |
+| __SDMS_RESTORE_QUEUE__ | The name of the Azure Storage Queue used for submitting restore tasks. Optional; defaults to `sdms-queue-restore`. | `sdms-queue-restore` |
 | __CENTRAL_STORAGE_QUEUE_ENDPOINT__ | The endpoint of the Storage Queue service that holds the restore queue. Optional; read from Key Vault when not supplied. | `https://xxxxx.queue.core.windows.net/` |
-| __SDMS_COSMOS_ENDPOINT__ | The URL for the Cosmos instance that stores the SDMS metadata. Required if __DES_SERVICE_HOST__ is not supplied. | `https://db-xxx.documents.azure.com:443/` |
-| __SDMS_COSMOS_KEY__ | The key for the Cosmos instance. Required if __DES_SERVICE_HOST__ is not supplied. | `primary/secondary Cosmos key` |
-| __SDMS_STORAGE_ACCOUNT_NAME__ | The name of the Azure Storage account used to hold the datasets. Required if __DES_SERVICE_HOST__ is not supplied. | `sdmsstoragexxxxx` |
-| __SDMS_STORAGE_CONNSTR__ | The connection string for the Azure Storage account used to hold the datasets. Required if __DES_SERVICE_HOST__ is not supplied. | `DefaultEndpointsProtocol=https;AccountName=some-account;AccountKey=some_account_key;EndpointSuffix=core.windows.net` |
 | __SDMS_REDIS_LOCKS_HOSTNAME__ | Host of the Redis instance that handles the dataset locks. In the typical Azure deployment this Redis instance starts with the prefix `queue`. Optional; read from Key Vault when not supplied. | `queue-xxxxx.redis.cache.windows.net` |
 | __SDMS_REDIS_LOCKS_PASSWORD__ | Password for the Redis instance that handles the dataset locks. Optional; read from Key Vault when not supplied. | `password` |
 | __SDMS_REDIS_LOCKS_PORT__ | Port for the locks Redis instance. Optional; defaults to `6380`. | `6380` |
@@ -76,34 +72,19 @@ The service uses [`DefaultAzureCredential`](https://learn.microsoft.com/dotnet/a
 
 ### Example configurations
 
-The values below mirror a typical Azure deployment. When `DES_SERVICE_HOST` is supplied, the DES
-service provides the connection values for the Cosmos instance and the storage account.
+The values below mirror a typical Azure deployment. DES provides the Cosmos endpoint and storage
+account name for the requested data partition.
 
 ```bash
 SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
 DES_SERVICE_HOST='https://sdmstest.oep.ppe.azure-int.net'
 AZURE_SUBSCRIPTION_ID='00000000-0000-0000-0000-000000000000'
 AZURE_RESOURCE_GROUP='rg-sdms-xxxxx'
-SDMS_RESTORE_QUEUE='restore-queue'
+SDMS_RESTORE_QUEUE='sdms-queue-restore'
 Logging__LogLevel__Debug=1
 AZURE_CLIENT_ID='00000000-0000-0000-0000-000000000000'
 AZURE_CLIENT_SECRET='<client secret>'
 AZURE_TENANT_ID='00000000-0000-0000-0000-000000000000'
-```
-
-To avoid the calls to the DES service while running locally, omit `DES_SERVICE_HOST` and supply the
-Cosmos and storage connection values directly:
-
-```bash
-SDMS_KEYVAULT_URL='https://kv-xxx.vault.azure.net/'
-AZURE_SUBSCRIPTION_ID='00000000-0000-0000-0000-000000000000'
-AZURE_RESOURCE_GROUP='rg-sdms-xxxxx'
-SDMS_RESTORE_QUEUE='restore-queue'
-SDMS_COSMOS_KEY='<primary/secondary Cosmos Key>'
-SDMS_COSMOS_ENDPOINT='https://db-xxx.documents.azure.com:443/'
-SDMS_STORAGE_ACCOUNT_NAME='<storage account name>'
-SDMS_STORAGE_CONNSTR='DefaultEndpointsProtocol=https;AccountName=<account name>;AccountKey=<some account key>;EndpointSuffix=core.windows.net'
-Logging__LogLevel__Debug=1
 ```
 
 You can also override the Redis connection values (otherwise they are read from Key Vault):
@@ -129,9 +110,9 @@ This value can be found using the following steps:
 
 ### Prerequisites
 
-- [.NET SDK 8.0](https://dotnet.microsoft.com/download/dotnet/8.0) installed
+- [.NET SDK 9.0](https://dotnet.microsoft.com/download/dotnet/9.0) installed
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed and signed in (`az login`)
-- Access to a running SDMS Azure deployment (Key Vault, Cosmos DB, Redis, Storage) or the equivalent connection values
+- Access to a running SDMS Azure deployment (DES, Key Vault, Cosmos DB, Redis, Storage)
 
 All commands below are run from the sidecar root directory:
 

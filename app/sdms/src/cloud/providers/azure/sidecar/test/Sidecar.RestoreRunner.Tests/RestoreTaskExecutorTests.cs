@@ -16,6 +16,7 @@
 
 namespace Sidecar.RestoreRunner.Tests;
 
+using Sidecar.Common.Exceptions;
 using Constants = Sidecar.Common.Utility.Constants;
 using StatusEnum = Sidecar.Common.RestoreOperationStatus;
 
@@ -378,6 +379,26 @@ public class RestoreTaskExecutorTests
     }
 
     [Fact]
+    public async Task ProcessAsync_BlobRestoreFails_RetainsLocksForManualRecovery()
+    {
+        _ = _blobRestoreServiceMock
+            .Setup(m => m.WaitForBlobRestoreAsync(
+                It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new BlobRestoreFailedException("Azure reported a failed blob restore."));
+        var message = CreateMessage();
+
+        var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _ = await act.Should().NotThrowAsync();
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
+        _lockManagerMock.Verify(
+            m => m.MakeWriteLockIndefiniteAsync(It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())),
+            Times.Once);
+        _ = _recordedStatuses.Should().Contain(nameof(StatusEnum.Failed));
+    }
+
+    [Fact]
     public async Task ProcessAsync_FinalizeMetadataThrows_RetainsLocksAndKeepsInProgress()
     {
         _ = _metadataRestoreServiceMock
@@ -395,6 +416,25 @@ public class RestoreTaskExecutorTests
         _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())), Times.Once);
         _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Failed));
         _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Succeeded));
+    }
+
+    [Fact]
+    public async Task ProcessAsync_FinalizeMetadataRejects_RetainsLocksForManualRecovery()
+    {
+        _ = _metadataRestoreServiceMock
+            .Setup(m => m.FinalizeRestoreAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new RestoreRejectedException("archived snapshot expired"));
+        var message = CreateMessage();
+
+        var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _ = await act.Should().NotThrowAsync();
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
+        _lockManagerMock.Verify(
+            m => m.MakeWriteLockIndefiniteAsync(It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())),
+            Times.Once);
+        _ = _recordedStatuses.Should().Contain(nameof(StatusEnum.Failed));
     }
 
     [Fact]
@@ -481,6 +521,27 @@ public class RestoreTaskExecutorTests
         _ = await act.Should().ThrowAsync<Exception>();
         _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
         _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Succeeded));
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ConsistencyValidationNonRetriable_RetainsLocksForManualRecovery()
+    {
+        _ = _blobRestoreServiceMock
+            .Setup(m => m.ValidateConsistencyAsync(
+                It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Azure.RequestFailedException(
+                ForbiddenStatusCode, KeyBasedAuthErrorMessage, KeyBasedAuthErrorCode, null));
+        var message = CreateMessage();
+
+        var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _ = await act.Should().NotThrowAsync();
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
+        _lockManagerMock.Verify(
+            m => m.MakeWriteLockIndefiniteAsync(It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())),
+            Times.Once);
+        _ = _recordedStatuses.Should().Contain(nameof(StatusEnum.Failed));
     }
 
     // ------------------------------------------------------------------------
@@ -623,6 +684,27 @@ public class RestoreTaskExecutorTests
         await _executor.ProcessAsync(message.Object, CancellationToken.None);
 
         _ = wOrder.Should().ContainInOrder("persisted", "waited");
+    }
+
+    [Fact]
+    public async Task ProcessAsync_BlobRestoreIdSaveFails_RetainsLocksForRetry()
+    {
+        _ = _statusStorageMock
+            .Setup(m => m.SaveStatusAsync(
+                It.IsAny<string>(),
+                It.Is<TrackedRestoreStatus>(t => t.Document.BlobRestoreId == TestRestoreId),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TimeoutException("Cosmos write timed out"));
+        var message = CreateMessage();
+
+        var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _ = await act.Should().ThrowAsync<Exception>();
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
+        _lockManagerMock.Verify(
+            m => m.MakeWriteLockIndefiniteAsync(It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())),
+            Times.Once);
+        _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Failed));
     }
 
     [Fact]

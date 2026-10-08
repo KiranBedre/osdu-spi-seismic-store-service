@@ -36,6 +36,7 @@ public class StorageQueueWorkerTests
     private readonly DeletionTaskJsonDeserializer _deserializer = new();
     private readonly Mock<ITaskExecutor<IDeletionOperationMessage>> _executorMock = new(MockBehavior.Strict);
     private readonly Mock<QueueClient> _queueClientMock = new(MockBehavior.Strict);
+    private readonly Mock<QueueClient> _poisonQueueClientMock = new(MockBehavior.Strict);
 
     private WorkerType BuildWorker(int maxDequeueCount, TimeSpan lockDuration, TimeSpan lockRenewalPeriod) => new(
             _loggerMock.Object,
@@ -47,6 +48,7 @@ public class StorageQueueWorkerTests
                 MaxDequeueCount = maxDequeueCount,
                 LockDuration = lockDuration,
                 LockRenewalPeriod = lockRenewalPeriod,
+                PoisonQueueClient = _poisonQueueClientMock.Object,
             });
 
     [Theory]
@@ -77,6 +79,10 @@ public class StorageQueueWorkerTests
             It.IsAny<string>(), // popReceipt
             It.IsAny<CancellationToken>())
         ).ReturnsAsync(new Mock<Response>().Object).Verifiable();
+        _poisonQueueClientMock.Setup(qc => qc.SendMessageAsync(
+            messagePayload,
+            It.IsAny<CancellationToken>())
+        ).ReturnsAsync((Response<SendReceipt>)null!).Verifiable();
 
         var worker = BuildWorker(
             maxDequeueCount: retryLimit,
@@ -94,6 +100,10 @@ public class StorageQueueWorkerTests
         _queueClientMock.Verify(qc => qc.DeleteMessageAsync(
             It.IsAny<string>(),
             It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Exactly(tasksWithToManyRetries));
+
+        _poisonQueueClientMock.Verify(qc => qc.SendMessageAsync(
+            messagePayload,
             It.IsAny<CancellationToken>()), Times.Exactly(tasksWithToManyRetries));
 
         _queueClientMock.VerifyNoOtherCalls();

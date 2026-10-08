@@ -26,13 +26,11 @@ using Sidecar.Common.Utility;
 /// </summary>
 public class AzureStorageResourceResolver(
     IOptionsAzureResourceScope azureResourceScope,
-    IOptionsStorageAccount storageAccountOptions,
     IDesClient desClient,
     SecretClient secretClient)
     : IAzureStorageResourceResolver
 {
     private readonly IOptionsAzureResourceScope _azureResourceScope = azureResourceScope ?? throw new ArgumentNullException(nameof(azureResourceScope));
-    private readonly IOptionsStorageAccount _storageAccountOptions = storageAccountOptions ?? throw new ArgumentNullException(nameof(storageAccountOptions));
     private readonly IDesClient _desClient = desClient ?? throw new ArgumentNullException(nameof(desClient));
     private readonly SecretClient _secretClient = secretClient ?? throw new ArgumentNullException(nameof(secretClient));
 
@@ -45,22 +43,6 @@ public class AzureStorageResourceResolver(
     /// <inheritdoc/>
     public async Task<string> ResolveStorageAccountNameAsync(string dataPartitionId, CancellationToken ct)
     {
-        if (!string.IsNullOrWhiteSpace(_storageAccountOptions.StorageAccountName))
-        {
-            return _storageAccountOptions.StorageAccountName;
-        }
-
-        if (!string.IsNullOrWhiteSpace(_storageAccountOptions.StorageAccountConnectionString))
-        {
-            foreach (var segment in _storageAccountOptions.StorageAccountConnectionString.Split(';', StringSplitOptions.RemoveEmptyEntries))
-            {
-                if (segment.StartsWith(Constants.StorageResource.ACCOUNT_NAME_KEY, StringComparison.OrdinalIgnoreCase))
-                {
-                    return segment[Constants.StorageResource.ACCOUNT_NAME_KEY.Length..];
-                }
-            }
-        }
-
         var desConfig = await _desClient.GetPartitionConfigurationAsync(dataPartitionId, ct);
         return await desConfig.StorageAccountName.GetActualValueAsync(_secretClient, ct);
     }
@@ -75,25 +57,6 @@ public class AzureStorageResourceResolver(
             throw new InvalidOperationException("AZURE_RESOURCE_GROUP must be configured for management-plane operations.");
         }
 
-        if (!configuredResourceGroup.StartsWith(Constants.StorageResource.COMPUTE_RG_PREFIX, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                $"AZURE_RESOURCE_GROUP '{configuredResourceGroup}' must start with '{Constants.StorageResource.COMPUTE_RG_PREFIX}' for PITR resource group derivation.");
-        }
-
-        // Remaining shape expected: <stamp>-<suffix>
-        var remainder = configuredResourceGroup[Constants.StorageResource.COMPUTE_RG_PREFIX.Length..];
-        var lastDashIndex = remainder.LastIndexOf('-');
-        if (lastDashIndex <= 0 || lastDashIndex >= remainder.Length - 1)
-        {
-            throw new InvalidOperationException(
-                $"AZURE_RESOURCE_GROUP '{configuredResourceGroup}' is not in expected format 'Compute-rg-<stamp>-<suffix>'.");
-        }
-
-        var stamp = remainder[..lastDashIndex];
-        var suffix = remainder[(lastDashIndex + 1)..];
-        var tenant = dataPartitionId.Trim();
-
-        return $"DataPartition-rg-{stamp}-{tenant}-{suffix}";
+        return configuredResourceGroup;
     }
 }

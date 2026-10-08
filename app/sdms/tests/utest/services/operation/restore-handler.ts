@@ -337,7 +337,8 @@ export class TestRestoreHandler {
             this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(true);
             this.sandbox.stub(RestoreOperationLock, 'release').resolves(true);
             this.sandbox.stub(Utils, 'getUserId').resolves('user@example.com');
-            this.sandbox.stub(restoreStatusStorage, 'createRestoreOperation').resolves();
+            const createStatusStub = this.sandbox.stub(
+                restoreStatusStorage, 'createRestoreOperation').resolves();
             this.sandbox.stub(restoreStatusStorage, 'markRestoreOperationFailed').resolves();
 
             const taskQueueStub = this.sandbox.createStubInstance<any>(AzureTaskQueue);
@@ -346,6 +347,7 @@ export class TestRestoreHandler {
 
             await Handler.handle(req, res, Operation.RestorePush);
             Tx.check500((res as any).statusCode);
+            sinon.assert.callOrder(createStatusStub, taskQueueStub.pushTask);
         });
     }
 

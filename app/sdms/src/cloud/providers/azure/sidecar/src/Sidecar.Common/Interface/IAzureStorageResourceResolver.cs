@@ -37,14 +37,7 @@ public interface IAzureStorageResourceResolver
     Task<string> ResolveStorageAccountNameAsync(string dataPartitionId, CancellationToken ct);
 
     /// <summary>
-    /// Resolves the resource group used for management-plane operations by converting the
-    /// configured compute resource group into the data-partition resource group.
-    ///
-    /// Expected input example:
-    ///   Compute-rg-rtsdmsxaj1-xhilnt
-    ///
-    /// Converted output example (dataPartitionId = opendes):
-    ///   DataPartition-rg-rtsdmsxaj1-opendes-xhilnt
+    /// Returns the configured resource group that contains the data-partition storage account.
     /// </summary>
     string ResolveResourceGroupName(string dataPartitionId);
 }
