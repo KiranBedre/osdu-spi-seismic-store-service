@@ -39,18 +39,17 @@ public class RestoreVersionSelectorTests
     // Archive wins even when the point would otherwise be rejected as before-creation.
     [InlineData(true, true, Created, VersionStart, 500L, RestoreVersionDecision.UseArchivedSnapshot)]
 
-    // ---- Reject: no archive, dataset live, point inside the current live window. ----
-    // The live document already reflects that state, so there is nothing to restore.
+    // ---- Use live metadata: blobs may change independently within this metadata window. ----
     // Point strictly after both bounds.
-    [InlineData(false, true, Created, VersionStart, 5_000L, RestoreVersionDecision.RejectRestorePointInLiveWindow)]
+    [InlineData(false, true, Created, VersionStart, 5_000L, RestoreVersionDecision.UseLiveDocument)]
     // Boundary: point exactly at the version start is inside the window (>= start).
-    [InlineData(false, true, Created, VersionStart, VersionStart, RestoreVersionDecision.RejectRestorePointInLiveWindow)]
+    [InlineData(false, true, Created, VersionStart, VersionStart, RestoreVersionDecision.UseLiveDocument)]
     // Both bounds unknown: no lower bound can reject on range, still inside the live window.
-    [InlineData(false, true, null, null, 5_000L, RestoreVersionDecision.RejectRestorePointInLiveWindow)]
+    [InlineData(false, true, null, null, 5_000L, RestoreVersionDecision.UseLiveDocument)]
     // Only version-start known and satisfied; created unknown.
-    [InlineData(false, true, null, VersionStart, VersionStart, RestoreVersionDecision.RejectRestorePointInLiveWindow)]
+    [InlineData(false, true, null, VersionStart, VersionStart, RestoreVersionDecision.UseLiveDocument)]
     // Only created known and satisfied; version-start unknown.
-    [InlineData(false, true, Created, null, 1_001L, RestoreVersionDecision.RejectRestorePointInLiveWindow)]
+    [InlineData(false, true, Created, null, 1_001L, RestoreVersionDecision.UseLiveDocument)]
 
     // ---- Reject: at/before creation (earlier lifecycle or pre-dataset). ----
     // Boundary: point exactly at created_date is rejected (<= created).

@@ -132,16 +132,12 @@ public class CosmosDatasetStorageInfoProvider(
                             $"Archived snapshot '{archivedSnapshot.Id}' is missing its 'data' node. OperationId: {operationId}, SdPath: {sdPath}");
                     break;
 
-                case RestoreVersionDecision.RejectRestorePointInLiveWindow:
-                    // The restore point falls inside the current live version's window: the dataset
-                    // already reflects that state, so there is nothing to restore. Reject here (before
-                    // any archive/metadata write) rather than re-archiving and re-writing the current
-                    // version onto itself. This is a request-level rejection, not an operational
-                    // failure, so it surfaces as status Rejected.
-                    throw new RestoreRejectedException(
-                        $"Restore point '{restorePointInTime}' falls within the current live version's window; " +
-                        $"the dataset already reflects that state, so there is nothing to restore. " +
-                        $"OperationId: {operationId}, SdPath: {sdPath}");
+                case RestoreVersionDecision.UseLiveDocument:
+                    // Metadata may be unchanged while blobs change independently. Use the live
+                    // document to locate storage and establish expected content; metadata finalize
+                    // archives this document before selecting it for the requested point.
+                    selectedRecord = liveRecords.records![0];
+                    break;
 
                 case RestoreVersionDecision.RejectBeforeCreation:
                     throw new RestoreRejectedException(

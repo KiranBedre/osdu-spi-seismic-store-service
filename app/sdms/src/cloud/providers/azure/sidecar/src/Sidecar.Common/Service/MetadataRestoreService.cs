@@ -110,12 +110,9 @@ public class MetadataRestoreService(
         }
 
         // --- 2. Select the archived snapshot active at the restore point ---
-        // Read-side discovery (IDatasetStorageInfoProvider) has already validated that a snapshot
-        // covers this restore point and rejected out-of-range points before any blob restore ran, so
-        // a null here is a deterministic, terminal request-level outcome rather than a transient
-        // fault. Surface it as a rejection (not an operational failure) so the executor marks the
-        // operation Rejected and releases its locks instead of retrying a request that can never
-        // succeed and holding the locks across every redelivery.
+        // Read-side discovery validated either an archived version or the live metadata version.
+        // For the live path, step 1 archived the current document so this same interval query can
+        // select it. A null result is therefore a deterministic request-level rejection.
         var restorePointEpochMs = new DateTimeOffset(restorePoint, TimeSpan.Zero).ToUnixTimeMilliseconds();
         var snapshot = await _snapshotSelector.SelectSnapshotAsync(
             endpoint, sdPath, restorePointEpochMs, lifecycleKey, operationId, ct)

@@ -58,23 +58,23 @@ public class CosmosDatasetStorageInfoProviderTests
         => new(_logger.Object, _dataAccess.Object, _cosmosClientFactory.Object, _snapshotSelector.Object);
 
     // ------------------------------------------------------------------------
-    // Live-window rejection & dataset-policy gcsurl inference
+    // Live-window storage selection & dataset-policy gcsurl inference
     // ------------------------------------------------------------------------
 
     [Fact]
-    public async Task ResolveDatasetInfoAsync_LiveDataset_PointInCurrentWindow_Throws()
+    public async Task ResolveDatasetInfoAsync_LiveDataset_PointInCurrentWindow_UsesLiveStorageInfo()
     {
-        // Restore point is inside the still-live window, so the archive lookup finds nothing. The
-        // live document already reflects that state, so the restore is rejected as a no-op instead
-        // of re-archiving and re-writing the current version onto itself.
         SetupLiveRecord(gcsurl: "sharedcontainer/uuid-123", filemetadata: new { nobjects = 5, size = 1024 });
         SetupArchiveLookup(snapshot: null);
         var sut = CreateSut();
 
-        var act = () => sut.ResolveDatasetInfoAsync(SdPath, PointInCurrentWindow, OperationId, CancellationToken.None);
+        var result = await sut.ResolveDatasetInfoAsync(
+            SdPath, PointInCurrentWindow, OperationId, CancellationToken.None);
 
-        _ = (await act.Should().ThrowAsync<RestoreRejectedException>())
-            .Which.Message.Should().Contain("nothing to restore");
+        _ = result.ContainerName.Should().Be("sharedcontainer");
+        _ = result.VirtualFolder.Should().Be("uuid-123");
+        _ = result.ExpectedObjectCount.Should().Be(5);
+        _ = result.ExpectedTotalSize.Should().Be(1024);
     }
 
     [Fact]

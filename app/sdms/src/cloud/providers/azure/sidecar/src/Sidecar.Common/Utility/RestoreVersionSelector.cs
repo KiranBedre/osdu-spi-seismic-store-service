@@ -30,11 +30,10 @@ public enum RestoreVersionDecision
 
     /// <summary>
     /// No archived version covers the restore point and the dataset is live with the point falling
-    /// in the current (still-unarchived) version's window. The live document already reflects the
-    /// state at that instant, so there is nothing to restore and the request is rejected rather than
-    /// re-archiving and re-writing the current version onto itself.
+    /// in the current metadata version's window. Use the live metadata to locate and validate blob
+    /// storage; blob contents may have changed independently and still require point-in-time restore.
     /// </summary>
-    RejectRestorePointInLiveWindow,
+    UseLiveDocument,
 
     /// <summary>
     /// The restore point is at or before the live version's creation, so it belongs to an earlier
@@ -58,8 +57,7 @@ public enum RestoreVersionDecision
 /// <summary>
 /// Pure decision logic for point-in-time restore version selection. Given the archive-lookup
 /// result and the live document's lifecycle bounds, decides whether to restore from an archived
-/// snapshot or to reject the restore point (out of range, or inside the current live window where
-/// the dataset already reflects that state and there is nothing to restore). Kept side effect free
+/// snapshot, use the current live metadata for blob restore, or reject an out-of-range point. Kept side effect free
 /// (no Cosmos, no clock) so the branching can be exercised with table-driven tests.
 /// </summary>
 public static class RestoreVersionSelector
@@ -67,8 +65,8 @@ public static class RestoreVersionSelector
     /// <summary>
     /// Decides which version a restore should use. Selection is archive-interval-first: when an
     /// archived snapshot covers the restore point it always wins; otherwise a live dataset whose
-    /// current version's window contains the point is rejected (the live document already reflects
-    /// that state), as are points outside the current lifecycle's bounds.
+    /// current version's window contains the point uses the live metadata for blob restore. Points
+    /// outside the current lifecycle's bounds are rejected.
     /// </summary>
     /// <param name="hasArchivedSnapshot">
     /// True when the archive lookup found a version whose window contains the restore point.
@@ -111,10 +109,7 @@ public static class RestoreVersionSelector
                 return RestoreVersionDecision.RejectNoLiveVersion;
             }
 
-            // The point falls in the current version's still-live window: the live document already
-            // reflects that state, so there is nothing to restore. Reject rather than re-archiving
-            // and re-writing the current version onto itself.
-            return RestoreVersionDecision.RejectRestorePointInLiveWindow;
+            return RestoreVersionDecision.UseLiveDocument;
         }
 
         // Deleted dataset with no covering archived version: nothing existed at that instant.
