@@ -99,7 +99,11 @@ public class BlobRestoreServiceTests
             ExpectedObjectCount: expectedObjectCount,
             ExpectedTotalSize: expectedTotalSize);
 
-    private static string AccountStatusJson(string? restoreId, string? status, string? timeToRestore = null)
+    private static string AccountStatusJson(
+        string? restoreId,
+        string? status,
+        string? timeToRestore = null,
+        (string StartRange, string EndRange)? blobRange = null)
     {
         var inner = new List<string>();
         if (restoreId is not null)
@@ -110,9 +114,20 @@ public class BlobRestoreServiceTests
         {
             inner.Add($"\"status\":\"{status}\"");
         }
+        var parameters = new List<string>();
         if (timeToRestore is not null)
         {
-            inner.Add($"\"parameters\":{{\"timeToRestore\":\"{timeToRestore}\"}}");
+            parameters.Add($"\"timeToRestore\":\"{timeToRestore}\"");
+        }
+        if (blobRange is not null)
+        {
+            parameters.Add(
+                $"\"blobRanges\":[{{\"startRange\":\"{blobRange.Value.StartRange}\"," +
+                $"\"endRange\":\"{blobRange.Value.EndRange}\"}}]");
+        }
+        if (parameters.Count > 0)
+        {
+            inner.Add($"\"parameters\":{{{string.Join(",", parameters)}}}");
         }
         return $"{{\"properties\":{{\"blobRestoreStatus\":{{{string.Join(",", inner)}}}}}}}";
     }
@@ -204,8 +219,8 @@ public class BlobRestoreServiceTests
         // (the dataset UUID). gcsurl example:
         //   ss-local-psmb3nw5vxy8n52/64cc33b9-e313-4453-994f-400bda80ef96
         //
-        // Half-open range [startRange, endRange) with an EXCLUSIVE endRange: the sibling-folder
-        // boundary is respected because e.g. "c/aab/..." sorts ABOVE the exclusive end "c/aaa/~".
+        // Replacing the trailing '/' with the next character '0' creates a prefix-complete,
+        // Unicode-safe half-open range without spilling into sibling folders.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-abc\"}");
         var sut = CreateSut();
@@ -217,7 +232,7 @@ public class BlobRestoreServiceTests
 
         var body = _handler.Requests[1].Body!;
         _ = body.Should().Contain($"\"startRange\":\"{UniformPolicyContainer}/{DatasetUuid}/\"");
-        _ = body.Should().Contain($"\"endRange\":\"{UniformPolicyContainer}/{DatasetUuid}/~\"");
+        _ = body.Should().Contain($"\"endRange\":\"{UniformPolicyContainer}/{DatasetUuid}0\"");
     }
 
     [Fact]
@@ -247,7 +262,9 @@ public class BlobRestoreServiceTests
         // account GET reports an in-flight restore whose timeToRestore matches our target — adopt it.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Conflict, string.Empty);
-        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("inflight-id", "InProgress", RestorePoint));
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
+            "inflight-id", "InProgress", RestorePoint,
+            ($"{DefaultContainer}/", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
@@ -282,7 +299,9 @@ public class BlobRestoreServiceTests
         // Because Azure serializes one blob-range restore per account, that restore is ours \u2014 adopt
         // it instead of resubmitting a duplicate (potentially multi-hour) restore. Only the reconcile
         // GET should be issued; no POST.
-        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("adopted-id", "InProgress", RestorePoint));
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
+            "adopted-id", "InProgress", RestorePoint,
+            ($"{DefaultContainer}/", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
@@ -291,6 +310,23 @@ public class BlobRestoreServiceTests
         _ = result.Should().Be("adopted-id");
         _ = _handler.Requests.Should().ContainSingle();
         _ = _handler.Requests[0].Method.Should().Be(HttpMethod.Get);
+    }
+
+    [Fact]
+    public async Task StartBlobRestoreAsync_Reconcile_SameTargetDifferentRange_SubmitsNewRestore()
+    {
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
+            "other-id", "InProgress", RestorePoint, ("other-container/", "other-container0")));
+        _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-new\"}");
+        var sut = CreateSut();
+
+        var result = await sut.StartBlobRestoreAsync(
+            DataPartition, StorageInfo(), RestorePoint, OperationId,
+            existingRestoreId: null, CancellationToken.None);
+
+        _ = result.Should().Be("restore-new");
+        _ = _handler.Requests.Should().HaveCount(2);
+        _ = _handler.Requests[1].Method.Should().Be(HttpMethod.Post);
     }
 
     [Fact]
@@ -385,7 +421,9 @@ public class BlobRestoreServiceTests
         // The account's most-recent restore has a DIFFERENT id but targets OUR point-in-time, so it
         // is our restore re-manifested. Adopt the LATEST id so the operation tracks the live restore
         // instead of the stale tracked id \u2014 no re-submit.
-        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson("latest-id", "InProgress", RestorePoint));
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
+            "latest-id", "InProgress", RestorePoint,
+            ($"{DefaultContainer}/", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(

@@ -794,6 +794,9 @@ public class RestoreTaskExecutorTests
             It.IsAny<WriteLockSession>()), Times.Never);
         _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
             It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())), Times.Once);
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
+            It.Is<WriteLockSession>(s =>
+                s.Key == OperationLockKey() && s.Wid == TestOperationId)), Times.Once);
         _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Failed));
     }
 

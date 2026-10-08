@@ -529,8 +529,8 @@ public class RestoreTaskExecutor(
                 _logger.LogWarning(
                     "Restore cancelled after blob PITR may have started; retaining locks for redelivery - OperationId: {OperationId}",
                     message.OperationId);
-                await MakeDatasetLockIndefiniteAsync(
-                    datasetLockSession, datasetLockKey, message.OperationId);
+                await MakeLocksIndefiniteAsync(
+                    datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
             }
             else
             {
@@ -565,7 +565,8 @@ public class RestoreTaskExecutor(
             _logger.LogError(ex,
                 "Restore left in a potentially inconsistent state; retaining locks and retrying at queue level - OperationId: {OperationId}, Error: {Error}",
                 message.OperationId, ex.Message);
-            await MakeDatasetLockIndefiniteAsync(datasetLockSession, datasetLockKey, message.OperationId);
+            await MakeLocksIndefiniteAsync(
+                datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
             throw;
         }
         catch (RestoreManualRecoveryException ex)
@@ -579,7 +580,8 @@ public class RestoreTaskExecutor(
             _logger.LogError(ex,
                 "Restore left in a potentially inconsistent state by a non-retriable error; retaining locks and stopping redelivery for manual recovery - OperationId: {OperationId}, Error: {Error}",
                 message.OperationId, ex.Message);
-            await MakeDatasetLockIndefiniteAsync(datasetLockSession, datasetLockKey, message.OperationId);
+            await MakeLocksIndefiniteAsync(
+                datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
             // Intentionally not rethrown: the message is deleted (no retries); locks remain held.
         }
         catch (Exception ex)
@@ -763,13 +765,35 @@ WHERE c.data.tenant = @tenant
     }
 
     /// <summary>
-    /// Best-effort conversion of the dataset write lock into an indefinite (no-TTL) lock when a
-    /// failure leaves the dataset potentially inconsistent. This fences the dataset off from further
-    /// writes until an operator manually recovers it: unlike the default TTL-bounded lock, an
-    /// indefinite lock will not silently expire. Failures here are logged and swallowed so they never
-    /// mask the original inconsistency failure.
+    /// Best-effort conversion of the dataset and partition operation locks into indefinite locks.
+    /// The lock manager verifies each lock's current owner before removing its TTL.
     /// </summary>
-    private async Task MakeDatasetLockIndefiniteAsync(WriteLockSession? lockSession, string datasetLockKey, string operationId)
+    private async Task MakeLocksIndefiniteAsync(
+        WriteLockSession? datasetLockSession,
+        string datasetLockKey,
+        string operationLockKey,
+        string operationId)
+    {
+        await MakeLockIndefiniteAsync(
+            datasetLockSession, "dataset", datasetLockKey, operationId);
+        await MakeLockIndefiniteAsync(
+            new WriteLockSession
+            {
+                Key = operationLockKey,
+                Wid = operationId,
+                Locked = true,
+                IsIdempotent = true,
+            },
+            "operation",
+            operationLockKey,
+            operationId);
+    }
+
+    private async Task MakeLockIndefiniteAsync(
+        WriteLockSession? lockSession,
+        string lockType,
+        string lockKey,
+        string operationId)
     {
         if (lockSession?.Locked != true)
         {
@@ -782,21 +806,21 @@ WHERE c.data.tenant = @tenant
             if (persisted)
             {
                 _logger.LogWarning(
-                    "Dataset lock made indefinite pending manual recovery - DatasetLockKey: {DatasetLockKey}, OperationId: {OperationId}",
-                    datasetLockKey, operationId);
+                    "Restore {LockType} lock made indefinite pending retry or recovery - LockKey: {LockKey}, OperationId: {OperationId}",
+                    lockType, lockKey, operationId);
             }
             else
             {
                 _logger.LogError(
-                    "Failed to make dataset lock indefinite; it may expire via TTL - DatasetLockKey: {DatasetLockKey}, OperationId: {OperationId}",
-                    datasetLockKey, operationId);
+                    "Failed to make restore {LockType} lock indefinite; it may expire via TTL - LockKey: {LockKey}, OperationId: {OperationId}",
+                    lockType, lockKey, operationId);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Error making dataset lock indefinite; it may expire via TTL - DatasetLockKey: {DatasetLockKey}, OperationId: {OperationId}",
-                datasetLockKey, operationId);
+                "Error making restore {LockType} lock indefinite; it may expire via TTL - LockKey: {LockKey}, OperationId: {OperationId}",
+                lockType, lockKey, operationId);
         }
     }
 

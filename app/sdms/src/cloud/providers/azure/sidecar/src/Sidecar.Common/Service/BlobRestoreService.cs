@@ -81,7 +81,8 @@ public class BlobRestoreService(
             // Resume path: adopt an already-issued restore instead of starting a new one.
             if (!string.IsNullOrWhiteSpace(existingRestoreId))
             {
-                var (currentRestoreId, status, _, currentTimeToRestore) = await GetAccountBlobRestoreStatusAsync(
+                var (currentRestoreId, status, _, currentTimeToRestore, currentBlobRanges) =
+                    await GetAccountBlobRestoreStatusAsync(
                     subscriptionId, resourceGroupName, storageAccountName, ct);
 
                 var currentStatus = AzureBlobRestoreStatusParser.Parse(status);
@@ -98,16 +99,17 @@ public class BlobRestoreService(
 
                 // The account's current restore has a DIFFERENT id than we tracked. Azure serializes
                 // restores per account and exposes only the most recent one, so we can only treat it
-                // as ours when its target point-in-time (parameters.timeToRestore) matches ours. When
-                // it does, adopt the LATEST id so the operation tracks the live restore rather than a
-                // stale tracked id (the account has effectively re-manifested our restore).
+                // as ours when its target point-in-time and blob range match ours. When they do,
+                // adopt the LATEST id so the operation tracks the live restore rather than a stale
+                // tracked id (the account has effectively re-manifested our restore).
                 if (!isSameRestore &&
                     !string.IsNullOrWhiteSpace(currentRestoreId) &&
                     IsSameRestorePoint(currentTimeToRestore, restorePointInTimeUtc) &&
+                    IsSameBlobRange(currentBlobRanges, storageInfo) &&
                     currentStatus.IsActiveOrCompleted())
                 {
                     _logger.LogInformation(
-                        "Account's current restoreId ({CurrentRestoreId}) differs from tracked ({ExistingRestoreId}) but targets our point-in-time; adopting the latest id - OperationId: {OperationId}",
+                        "Account's current restoreId ({CurrentRestoreId}) differs from tracked ({ExistingRestoreId}) but targets our point-in-time and range; adopting the latest id - OperationId: {OperationId}",
                         currentRestoreId, existingRestoreId, operationId);
                     return currentRestoreId;
                 }
@@ -127,21 +129,22 @@ public class BlobRestoreService(
 
             // Idempotency guard for the crash-before-persist window: even when no restoreId
             // was persisted, reconcile against the account's current restore by its natural key
-            // (parameters.timeToRestore) before submitting. Azure serializes one blob-range restore
-            // per account, so a restore on the account whose target point-in-time matches ours is
-            // ours — adopt it (whether still InProgress or already completed) rather than submitting
-            // a duplicate that would re-run a potentially multi-hour restore to the same point.
+            // (parameters.timeToRestore + blobRanges) before submitting. Azure serializes one
+            // blob-range restore per account, so a restore whose target point-in-time and range
+            // match ours is ours. Adopt it rather than submitting a duplicate.
             if (string.IsNullOrWhiteSpace(existingRestoreId))
             {
-                var (accountRestoreId, accountStatus, _, accountTimeToRestore) = await GetAccountBlobRestoreStatusAsync(
+                var (accountRestoreId, accountStatus, _, accountTimeToRestore, accountBlobRanges) =
+                    await GetAccountBlobRestoreStatusAsync(
                     subscriptionId, resourceGroupName, storageAccountName, ct);
 
                 if (!string.IsNullOrWhiteSpace(accountRestoreId) &&
                     IsSameRestorePoint(accountTimeToRestore, restorePointInTimeUtc) &&
+                    IsSameBlobRange(accountBlobRanges, storageInfo) &&
                     AzureBlobRestoreStatusParser.Parse(accountStatus).IsActiveOrCompleted())
                 {
                     _logger.LogInformation(
-                        "Adopting account restore matching target point-in-time instead of resubmitting - RestoreId: {RestoreId}, Status: {Status}, RestorePoint: {RestorePointInTime}, OperationId: {OperationId}",
+                        "Adopting account restore matching target point-in-time and range instead of resubmitting - RestoreId: {RestoreId}, Status: {Status}, RestorePoint: {RestorePointInTime}, OperationId: {OperationId}",
                         accountRestoreId, accountStatus, restorePointInTime, operationId);
                     return accountRestoreId;
                 }
@@ -203,7 +206,8 @@ public class BlobRestoreService(
             var restorePointInTimeUtc = DateTime.Parse(restorePointInTime, null, System.Globalization.DateTimeStyles.RoundtripKind);
 
             await WaitForRestoreCompletionAsync(
-                subscriptionId, resourceGroupName, storageAccountName, restoreId, restorePointInTimeUtc, operationId, ct);
+                subscriptionId, resourceGroupName, storageAccountName, storageInfo,
+                restoreId, restorePointInTimeUtc, operationId, ct);
 
             result.RestoredBlobs = result.TotalBlobs;
 
@@ -397,18 +401,17 @@ public class BlobRestoreService(
         // lost). Recover and adopt the in-flight restore rather than failing.
         if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            var (conflictRestoreId, conflictStatus, _, conflictTimeToRestore) = await GetAccountBlobRestoreStatusAsync(
+            var (conflictRestoreId, conflictStatus, _, conflictTimeToRestore, conflictBlobRanges) =
+                await GetAccountBlobRestoreStatusAsync(
                 subscriptionId, resourceGroupName, storageAccountName, ct);
 
-            // Only adopt the blocking restore if its target point-in-time matches ours: under
-            // per-account serialization it is virtually always our own lost submission, but the
-            // timeToRestore check guards against adopting an unrelated restore that happens to be
-            // occupying the account's single restore slot.
+            // Only adopt the blocking restore if its target point-in-time and blob range match ours.
             if (!string.IsNullOrWhiteSpace(conflictRestoreId) &&
-                IsSameRestorePoint(conflictTimeToRestore, restorePointInTime))
+                IsSameRestorePoint(conflictTimeToRestore, restorePointInTime) &&
+                IsSameBlobRange(conflictBlobRanges, storageInfo))
             {
                 _logger.LogWarning(
-                    "PITR request returned 409 Conflict; adopting matching in-flight restore - RestoreId: {RestoreId}, Status: {Status}, OperationId: {OperationId}",
+                    "PITR request returned 409 Conflict; adopting in-flight restore with matching time and range - RestoreId: {RestoreId}, Status: {Status}, OperationId: {OperationId}",
                     conflictRestoreId, conflictStatus ?? "<unknown>", operationId);
                 return conflictRestoreId;
             }
@@ -433,7 +436,7 @@ public class BlobRestoreService(
         if (string.IsNullOrWhiteSpace(restoreId))
         {
             // Some responses omit the id in the body; recover it from the account status.
-            var (accountRestoreId, _, _, _) = await GetAccountBlobRestoreStatusAsync(
+            var (accountRestoreId, _, _, _, _) = await GetAccountBlobRestoreStatusAsync(
                 subscriptionId, resourceGroupName, storageAccountName, ct);
             restoreId = accountRestoreId;
         }
@@ -452,7 +455,7 @@ public class BlobRestoreService(
 
     /// <summary>
     /// Builds the half-open PITR range <c>[startRange, endRange)</c> for a dataset: dataset policy
-    /// uses the whole container <c>["c/", "c0")</c>; uniform policy uses <c>["c/folder/", "c/folder/~")</c>.
+    /// uses the whole container <c>["c/", "c0")</c>; uniform policy uses <c>["c/folder/", "c/folder0")</c>.
     /// </summary>
     private static (string StartRange, string EndRange) BuildBlobRestoreRange(DatasetStorageInfo storageInfo)
     {
@@ -462,7 +465,17 @@ public class BlobRestoreService(
         }
 
         var folderPrefix = $"{storageInfo.ContainerName}/{storageInfo.VirtualFolder.Trim('/')}/";
-        return (folderPrefix, folderPrefix + "~");
+        return (folderPrefix, folderPrefix[..^1] + "0");
+    }
+
+    private static bool IsSameBlobRange(
+        IReadOnlyCollection<BlobRange> blobRanges,
+        DatasetStorageInfo storageInfo)
+    {
+        var expected = BuildBlobRestoreRange(storageInfo);
+        return blobRanges.Any(range =>
+            string.Equals(range.StartRange, expected.StartRange, StringComparison.Ordinal) &&
+            string.Equals(range.EndRange, expected.EndRange, StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -499,7 +512,12 @@ public class BlobRestoreService(
     /// per account, a restore whose TimeToRestore matches our target point-in-time IS ours, even
     /// when we never persisted its restoreId.
     /// </summary>
-    private async Task<(string? RestoreId, string? Status, string? FailureReason, string? TimeToRestore)> GetAccountBlobRestoreStatusAsync(
+    private async Task<(
+        string? RestoreId,
+        string? Status,
+        string? FailureReason,
+        string? TimeToRestore,
+        IReadOnlyCollection<BlobRange> BlobRanges)> GetAccountBlobRestoreStatusAsync(
         string subscriptionId,
         string resourceGroupName,
         string storageAccountName,
@@ -522,7 +540,7 @@ public class BlobRestoreService(
         var payload = await response.Content.ReadAsStringAsync(ct);
         if (string.IsNullOrWhiteSpace(payload))
         {
-            return (null, null, null, null);
+            return (null, null, null, null, []);
         }
 
         using var doc = JsonDocument.Parse(payload);
@@ -538,14 +556,32 @@ public class BlobRestoreService(
             var failureReason = blobRestoreStatus.TryGetProperty("failureReason", out var reasonElement)
                 ? reasonElement.GetString()
                 : null;
-            var timeToRestore = blobRestoreStatus.TryGetProperty("parameters", out var parametersElement) &&
-                parametersElement.TryGetProperty("timeToRestore", out var timeElement)
-                ? timeElement.GetString()
-                : null;
-            return (restoreId, status, failureReason, timeToRestore);
+            string? timeToRestore = null;
+            var blobRanges = new List<BlobRange>();
+            if (blobRestoreStatus.TryGetProperty("parameters", out var parametersElement))
+            {
+                timeToRestore = parametersElement.TryGetProperty("timeToRestore", out var timeElement)
+                    ? timeElement.GetString()
+                    : null;
+                if (parametersElement.TryGetProperty("blobRanges", out var rangesElement) &&
+                    rangesElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var rangeElement in rangesElement.EnumerateArray())
+                    {
+                        if (rangeElement.TryGetProperty("startRange", out var startElement) &&
+                            rangeElement.TryGetProperty("endRange", out var endElement) &&
+                            startElement.GetString() is { } startRange &&
+                            endElement.GetString() is { } endRange)
+                        {
+                            blobRanges.Add(new BlobRange(startRange, endRange));
+                        }
+                    }
+                }
+            }
+            return (restoreId, status, failureReason, timeToRestore, blobRanges);
         }
 
-        return (null, null, null, null);
+        return (null, null, null, null, []);
     }
 
     /// <summary>
@@ -559,14 +595,15 @@ public class BlobRestoreService(
     ///
     /// Because Azure serializes restores per account and exposes only the most recent one, a
     /// status that reports a DIFFERENT restoreId is only treated as our completion when its target
-    /// <paramref name="restorePointInTimeUtc"/> matches ours; a different id targeting a different
-    /// point-in-time means an unrelated restore superseded ours and hid its outcome, so we raise a
-    /// retryable condition rather than falsely reporting success.
+    /// <paramref name="restorePointInTimeUtc"/> and dataset range match ours; otherwise an unrelated
+    /// restore superseded ours and hid its outcome, so we raise a retryable condition rather than
+    /// falsely reporting success.
     /// </summary>
     private async Task WaitForRestoreCompletionAsync(
         string subscriptionId,
         string resourceGroupName,
         string storageAccountName,
+        DatasetStorageInfo storageInfo,
         string restoreId,
         DateTime restorePointInTimeUtc,
         string operationId,
@@ -585,7 +622,8 @@ public class BlobRestoreService(
 
             await Task.Delay(GetFallbackPollDelay(backoffAttempt++), ct);
 
-            var (currentRestoreId, status, failureReason, currentTimeToRestore) = await GetAccountBlobRestoreStatusAsync(
+            var (currentRestoreId, status, failureReason, currentTimeToRestore, currentBlobRanges) =
+                await GetAccountBlobRestoreStatusAsync(
                 subscriptionId, resourceGroupName, storageAccountName, ct);
 
             if (string.IsNullOrWhiteSpace(status))
@@ -601,29 +639,29 @@ public class BlobRestoreService(
             if (!string.IsNullOrWhiteSpace(currentRestoreId) &&
                 !string.Equals(currentRestoreId, restoreId, StringComparison.OrdinalIgnoreCase))
             {
-                // Same target point-in-time => same data outcome. Adopt the newer id and fall through
+                // Same target point-in-time and range means the same data outcome. Adopt the newer id and fall through
                 // to the status evaluation below rather than returning: the re-manifested restore may
                 // still be InProgress (keep polling) or have Failed (use the failure path). Returning
                 // here unconditionally would report success while the blob PITR is still running or
                 // has already failed.
-                if (IsSameRestorePoint(currentTimeToRestore, restorePointInTimeUtc))
+                if (IsSameRestorePoint(currentTimeToRestore, restorePointInTimeUtc) &&
+                    IsSameBlobRange(currentBlobRanges, storageInfo))
                 {
                     _logger.LogInformation(
-                        "Account reports a newer restoreId ({CurrentRestoreId}) than tracked ({RestoreId}) but targeting our point-in-time; adopting latest id and continuing to track its status - OperationId: {OperationId}",
+                        "Account reports a newer restoreId ({CurrentRestoreId}) than tracked ({RestoreId}) but targeting our point-in-time and range; adopting latest id and continuing to track its status - OperationId: {OperationId}",
                         currentRestoreId, restoreId, operationId);
                     restoreId = currentRestoreId;
                 }
+
                 else
                 {
-                    // Different id AND different point-in-time: an unrelated restore superseded ours and
-                    // hid its outcome. We cannot confirm success (ours may have Failed just before being
-                    // replaced), so do NOT report completion. Raise a retryable condition; on redelivery
-                    // the resume/reconcile path re-submits the same point-in-time (idempotent).
+                    // A different id whose point-in-time or range differs is unrelated and may have
+                    // hidden our outcome. Do not report completion; resume on redelivery.
                     _logger.LogWarning(
-                        "Account reports a newer restoreId ({CurrentRestoreId}) targeting a DIFFERENT point-in-time than tracked ({RestoreId}); restore outcome is unconfirmable, will resume on redelivery - OperationId: {OperationId}",
+                        "Account reports a newer restoreId ({CurrentRestoreId}) targeting a different point-in-time or range than tracked ({RestoreId}); restore outcome is unconfirmable, will resume on redelivery - OperationId: {OperationId}",
                         currentRestoreId, restoreId, operationId);
                     throw new RetryableRestoreException(
-                        "The tracked point-in-time restore was superseded by an unrelated restore before completion could be confirmed; retrying.");
+                        "The tracked restore was superseded by an unrelated time or range before completion could be confirmed; retrying.");
                 }
             }
 
@@ -691,4 +729,5 @@ public class BlobRestoreService(
         return TimeSpan.FromMilliseconds(cappedDelayMs);
     }
 
+    private sealed record BlobRange(string StartRange, string EndRange);
 }
