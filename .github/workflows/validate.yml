@@ -38,6 +38,11 @@ on:
         required: false
         type: boolean
         default: false
+      force_full_pipeline:
+        description: 'Run the full build and trusted image publication pipeline'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
