@@ -16,6 +16,7 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { AzureConfig } from '../../../../src/cloud/providers/azure/config';
 import { AzureRestoreOperationStatusStorage } from '../../../../src/cloud/providers/azure/restore-operation-status';
 import { Tx } from '../../utils';
 
@@ -30,12 +31,14 @@ export class TestAzureRestoreOperationStatus {
     private static readStub: sinon.SinonStub;
     private static patchStub: sinon.SinonStub;
     private static fetchAllStub: sinon.SinonStub;
+    private static getContainerStub: sinon.SinonStub;
 
     public static run() {
         describe(Tx.testInit('azure restore operation status', true), () => {
             beforeEach(() => {
                 this.sandbox = sinon.createSandbox();
                 this.storage = new AzureRestoreOperationStatusStorage();
+                AzureConfig.COSMO_RESTORE_STATUS_MAX_THROUGHPUT = 4000;
                 this.createStub = this.sandbox.stub().resolves();
                 this.fetchAllStub = this.sandbox.stub().resolves({ resources: [] });
                 this.queryStub = this.sandbox.stub().returns({ fetchAll: this.fetchAllStub });
@@ -52,7 +55,8 @@ export class TestAzureRestoreOperationStatus {
                     },
                     item: this.itemStub
                 };
-                this.sandbox.stub(AzureRestoreOperationStatusStorage.prototype as any, 'getContainer')
+                this.getContainerStub = this.sandbox.stub(
+                    AzureRestoreOperationStatusStorage.prototype as any, 'getContainer')
                     .resolves(this.mockContainer);
             });
 
@@ -60,12 +64,15 @@ export class TestAzureRestoreOperationStatus {
                 this.sandbox.restore();
                 (AzureRestoreOperationStatusStorage as any).containerCache.clear();
                 (AzureRestoreOperationStatusStorage as any).cosmosClientCache.clear();
+                delete (AzureConfig as any).COSMO_RESTORE_STATUS_MAX_THROUGHPUT;
             });
 
             this.testCreateRestoreOperation();
             this.testGetRestoreOperationStatus();
             this.testMarkRestoreOperationFailed();
             this.testGetActiveRestoreOperationId();
+            this.testCreatesRestoreStatusContainer();
+            this.testRetriesRestoreStatusContainerCreation();
         });
     }
 
@@ -197,6 +204,65 @@ export class TestAzureRestoreOperationStatus {
             const result = await this.storage.getActiveRestoreOperationId('tenant-a');
 
             expect(result).to.equal(null);
+        });
+    }
+
+    private static testCreatesRestoreStatusContainer() {
+        Tx.sectionInit('creates restore status container');
+
+        Tx.test(async () => {
+            this.getContainerStub.restore();
+            const createContainerStub = this.sandbox.stub().resolves({
+                container: this.mockContainer
+            });
+            const cosmosClient = {
+                database: this.sandbox.stub().returns({
+                    containers: { createIfNotExists: createContainerStub }
+                })
+            };
+            this.sandbox.stub(
+                AzureRestoreOperationStatusStorage.prototype as any, 'getCosmosClient')
+                .resolves(cosmosClient);
+
+            await (this.storage as any).getContainer('tenant-a');
+
+            sinon.assert.calledOnceWithExactly(createContainerStub, {
+                id: 'RestoreOperationStatus',
+                maxThroughput: 4000,
+                partitionKey: { paths: ['/operationId'], version: 2 }
+            });
+        });
+    }
+
+    private static testRetriesRestoreStatusContainerCreation() {
+        Tx.sectionInit('retries restore status container creation');
+
+        Tx.test(async () => {
+            this.getContainerStub.restore();
+            const createContainerStub = this.sandbox.stub();
+            createContainerStub.onFirstCall().rejects(new Error('Container creation failed'));
+            createContainerStub.onSecondCall().resolves({
+                container: this.mockContainer
+            });
+            const cosmosClient = {
+                database: this.sandbox.stub().returns({
+                    containers: { createIfNotExists: createContainerStub }
+                })
+            };
+            this.sandbox.stub(
+                AzureRestoreOperationStatusStorage.prototype as any, 'getCosmosClient')
+                .resolves(cosmosClient);
+
+            try {
+                await (this.storage as any).getContainer('tenant-a');
+                expect.fail('Should have thrown');
+            } catch (error) {
+                expect(error.message).to.equal('Container creation failed');
+            }
+            const container = await (this.storage as any).getContainer('tenant-a');
+
+            expect(container).to.equal(this.mockContainer);
+            expect(createContainerStub.callCount).to.equal(2);
         });
     }
 }

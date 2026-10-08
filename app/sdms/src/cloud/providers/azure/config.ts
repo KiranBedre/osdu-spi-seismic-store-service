@@ -65,6 +65,8 @@ export class AzureConfig extends Config {
     public static COSMOS_CHANGE_TIER_FAILURE_CONTAINER = 'ChangeTierFailure';
     public static COSMOS_RESTORE_STATUS_CONTAINER = 'RestoreOperationStatus';
     public static COSMOS_ARCHIVE_CONTAINER = 'ArchiveDatasetMetadata';
+    public static COSMOS_RESTORE_STATUS_PARTITION_KEY = '/operationId';
+    public static COSMOS_ARCHIVE_PARTITION_KEY = '/sdPath';
 
     // Archive TTL derived from restore max days (Config.SDMS_RESTORE_MAX_DAYS)
     public static get COSMOS_ARCHIVE_TTL_SECONDS(): number {

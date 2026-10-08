@@ -52,7 +52,14 @@ export class AzureRestoreOperationStatusStorage {
             const containerPromise = (async () => {
                 const cosmosClient = await this.getCosmosClient(tenant);
                 const database = cosmosClient.database(AzureConfig.COSMOS_DATABASE_ID);
-                const container = database.container(AzureConfig.COSMOS_RESTORE_STATUS_CONTAINER);
+                const { container } = await database.containers.createIfNotExists({
+                    id: AzureConfig.COSMOS_RESTORE_STATUS_CONTAINER,
+                    maxThroughput: AzureConfig.COSMO_RESTORE_STATUS_MAX_THROUGHPUT,
+                    partitionKey: {
+                        paths: [AzureConfig.COSMOS_RESTORE_STATUS_PARTITION_KEY],
+                        version: 2
+                    }
+                });
                 return container;
             })().catch((err) => {
                 AzureRestoreOperationStatusStorage.containerCache.delete(tenant);

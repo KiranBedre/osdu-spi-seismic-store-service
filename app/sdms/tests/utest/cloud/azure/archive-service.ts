@@ -45,6 +45,7 @@ export class TestAzureArchiveService {
                 this.sandbox.stub(AzureConfig, 'COSMOS_DATA_CONTAINER').value('data');
                 this.sandbox.stub(AzureConfig, 'COSMOS_ARCHIVE_CONTAINER').value('ArchiveDatasetMetadata');
                 this.sandbox.stub(AzureConfig, 'COSMOS_ARCHIVE_TTL_SECONDS').value(2592000);
+                AzureConfig.COSMO_ARCHIVE_MAX_THROUGHPUT = 4000;
             });
 
             afterEach(() => {
@@ -52,13 +53,67 @@ export class TestAzureArchiveService {
                 // Clear cached clients/containers between tests
                 (AzureArchiveService as any).cosmosClientCache = new Map();
                 (AzureArchiveService as any).containerCache = new Map();
+                delete (AzureConfig as any).COSMO_ARCHIVE_MAX_THROUGHPUT;
             });
 
             this.archiveBeforeSave_existingItem();
+            this.archiveContainerCreation_retriesAfterFailure();
             this.archiveBeforeSave_newItem();
             this.archiveBeforeSave_failurePropagates();
             this.archiveBatch_allSucceed();
             this.archiveBatch_partialFailure();
+        });
+    }
+
+    private static stubContainers(
+        readStub: sinon.SinonStub,
+        createStub: sinon.SinonStub,
+        createContainerStub?: sinon.SinonStub
+    ) {
+        const archiveContainer = {
+            items: {
+                create: createStub,
+                query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) })
+            }
+        } as any;
+        const containerCreationStub = createContainerStub ??
+            this.sandbox.stub().resolves({ container: archiveContainer });
+        this.sandbox.stub(CosmosClient.prototype, 'database').returns({
+            container: () => ({ item: () => ({ read: readStub }) }) as any,
+            containers: { createIfNotExists: containerCreationStub }
+        } as any);
+        return containerCreationStub;
+    }
+
+    private static archiveContainerCreation_retriesAfterFailure() {
+        Tx.sectionInit('archive container creation - retries after failure');
+
+        Tx.test(async () => {
+            const existingData = { id: 'dataset-1', data: { name: 'test-dataset' } };
+            const readStub = this.sandbox.stub().resolves({ resource: existingData });
+            const createStub = this.sandbox.stub().resolves({});
+            const createContainerStub = this.sandbox.stub();
+            createContainerStub.onFirstCall().rejects(new Error('Container creation failed'));
+            createContainerStub.onSecondCall().resolves({
+                container: {
+                    items: {
+                        create: createStub,
+                        query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) })
+                    }
+                }
+            });
+            this.stubContainers(readStub, createStub, createContainerStub);
+
+            try {
+                await AzureArchiveService.archiveBeforeSave('dataset-1', 'opendes');
+                assert.fail('Should have thrown');
+            } catch (error) {
+                assert.equal(error.message, 'Container creation failed');
+            }
+            await AzureArchiveService.archiveBeforeSave('dataset-1', 'opendes');
+
+            assert.equal(createContainerStub.callCount, 2);
+            assert.isTrue(createStub.calledOnce);
         });
     }
 
@@ -70,19 +125,18 @@ export class TestAzureArchiveService {
             const readStub = this.sandbox.stub().resolves({ resource: existingData });
             const createStub = this.sandbox.stub().resolves({});
 
-            this.sandbox.stub(CosmosClient.prototype, 'database').returns({
-                container: (name: string) => {
-                    if (name === 'data') {
-                        return { item: () => ({ read: readStub }) } as any;
-                    }
-                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
-                }
-            } as any);
+            const createContainerStub = this.stubContainers(readStub, createStub);
 
             await AzureArchiveService.archiveBeforeSave('dataset-1', 'opendes');
 
             assert.isTrue(readStub.calledOnce, 'Should read current state from data container');
             assert.isTrue(createStub.calledOnce, 'Should create archive entry');
+            sinon.assert.calledOnceWithExactly(createContainerStub, {
+                id: 'ArchiveDatasetMetadata',
+                maxThroughput: 4000,
+                partitionKey: { paths: ['/sdPath'], version: 2 },
+                defaultTtl: -1
+            });
 
             const archiveEntry = createStub.firstCall.args[0];
             assert.equal(archiveEntry.sdPath, 'sd://opendes/sp1/a/test-dataset');
@@ -113,14 +167,7 @@ export class TestAzureArchiveService {
             const readStub = this.sandbox.stub().resolves({ resource: undefined });
             const createStub = this.sandbox.stub().resolves({});
 
-            this.sandbox.stub(CosmosClient.prototype, 'database').returns({
-                container: (name: string) => {
-                    if (name === 'data') {
-                        return { item: () => ({ read: readStub }) } as any;
-                    }
-                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
-                }
-            } as any);
+            this.stubContainers(readStub, createStub);
 
             await AzureArchiveService.archiveBeforeSave('new-dataset', 'opendes');
 
@@ -137,14 +184,7 @@ export class TestAzureArchiveService {
             const readStub = this.sandbox.stub().resolves({ resource: existingData });
             const createStub = this.sandbox.stub().rejects(new Error('Cosmos write failure'));
 
-            this.sandbox.stub(CosmosClient.prototype, 'database').returns({
-                container: (name: string) => {
-                    if (name === 'data') {
-                        return { item: () => ({ read: readStub }) } as any;
-                    }
-                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
-                }
-            } as any);
+            this.stubContainers(readStub, createStub);
 
             try {
                 await AzureArchiveService.archiveBeforeSave('dataset-1', 'opendes');
@@ -165,14 +205,7 @@ export class TestAzureArchiveService {
             readStub.onCall(2).resolves({ resource: { id: 'ds-3', data: { name: 'three' } } });
             const createStub = this.sandbox.stub().resolves({});
 
-            this.sandbox.stub(CosmosClient.prototype, 'database').returns({
-                container: (name: string) => {
-                    if (name === 'data') {
-                        return { item: () => ({ read: readStub }) } as any;
-                    }
-                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
-                }
-            } as any);
+            this.stubContainers(readStub, createStub);
 
             await AzureArchiveService.archiveBatch(['ds-1', 'ds-2', 'ds-3'], 'opendes');
 
@@ -192,14 +225,7 @@ export class TestAzureArchiveService {
             createStub.onCall(0).resolves({});
             createStub.onCall(1).rejects(new Error('Archive write failed'));
 
-            this.sandbox.stub(CosmosClient.prototype, 'database').returns({
-                container: (name: string) => {
-                    if (name === 'data') {
-                        return { item: () => ({ read: readStub }) } as any;
-                    }
-                    return { items: { create: createStub, query: () => ({ fetchAll: async () => ({ resources: [] as any[] }) }) } } as any;
-                }
-            } as any);
+            this.stubContainers(readStub, createStub);
 
             try {
                 await AzureArchiveService.archiveBatch(['ds-1', 'ds-2'], 'opendes');

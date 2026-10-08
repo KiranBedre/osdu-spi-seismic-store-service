@@ -56,7 +56,21 @@ export class AzureArchiveService {
         if (!AzureArchiveService.containerCache.has(cacheKey)) {
             const containerPromise = (async () => {
                 const cosmosClient = await AzureArchiveService.getCosmosClient(tenant);
-                return cosmosClient.database(AzureConfig.COSMOS_DATABASE_ID).container(containerId);
+                const database = cosmosClient.database(AzureConfig.COSMOS_DATABASE_ID);
+                if (containerId !== AzureConfig.COSMOS_ARCHIVE_CONTAINER) {
+                    return database.container(containerId);
+                }
+
+                const { container } = await database.containers.createIfNotExists({
+                    id: containerId,
+                    maxThroughput: AzureConfig.COSMO_ARCHIVE_MAX_THROUGHPUT,
+                    partitionKey: {
+                        paths: [AzureConfig.COSMOS_ARCHIVE_PARTITION_KEY],
+                        version: 2
+                    },
+                    defaultTtl: -1
+                });
+                return container;
             })().catch((err) => {
                 AzureArchiveService.containerCache.delete(cacheKey);
                 throw err;
