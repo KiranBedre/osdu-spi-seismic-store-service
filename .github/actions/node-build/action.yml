@@ -33,6 +33,9 @@ outputs:
   build_result:
     description: success when all commands and evidence checks pass
     value: ${{ steps.build.outputs.build_result }}
+  runtime_artifact:
+    description: Name of the artifact containing dist, node_modules, and package metadata
+    value: node-runtime-artifacts
   test_report:
     description: Repository-relative JUnit report path
     value: ${{ steps.config.outputs.test_report }}
@@ -74,6 +77,21 @@ runs:
         TEST_REPORT: ${{ inputs.test_report }}
         COVERAGE_FILE: ${{ inputs.coverage_file }}
       run: "$GITHUB_ACTION_PATH/run-build.sh"
+
+    - name: Package runtime artifact
+      shell: bash
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working_directory }}
+        RUNTIME_ARCHIVE: ${{ runner.temp }}/node-runtime-artifacts/node-runtime.tar.gz
+      run: "$GITHUB_ACTION_PATH/package-runtime.sh"
+
+    - name: Upload runtime artifact
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+      with:
+        name: node-runtime-artifacts
+        path: ${{ runner.temp }}/node-runtime-artifacts/node-runtime.tar.gz
+        if-no-files-found: error
+        retention-days: 2
 
     - name: Upload test and coverage evidence
       if: always()

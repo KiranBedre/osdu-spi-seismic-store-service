@@ -36,14 +36,6 @@ variables:
     - rm -Rf tests/utest/dao
     - rm -Rf tests/utest/services
     - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.yaml
-    - jq "del(.prisma)" package.json > cleaned_package.json
-    - mv cleaned_package.json package.json
-    - export directoryToScan=$PWD
-    - export currentDirectory=$PWD
-    - chmod +x devops/scripts/detect_unused_packages.sh
-    - devops/scripts/detect_unused_packages.sh
-    - chmod +x devops/scripts/clean_package_json.sh
-    - devops/scripts/clean_package_json.sh
 
 sdms_azure_containerize:
   extends:
@@ -82,7 +74,7 @@ sdms_azure_containerize:
     - !reference [azure_containerize, before_script]
   script:
     # Runtime image
-    - docker build --build-arg docker_node_image_version=${SDMS_RUNTIME_NODE_VERSION} -t $SDMS_UTEST_RUNTIME_IMAGE --file devops/azure/runtime.Dockerfile .
+    - docker build --build-arg RUNTIME_ARTIFACT_STAGE=source-builder -t $SDMS_UTEST_RUNTIME_IMAGE --file devops/azure/runtime.Dockerfile .
     # Sidecar image
     - docker build --build-arg PASS=$SIDECAR_CERT_PASS -t $SDMS_SIDECAR_IMAGE -f ./src/cloud/providers/azure/sidecar/src/Sidecar.QueryRunner/Dockerfile ./src/cloud/providers/azure/sidecar/src/
     # Deletion service image
@@ -366,6 +358,7 @@ sdms_azure_test:
     - apt-get install -y python3
     - apt-get install -y python3-pip
     - pip3 install --break-system-packages msal
+    - npm install --global npm@${SDMS_NPM_VERSION}
     - export svctoken=$(python3 ${CI_PROJECT_DIR}/devops/scripts/azure_jwt_client.py)
   script:
     - echo $svctoken > /dev/null

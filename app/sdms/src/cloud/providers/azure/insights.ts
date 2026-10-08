@@ -107,7 +107,7 @@ export class AzureInsightsLogger extends AbstractLogger {
             appinsights.setup(AzureConfig.AI_CONNECTION_STRING)
                 .setAutoDependencyCorrelation(true)
                 .setAutoCollectRequests(true)
-                .setAutoCollectPerformance(true, true)
+                .setAutoCollectPerformance(true, false)
                 .setAutoCollectExceptions(true)
                 .setAutoCollectDependencies(true)
                 .setAutoCollectConsole(true)

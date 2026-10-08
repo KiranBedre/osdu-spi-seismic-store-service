@@ -14,41 +14,52 @@
 # limitations under the License.
 # ============================================================================
 
-ARG docker_node_image_version=lts-alpine
+ARG NODEJS_VERSION=24.14
+ARG NODEJS_DIGEST=sha256:2cb9bed9f0d2aba3d711b09da1ca62dd11ef594e0ae9b87352bb7eea34f3297c
+ARG SEISMIC_DDMS_RELEASE_VERSION=2.0.0
+ARG RUNTIME_ARTIFACT_STAGE=prebuilt-builder
 
-# -------------------------------
-# Compilation stage
-# -------------------------------
-FROM node:${docker_node_image_version} as runtime-builder
+FROM mcr.microsoft.com/azurelinux/base/nodejs:${NODEJS_VERSION}@${NODEJS_DIGEST} AS prebuilt-builder
 
-ADD ./ /service
+COPY ./ /service
 WORKDIR /service
-RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
-    && npm install --quiet node-gyp -g \
-    && npm install --quiet husky -g \
-    && npm install --quiet \
-    && npm run build \
-    && mkdir artifact \
-    && cp -r package.json npm-shrinkwrap.json dist artifact \
-    && apk del native-deps
 
-# -------------------------------
-# Package stage
-# -------------------------------
-FROM node:${docker_node_image_version} as release
+RUN mkdir /artifact && \
+    cp -a package.json npm-shrinkwrap.json dist node_modules /artifact/
 
-COPY --from=runtime-builder /service/artifact /seistore-service
+FROM mcr.microsoft.com/azurelinux/base/nodejs:${NODEJS_VERSION}@${NODEJS_DIGEST} AS source-builder
+
+ARG NPM_VERSION=11.19.0
+COPY ./ /service
+WORKDIR /service
+
+RUN npm install --global "npm@${NPM_VERSION}" && \
+    npm ci && \
+    npm run build && \
+    npm ci --omit=dev && \
+    mkdir /artifact && \
+    cp -a package.json npm-shrinkwrap.json dist node_modules /artifact/
+
+FROM ${RUNTIME_ARTIFACT_STAGE} AS runtime-builder
+
+FROM mcr.microsoft.com/azurelinux/base/nodejs:${NODEJS_VERSION}@${NODEJS_DIGEST} AS release
+
+ARG SEISMIC_DDMS_RELEASE_VERSION
+ENV NODE_ENV=production \
+    VERSION=${SEISMIC_DDMS_RELEASE_VERSION}
+
+RUN tdnf install -y libseccomp shadow-utils && \
+    tdnf -y update && \
+    tdnf clean all && \
+    groupadd --system appgroup && \
+    useradd --system --gid appgroup --home-dir /seistore-service --shell /sbin/nologin appuser && \
+    rm -rf /usr/lib/node_modules/npm /usr/lib/node_modules/npx \
+      /usr/local/lib/node_modules/npm \
+      /usr/bin/npm /usr/bin/npx /usr/local/bin/npm /usr/local/bin/npx
+
 WORKDIR /seistore-service
+COPY --from=runtime-builder --chown=appuser:appgroup /artifact/ ./
 
-RUN apk update && apk upgrade
-RUN apk --no-cache add --virtual native-deps g++ gcc libgcc libstdc++ linux-headers make python3 \
-    && addgroup appgroup \
-    && adduser --disabled-password --gecos --shell appuser --ingroup appgroup \
-    && chown -R appuser:appgroup /seistore-service \
-    && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/npm' >> /etc/sudoers \
-    && echo '%appgroup ALL=(ALL) NOPASSWD: /usr/bin/node' >> /etc/sudoers \
-    && npm install --quiet husky -g \
-    && npm ci --production --quiet \
-    && apk del native-deps
-
+USER appuser:appgroup
+EXPOSE 8080
 ENTRYPOINT ["node", "--trace-warnings", "--trace-uncaught", "./dist/server/server-start.js"]

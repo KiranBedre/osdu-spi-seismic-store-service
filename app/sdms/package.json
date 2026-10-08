@@ -55,7 +55,7 @@
     "instrument": true
   },
   "engines": {
-    "node": ">= 22.0.0",
+    "node": ">= 24.0.0",
     "npm": ">= 11.0.0"
   },
   "dependencies": {
@@ -79,7 +79,6 @@
     "ajv": "^8.8.0",
     "ajv-formats": "^2.1.1",
     "applicationinsights": "^2.7.3",
-    "applicationinsights-native-metrics": "^0.0.6",
     "aws-sdk": "^2.1024.0",
     "axios": "^1.18.1",
     "bull": "^4.12.2",

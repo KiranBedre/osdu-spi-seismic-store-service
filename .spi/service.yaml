@@ -1,0 +1,38 @@
+schemaVersion: 4
+service:
+  name: seismic
+  archetype: node-typescript-azure
+  sourcePath: app/sdms
+  nodeVersion: "24"
+  image:
+    context: app/sdms
+    dockerfile: app/sdms/devops/azure/runtime.Dockerfile
+tests:
+  acceptance:
+    type: script
+    path: app/sdms
+    entrypoint: tests/e2e/run_e2e_tests.sh
+    arguments:
+      - "--seistore-svc-url"
+      - "${SVC_URL}"
+      - "--seistore-svc-api-key"
+      - "unused"
+      - "--user-idtoken"
+      - "${STOKEN}"
+      - "--tenant"
+      - "${PARTITION}"
+      - "--datapartition"
+      - "${PARTITION}"
+      - "--legaltag01"
+      - "${LEGAL_TAG}"
+      - "--legaltag02"
+      - "${LEGAL_TAG}"
+      - "--VCS-Provider"
+      - "gitlab"
+    reportPaths:
+      - "newman/*.xml"
+    bindings:
+      SVC_URL: { source: gateway, suffix: /seistore-svc/api/v3 }
+      STOKEN: { source: token }
+      PARTITION: { source: partition }
+      LEGAL_TAG: { source: legalTag }

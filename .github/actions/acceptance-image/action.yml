@@ -121,7 +121,7 @@ runs:
       uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
       with:
         context: ${{ inputs.build_context }}
-        file: ${{ steps.suite.outputs.test_type == 'script' && 'build/script-acceptance.Dockerfile' || inputs.dockerfile_path }}
+        file: ${{ steps.suite.outputs.test_type == 'script' && (steps.suite.outputs.node_version == '24' && 'build/script-acceptance-node24.Dockerfile' || 'build/script-acceptance.Dockerfile') || inputs.dockerfile_path }}
         push: ${{ inputs.push == 'true' }}
         # amd64-only: CI is the only consumer and dependency prewarming is costly under QEMU.
         platforms: linux/amd64

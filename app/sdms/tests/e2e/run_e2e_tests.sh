@@ -47,6 +47,30 @@ usage() {
 # argument [admin-email] user credential email - optional (deprecated)
 # argument [subproject] subproject name to use in e2e tests - optional
 
+normalized_args=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --*=*)
+      normalized_args+=("$1")
+      shift
+      ;;
+    --*)
+      if [ "$#" -lt 2 ] || [[ "$2" == --* ]]; then
+        normalized_args+=("$1")
+        shift
+      else
+        normalized_args+=("$1=$2")
+        shift 2
+      fi
+      ;;
+    *)
+      normalized_args+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- "${normalized_args[@]}"
+
 for i in "$@"; do
 case $i in
   --seistore-svc-url=*)
@@ -213,10 +237,14 @@ fi
 
 export NODE_OPTIONS=--max_old_space_size=8192
 
-# install required packages
-npm ci 
+# install required packages when the acceptance image did not preinstall them
+if [ ! -f "./node_modules/newman/bin/newman.js" ]; then
+   npm ci
+fi
 
 # run tests
+mkdir -p ./newman ./tests/e2e/results
+rm -f ./newman/*.xml
 rm -f ./tests/e2e/results/e2e_tests_*.html
 
 if [ -f "./node_modules/newman/bin/newman.js" ]; then
@@ -236,7 +264,7 @@ if [ -f "./node_modules/newman/bin/newman.js" ]; then
          $ALLURE_OPT \
          --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
          --reporter-htmlextra-export ./tests/e2e/results/e2e_tests_iteration$1.html \
-         --reporter-junit-export ./newman/e2e_tests_iteration$1.xml \
+         --reporter-junit-export ./newman/e2e_tests.xml \
          --bail
    }
 
@@ -259,7 +287,7 @@ else
          $ALLURE_OPT \
          --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
          --reporter-htmlextra-export ./tests/e2e/results/e2e_tests_iteration$1.html \
-         --reporter-junit-export ./newman/e2e_tests_iteration$1.xml \
+         --reporter-junit-export ./newman/e2e_tests.xml \
          --bail
    }
 fi
