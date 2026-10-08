@@ -324,6 +324,7 @@ export class Handler {
 
         // Persist the status before publishing the queue message so a fast consumer cannot create
         // a competing fallback record for the same operation.
+        let statusCreated = false;
         try {
             const task: IRestoreOperationQueueTask = {
                 type: OperationType.RESTORE,
@@ -344,6 +345,7 @@ export class Handler {
                 createdBy: user,
                 storageAccountName,
             });
+            statusCreated = true;
 
             const taskQueue = TaskQueueFactory.build(Config.CLOUDPROVIDER);
             await taskQueue.pushTask(task);
@@ -352,17 +354,12 @@ export class Handler {
                 message: `Failed to create/enqueue restore operation: ${(error as any).message}`,
                 context, operationId
             });
-            await RestoreOperationLock.release(storageAccountName, operationId);
-            try {
-                await restoreStatusStorage.markRestoreOperationFailed(
+            if (statusCreated) {
+                await this.persistRestoreSetupFailure(
                     operationId, parsedPath.tenant,
-                    `Operation setup failure: ${(error as any).message}`);
-            } catch (statusError) {
-                this.logger.error({
-                    message: `Failed to mark restore operation as failed: ${(statusError as any).message}`,
-                    context, operationId
-                });
+                    `Operation setup failure: ${(error as any).message}`, context);
             }
+            await RestoreOperationLock.release(storageAccountName, operationId);
             throw Error.make(Error.Status.UNKNOWN, 'Failed to initiate restore operation');
         }
 
@@ -373,6 +370,26 @@ export class Handler {
             operation_id: operationId,
             statusUrl: `${basePath}/operation/restore/${operationId}`
         } as any;
+    }
+
+    private static async persistRestoreSetupFailure(
+        operationId: string, tenant: string, failure: string, context: any): Promise<void> {
+        const attempts = 3;
+        let lastError: any;
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+            try {
+                await restoreStatusStorage.markRestoreOperationFailed(operationId, tenant, failure);
+                return;
+            } catch (statusError) {
+                lastError = statusError;
+                this.logger.error({
+                    message: `Failed to mark restore operation as failed `
+                        + `(attempt ${attempt}/${attempts}): ${(statusError as any).message}`,
+                    context, operationId
+                });
+            }
+        }
+        throw lastError;
     }
 
     // get status of a restore operation

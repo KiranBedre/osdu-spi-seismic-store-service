@@ -345,11 +345,14 @@ export class TestRestoreHandler {
             this.sandbox.stub(RestoreOperationLock, 'getHolder').resolves(null);
             this.sandbox.stub(restoreStatusStorage, 'getActiveRestoreOperationId').resolves(null);
             this.sandbox.stub(RestoreOperationLock, 'acquire').resolves(true);
-            this.sandbox.stub(RestoreOperationLock, 'release').resolves(true);
+            const releaseStub = this.sandbox.stub(RestoreOperationLock, 'release').resolves(true);
             this.sandbox.stub(Utils, 'getUserId').resolves('user@example.com');
             const createStatusStub = this.sandbox.stub(
                 restoreStatusStorage, 'createRestoreOperation').resolves();
-            this.sandbox.stub(restoreStatusStorage, 'markRestoreOperationFailed').resolves();
+            const markFailedStub = this.sandbox.stub(
+                restoreStatusStorage, 'markRestoreOperationFailed');
+            markFailedStub.onFirstCall().rejects(new Error('Cosmos unavailable'));
+            markFailedStub.onSecondCall().resolves();
 
             const taskQueueStub = this.sandbox.createStubInstance<any>(AzureTaskQueue);
             taskQueueStub.pushTask.rejects(new Error('Queue unavailable'));
@@ -357,7 +360,8 @@ export class TestRestoreHandler {
 
             await Handler.handle(req, res, Operation.RestorePush);
             Tx.check500((res as any).statusCode);
-            sinon.assert.callOrder(createStatusStub, taskQueueStub.pushTask);
+            sinon.assert.callCount(markFailedStub, 2);
+            sinon.assert.callOrder(createStatusStub, taskQueueStub.pushTask, markFailedStub, releaseStub);
         });
     }
 
