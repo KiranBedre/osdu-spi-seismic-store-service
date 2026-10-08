@@ -1,0 +1,101 @@
+name: 'Sync State Manager'
+description: 'Manages upstream sync state to prevent duplicate PRs and issues'
+
+inputs:
+  github_token:
+    description: 'GitHub token for API access'
+    required: true
+  upstream_repo_url:
+    description: 'Upstream repository URL'
+    required: true
+  default_branch:
+    description: 'Default branch name (main/master)'
+    required: true
+  sync_mode:
+    description: 'Tree generation mode: filter, mirror, or passthrough'
+    required: false
+    default: ''
+
+outputs:
+  should_create_pr:
+    description: "Whether to create a new PR (true/false)"
+    value: ${{ steps.decision.outputs.should_create_pr }}
+  should_create_issue:
+    description: "Whether to create a new issue (true/false)"
+    value: ${{ steps.decision.outputs.should_create_issue }}
+  should_update_branch:
+    description: "Whether to update existing branch (true/false)"
+    value: ${{ steps.decision.outputs.should_update_branch }}
+  existing_pr_number:
+    description: "Existing PR number if found"
+    value: ${{ steps.decision.outputs.existing_pr_number }}
+  existing_issue_number:
+    description: "Existing issue number if found"
+    value: ${{ steps.decision.outputs.existing_issue_number }}
+  existing_branch_name:
+    description: "Existing sync branch name if found"
+    value: ${{ steps.decision.outputs.existing_branch_name }}
+  sync_decision:
+    description: "Decision reason for logging"
+    value: ${{ steps.decision.outputs.sync_decision }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Get current upstream SHA"
+      id: upstream_sha
+      shell: bash
+      env:
+        DEFAULT_BRANCH: ${{ inputs.default_branch }}
+      run: '"$GITHUB_ACTION_PATH/get-upstream-sha.sh" "$DEFAULT_BRANCH"'
+
+    - name: "Detect existing sync issues"
+      id: existing_issues
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: '"$GITHUB_ACTION_PATH/detect-existing-issues.sh"'
+
+    - name: "Check stored sync state"
+      id: stored_state
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        SYNC_MODE: ${{ inputs.sync_mode }}
+        EXISTING_ISSUE_NUMBER: ${{ steps.existing_issues.outputs.existing_issue_number }}
+      run: '"$GITHUB_ACTION_PATH/check-stored-state.sh" "$EXISTING_ISSUE_NUMBER"'
+
+    - name: "Detect existing sync PRs"
+      id: existing_prs
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: '"$GITHUB_ACTION_PATH/detect-existing-prs.sh"'
+
+    - name: "Clean up abandoned sync branches"
+      id: cleanup
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: '"$GITHUB_ACTION_PATH/cleanup-abandoned-branches.sh"'
+
+    - name: "Make sync decision"
+      id: decision
+      shell: bash
+      env:
+        UPSTREAM_SHA: ${{ steps.upstream_sha.outputs.upstream_sha }}
+        LAST_UPSTREAM_SHA: ${{ steps.stored_state.outputs.last_upstream_sha }}
+        HAS_EXISTING_PR: ${{ steps.existing_prs.outputs.has_existing_pr }}
+        HAS_EXISTING_ISSUE: ${{ steps.existing_issues.outputs.has_existing_issue }}
+        EXISTING_PR_NUMBER: ${{ steps.existing_prs.outputs.existing_pr_number }}
+        EXISTING_ISSUE_NUMBER: ${{ steps.existing_issues.outputs.existing_issue_number }}
+        EXISTING_PR_BRANCH: ${{ steps.existing_prs.outputs.existing_pr_branch }}
+      run: |
+        "$GITHUB_ACTION_PATH/make-sync-decision.sh" \
+          "$UPSTREAM_SHA" \
+          "$LAST_UPSTREAM_SHA" \
+          "$HAS_EXISTING_PR" \
+          "$HAS_EXISTING_ISSUE" \
+          "$EXISTING_PR_NUMBER" \
+          "$EXISTING_ISSUE_NUMBER" \
+          "$EXISTING_PR_BRANCH"

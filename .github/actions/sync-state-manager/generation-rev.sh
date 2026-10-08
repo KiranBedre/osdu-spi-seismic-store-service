@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Copyright © Microsoft Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#
+# Prints the identity of every input, other than the upstream commit itself,
+# that determines the generated tree. Durable no-op state is only trusted while
+# this value still matches: a filter config or engine change makes a previously
+# no-op upstream commit produce a different tree (ADR-024, ADR-038).
+#
+# Arguments: $1 repository root (optional, defaults to the enclosing work tree)
+# Env: SYNC_MODE ("mirror" or "passthrough" for verbatim trees; otherwise filter)
+
+set -euo pipefail
+
+MODE="${SYNC_MODE:-filter}"
+
+if [[ "$MODE" == "mirror" || "$MODE" == "passthrough" ]]; then
+  # Verbatim generation copies the upstream tree unchanged. The engine and config
+  # are never read, so the upstream commit is the only input.
+  echo "$MODE"
+  exit 0
+fi
+
+if [[ "$MODE" != "filter" ]]; then
+  echo "generation-rev: unsupported SYNC_MODE '$MODE'" >&2
+  exit 2
+fi
+
+if [[ $# -ge 1 && -n "$1" ]]; then
+  REPO_ROOT="$1"
+else
+  HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  REPO_ROOT="$(git -C "$HERE" rev-parse --show-toplevel)"
+fi
+
+# Every input to the no-change comparison other than the upstream commit:
+# the config and engine decide what is kept, and generate-branch.sh decides how
+# the tree is extracted, serialized, and compared.
+REV="filter"
+for input in \
+  "$REPO_ROOT/.github/upstream-filter.yml" \
+  "$REPO_ROOT/.github/actions/upstream-filter/upstream_filter.py" \
+  "$REPO_ROOT/.github/actions/upstream-filter/generate-branch.sh"
+do
+  if [[ -f "$input" ]]; then
+    REV="$REV-$(git hash-object "$input" | cut -c1-12)"
+  else
+    REV="$REV-absent"
+  fi
+done
+
+echo "$REV"

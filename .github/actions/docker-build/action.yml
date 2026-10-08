@@ -1,0 +1,227 @@
+name: 'Docker Build'
+description: 'Build a service image from a Maven JAR artifact or source context and optionally push it to GHCR'
+
+inputs:
+  image_name:
+    description: 'Short service name (e.g. partition); set from vars.SERVICE_NAME. Required.'
+    required: true
+  dockerfile_path:
+    description: 'Path to the Dockerfile relative to the repo root. Defaults to the canonical Dockerfile the engineering system syncs to every fork (ADR-037).'
+    required: false
+    default: 'build/Dockerfile'
+  build_context:
+    description: 'Docker build context directory'
+    required: false
+    default: '.'
+  build_kind:
+    description: 'maven-jar downloads and resolves the build artifact; source builds the checked-out context directly'
+    required: false
+    default: 'maven-jar'
+  registry:
+    description: 'Container registry host'
+    required: false
+    default: 'ghcr.io'
+  org:
+    description: 'Registry organisation/owner. Falls back to the workflow github.repository_owner at runtime when omitted.'
+    required: false
+  jar_artifact_name:
+    description: 'Name of the GitHub Actions artifact that contains the built JARs'
+    required: false
+    default: 'build-artifacts'
+  build_args:
+    description: 'Optional --build-arg values (newline-separated KEY=VALUE). Never pass GITHUB_TOKEN here.'
+    required: false
+  jar_file:
+    description: 'Conventional path/glob of the service Spring Boot JAR (default provider/<service>-azure/target/*-spring-boot.jar, from SERVICE_TARGET_JAR or SERVICE_NAME). If it matches no file the action auto-discovers the Azure JAR; SERVICE_TARGET_JAR is only needed to disambiguate a service that builds more than one.'
+    required: false
+  push:
+    description: 'When true, log in to GHCR, push the image, compute branch (snapshot) tags, and flip package visibility. When false, build only (no registry auth). The caller must set this explicitly per job.'
+    required: false
+    default: 'true'
+  github_token:
+    description: 'Token for GHCR login and the package-visibility flip. Only consumed on the push path; omit for build-only callers.'
+    required: false
+
+outputs:
+  image_repository:
+    description: "Full registry path, e.g. ghcr.io/<org>/<service> (always set)"
+    value: ${{ steps.meta.outputs.image_repository }}
+  image_digest:
+    description: "sha256:... digest of the pushed image (prefix already included; empty string when push is not true)"
+    value: ${{ inputs.push == 'true' && steps.build.outputs.digest || '' }}
+  image_tags:
+    description: "Comma-separated tags pushed; for human/log use only. Deploy stages must use image_digest, not a tag."
+    value: ${{ steps.tags.outputs.image_tags }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Validate build kind"
+      shell: bash
+      env:
+        BUILD_KIND: ${{ inputs.build_kind }}
+      run: |
+        case "$BUILD_KIND" in
+          maven-jar|source) ;;
+          *) echo "::error::build_kind must be maven-jar or source"; exit 2 ;;
+        esac
+
+    - name: "Validate push prerequisites"
+      if: ${{ inputs.push == 'true' }}
+      shell: bash
+      run: |
+        if [ -z "${GITHUB_TOKEN:-}" ]; then
+          echo "::error::push=true requires github_token (GHCR login + visibility flip)."
+          exit 1
+        fi
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+
+    - name: "Compute image metadata"
+      id: meta
+      shell: bash
+      # Inputs arrive via env, never interpolated into the script, so $(...) or backticks cannot run.
+      run: |
+        "$GITHUB_ACTION_PATH/compute-metadata.sh" "$REGISTRY" "$ORG" "$IMAGE_NAME"
+      env:
+        REGISTRY: ${{ inputs.registry }}
+        ORG: ${{ inputs.org || github.repository_owner }}
+        IMAGE_NAME: ${{ inputs.image_name }}
+
+    - name: "Download build artifacts"
+      if: ${{ inputs.build_kind == 'maven-jar' }}
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+      with:
+        name: ${{ inputs.jar_artifact_name }}
+        # Download into the build context so resolve-jar.sh and the context-relative COPY agree.
+        path: ${{ inputs.build_context }}
+
+    - name: "Resolve service JAR path"
+      id: jar
+      if: ${{ inputs.build_kind == 'maven-jar' }}
+      shell: bash
+      run: "$GITHUB_ACTION_PATH/resolve-jar.sh"
+      env:
+        REQUESTED_JAR: ${{ inputs.jar_file }}
+        IMAGE_NAME: ${{ inputs.image_name }}
+        BUILD_CONTEXT: ${{ inputs.build_context }}
+
+    - name: "Compute image tags"
+      id: tags
+      shell: bash
+      run: |
+        "$GITHUB_ACTION_PATH/compute-tags.sh" "$IMAGE_REPOSITORY" "$SHORT_SHA" "$REF_NAME" "$PUSH"
+      env:
+        IMAGE_REPOSITORY: ${{ steps.meta.outputs.image_repository }}
+        SHORT_SHA: ${{ steps.meta.outputs.short_sha }}
+        REF_NAME: ${{ github.ref_name }}
+        PUSH: ${{ inputs.push }}
+
+    - name: "Set up QEMU"
+      # Only the push path builds the emulated linux/arm64 leg.
+      if: ${{ inputs.push == 'true' }}
+      uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3  # v4.1.0
+
+    - name: "Set up Docker Buildx"
+      uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+
+    - name: "Log in to GHCR"
+      if: ${{ inputs.push == 'true' }}
+      uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee  # v4.2.0
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ inputs.github_token }}
+
+    - name: "Stage validated build context"
+      shell: bash
+      env:
+        BUILD_CONTEXT: ${{ inputs.build_context }}
+        DOCKERFILE_PATH: ${{ inputs.dockerfile_path }}
+      run: |
+        set -euo pipefail
+        case "$BUILD_CONTEXT" in
+          /*|*..*) echo "::error::build_context must be a repository-relative path without '..'"; exit 2 ;;
+        esac
+        case "$DOCKERFILE_PATH" in
+          /*|*..*) echo "::error::dockerfile_path must be a repository-relative path without '..'"; exit 2 ;;
+        esac
+
+        workspace=$(realpath "$GITHUB_WORKSPACE")
+        context=$(realpath "$BUILD_CONTEXT")
+        dockerfile=$(realpath "$DOCKERFILE_PATH")
+        [[ -d "$context" && ("$context" == "$workspace" || "$context" == "$workspace/"*) ]] \
+          || { echo "::error::build_context must resolve inside the repository"; exit 2; }
+        [[ -f "$dockerfile" && "$dockerfile" == "$workspace/"* ]] \
+          || { echo "::error::dockerfile_path must resolve inside the repository"; exit 2; }
+
+        target="${RUNNER_TEMP:?RUNNER_TEMP is required}/spi-service-image-context"
+        rm -rf "$target"
+        mkdir -p "$target"
+        cp -a "$context/." "$target/"
+        cp "$dockerfile" "$target/.spi.Dockerfile"
+
+    - name: "Build container image"
+      id: build
+      uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
+      with:
+        context: ${{ runner.temp }}/spi-service-image-context
+        file: ${{ runner.temp }}/spi-service-image-context/.spi.Dockerfile
+        push: ${{ inputs.push == 'true' }}
+        # Multi-arch only on the push path; validate-only builds skip the QEMU cost on every PR.
+        # provenance:false keeps the pushed index to the two real platforms: the unknown/unknown
+        # attestation manifest makes a bare docker pull miss on arm64.
+        platforms: ${{ inputs.push == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+        provenance: false
+        tags: ${{ steps.tags.outputs.docker_tags }}
+        build-args: |
+          ${{ inputs.build_kind == 'maven-jar' && format('JAR_FILE={0}', steps.jar.outputs.jar_file) || '' }}
+          ${{ inputs.build_args }}
+        # Links the package to its repo in the GHCR UI; this inherits permissions, not visibility.
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+        cache-from: type=gha
+        # ignore-error: two runs of the same PR build an identical image and collide on the
+        # cache keys; a cache write must never fail an image that built successfully.
+        cache-to: type=gha,mode=max,ignore-error=true
+
+    - name: "Verify package visibility"
+      if: ${{ inputs.push == 'true' && steps.build.outcome == 'success' }}
+      shell: bash
+      run: |
+        "$GITHUB_ACTION_PATH/set-package-visibility.sh" "$ORG" "$IMAGE_NAME"
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        ORG: ${{ inputs.org || github.repository_owner }}
+        IMAGE_NAME: ${{ inputs.image_name }}
+
+    - name: "Summary"
+      shell: bash
+      run: |
+        # Never echoes the token.
+        if [ "$PUSH" = "true" ]; then
+          HEADING="Docker Push"
+          MSG="Image pushed: \`${IMAGE_REPOSITORY}@${IMAGE_DIGEST}\`"
+        else
+          HEADING="Docker Build"
+          MSG="Dockerfile validated; no GHCR push (validate-only job)"
+        fi
+        echo "Repository: $IMAGE_REPOSITORY"
+        echo "Tags: $IMAGE_TAGS"
+        echo "$MSG"
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          {
+            echo "### ${HEADING}"
+            echo ""
+            echo "- Repository: \`${IMAGE_REPOSITORY}\`"
+            if [ "$PUSH" = "true" ]; then
+              echo "- Tags: \`${IMAGE_TAGS}\`"
+            fi
+            echo "- ${MSG}"
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+      env:
+        IMAGE_REPOSITORY: ${{ steps.meta.outputs.image_repository }}
+        IMAGE_TAGS: ${{ steps.tags.outputs.image_tags }}
+        PUSH: ${{ inputs.push }}
+        IMAGE_DIGEST: ${{ steps.build.outputs.digest }}

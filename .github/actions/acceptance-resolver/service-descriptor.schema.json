@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://azure.github.io/osdu-spi/schemas/service-descriptor-v4.schema.json",
+  "title": "SPI service descriptor (schema v3 and v4)",
+  "description": "Fork-owned service and acceptance contract at .spi/service.yaml. Schema v3 remains the Java/Maven contract. Schema v4 adds a Node/TypeScript Azure archetype and argv-safe script suites. Bindings remain symbolic and are resolved per run against the stack facts envelope. The resolver engine (.github/actions/acceptance-resolver) is the authority on enforcement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "service", "tests"],
+  "properties": {
+    "schemaVersion": {
+      "enum": [3, 4],
+      "description": "Contract version. Version 3 is Java/Maven-only. Version 4 adds Node/TypeScript services and script acceptance suites."
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "archetype"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+          "description": "Service slug, e.g. partition."
+        },
+        "archetype": {
+          "enum": ["java-maven-azure", "node-typescript-azure"],
+          "description": "Build/test archetype. node-typescript-azure requires schemaVersion 4."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "sourcePath": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$",
+          "description": "Repository-relative package root. Required for node-typescript-azure."
+        },
+        "nodeVersion": {
+          "type": "string",
+          "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2}){0,2}$",
+          "description": "Node.js version supplied to actions/setup-node. Required for node-typescript-azure."
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["context", "dockerfile"],
+          "properties": {
+            "context": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$"
+            },
+            "dockerfile": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$"
+            }
+          },
+          "description": "Source-based service image inputs. Required for node-typescript-azure."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "archetype": { "const": "node-typescript-azure" }
+            }
+          },
+          "then": {
+            "required": ["sourcePath", "nodeVersion", "image"]
+          }
+        }
+      ]
+    },
+    "tests": {
+      "type": "object",
+      "required": ["acceptance"],
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]{0,31}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/suite"
+      },
+      "properties": {
+        "acceptance": {
+          "$ref": "#/$defs/suite"
+        }
+      },
+      "description": "Named suites of one shape. acceptance is required and is the upstream <svc>-acceptance-test by default; a fork adds others, for example integration for its provider suite. The acceptance image bakes every declared suite path."
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "^(gateway|partition|openid|tenant|legalTag|domain|static|template|user|token|memberToken|noAccessToken|keyvault:[A-Za-z0-9][A-Za-z0-9-]{0,126})$",
+          "description": "Closed source vocabulary. Facts: gateway (base_url), partition (primary partition name), openid (OIDC v2.0 issuer URL, published explicitly by the stack), tenant (azure.tenant_id), legalTag (primary partition's legal_tag), domain (the entitlements domain the stack deployed, published as entitlements_domain). keyvault:<name> reads that secret from the stack's vault. static carries the declared value; template renders ${NAME} references to other (non-template, non-secret) bindings after everything else resolves; user must be supplied by the caller's environment; token is the bearer the caller minted for this run, supplied as RESOLVER_TOKEN; memberToken is the bearer minted for the stack's member identity, a plain user with no admin rights, supplied as RESOLVER_MEMBER_TOKEN; noAccessToken is the bearer minted for the stack's no-access identity, supplied as RESOLVER_NO_ACCESS_TOKEN. Anything else is a hard failure naming the key."
+        },
+        "suffix": {
+          "type": "string",
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9._~:/@+-]+$",
+          "description": "Appended to a fact-sourced value (gateway values have their trailing slash stripped first). Fact sources only."
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "Required for static and template sources; invalid elsewhere."
+        },
+        "default": {
+          "type": "string",
+          "description": "Fallback when the fact or caller environment does not supply an answer. Invalid for keyvault, token, memberToken, and noAccessToken sources (a default secret would put a secret value in the repository) and for static/template."
+        }
+      }
+    },
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path"],
+      "properties": {
+        "type": {
+          "enum": ["maven", "script"],
+          "description": "maven is available in schema v3 and v4. script requires schemaVersion 4."
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$",
+          "description": "Repository-relative working directory of the suite, e.g. the upstream <svc>-acceptance-test module."
+        },
+        "mavenArguments": {
+          "type": "array",
+          "minItems": 1,
+          "default": ["verify"],
+          "items": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^[^\\s\\u0000-\\u001f\\u007f]+$"
+          },
+          "description": "Individual Maven argv tokens. Consumers pass the decoded array directly to Maven and never evaluate it as a shell string."
+        },
+        "entrypoint": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$",
+          "description": "Executable path relative to the suite path. Required for script suites."
+        },
+        "arguments": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+          },
+          "description": "Script argv tokens. Consumers pass each item as one argument and never evaluate a shell string. A ${NAME} environment placeholder must occupy the complete token."
+        },
+        "reportPaths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._/*?{}\\[\\]-]{0,199}$"
+          },
+          "description": "JUnit XML globs relative to the suite directory. Required for script suites so a zero exit with no tests cannot pass."
+        },
+        "bindings": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,127}$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/binding"
+          },
+          "description": "Environment variables the suite reads, each bound to a symbol from the closed source vocabulary -- never to an environment value. Resolution precedence per variable: explicit process environment (verbatim) -> source resolution -> declared default. template sources render last."
+        },
+        "keyVaultBindings": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,127}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,126}$"
+          },
+          "description": "Environment variable to Key Vault secret NAME, resolved from the stack's vault at run time. Secret values never appear in the descriptor."
+        },
+        "requires": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "loads": {
+              "type": "array",
+              "default": [],
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+              },
+              "description": "Named data loads the environment must have seeded (checked against published load facts by the deploy gate)."
+            },
+            "groups": {
+              "type": "array",
+              "default": [],
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._@-]{0,254}$"
+              },
+              "description": "Entitlement groups the test caller must hold."
+            }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+          },
+          "description": "Sibling services this suite calls; a pinned dependency blocks the deploy gate with a typed reason."
+        },
+        "timeoutMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 180,
+          "default": 25
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": { "const": "maven" }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["entrypoint"] },
+                { "required": ["arguments"] },
+                { "required": ["reportPaths"] }
+              ]
+            }
+          },
+          "else": {
+            "required": ["entrypoint", "reportPaths"],
+            "not": {
+              "required": ["mavenArguments"]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+# Copyright © Microsoft Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Decide one suite's verdict from its JUnit XML reports.
+
+Usage: suite-verdict.py --exit-code N --reports DIR [--patterns-json JSON]
+
+Prints one line for the run summary and exits 0 for pass, 1 for fail. The
+console is not consulted: -q hides the summary lines and
+-Dmaven.test.failure.ignore turns a failing suite into a zero exit, so only
+the report XML says what ran. A pass needs a zero exit, at least one test
+that was not skipped, and no failures or errors.
+"""
+
+import argparse
+import json
+import pathlib
+import sys
+import xml.etree.ElementTree as ET
+
+DEFAULT_PATTERNS = (
+    "**/surefire-reports/TEST-*.xml",
+    "**/failsafe-reports/TEST-*.xml",
+)
+
+
+def count(reports, patterns):
+    totals = {"tests": 0, "skipped": 0, "failures": 0, "errors": 0}
+    root_dir = pathlib.Path(reports)
+    files = sorted({
+        path
+        for pattern in patterns
+        for path in root_dir.glob(pattern)
+        if path.is_file()
+    })
+    for path in files:
+        try:
+            root = ET.parse(path).getroot()
+        except ET.ParseError:
+            return None, f"unreadable report {path.name}"
+        suites = [root] if root.tag == "testsuite" else root.findall(".//testsuite")
+        for suite in suites:
+            for key in totals:
+                totals[key] += int(suite.get(key, 0))
+    return totals, ""
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--exit-code", type=int, required=True)
+    parser.add_argument("--reports", required=True)
+    parser.add_argument(
+        "--patterns-json",
+        default="",
+        help="JSON array of JUnit XML globs relative to --reports; "
+             "defaults to Maven Surefire and Failsafe reports",
+    )
+    args = parser.parse_args()
+
+    try:
+        patterns = json.loads(args.patterns_json) if args.patterns_json else DEFAULT_PATTERNS
+    except json.JSONDecodeError as error:
+        print(f"FAIL: invalid report patterns: {error}")
+        return 1
+    if not isinstance(patterns, (list, tuple)) or not patterns or not all(
+        isinstance(pattern, str) and pattern for pattern in patterns
+    ):
+        print("FAIL: report patterns must be a non-empty JSON string array")
+        return 1
+
+    totals, problem = count(args.reports, patterns)
+    if problem:
+        print(f"FAIL: {problem}")
+        return 1
+    ran = totals["tests"] - totals["skipped"]
+    broken = totals["failures"] + totals["errors"]
+    if args.exit_code == 124:
+        print(f"FAIL: timed out after {ran} tests")
+        return 1
+    if args.exit_code != 0:
+        print(f"FAIL: exit {args.exit_code}, {ran} tests ran, {broken} failed or errored")
+        return 1
+    if broken:
+        print(f"FAIL: {broken} of {ran} tests failed or errored despite a zero exit")
+        return 1
+    if ran == 0:
+        print(f"FAIL: no tests executed ({totals['skipped']} skipped)")
+        return 1
+    print(f"pass: {ran} tests, {totals['skipped']} skipped")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
