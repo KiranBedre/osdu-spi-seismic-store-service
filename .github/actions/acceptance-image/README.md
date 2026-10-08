@@ -46,8 +46,9 @@ read as "this fork has no acceptance suite".
 
 All suites in one image use the same runtime type. Maven suites use
 `build/acceptance.Dockerfile`. Schema v4 `script` suites use
-`build/script-acceptance.Dockerfile`, currently pinned to Node 22. Resolution
-halts if a script suite declares another Node major rather than silently
+the Node 22 `build/script-acceptance.Dockerfile` or the Node 24
+`build/script-acceptance-node24.Dockerfile`, matching the descriptor's
+`nodeVersion`. Resolution halts for another Node major rather than silently
 running it on the wrong runtime. The image installs locked npm dependencies
 and invokes the declared repository-relative entrypoint directly. Script
 arguments remain argv tokens; the entrypoint expands only exact `${NAME}`
