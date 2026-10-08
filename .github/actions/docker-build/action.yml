@@ -14,7 +14,7 @@ inputs:
     required: false
     default: '.'
   build_kind:
-    description: 'maven-jar downloads and resolves the build artifact; source builds the checked-out context directly'
+    description: 'maven-jar resolves a JAR, source restores a Node runtime, and artifact uses a downloaded runtime artifact as the complete context'
     required: false
     default: 'maven-jar'
   registry:
@@ -66,8 +66,8 @@ runs:
         BUILD_KIND: ${{ inputs.build_kind }}
       run: |
         case "$BUILD_KIND" in
-          maven-jar|source) ;;
-          *) echo "::error::build_kind must be maven-jar or source"; exit 2 ;;
+          maven-jar|source|artifact) ;;
+          *) echo "::error::build_kind must be maven-jar, source, or artifact"; exit 2 ;;
         esac
 
     - name: "Validate push prerequisites"
@@ -115,6 +115,13 @@ runs:
         RUNTIME_ARCHIVE: ${{ runner.temp }}/node-runtime-artifact/node-runtime.tar.gz
       run: "$GITHUB_ACTION_PATH/restore-node-runtime.sh"
 
+    - name: "Download runtime artifact"
+      if: ${{ inputs.build_kind == 'artifact' }}
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+      with:
+        name: ${{ inputs.source_artifact_name }}
+        path: ${{ runner.temp }}/spi-runtime-artifact
+
     - name: "Resolve service JAR path"
       id: jar
       if: ${{ inputs.build_kind == 'maven-jar' }}
@@ -155,22 +162,33 @@ runs:
     - name: "Stage validated build context"
       shell: bash
       env:
+        BUILD_KIND: ${{ inputs.build_kind }}
         BUILD_CONTEXT: ${{ inputs.build_context }}
         DOCKERFILE_PATH: ${{ inputs.dockerfile_path }}
+        ARTIFACT_CONTEXT: ${{ runner.temp }}/spi-runtime-artifact
       run: |
         set -euo pipefail
-        case "$BUILD_CONTEXT" in
-          /*|*..*) echo "::error::build_context must be a repository-relative path without '..'"; exit 2 ;;
-        esac
         case "$DOCKERFILE_PATH" in
           /*|*..*) echo "::error::dockerfile_path must be a repository-relative path without '..'"; exit 2 ;;
         esac
 
         workspace=$(realpath "$GITHUB_WORKSPACE")
-        context=$(realpath "$BUILD_CONTEXT")
+        if [ "$BUILD_KIND" = "artifact" ]; then
+          context=$(realpath "$ARTIFACT_CONTEXT")
+        else
+          case "$BUILD_CONTEXT" in
+            /*|*..*) echo "::error::build_context must be a repository-relative path without '..'"; exit 2 ;;
+          esac
+          context=$(realpath "$BUILD_CONTEXT")
+        fi
         dockerfile=$(realpath "$DOCKERFILE_PATH")
-        [[ -d "$context" && ("$context" == "$workspace" || "$context" == "$workspace/"*) ]] \
-          || { echo "::error::build_context must resolve inside the repository"; exit 2; }
+        if [ "$BUILD_KIND" = "artifact" ]; then
+          [[ -d "$context" && "$context" == "$(realpath "$RUNNER_TEMP")/"* ]] \
+            || { echo "::error::artifact context must resolve inside RUNNER_TEMP"; exit 2; }
+        else
+          [[ -d "$context" && ("$context" == "$workspace" || "$context" == "$workspace/"*) ]] \
+            || { echo "::error::build_context must resolve inside the repository"; exit 2; }
+        fi
         [[ -f "$dockerfile" && "$dockerfile" == "$workspace/"* ]] \
           || { echo "::error::dockerfile_path must resolve inside the repository"; exit 2; }
 
