@@ -759,7 +759,26 @@ public class RestoreTaskExecutorTests
     // ------------------------------------------------------------------------
 
     [Fact]
-    public async Task ProcessAsync_CancelledDuringBlobWait_PropagatesAndReleasesLocks()
+    public async Task ProcessAsync_CancelledBeforeBlobRestore_PropagatesAndReleasesLocks()
+    {
+        _ = _storageInfoProviderMock
+            .Setup(m => m.ResolveDatasetInfoAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException());
+        var message = CreateMessage();
+
+        var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _ = await act.Should().ThrowAsync<OperationCanceledException>();
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(
+            It.IsAny<WriteLockSession>()), Times.Exactly(2));
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
+            It.IsAny<WriteLockSession>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_CancelledDuringBlobWait_PropagatesAndRetainsLocks()
     {
         _ = _blobRestoreServiceMock
             .Setup(m => m.WaitForBlobRestoreAsync(
@@ -771,8 +790,10 @@ public class RestoreTaskExecutorTests
         var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
 
         _ = await act.Should().ThrowAsync<OperationCanceledException>();
-        // Cancellation is not treated as an inconsistent failure → locks released, status not Failed.
-        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Exactly(2));
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(
+            It.IsAny<WriteLockSession>()), Times.Never);
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
+            It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())), Times.Once);
         _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Failed));
     }
 

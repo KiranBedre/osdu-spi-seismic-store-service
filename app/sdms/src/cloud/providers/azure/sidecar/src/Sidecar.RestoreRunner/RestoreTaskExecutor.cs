@@ -124,6 +124,7 @@ public class RestoreTaskExecutor(
         // retried at the queue level instead of releasing locks. See the RestoreRetryableException
         // handler below.
         var retainLocksForRetry = false;
+        var blobRestoreMayHaveStarted = false;
 
         try
         {
@@ -258,6 +259,7 @@ public class RestoreTaskExecutor(
             string blobRestoreId;
             try
             {
+                blobRestoreMayHaveStarted = true;
                 blobRestoreId = await _blobRestoreService.StartBlobRestoreAsync(
                     tenant,
                     storageInfo,
@@ -265,6 +267,7 @@ public class RestoreTaskExecutor(
                     message.OperationId,
                     trackedStatus.Document.BlobRestoreId,
                     ct);
+                blobRestoreMayHaveStarted = !string.IsNullOrEmpty(blobRestoreId);
             }
             catch (Common.Exceptions.RetryableRestoreException ex)
             {
@@ -520,7 +523,21 @@ public class RestoreTaskExecutor(
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("Restore cancelled - OperationId: {OperationId}", message.OperationId);
+            if (blobRestoreMayHaveStarted)
+            {
+                retainLocksForRetry = true;
+                _logger.LogWarning(
+                    "Restore cancelled after blob PITR may have started; retaining locks for redelivery - OperationId: {OperationId}",
+                    message.OperationId);
+                await MakeDatasetLockIndefiniteAsync(
+                    datasetLockSession, datasetLockKey, message.OperationId);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Restore cancelled before blob PITR started - OperationId: {OperationId}",
+                    message.OperationId);
+            }
             throw;
         }
         catch (RestoreRejectedException ex)
