@@ -1,0 +1,282 @@
+#!/usr/bin/env bash
+# Copyright © Microsoft Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -euo pipefail
+
+#
+# setup-fork-repo.sh
+#
+# Configures a fork repository with required variables and secrets.
+# Pulls all sensitive values from Azure Key Vault and sets the necessary
+# GitHub Actions variables and secrets for the osdu-spi engineering system.
+#
+# Prerequisites:
+#   - az CLI (authenticated to the tenant/subscription containing the vault)
+#   - gh CLI (authenticated with write access to the target repo)
+#
+# Key Vault secrets used:
+#   - github-app-id:          GitHub App ID for the automation app
+#   - github-app-private-key: GitHub App private key (PEM format)
+#
+# Usage:
+#   .github/scripts/setup-fork-repo.sh \
+#     --repo <owner/repo> \
+#     --upstream <upstream-url> \
+#     --vault-name <vault> \
+#     [--codeowners <@org/team>] \
+#     [--template-repo <url>] \
+#     [--dry-run]
+#
+# Example:
+#   .github/scripts/setup-fork-repo.sh \
+#     --repo Azure/osdu-spi-partition \
+#     --upstream https://community.opengroup.org/osdu/platform/system/partition.git \
+#     --vault-name my-vault
+#
+
+REPO=""
+UPSTREAM=""
+VAULT_NAME="${AZURE_VAULT_NAME:-}"
+TEMPLATE_REPO="https://github.com/Azure/osdu-spi.git"
+CODEOWNERS=""
+FIREWALL_DOMAINS="community.opengroup.org,repo1.maven.org,central.maven.org,repo.maven.apache.org,plugins.gradle.org"
+DRY_RUN=false
+
+usage() {
+  local exit_code="${1:-1}"
+  cat <<EOF
+Usage: $0 --repo <owner/repo> --upstream <upstream-url> --vault-name <vault> [options]
+
+Required:
+  --repo <owner/repo>         Target GitHub repository (e.g., Azure/osdu-spi-partition)
+  --upstream <url>            Upstream repository URL
+  --vault-name <name>         Azure Key Vault name (or set AZURE_VAULT_NAME env var)
+
+Options:
+  --codeowners <handle>       Reviewers for .github/CODEOWNERS, as @org/team or @user; the next
+                              template sync plants the file (no default: one person cannot
+                              approve their own pull requests)
+  --template-repo <url>       Template repository URL (default: https://github.com/Azure/osdu-spi.git)
+  --dry-run                   Show what would be done without making changes
+  -h, --help                  Show this help message
+
+Environment Variables:
+  AZURE_VAULT_NAME            Default value for --vault-name
+EOF
+  exit "$exit_code"
+}
+
+require_arg() {
+  local opt="$1"
+  local val="${2-}"
+  if [[ -z "$val" || "$val" == -* ]]; then
+    echo "ERROR: Option '$opt' requires a non-empty value."
+    usage
+  fi
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo)           require_arg "$1" "${2-}"; REPO="${2-}"; shift 2 ;;
+    --upstream)       require_arg "$1" "${2-}"; UPSTREAM="${2-}"; shift 2 ;;
+    --vault-name)     require_arg "$1" "${2-}"; VAULT_NAME="${2-}"; shift 2 ;;
+    --codeowners)     require_arg "$1" "${2-}"; CODEOWNERS="${2-}"; shift 2 ;;
+    --template-repo)  require_arg "$1" "${2-}"; TEMPLATE_REPO="${2-}"; shift 2 ;;
+    --dry-run)        DRY_RUN=true; shift ;;
+    -h|--help)        usage 0 ;;
+    *)                echo "Unknown option: $1"; usage ;;
+  esac
+done
+
+if [[ -z "$REPO" || -z "$UPSTREAM" ]]; then
+  echo "ERROR: --repo and --upstream are required."
+  usage
+fi
+
+if [[ -z "$VAULT_NAME" ]]; then
+  echo "ERROR: --vault-name is required (or set AZURE_VAULT_NAME environment variable)."
+  usage
+fi
+
+if [[ -n "$CODEOWNERS" && "$CODEOWNERS" != @* ]]; then
+  echo "ERROR: --codeowners must be an @user or @org/team handle, got '$CODEOWNERS'."
+  usage
+fi
+
+if $DRY_RUN; then
+  echo "[DRY RUN] No changes will be made."
+  echo ""
+fi
+
+# ── Prerequisites ──────────────────────────────────────────────────
+
+echo "==> Checking prerequisites..."
+
+if ! command -v az &> /dev/null; then
+  echo "ERROR: az CLI not found. Install: https://aka.ms/install-azure-cli"
+  exit 1
+fi
+
+if ! command -v gh &> /dev/null; then
+  echo "ERROR: gh CLI not found. Install: https://cli.github.com"
+  exit 1
+fi
+
+az account show &> /dev/null || { echo "ERROR: Not logged in to Azure. Run: az login"; exit 1; }
+gh auth status &> /dev/null || { echo "ERROR: Not logged in to GitHub. Run: gh auth login"; exit 1; }
+
+if ! gh api "repos/$REPO" --jq '.full_name' &> /dev/null; then
+  echo "ERROR: Cannot access repository $REPO. Check permissions."
+  exit 1
+fi
+
+echo "    Target repo: $REPO"
+echo "    Upstream:    $UPSTREAM"
+echo ""
+
+# ── Fetch secrets from Key Vault ──────────────────────────────────
+
+echo "==> Fetching secrets from Key Vault ($VAULT_NAME)..."
+
+fetch_secret() {
+  local name="$1"
+  local value
+  value=$(az keyvault secret show \
+    --vault-name "$VAULT_NAME" \
+    --name "$name" \
+    --query value -o tsv 2>/dev/null) || true
+
+  if [[ -z "$value" ]]; then
+    echo "ERROR: Failed to retrieve '$name' from vault '$VAULT_NAME'." >&2
+    echo "       Ensure the secret exists and you have access." >&2
+    echo "       Check: az account show" >&2
+    exit 1
+  fi
+
+  echo "    Retrieved $name" >&2
+  printf '%s' "$value"
+}
+
+APP_ID=$(fetch_secret "github-app-id")
+APP_KEY=$(fetch_secret "github-app-private-key")
+
+echo ""
+
+# ── Variables ──────────────────────────────────────────────────────
+
+echo "==> Setting repository variables..."
+
+set_variable() {
+  local name="$1"
+  local value="$2"
+  if $DRY_RUN; then
+    echo "    [DRY RUN] Would set $name = $value"
+  else
+    gh variable set "$name" --body "$value" --repo "$REPO"
+    echo "    Set $name"
+  fi
+}
+
+# INITIALIZATION_COMPLETE is left to init-complete.yml; setting it here stops init from running.
+set_variable "COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS" "$FIREWALL_DOMAINS"
+set_variable "TEMPLATE_REPO_URL" "$TEMPLATE_REPO"
+set_variable "UPSTREAM_REPO_URL" "$UPSTREAM"
+if [[ -n "$CODEOWNERS" ]]; then
+  set_variable "CODEOWNERS" "$CODEOWNERS"
+else
+  echo "    CODEOWNERS not set; pass --codeowners or Settings Apply opens a human-required issue"
+fi
+
+echo ""
+
+# ── Secrets ────────────────────────────────────────────────────────
+
+echo "==> Setting repository secrets..."
+
+set_secret() {
+  local name="$1"
+  local value="$2"
+  if $DRY_RUN; then
+    echo "    [DRY RUN] Would set $name (${#value} bytes)"
+  else
+    printf '%s' "$value" | gh secret set "$name" --repo "$REPO"
+    echo "    Set $name"
+  fi
+}
+
+set_secret "RELEASE_APP_ID" "$APP_ID"
+set_secret "RELEASE_APP_PRIVATE_KEY" "$APP_KEY"
+
+echo ""
+
+# ── Repository settings ────────────────────────────────────────────
+#
+# The cascade arms auto-merge with the merge-commit method on release PRs, and
+# a squash merge breaks the fork_upstream ancestry check. Both settings are
+# needed: auto-merge alone leaves "Create a merge commit" unavailable where
+# merge commits are disabled by org policy.
+
+echo "==> Configuring repository settings..."
+
+if $DRY_RUN; then
+  echo "    [DRY RUN] Would enable allow_auto_merge=true and allow_merge_commit=true on $REPO"
+else
+  gh api --method PATCH "repos/$REPO" \
+    -F allow_auto_merge=true \
+    -F allow_merge_commit=true >/dev/null
+  echo "    Enabled allow_auto_merge and allow_merge_commit"
+fi
+
+echo ""
+
+# ── Summary ────────────────────────────────────────────────────────
+
+if [ "$DRY_RUN" = true ]; then
+  echo "==> [DRY RUN] Setup summary for $REPO (no changes were made)"
+  echo ""
+  echo "Variables that would be configured:"
+  echo "  - COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS"
+  echo "  - TEMPLATE_REPO_URL"
+  echo "  - UPSTREAM_REPO_URL"
+  [[ -n "$CODEOWNERS" ]] && echo "  - CODEOWNERS"
+  echo ""
+  echo "Secrets that would be configured:"
+  echo "  - RELEASE_APP_ID"
+  echo "  - RELEASE_APP_PRIVATE_KEY"
+  echo ""
+  echo "Next steps (after running without --dry-run):"
+  echo "  1. Make sure the GitHub App behind RELEASE_APP_ID is installed on $REPO"
+  echo "  2. Push template content to the repo (if not already done)"
+  echo "  3. The init workflow will trigger automatically on push to main"
+  echo "  4. Or, if already initialized, trigger a sync workflow to verify"
+else
+  echo "==> Setup complete for $REPO"
+  echo ""
+  echo "Variables configured:"
+  echo "  - COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS"
+  echo "  - TEMPLATE_REPO_URL"
+  echo "  - UPSTREAM_REPO_URL"
+  [[ -n "$CODEOWNERS" ]] && echo "  - CODEOWNERS"
+  echo ""
+  echo "Secrets configured:"
+  echo "  - RELEASE_APP_ID"
+  echo "  - RELEASE_APP_PRIVATE_KEY"
+  echo ""
+  echo "Next steps:"
+  echo "  1. Make sure the GitHub App behind RELEASE_APP_ID is installed on $REPO"
+  echo "  2. Push template content to the repo (if not already done)"
+  echo "  3. The init workflow will trigger automatically on push to main"
+  echo "  4. Or, if already initialized, trigger a sync workflow to verify"
+fi

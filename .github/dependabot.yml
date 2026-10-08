@@ -1,0 +1,53 @@
+version: 2
+updates:
+  # Template repository only. The template owns the engineering system (.github
+  # workflows and actions); forks own application code and receive .github
+  # updates through sync-template, never through their own Dependabot.
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github"
+    schedule:
+      interval: "daily"
+      time: "08:00"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+
+  # Digest and patch bumps for the base images in build/; template-sync carries the
+  # updated Dockerfiles to every fork (ADR-037). Major and minor image changes (the
+  # Java release) and the App Insights agent, an ADD with a checksum, stay manual.
+  - package-ecosystem: "docker"
+    directory: "/build"
+    schedule:
+      interval: "daily"
+      time: "08:30"
+    target-branch: "main"
+    labels:
+      - "dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+      # Dependabot reads the JDK in maven's tag as the patch: 3.9-eclipse-temurin-17 is 3.9.17.
+      - dependency-name: "library/maven"
+        update-types:
+          - "version-update:semver-patch"
+    groups:
+      docker:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+
+  # No pip ecosystem for doc/: a fork inherits this file until
+  # deploy-fork-resources.sh replaces it, and Dependabot caches the ecosystem.

@@ -1,0 +1,492 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42  # v2.1.4
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout main (contains workflows and actions)
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -z "${{ vars.UPSTREAM_REPO_URL }}" ]; then
+            echo "::error::UPSTREAM_REPO_URL variable is not configured. Please set it in repository settings."
+            echo "This variable should contain the URL of your upstream repository (e.g., https://github.com/Azure/osdu-infrastructure.git)"
+            exit 1
+          fi
+          
+          echo "Adding upstream remote: ${{ vars.UPSTREAM_REPO_URL }}"
+          git remote add upstream "${{ vars.UPSTREAM_REPO_URL }}" || {
+            echo "::error::Failed to add upstream remote. Please check the UPSTREAM_REPO_URL variable."
+            exit 1
+          }
+
+      - name: Fetch Upstream
+        env:
+          SYNC_MODE: ${{ vars.SYNC_MODE }}
+        run: |
+          if [ "${SYNC_MODE:-filter}" = "passthrough" ]; then
+            git fetch upstream --prune --no-tags
+          else
+            git fetch upstream --prune
+          fi
+
+          if git rev-parse --verify upstream/main >/dev/null 2>&1; then
+            DEFAULT_BRANCH="main"
+          elif git rev-parse --verify upstream/master >/dev/null 2>&1; then
+            DEFAULT_BRANCH="master"
+          else
+            echo "::error::Could not find main or master branch in upstream"
+            exit 1
+          fi
+          echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
+
+      - name: Publish new passthrough tags
+        if: vars.SYNC_MODE == 'passthrough'
+        run: |
+          git fetch upstream --prune --no-tags '+refs/tags/*:refs/upstream-tags/*'
+          if git for-each-ref --format='%(refname)' refs/upstream-tags/ | grep -q .; then
+            git push --atomic origin 'refs/upstream-tags/*:refs/tags/*'
+            git fetch origin --tags
+          else
+            echo "Upstream has no tags to publish"
+          fi
+
+      - name: Check for active cascades
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          echo "Checking for active cascade integrations..."
+          
+          ACTIVE_CASCADE=$(gh issue list \
+            --label "upstream-sync,cascade-active" \
+            --state open \
+            --json number,title)
+          
+          if [ -n "$ACTIVE_CASCADE" ] && [ "$ACTIVE_CASCADE" != "[]" ]; then
+            echo "❌ Upstream sync blocked - active cascade in progress"
+            echo "Active cascades:"
+            echo "$ACTIVE_CASCADE" | jq -r '.[] | "- Issue #\(.number): \(.title)"'
+            echo ""
+            echo "**Resolution Options:**"
+            echo "1. Wait for current cascade to complete or fail"
+            echo "2. If cascade has failed with human-required label, upstream sync is allowed (for potential fixes)"
+            echo "3. Manually resolve any stuck cascades before retrying upstream sync"
+            exit 1
+          fi
+          
+          echo "✅ No active cascades detected - proceeding with upstream sync"
+
+      - name: Check sync state and prevent duplicates
+        id: sync-state
+        uses: ./.github/actions/sync-state-manager
+        with:
+          github_token: ${{ steps.app-token.outputs.token }}
+          upstream_repo_url: ${{ vars.UPSTREAM_REPO_URL }}
+          default_branch: ${{ env.DEFAULT_BRANCH }}
+          sync_mode: ${{ vars.SYNC_MODE }}
+
+      - name: Sync upstream changes
+        id: sync-changes
+        if: steps.sync-state.outputs.should_create_pr == 'true' || steps.sync-state.outputs.should_update_branch == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          # mirror and passthrough take the upstream tip verbatim, without the filter engine.
+          SYNC_MODE: ${{ vars.SYNC_MODE }}
+        run: |
+          echo "Sync mode: ${SYNC_MODE:-filter}"
+
+          DATE_SUFFIX=$(date +%Y%m%d-%H%M%S)
+
+          if [ "${{ steps.sync-state.outputs.should_update_branch }}" = "true" ]; then
+            SYNC_BRANCH="${{ steps.sync-state.outputs.existing_branch_name }}"
+            echo "🔄 Updating existing sync branch: $SYNC_BRANCH"
+          else
+            SYNC_BRANCH="sync/upstream-${DATE_SUFFIX}"
+            echo "🆕 Creating new sync branch: $SYNC_BRANCH"
+          fi
+
+          # The checkout never leaves main: the filter engine and the per-service
+          # config live there, and fork_upstream carries no .github/ at all. The
+          # generated tree is serialized through a scratch index and pushed by ref.
+          git fetch origin fork_upstream
+          BEFORE_SHA=$(git rev-parse origin/fork_upstream)
+          UPSTREAM_SHA=$(git rev-parse "upstream/$DEFAULT_BRANCH")
+          if [[ ! "$UPSTREAM_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Resolved upstream SHA is not a full lowercase commit ID: $UPSTREAM_SHA"
+            exit 1
+          fi
+          UPSTREAM_VERSION=$(git describe --tags --abbrev=0 "$UPSTREAM_SHA" 2>/dev/null || echo "${UPSTREAM_SHA:0:8}")
+          echo "Captured pre-sync state: $BEFORE_SHA"
+
+          # Exported before generation so a no-change run can still record the evaluated SHA.
+          echo "SYNC_BRANCH=$SYNC_BRANCH" >> "$GITHUB_ENV"
+          echo "UPSTREAM_SHA=$UPSTREAM_SHA" >> "$GITHUB_ENV"
+          echo "UPSTREAM_VERSION=$UPSTREAM_VERSION" >> "$GITHUB_ENV"
+
+          GEN_OUT="$RUNNER_TEMP/generate-branch.env"
+          bash .github/actions/upstream-filter/generate-branch.sh \
+            "$BEFORE_SHA" "$UPSTREAM_SHA" ".github/upstream-filter.yml" "$GEN_OUT"
+          . "$GEN_OUT"
+
+          if [ "$has_changes" = "false" ]; then
+            echo "No changes to sync from upstream"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            # Recorded only on the no-change path: a later failure with changes would
+            # claim the SHA was handled with no PR to show. An open sync PR carries a
+            # tree this comparison never saw, so its cycle must finish first.
+            if [ "${{ steps.sync-state.outputs.should_create_pr }}" = "true" ]; then
+              bash .github/actions/sync-state-manager/record-evaluated-sha.sh "$UPSTREAM_SHA"
+            else
+              echo "Existing sync PR is still open - not recording durable state"
+            fi
+            exit 0
+          fi
+
+          # Release Please classification is a rule, not a model: the same commit range
+          # always yields the same bump, and non-conventional commits fall through to fix.
+          # The `!` marker only counts on a subject line; quoted prose in a body must not
+          # force a major bump. Read into variables first: grep -q short-circuits, and the
+          # SIGPIPE makes a git|grep pipeline return 141 under pipefail, inverting the test.
+          UPSTREAM_SUBJECTS=$(git log --format=%s "$BEFORE_SHA..$commit")
+          UPSTREAM_BODIES=$(git log --format=%b "$BEFORE_SHA..$commit")
+          if grep -qE '^[a-z]+(\([^)]*\))?!:' <<<"$UPSTREAM_SUBJECTS" \
+             || grep -qE '^BREAKING[ -]CHANGE:' <<<"$UPSTREAM_BODIES"; then
+            META_COMMIT_MSG="feat!: sync upstream changes from $UPSTREAM_VERSION"$'\n\n'"BREAKING CHANGE: upstream $UPSTREAM_VERSION contains a breaking change"
+          elif grep -qE '^feat(\([^)]*\))?:' <<<"$UPSTREAM_SUBJECTS"; then
+            META_COMMIT_MSG="feat: sync upstream changes from $UPSTREAM_VERSION"
+          else
+            META_COMMIT_MSG="fix: sync upstream changes from $UPSTREAM_VERSION"
+          fi
+          echo "Meta commit: $(head -n1 <<<"$META_COMMIT_MSG")"
+
+          # Empty meta commit for Release Please; the generated tree is carried unchanged.
+          META=$(git commit-tree "${commit}^{tree}" -p "$commit" -m "$META_COMMIT_MSG")
+          echo "✅ Added meta commit for Release Please integration"
+
+          # Local refs so later diff/log expressions work without checking either branch out.
+          git branch -f "$SYNC_BRANCH" "$META"
+          git branch -f fork_upstream "$BEFORE_SHA"
+
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+
+          git push -f origin "$META:refs/heads/$SYNC_BRANCH"
+          echo "Pushed generated sync branch $SYNC_BRANCH"
+
+          # GitHub rejects a PR body over 65536 characters, and this is the only description
+          # path, so the largest syncs would fail outright without a cap.
+          MAX_BODY_COMMITS=200
+          # Range ends at the upstream tip, not the sync branch: the branch also reaches the
+          # meta and generation commits just written, which are not upstream changes.
+          TOTAL_COMMITS=$(git rev-list --count "fork_upstream..$UPSTREAM_SHA")
+          if [ "$TOTAL_COMMITS" -eq 0 ]; then
+            # Tree changed with no new upstream commits, so a generation input moved
+            # (generation-rev.sh). An empty list would read like a broken body.
+            CHANGES="* _No new upstream commits; tree regenerated at $UPSTREAM_VERSION (filter-rev $filter_rev)._"
+          else
+            CHANGES=$(git log -n "$MAX_BODY_COMMITS" --pretty=format:"* %s" "fork_upstream..$UPSTREAM_SHA")
+            if [ "$TOTAL_COMMITS" -gt "$MAX_BODY_COMMITS" ]; then
+              CHANGES="${CHANGES}"$'\n'"* _...and $((TOTAL_COMMITS - MAX_BODY_COMMITS)) more commits._"
+            fi
+          fi
+
+          PR_DESCRIPTION="Automated PR to sync with upstream repository changes."$'\n\n'"### Changes from upstream:"$'\n'"${CHANGES}"
+          if [ "${#PR_DESCRIPTION}" -gt 60000 ]; then
+            PR_DESCRIPTION="${PR_DESCRIPTION:0:60000}"$'\n\n'"_Description truncated._"
+          fi
+
+          # Randomized delimiter: a commit subject that is literally "EOF" would close the
+          # block early and the rest would parse as env assignments.
+          PR_DESCRIPTION_DELIM="EOF_$(openssl rand -hex 16)"
+          {
+            echo "PR_DESCRIPTION<<$PR_DESCRIPTION_DELIM"
+            echo "$PR_DESCRIPTION"
+            echo "$PR_DESCRIPTION_DELIM"
+          } >> "$GITHUB_ENV"
+
+      - name: Create sync PR
+        if: steps.sync-changes.outputs.has_changes == 'true' && steps.sync-state.outputs.should_create_pr == 'true'
+        id: create-pr
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Read from the environment, not ${{ env.X }}: expression substitution
+          # breaks on quotes in commit subjects.
+          echo "Creating PR from branch $SYNC_BRANCH to fork_upstream"
+          printf '%s\n' "$PR_DESCRIPTION" > /tmp/pr_body.txt
+          PR_URL=$(gh pr create \
+            --base fork_upstream \
+            --head "$SYNC_BRANCH" \
+            --title "⬆️ Sync with upstream $UPSTREAM_VERSION" \
+            --body-file /tmp/pr_body.txt \
+            --label "upstream-sync,human-required")
+          rm -f /tmp/pr_body.txt
+
+          echo "PR created: $PR_URL"
+
+          PR_NUMBER=$(basename "$PR_URL")
+          echo "PR number: $PR_NUMBER"
+
+          echo "pr-url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Update existing PR
+        if: steps.sync-changes.outputs.has_changes == 'true' && steps.sync-state.outputs.should_update_branch == 'true'
+        id: update-pr
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          PR_NUMBER="${{ steps.sync-state.outputs.existing_pr_number }}"
+          printf '%s\n' "$PR_DESCRIPTION" > /tmp/pr_body.txt
+          gh pr edit "$PR_NUMBER" \
+            --title "⬆️ Sync with upstream $UPSTREAM_VERSION (Updated)" \
+            --body-file /tmp/pr_body.txt
+          rm -f /tmp/pr_body.txt
+          
+          EXISTING_COMMENT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[] | select(.body | contains("🔄 **Sync Updated**")) | .body' | grep -c "New upstream version.*$UPSTREAM_VERSION" || echo "0")
+          
+          if [ "$EXISTING_COMMENT" = "0" ]; then
+            gh pr comment "$PR_NUMBER" --body "🔄 **Sync Updated**
+            
+            The upstream repository has advanced since this PR was created. This branch has been updated with the latest changes from upstream.
+            
+            **New upstream version**: \`$UPSTREAM_VERSION\`
+            **Updated at**: \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\`
+            **PR description**: Regenerated to include all commits (original + new changes)
+            
+            Please review the updated changes and merge when ready."
+            echo "✅ Added sync update comment for upstream version $UPSTREAM_VERSION"
+          else
+            echo "ℹ️ Skipping duplicate comment - sync update for $UPSTREAM_VERSION already exists"
+          fi
+          
+          echo "pr-url=${{ github.server_url }}/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          
+          echo "✅ Updated existing PR #$PR_NUMBER with new upstream changes and regenerated description"
+
+      - name: Create human notification issue
+        if: steps.sync-changes.outputs.has_changes == 'true' && steps.sync-state.outputs.should_create_issue == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          PR_URL="${{ steps.create-pr.outputs.pr-url }}"
+          PR_NUMBER="${{ steps.create-pr.outputs.pr-number }}"
+
+          COMMIT_COUNT=$(git rev-list --count fork_upstream..$SYNC_BRANCH)
+
+          # One create call with the full body: a create-then-edit races the GraphQL index
+          # and gh issue edit fails with "Could not resolve to an issue or pull request".
+          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/workflows/cascade.yml"
+          printf -v NOTIFICATION_BODY '%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s\n\n%s\n\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n%s' \
+            "📥 **Upstream Sync Ready for Review**" \
+            "This issue tracks the integration of upstream changes into your fork." \
+            "---" \
+            "**What You Need to Do Now**" \
+            "1. Review & merge the sync PR: [$PR_URL]($PR_URL)" \
+            "2. After merging, [run the Cascade Integration workflow]($WORKFLOW_URL):" \
+            "   - In the \`issue_number\` field, enter this issue's number" \
+            "   - Click **Run workflow**" \
+            "> **Note**: If not triggered manually, the automated monitor will start the cascade process within 6 hours." \
+            "---" \
+            "**Sync Summary**" \
+            "- **Upstream Version**: \`$UPSTREAM_VERSION\`" \
+            "- **Changes**: $COMMIT_COUNT new commits from upstream" \
+            "- **Branch**: \`$SYNC_BRANCH\` → \`fork_upstream\`" \
+            "---" \
+            "**Complete Integration Process**" \
+            "### Phase 1: Review & Merge (**Current**)" \
+            "1. Review the sync PR for breaking changes or merge conflicts" \
+            "2. Merge the PR when approved" \
+            "### Phase 2: Cascade Integration" \
+            "3. Trigger the Cascade Integration workflow" \
+            "4. Monitor progress – updates will appear as comments below" \
+            "### Phase 3: Final Integration to Main" \
+            "5. Review cascade results posted by the workflow" \
+            "6. Approve final integration if tests pass and no conflicts exist" \
+            "7. Done – changes merged to \`main\`" \
+            "---" \
+            "**Progress Tracking**" \
+            "**Status Updates**" \
+            "This issue will be updated with:" \
+            "- ✅ Successful completions" \
+            "- ⚠️ Conflicts requiring manual resolution" \
+            "- 📝 Cascade results and next steps" \
+            "**Label Tracking**" \
+            "Monitor PR/issue labels for current status:" \
+            "\`upstream-sync\` → \`cascade-active\` → \`validated\`" \
+            "---" \
+            "**Timeline**" \
+            "- **Sync detected**: \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\`" \
+            "- **Current status**: Awaiting PR review and merge"$'\n\n'"<!-- upstream-sha: $UPSTREAM_SHA -->"
+
+          printf '%s\n' "$NOTIFICATION_BODY" > /tmp/issue_body.txt
+          ISSUE_URL=$(gh issue create \
+            --title "📥 Upstream Sync Ready for Review - $(date +%Y-%m-%d)" \
+            --body-file /tmp/issue_body.txt \
+            --label "upstream-sync,human-required")
+          rm -f /tmp/issue_body.txt
+
+          ISSUE_NUMBER=$(basename "$ISSUE_URL")
+          echo "Created notification issue #$ISSUE_NUMBER: $ISSUE_URL"
+
+      - name: Update issue description with current sync status
+        if: steps.sync-state.outputs.sync_decision == 'update_existing'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          ISSUE_NUMBER="${{ steps.sync-state.outputs.existing_issue_number }}"
+
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "⚠️ No open tracking issue found (issue may have been closed by cascade validation)"
+            echo "Skipping issue description update - no replacement tracking issue will be created in this workflow path"
+            echo "ISSUE_DESCRIPTION_UPDATE_SKIPPED=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "Updating issue description for issue #$ISSUE_NUMBER"
+          echo "Repository: $GH_REPO"
+          echo "Parameters: UPSTREAM_VERSION=$UPSTREAM_VERSION, UPSTREAM_SHA=$UPSTREAM_SHA, SYNC_BRANCH=$SYNC_BRANCH"
+          
+          echo "Fetching current issue body..."
+          CURRENT_BODY=$(gh api "repos/$GH_REPO/issues/$ISSUE_NUMBER" --jq '.body')
+          
+          if [ -z "$CURRENT_BODY" ] || [ "$CURRENT_BODY" = "null" ]; then
+            echo "❌ Error: Could not fetch issue body"
+            exit 1
+          fi
+          
+          if [ -n "$SYNC_BRANCH" ] && git rev-parse --verify "$SYNC_BRANCH" >/dev/null 2>&1; then
+            COMMIT_COUNT=$(git rev-list --count fork_upstream..$SYNC_BRANCH 2>/dev/null || echo "0")
+          else
+            # A no-change update creates no local branch ref; count from the remote branch.
+            COMMIT_COUNT=$(git rev-list --count fork_upstream..origin/$SYNC_BRANCH 2>/dev/null || echo "0")
+          fi
+          
+          echo "Calculated commit count: $COMMIT_COUNT"
+          
+          printf '%s\n' "$CURRENT_BODY" > /tmp/current_body.txt
+
+          bash .github/actions/sync-state-manager/update-issue-body.sh \
+            /tmp/current_body.txt \
+            /tmp/updated_body.txt \
+            "$UPSTREAM_VERSION" \
+            "$UPSTREAM_SHA" \
+            "$COMMIT_COUNT" \
+            "$SYNC_BRANCH"
+          
+          echo "Updating issue description..."
+          gh issue edit "$ISSUE_NUMBER" --body-file /tmp/updated_body.txt
+          
+          rm -f /tmp/current_body.txt /tmp/updated_body.txt
+          
+          echo "✅ Updated issue description with current sync status:"
+          echo "  - Upstream Version: $UPSTREAM_VERSION"
+          echo "  - Upstream SHA: $UPSTREAM_SHA"
+          echo "  - Changes: $COMMIT_COUNT new commits"
+          echo "  - Branch: $SYNC_BRANCH"
+
+      - name: Log sync completion
+        if: steps.sync-changes.outputs.has_changes == 'true' || steps.sync-state.outputs.sync_decision == 'add_reminder'
+        run: |
+          SYNC_DECISION="${{ steps.sync-state.outputs.sync_decision }}"
+          
+          case "$SYNC_DECISION" in
+            "create_new")
+              PR_URL="${{ steps.create-pr.outputs.pr-url }}"
+              echo "✅ New sync PR created successfully: $PR_URL"
+              echo "✅ Human notification issue created"
+              echo "The PR can be reviewed and merged to integrate upstream changes."
+              ;;
+            "update_existing")
+              PR_URL="${{ steps.update-pr.outputs.pr-url }}"
+              echo "✅ Existing sync PR updated successfully: $PR_URL"
+              if [ "$ISSUE_DESCRIPTION_UPDATE_SKIPPED" = "true" ]; then
+                echo "⚠️ Issue description update skipped (tracking issue was closed)"
+              else
+                echo "✅ Issue description updated with current sync status"
+              fi
+              echo "The updated PR can be reviewed and merged to integrate upstream changes."
+              ;;
+            "add_reminder")
+              echo "No new changes from upstream - existing PR is still current"
+              ;;
+            "no_action")
+              echo "✅ No action taken - upstream unchanged and no existing PR"
+              ;;
+            *)
+              echo "⚠️ Unknown sync decision: $SYNC_DECISION"
+              ;;
+          esac
+
+      - name: Handle Failure
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # A filter halt persists, so without dedup the nightly schedule would open one
+          # identical issue per day until someone classifies the change.
+          HALT_DETAIL=""
+          if [ -f "$RUNNER_TEMP/upstream-filter-report.json" ]; then
+            HALT_DETAIL=$(jq -r '[.halts[]? | "\(.code): \(.detail)"] | join("; ")' "$RUNNER_TEMP/upstream-filter-report.json" 2>/dev/null || echo "")
+          fi
+
+          if [ -n "$HALT_DETAIL" ]; then
+            ISSUE_BODY="The upstream filter halted rather than guess.
+
+          ### Halt
+          $HALT_DETAIL
+
+          A halt usually means upstream added something that .github/upstream-filter.yml does not classify yet. Classify the new entry in that file on main, then re-run the sync workflow.
+
+          ### Workflow Run
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            ISSUE_BODY="The automated upstream sync workflow failed.
+
+          ### Error Details
+          Please check the workflow logs for more information:
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ### Manual Steps Required
+          1. Review the error logs
+          2. Resolve any conflicts
+          3. Re-run the sync workflow"
+          fi
+
+          EXISTING_ISSUE=$(gh issue list --state open --label "sync-failed" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING_ISSUE" ]; then
+            gh issue comment "$EXISTING_ISSUE" --body "$ISSUE_BODY"
+            echo "Updated existing sync-failed issue #$EXISTING_ISSUE"
+          else
+            gh issue create \
+              --title "🔄 Upstream Sync Failed $(date +%Y-%m-%d)" \
+              --body "$ISSUE_BODY" \
+              --label "sync-failed,human-required"
+          fi

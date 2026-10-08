@@ -1,0 +1,249 @@
+name: Release Management
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  check-initialization:
+    name: "Check Repository"
+    runs-on: ubuntu-latest
+    outputs:
+      initialized: ${{ steps.check.outputs.initialized }}
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        
+      - name: "Verify Initialization Status"
+        id: check
+        run: |
+          if [ "${{ vars.INITIALIZATION_COMPLETE }}" = "true" ]; then
+            echo "initialized=true" >> $GITHUB_OUTPUT
+          else
+            echo "initialized=false" >> $GITHUB_OUTPUT
+          fi
+          
+  release-please:
+    name: "📦 Create Release"
+    needs: check-initialization
+    if: needs.check-initialization.outputs.initialized == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      # Manifest config (.release-please-config.json) emits path-prefixed outputs; fall back to top-level.
+      version: ${{ steps.release.outputs['.--version'] || steps.release.outputs.version }}
+      tag_name: ${{ steps.release.outputs['.--tag_name'] || steps.release.outputs.tag_name }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: "Generate GitHub App Token"
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: "Generate Release PR"
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38  # v4.4.0
+        id: release
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: .release-please-config.json
+          
+  tag-with-upstream:
+    name: "🏷️ Update Release Tags"
+    needs: [check-initialization, release-please]
+    if: needs.check-initialization.outputs.initialized == 'true' && needs.release-please.outputs.release_created
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: "Checkout Code"
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          fetch-depth: 0
+          
+      - name: "Fetch Upstream Version"
+        env:
+          UPSTREAM_REPO_URL: ${{ vars.UPSTREAM_REPO_URL }}
+        run: |
+          git remote add upstream "$UPSTREAM_REPO_URL"
+          git fetch upstream --tags --force
+
+          if git rev-parse --verify upstream/main >/dev/null 2>&1; then
+            DEFAULT_BRANCH="main"
+          elif git rev-parse --verify upstream/master >/dev/null 2>&1; then
+            DEFAULT_BRANCH="master"
+          else
+            echo "::error::Could not find main or master branch in upstream"
+            exit 1
+          fi
+
+          # Matches sync.yml: prefer the nearest reachable upstream tag, otherwise
+          # the short upstream SHA, so the correlation tag agrees with the meta commit.
+          UPSTREAM_SHA=$(git rev-parse "upstream/$DEFAULT_BRANCH")
+          UPSTREAM_VERSION=$(git describe --tags --abbrev=0 "$UPSTREAM_SHA" 2>/dev/null || echo "${UPSTREAM_SHA:0:8}")
+          echo "UPSTREAM_VERSION=$UPSTREAM_VERSION" >> $GITHUB_ENV
+          
+      - name: "Update Release Tags"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          RELEASE_TAG=$(gh release list -L 1 | cut -f 3)
+          
+          # Additive: the release tag itself is never moved.
+          CORRELATION_TAG="${RELEASE_TAG}-upstream-${UPSTREAM_VERSION}"
+          
+          if ! git tag -l "${CORRELATION_TAG}" | grep -q .; then
+            git tag $CORRELATION_TAG
+            git push origin $CORRELATION_TAG
+          fi
+          
+          RELEASE_NOTES=$(gh release view $RELEASE_TAG --json body -q .body)
+          gh release edit $RELEASE_TAG \
+            --notes "${RELEASE_NOTES}
+
+            Upstream Version: ${UPSTREAM_VERSION}
+            Correlation Tag: ${CORRELATION_TAG}"
+
+  retag-image:
+    name: "🏷️ Tag Release Image"
+    needs: [check-initialization, release-please]
+    # Gate on version presence (robust to manifest-prefixed vs top-level release-please outputs).
+    if: needs.check-initialization.outputs.initialized == 'true' && needs.release-please.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write         # registry-side retag of the already-pushed image
+    steps:
+      - name: "Log in to GHCR"
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee  # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: "Tag release image with semver"
+        id: service_tag
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+          OWNER: ${{ github.repository_owner }}
+          SERVICE_NAME: ${{ vars.SERVICE_NAME }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          # Registry-side retag: add :<version> to the release commit's image. No rebuild.
+          OWNER_LC=$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')
+          SERVICE=$(printf '%s' "${SERVICE_NAME:-$REPO_NAME}" | tr '[:upper:]' '[:lower:]')
+          REPO="ghcr.io/${OWNER_LC}/${SERVICE}"
+          # Source the immutable :sha-<short> of this commit, not :main-snapshot, which can still
+          # point at the prior commit until validate.yml's concurrent docker-push catches up.
+          SRC="${REPO}:sha-${GITHUB_SHA:0:12}"
+
+          # validate.yml's docker-push for this same push may still be building (many minutes on
+          # a cold cache); the loop exits as soon as the image appears.
+          found=false
+          for attempt in $(seq 1 60); do
+            if docker buildx imagetools inspect "$SRC" >/dev/null 2>&1; then found=true; break; fi
+            echo "Source ${SRC} not present yet (attempt ${attempt}/60); waiting for docker-push…"
+            sleep 20
+          done
+          if [ "$found" != "true" ]; then
+            echo "::error::Release image source ${SRC} did not appear within ~20 min; validate.yml docker-push may have failed for this commit."
+            exit 1
+          fi
+
+          docker buildx imagetools create --tag "${REPO}:${VERSION}" "$SRC"
+          echo "Tagged \`${REPO}:${VERSION}\` from \`${SRC}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
+
+      - name: "Resolve acceptance suite"
+        # After the service retag on purpose: a malformed .spi/service.yaml exits 2, and the
+        # service image, which the descriptor has nothing to do with, must be tagged first.
+        id: suite
+        run: .github/actions/acceptance-image/resolve-suite.sh
+        env:
+          SERVICE_NAME: ${{ vars.SERVICE_NAME || github.event.repository.name }}
+          RESOLVER: .github/actions/acceptance-resolver/resolve.py
+
+      - name: "Tag acceptance image with semver"
+        # Same commit as the service image, so "prove release X on stack Y" stays one command
+        # later. docker-push publishes it right after the service image, so this poll is normally instant.
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+          REPO: ${{ steps.service_tag.outputs.repo }}
+          ACCEPTANCE_BUILDABLE: ${{ steps.suite.outputs.buildable }}
+        run: |
+          set -euo pipefail
+          if [ "${ACCEPTANCE_BUILDABLE}" != "true" ]; then
+            echo "No acceptance suite on this commit; acceptance image retag skipped." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          ACC_REPO="${REPO}-acceptance"
+          ACC_SRC="${ACC_REPO}:sha-${GITHUB_SHA:0:12}"
+          acc_found=false
+          for attempt in $(seq 1 60); do
+            if docker buildx imagetools inspect "$ACC_SRC" >/dev/null 2>&1; then acc_found=true; break; fi
+            echo "Acceptance ${ACC_SRC} not present yet (attempt ${attempt}/60); waiting for its push…"
+            sleep 20
+          done
+          if [ "$acc_found" != "true" ]; then
+            echo "::error::Acceptance image ${ACC_SRC} did not appear within ~20 min; the acceptance push may have failed for this commit."
+            exit 1
+          fi
+          docker buildx imagetools create --tag "${ACC_REPO}:${VERSION}" "$ACC_SRC"
+          echo "Tagged \`${ACC_REPO}:${VERSION}\` from \`${ACC_SRC}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Resolve load payload"
+        id: payload
+        run: .github/actions/load-image/resolve-payload.sh
+
+      - name: "Tag load image with semver"
+        # Same commit as the service image (ADR-042); the stack selects the loader at the
+        # service's commit, so the release tag must name both.
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+          REPO: ${{ steps.service_tag.outputs.repo }}
+          LOAD_BUILDABLE: ${{ steps.payload.outputs.buildable }}
+        run: |
+          set -euo pipefail
+          if [ "${LOAD_BUILDABLE}" != "true" ]; then
+            echo "No shared-schemas payload on this commit; load image retag skipped." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          LOAD_REPO="${REPO}-load"
+          LOAD_SRC="${LOAD_REPO}:sha-${GITHUB_SHA:0:12}"
+          load_found=false
+          for attempt in $(seq 1 60); do
+            if docker buildx imagetools inspect "$LOAD_SRC" >/dev/null 2>&1; then load_found=true; break; fi
+            echo "Load image ${LOAD_SRC} not present yet (attempt ${attempt}/60); waiting for its push…"
+            sleep 20
+          done
+          if [ "$load_found" != "true" ]; then
+            echo "::error::Load image ${LOAD_SRC} did not appear within ~20 min; the load image push may have failed for this commit."
+            exit 1
+          fi
+          docker buildx imagetools create --tag "${LOAD_REPO}:${VERSION}" "$LOAD_SRC"
+          echo "Tagged \`${LOAD_REPO}:${VERSION}\` from \`${LOAD_SRC}\`" >> "$GITHUB_STEP_SUMMARY"

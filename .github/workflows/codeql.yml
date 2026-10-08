@@ -1,0 +1,150 @@
+name: CodeQL Analysis
+
+# Advanced setup, not default setup: default setup skips pull requests from forks, which
+# leaves the required "CodeQL" check absent and the PR unmergeable (the ruleset has no bypass).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Mondays at 6 AM UTC
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # actions is the point of this repository: 35 of its 46 YAML files are
+        # workflows or composite actions. python covers the upstream filter engine.
+        language: [actions, python]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: Setup Python
+        if: matrix.language == 'python'
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: '3.x'
+
+      - name: Initialize CodeQL
+        # Commit SHA, not the annotated-tag object SHA: Dependabot cannot resolve or bump a tag object.
+        uses: github/codeql-action/init@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+          build-mode: none
+          config: |
+            paths-ignore:
+              - '.github/local-actions/upstream-filter-tests/fixtures/**'
+              - 'doc/src/javascripts/**'
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # The actions extractor only reads .github/workflows/, so template-workflows/ is staged there
+  # and analyzed as a fork would see it. Nothing is uploaded: the findings belong to the forks'
+  # own scans. Diff-informed analysis is off because the staged paths never appear in a PR diff,
+  # and PR runs would otherwise keep only the non-dataflow findings.
+  template-workflows:
+    name: Analyze Template Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      CODEQL_ACTION_DIFF_INFORMED_QUERIES: "false"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: Stage template workflows as fork workflows
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/*.yml
+          cp .github/template-workflows/*.yml .github/workflows/
+          ls .github/workflows
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
+        with:
+          languages: actions
+          queries: security-extended
+          build-mode: none
+          config: |
+            paths-ignore:
+              - '.github/local-actions/**'
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
+        with:
+          category: "/language:actions/template-workflows"
+          upload: never
+          upload-database: false
+          output: template-workflows-sarif
+
+      - name: Fail on findings
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          sarifs=(template-workflows-sarif/*.sarif)
+          if [ "${#sarifs[@]}" -eq 0 ]; then
+            echo "❌ No SARIF produced for template-workflows; the analysis did not run"
+            exit 1
+          fi
+          total=0
+          for sarif in "${sarifs[@]}"; do
+            count=$(jq '[.runs[] | (.results // [])[]] | length' "$sarif")
+            # Point the annotation at the template file, not the staged copy.
+            jq -r '.runs[] | (.results // [])[]
+              | "::error file=\((.locations[0].physicalLocation.artifactLocation.uri // "unknown") | sub("^\\.github/workflows/"; ".github/template-workflows/")),line=\(.locations[0].physicalLocation.region.startLine // 0)::\(.ruleId // "unknown"): \((.message.text // "") | gsub("%"; "%25") | gsub("\r"; "%0D") | gsub("\n"; "%0A"))"' "$sarif"
+            total=$((total + count))
+          done
+          if [ "$total" -gt 0 ]; then
+            echo "❌ $total CodeQL finding(s) in template-workflows would reach every fork"
+            exit 1
+          fi
+          echo "✅ template-workflows are clean"
+
+  # Summary job for the required "CodeQL" check (ADR-030). always() so the context reports
+  # even when the matrix does not complete; a check that never arrives wedges the PR.
+  CodeQL:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    needs: [analyze, template-workflows]
+    if: always()
+    steps:
+      - name: Report CodeQL Status
+        run: |
+          status=0
+          for job in "analyze=${{ needs.analyze.result }}" "template-workflows=${{ needs.template-workflows.result }}"; do
+            case "${job#*=}" in
+              success)
+                echo "✅ ${job%%=*} passed"
+                ;;
+              skipped)
+                echo "✅ ${job%%=*} skipped"
+                ;;
+              *)
+                echo "❌ ${job%%=*} ${job#*=}"
+                status=1
+                ;;
+            esac
+          done
+          exit "$status"

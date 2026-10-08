@@ -1,0 +1,53 @@
+name: 'Java Build Status'
+description: 'Check Java build status from either reusable or direct workflow'
+
+inputs:
+  has_java_build:
+    description: 'Whether java-build workflow exists'
+    required: true
+  reusable_is_java:
+    description: 'Is Java project from reusable workflow'
+    required: false
+    default: ''
+  reusable_result:
+    description: 'Build result from reusable workflow'
+    required: false
+    default: ''
+  direct_is_java:
+    description: 'Is Java project from direct build'
+    required: false
+    default: ''
+  direct_result:
+    description: 'Build result from direct build'
+    required: false
+    default: ''
+
+outputs:
+  is_java:
+    description: "Whether this is a Java project"
+    value: ${{ steps.check.outputs.is_java }}
+  build_result:
+    description: "Result of the build"
+    value: ${{ steps.check.outputs.build_result }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: check
+      shell: bash
+      env:
+        HAS_JAVA_BUILD: ${{ inputs.has_java_build }}
+        REUSABLE_IS_JAVA: ${{ inputs.reusable_is_java }}
+        REUSABLE_RESULT: ${{ inputs.reusable_result }}
+        DIRECT_IS_JAVA: ${{ inputs.direct_is_java }}
+        DIRECT_RESULT: ${{ inputs.direct_result }}
+      run: |
+        if [[ "$HAS_JAVA_BUILD" == "true" ]]; then
+          IS_JAVA="$REUSABLE_IS_JAVA"
+          BUILD_RESULT="$REUSABLE_RESULT"
+        else
+          IS_JAVA="$DIRECT_IS_JAVA"
+          BUILD_RESULT="$DIRECT_RESULT"
+        fi
+        echo "is_java=$IS_JAVA" >> "$GITHUB_OUTPUT"
+        echo "build_result=$BUILD_RESULT" >> "$GITHUB_OUTPUT" 

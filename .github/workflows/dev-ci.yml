@@ -1,0 +1,351 @@
+name: Template Development CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upstream-filter-harness:
+    name: Upstream Filter Harness
+    runs-on: ubuntu-latest
+    if: github.repository == 'azure/osdu-spi'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - name: Run harness
+        run: bash .github/local-actions/upstream-filter-tests/run-tests.sh
+
+      - name: Run sync state harness
+        run: bash .github/local-actions/sync-state-manager-tests/run-tests.sh
+
+      - name: Run acceptance resolver harness
+        run: bash .github/local-actions/acceptance-resolver-tests/run-tests.sh
+
+      - name: Run acceptance image harness
+        run: bash .github/local-actions/acceptance-image-tests/run-tests.sh
+
+      - name: Run Node build harness
+        run: bash .github/local-actions/node-build-tests/run-tests.sh
+
+      - name: Run load image harness
+        run: bash .github/local-actions/load-image-tests/run-tests.sh
+
+      - name: Run upstream-owned files harness
+        run: bash .github/local-actions/upstream-owned-files-tests/run-tests.sh
+
+      - name: Run initialization mode harness
+        run: bash .github/local-actions/initialization-mode-tests/run-tests.sh
+
+  validate:
+    name: Validate Template
+    runs-on: ubuntu-latest
+    if: github.repository == 'azure/osdu-spi'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # v6.0.0
+        with:
+          node-version: '18'
+          
+      - name: Install yq for YAML validation
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          
+      - name: Validate Workflow YAML
+        run: |
+          validation_failed=false
+          
+          echo "Validating active workflows..."
+          for file in .github/workflows/*.yml; do
+            echo "Validating $file"
+            if yq e '.' "$file" >/dev/null 2>&1; then
+              echo "✅ $file is valid"
+            else
+              echo "❌ $file has YAML syntax errors"
+              validation_failed=true
+            fi
+          done
+          
+          echo "Validating template workflows..."
+          for file in .github/template-workflows/*.yml; do
+            echo "Validating $file"
+            if yq e '.' "$file" >/dev/null 2>&1; then
+              echo "✅ $file is valid"
+            else
+              echo "❌ $file has YAML syntax errors"
+              validation_failed=true
+            fi
+          done
+          
+          if [ "$validation_failed" = "true" ]; then
+            echo "❌ YAML validation failed - fix syntax errors above"
+            exit 1
+          fi
+          echo "✅ All YAML files are valid"
+
+      - name: Validate CI de-duplication invariants
+        run: |
+          set -euo pipefail
+
+          BUILD=".github/template-workflows/build.yml"
+          VALIDATE=".github/template-workflows/validate.yml"
+          DEPENDABOT=".github/template-workflows/dependabot-validation.yml"
+
+          assert_yq() {
+            if ! yq --exit-status "$1" "$2" > /dev/null; then
+              echo "::error file=$2::$3"
+              exit 1
+            fi
+          }
+
+          assert_contains() {
+            case "$1" in *"$2"*) return 0 ;; esac
+            echo "::error::$3"
+            exit 1
+          }
+
+          # Every value the onboarding check requires must arrive as a HAVE_<NAME> flag, or the
+          # check falls back to a secret listing the App token cannot read and reports it missing.
+          SETTINGS=".github/template-workflows/settings-apply.yml"
+          CHECK=".github/scripts/settings-apply/check-required-variables.sh"
+          for name in $(sed -n 's/^REQUIRED_[A-Z]*=(\(.*\))$/\1/p' "$CHECK"); do
+            assert_yq ".jobs.\"settings-apply\".steps[] | select(.name == \"Check required variables\") | .env.HAVE_${name} != null" "$SETTINGS" \
+              "check-required-variables.sh requires $name but settings-apply.yml passes no HAVE_${name} flag"
+          done
+
+          # build.yml is push-only; PR events belong to the validation workflows.
+          assert_yq '.on.pull_request == null' "$BUILD" \
+            "Build workflow must not duplicate protected-branch PR validation"
+          assert_yq '.on.push.branches | contains(["!sync/**"])' "$BUILD" \
+            "Sync branches must use the Validation workflow"
+          assert_yq '.on.push.branches | contains(["!dependabot/**"])' "$BUILD" \
+            "Dependabot branches must use the Dependabot Validation workflow"
+
+          # A path-filtered PR trigger leaves the required summary Pending (ADR-030).
+          assert_yq '.on.pull_request | has("paths-ignore") | not' "$VALIDATE" \
+            "pull_request must stay unfiltered so the required summary always reports"
+          assert_yq '.on.pull_request_target | has("paths-ignore") | not' "$VALIDATE" \
+            "pull_request_target owns sync PRs and must stay unfiltered"
+
+          CHECK_PATHS=$(yq -r '.jobs."check-paths".steps[] | select(.id == "filter") | .run' "$VALIDATE")
+          assert_contains "$CHECK_PATHS" 'case "$file" in .mvn/*|.spi/*)' \
+            ".mvn and .spi changes must always run full validation"
+          assert_contains "$CHECK_PATHS" "grep -qE '^(\.github/|devops/|docs/|\.)|\.md$'" \
+            "Config-only directory prefixes and Markdown suffixes must be filtered"
+
+          # ADR-038 ownership split: one implementation in the upstream-owned-files action, derived
+          # from fork_upstream's tree rather than a path list; validate honors the port label live.
+          OWNED_SCRIPT=".github/actions/upstream-owned-files/list.sh"
+          assert_contains "$(cat "$OWNED_SCRIPT")" 'git ls-tree -r --name-only origin/fork_upstream' \
+            "The ownership check must derive owned paths from origin/fork_upstream's tree, not a hardcoded list"
+          assert_contains "$(cat "$OWNED_SCRIPT")" '$BASE_SHA:.github/upstream-filter.yml' \
+            "The ownership check must test for the filter config on the base tree, not the PR checkout"
+          assert_yq '.jobs."check-paths".steps[] | select(.id == "owned") | .uses == "./.github/actions/upstream-owned-files"' "$VALIDATE" \
+            "Check Paths must list upstream-owned files through the shared action"
+          assert_yq '.jobs."check-paths".steps[] | select(.id == "owned") | .if == "github.event_name == '"'"'pull_request'"'"'"' "$VALIDATE" \
+            "The local action must not run on the pull_request_target lane, which checks out the PR head (ADR-036)"
+          OWNERSHIP_STEP=$(yq -r '.jobs."check-paths".steps[] | select(.name == "Assert upstream ownership split (ADR-038)")' "$VALIDATE")
+          assert_contains "$OWNERSHIP_STEP" 'issues/$PR_NUMBER/labels' \
+            "The ownership check must read the port label live so a re-run after labeling sees it"
+
+          # One lane per PR: check-initialization routes, and validation-summary repeats
+          # the test because always() bypasses it.
+          SYNC_HEAD="github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'sync/')"
+          CHECK_INIT_IF=$(yq -r '.jobs."check-initialization".if | sub("\s+"; " ")' "$VALIDATE")
+          SUMMARY_IF=$(yq -r '.jobs."validation-summary".if | sub("\s+"; " ")' "$VALIDATE")
+
+          assert_contains "$CHECK_INIT_IF" "(github.event_name == 'pull_request' && !($SYNC_HEAD))" \
+            "The pull_request lane must stand down for same-repository sync PRs"
+          assert_contains "$CHECK_INIT_IF" "(github.event_name == 'pull_request_target' && $SYNC_HEAD)" \
+            "The pull_request_target lane must own same-repository sync PRs, and only those"
+          assert_contains "$SUMMARY_IF" "(github.event_name != 'pull_request' || !($SYNC_HEAD))" \
+            "The lane that did not build must not report the required summary"
+          assert_contains "$SUMMARY_IF" "(github.event_name != 'pull_request_target' || ($SYNC_HEAD))" \
+            "The sync lane must report the required summary"
+
+          # Routing lives in check-initialization alone; per-job copies drift apart from it.
+          assert_yq '.jobs."java-build".if | contains("head.repo.full_name") | not' "$VALIDATE" \
+            "Lane routing belongs in check-initialization, not in java-build"
+          assert_yq '.jobs."code-validation".if | contains("head.repo.full_name") | not' "$VALIDATE" \
+            "Lane routing belongs in check-initialization, not in code-validation"
+          assert_yq '.jobs."java-build".steps[] | select(.id == "build") | .with.generate_coverage | contains("pull_request_target")' "$VALIDATE" \
+            "The sync pull_request_target build must generate coverage"
+
+          # A check bound to verify in a service pom must gate the pull request, not only main,
+          # so both goal paths of the action run the lifecycle through verify.
+          JAVA_BUILD=".github/actions/java-build/action.yml"
+          BUILD_RUN=$(yq -r '.runs.steps[] | select(.id == "build") | .run' "$JAVA_BUILD")
+          assert_contains "$BUILD_RUN" 'mvn $MAVEN_CLI_OPTS clean verify org.jacoco:jacoco-maven-plugin:0.8.11:report' \
+            "The coverage path must run through verify and still produce the JaCoCo report"
+          assert_contains "$BUILD_RUN" 'mvn $MAVEN_CLI_OPTS clean install' \
+            "The non-coverage path must run clean install, which includes verify"
+          assert_contains "$BUILD_RUN" '*/target/site/jacoco/*' \
+            "The coverage summary must still read the JaCoCo report from target/site/jacoco"
+
+          # A PR-head checkout in the read-only docker-build job is a CodeQL cache-poisoning finding (#164).
+          DOCKER_IF=$(yq -r '.jobs."docker-build".if | sub("\s+"; " ")' "$VALIDATE")
+          assert_contains "$DOCKER_IF" "github.event_name != 'pull_request_target'" \
+            "docker-build must stay out of the pull_request_target lane"
+          assert_yq '[.jobs."docker-build".steps[] | select(.uses != null and (.uses | test("actions/checkout"))) | .with.ref == null] | select(length > 0) | all' "$VALIDATE" \
+            "docker-build must check out github.sha, never a PR head"
+
+          # The deploy lane inherits docker-push's trust and never enters the pull_request_target lane.
+          assert_yq '.jobs."deploy-test".needs | contains(["docker-push", "deploy-gate"])' "$VALIDATE" \
+            "deploy-test must chain on docker-push and the deploy gate"
+          assert_yq '.jobs."deploy-test".if == "needs.deploy-gate.outputs.run == '"'"'true'"'"'"' "$VALIDATE" \
+            "deploy-test must run only when the gate decided to borrow"
+
+          # The stack service is the descriptor's service.name (#221); the image name (SERVICE_NAME,
+          # or the repository name when unset) differs from it under the osdu-spi-<service> convention.
+          assert_yq '.jobs."deploy-gate".outputs.service != null' "$VALIDATE" \
+            "deploy-gate must publish the descriptor service name"
+          # Tested with contains(): a literal expression here would be expanded by Actions before the shell runs.
+          assert_yq '.jobs."deploy-test".env.SERVICE | contains("needs.deploy-gate.outputs.service")' "$VALIDATE" \
+            "deploy-test must pin under the descriptor service name"
+          assert_yq '.jobs."deploy-test".env.SERVICE | contains("repository.name") | not' "$VALIDATE" \
+            "deploy-test must not pin under the repository name"
+          assert_yq '.jobs."deploy-test".concurrency.group | contains("needs.deploy-gate.outputs.service")' "$VALIDATE" \
+            "deploy-test must serialize per descriptor service name"
+          assert_yq '.jobs."deploy-test".environment == "spi-stack"' "$VALIDATE" \
+            "deploy-test must run in the spi-stack environment the deploy identity trusts"
+          assert_yq '.jobs."deploy-test".concurrency."cancel-in-progress" == false' "$VALIDATE" \
+            "A cancelled borrow could skip Restore; queue instead"
+          assert_yq '.jobs."deploy-test".steps[] | select(.name == "Install spi") | .run | contains("az aks install-cli --gh-token \"$GH_TOKEN\"")' "$VALIDATE" \
+            "Install spi must authenticate kubelogin release requests"
+          MINT_RUN=$(yq -r '.jobs."deploy-test".steps[] | select(.name == "Mint test callers") | .run' "$VALIDATE")
+          if printf '%s' "$MINT_RUN" | grep -q 'az account get-access-token'; then
+            echo "::error file=$VALIDATE::Mint test callers must not re-exchange the cached OIDC assertion with az account get-access-token"
+            exit 1
+          fi
+          assert_contains "$MINT_RUN" 'mint deploy "$AZURE_CLIENT_ID" RESOLVER_TOKEN' \
+            "The deploy identity's bearer must come from a fresh OIDC exchange"
+          assert_yq '.jobs."deploy-gate".if == "always()"' "$VALIDATE" \
+            "deploy-gate must always report why the lane did or did not run"
+          # The gate carries the ADR-036 clause itself, never by skip-propagation from docker-push.
+          GATE_RUN=$(yq -r '.jobs."deploy-gate".steps[] | select(.id == "decide") | .run' "$VALIDATE")
+          assert_contains "$GATE_RUN" 'push|pull_request) ;;' \
+            "The gate must refuse every event other than push and pull_request"
+          assert_contains "$GATE_RUN" '[ "$SAME_REPO" = "true" ] || reason=' \
+            "The gate must admit only same-repository pull requests"
+          assert_contains "$GATE_RUN" '[ "$ACTOR" != "dependabot[bot]" ] || reason=' \
+            "The gate must refuse Dependabot"
+          assert_contains "$GATE_RUN" '[ "$REF" != "fork_upstream" ] || reason=' \
+            "The gate must refuse fork_upstream"
+          # A rejected descriptor fails docker-build first; the gate must name the rejection, not the missing image.
+          RESOLVE_AT=$(printf '%s\n' "$GATE_RUN" | grep -n 'resolve.py --contract-only' | head -1 | cut -d: -f1)
+          PUSH_AT=$(printf '%s\n' "$GATE_RUN" | grep -n '"$PUSH_RESULT" = "success"' | head -1 | cut -d: -f1)
+          if [ -z "$RESOLVE_AT" ] || [ -z "$PUSH_AT" ] || [ "$RESOLVE_AT" -ge "$PUSH_AT" ]; then
+            echo "::error file=$VALIDATE::The gate must resolve the descriptor before it checks whether an image was pushed"
+            exit 1
+          fi
+
+          # The ruleset requires the summary by its job name; the two must not drift apart.
+          SUMMARY_NAME=$(yq -r '.jobs."validation-summary".name' "$VALIDATE")
+          if ! jq --exit-status --arg name "$SUMMARY_NAME" '[.rules[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context] | index($name)' \
+              .github/rulesets/default-branch.json > /dev/null; then
+            echo "::error file=.github/rulesets/default-branch.json::must require the validation-summary job by its current name ($SUMMARY_NAME)"
+            exit 1
+          fi
+
+          # settings-apply owns every checked-in ruleset, and Copilot review must stay a separate rule.
+          for ruleset in .github/rulesets/*.json; do
+            assert_contains "$(cat .github/scripts/settings-apply/setup-rulesets.sh)" "apply_ruleset \"$ruleset\"" \
+              "setup-rulesets.sh must reconcile $ruleset"
+          done
+          if ! jq --exit-status '
+              .name == "GitHub Copilot Code Review"
+              and .target == "branch"
+              and .conditions.ref_name.include == ["~DEFAULT_BRANCH"]
+              and .bypass_actors == []
+              and (.rules | length) == 1
+              and .rules[0].type == "copilot_code_review"
+              and .rules[0].parameters.review_on_push == true
+              and .rules[0].parameters.review_draft_pull_requests == false
+            ' .github/rulesets/copilot-code-review.json > /dev/null; then
+            echo "::error file=.github/rulesets/copilot-code-review.json::must request Copilot review as its own default-branch ruleset"
+            exit 1
+          fi
+
+          # Dependabot owns one build plus one image validation, under its own check name.
+          assert_yq '.jobs."java-build".steps[] | select(.id == "build") | .with.maven_profile | contains("core,azure")' "$DEPENDABOT" \
+            "Dependabot must produce the Azure JAR used by Docker"
+          assert_yq '.jobs."check-repo-state".steps[] | select(.id == "owned") | .uses == "./.github/actions/upstream-owned-files"' "$DEPENDABOT" \
+            "Dependabot validation must list upstream-owned files through the shared action"
+          assert_contains "$(yq -r '.jobs."check-repo-state".steps[] | select(.id == "close") | .run' "$DEPENDABOT")" 'gh pr close "$PR_NUMBER"' \
+            "A Dependabot bump that edits upstream-owned files must be closed, not left red"
+          assert_yq '.jobs."java-build".if | contains("closed != '"'"'true'"'"'")' "$DEPENDABOT" \
+            "The Dependabot build must not run for a closed bump"
+          assert_yq '.jobs."docker-build".needs == "java-build"' "$DEPENDABOT" \
+            "Dependabot Docker validation must consume its Java build"
+          assert_yq '.jobs."docker-build".name | contains("Dependabot")' "$DEPENDABOT" \
+            "Dependabot Docker validation needs a check name distinct from validate.yml's"
+          assert_yq '.jobs."docker-build".steps[] | select(.name == "Docker Build (validate-only)") | .with.push == "false"' "$DEPENDABOT" \
+            "Dependabot Docker validation must never push an image"
+
+          # A failed Dependabot build is reported on the PR's checks, never as an issue (ADR-026).
+          assert_yq '.jobs | has("create-issue-on-failure") | not' "$DEPENDABOT" \
+            "Dependabot validation must not open issues for failed builds"
+
+          echo "✅ CI de-duplication invariants hold"
+
+      - name: Validate JSON Configuration
+        run: |
+          echo "Validating JSON configuration files..."
+          for file in .github/*.json; do
+            echo "Validating $file"
+            jq empty "$file" && echo "✅ $file is valid" || echo "❌ $file has errors"
+          done
+          
+      - name: Check Documentation Links
+        run: |
+          echo "Checking for broken internal documentation links..."
+          grep -r "adr/[0-9]" doc/ | while read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            adr_ref=$(echo "$line" | grep -o "adr/[0-9][0-9][0-9]-[^.]*")
+            if [ ! -f "doc/$adr_ref.md" ]; then
+              echo "❌ Broken ADR reference in $file: $adr_ref"
+            else
+              echo "✅ Valid ADR reference: $adr_ref"
+            fi
+          done
+          
+      - name: Validate Template Structure
+        run: |
+          echo "Validating template repository structure..."
+
+          required_files=(
+            "README.md"
+            ".github/sync-config.json"
+            ".github/labels.json"
+            ".github/workflows/init.yml"
+            ".github/workflows/init-complete.yml"
+            ".github/template-workflows/sync.yml"
+            ".github/template-workflows/validate.yml"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ Required file exists: $file"
+            else
+              echo "❌ Missing required file: $file"
+              exit 1
+            fi
+          done

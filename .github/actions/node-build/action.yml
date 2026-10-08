@@ -1,0 +1,87 @@
+name: Node Build
+description: Build, lint, test, and verify coverage for a locked Node/TypeScript package
+
+inputs:
+  working_directory:
+    description: Repository-relative package root
+    required: true
+  node_version:
+    description: Node.js version supplied to actions/setup-node
+    required: true
+  lint_script:
+    description: npm script used for linting
+    required: false
+    default: lint
+  build_script:
+    description: npm script used for compilation
+    required: false
+    default: build
+  test_script:
+    description: npm script used for tests and coverage
+    required: false
+    default: test-coverage
+  test_report:
+    description: JUnit XML path relative to working_directory
+    required: false
+    default: test-results.xml
+  coverage_file:
+    description: LCOV file path relative to working_directory
+    required: false
+    default: coverage/lcov.info
+
+outputs:
+  build_result:
+    description: success when all commands and evidence checks pass
+    value: ${{ steps.build.outputs.build_result }}
+  test_report:
+    description: Repository-relative JUnit report path
+    value: ${{ steps.config.outputs.test_report }}
+  coverage_file:
+    description: Repository-relative LCOV path
+    value: ${{ steps.config.outputs.coverage_file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate Node build inputs
+      id: config
+      shell: bash
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working_directory }}
+        NODE_VERSION: ${{ inputs.node_version }}
+        LINT_SCRIPT: ${{ inputs.lint_script }}
+        BUILD_SCRIPT: ${{ inputs.build_script }}
+        TEST_SCRIPT: ${{ inputs.test_script }}
+        TEST_REPORT: ${{ inputs.test_report }}
+        COVERAGE_FILE: ${{ inputs.coverage_file }}
+      run: "$GITHUB_ACTION_PATH/validate-inputs.sh"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # v6.0.0
+      with:
+        node-version: ${{ inputs.node_version }}
+        cache: npm
+        cache-dependency-path: ${{ steps.config.outputs.lock_file }}
+
+    - name: Build and test
+      id: build
+      shell: bash
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working_directory }}
+        LINT_SCRIPT: ${{ inputs.lint_script }}
+        BUILD_SCRIPT: ${{ inputs.build_script }}
+        TEST_SCRIPT: ${{ inputs.test_script }}
+        TEST_REPORT: ${{ inputs.test_report }}
+        COVERAGE_FILE: ${{ inputs.coverage_file }}
+      run: "$GITHUB_ACTION_PATH/run-build.sh"
+
+    - name: Upload test and coverage evidence
+      if: always()
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+      with:
+        name: node-test-evidence
+        path: |
+          ${{ steps.config.outputs.test_report }}
+          ${{ steps.config.outputs.coverage_file }}
+        if-no-files-found: error
+        retention-days: 2

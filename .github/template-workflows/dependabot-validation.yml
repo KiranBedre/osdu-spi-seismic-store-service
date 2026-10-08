@@ -1,0 +1,182 @@
+name: Dependabot Validation
+
+on:
+  pull_request:
+    branches: [main, fork_integration, fork_upstream]
+    paths-ignore:
+      - '.github/workflows/**'
+      - '.github/template-workflows/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/actions/**'
+      - '.github/*.md'
+      - '.github/*.json'
+      - '.github/*.yml'
+      - '.github/*.yaml'
+      - '.github/.template-sync-commit'
+      - '.vscode/**'
+      - 'docs/**'
+      - '**.md'
+      - '**.txt'
+      - 'LICENSE'
+      - 'NOTICE'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  check-repo-state:
+    if: github.actor == 'dependabot[bot]'
+    name: "Check Repository"
+    runs-on: ubuntu-latest
+    outputs:
+      archetype: ${{ steps.check_service.outputs.archetype }}
+      source_path: ${{ steps.check_service.outputs.source_path }}
+      node_version: ${{ steps.check_service.outputs.node_version }}
+      image_context: ${{ steps.check_service.outputs.image_context }}
+      image_dockerfile: ${{ steps.check_service.outputs.image_dockerfile }}
+      closed: ${{ steps.close.outputs.closed }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          fetch-depth: 0
+
+      - name: "List upstream-owned files the PR changes"
+        id: owned
+        uses: ./.github/actions/upstream-owned-files
+        with:
+          base_ref: ${{ github.event.pull_request.base.ref }}
+          head_ref: ${{ github.event.pull_request.head.ref }}
+          base_sha: ${{ github.event.pull_request.base.sha }}
+          head_sha: ${{ github.event.pull_request.head.sha }}
+          same_repo: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          sync_mode: ${{ vars.SYNC_MODE }}
+
+      - name: "Close a bump that edits upstream-owned files"
+        id: close
+        if: steps.owned.outputs.files != ''
+        env:
+          TOUCHED: ${{ steps.owned.outputs.files }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Maven writes an inherited version where it is declared, so a bump seen from an Azure
+          # pom can land in the root pom. Shared versions move through the upstream sync (ADR-038);
+          # Dependabot does not reopen a closed version, so the next one arrives as a fresh PR.
+          {
+            echo "Closed: this bump edits upstream-owned files, which change only through the upstream sync (ADR-038)."
+            echo
+            while IFS= read -r file; do echo "- \`$file\`"; done <<< "$TOUCHED"
+            echo
+            echo "Bumps confined to the fork-owned Azure poms build and merge here. Shared-code CVEs are tracked in the Security tab and fixed upstream."
+          } > /tmp/close-comment.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/close-comment.md
+          gh pr close "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
+          echo "closed=true" >> "$GITHUB_OUTPUT"
+
+      - name: "Resolve service contract"
+        id: check_service
+        run: |
+          set -euo pipefail
+          if [ -f ".spi/service.yaml" ]; then
+            python3 .github/actions/acceptance-resolver/resolve.py \
+              --contract-only --descriptor .spi/service.yaml --report "$RUNNER_TEMP/service.json"
+            jq -r '
+              "archetype=\(.service_config.archetype)",
+              "source_path=\(.service_config.source_path)",
+              "node_version=\(.service_config.node_version)",
+              "image_context=\(.service_config.image.context)",
+              "image_dockerfile=\(.service_config.image.dockerfile)"
+            ' "$RUNNER_TEMP/service.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "archetype=java-maven-azure" >> "$GITHUB_OUTPUT"
+            echo "source_path=." >> "$GITHUB_OUTPUT"
+            echo "node_version=" >> "$GITHUB_OUTPUT"
+            echo "image_context=." >> "$GITHUB_OUTPUT"
+            echo "image_dockerfile=build/Dockerfile" >> "$GITHUB_OUTPUT"
+          fi
+
+  java-build:
+    name: "Dependabot Build Validation"
+    needs: check-repo-state
+    if: needs.check-repo-state.outputs.archetype == 'java-maven-azure' && needs.check-repo-state.outputs.closed != 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      build_result: ${{ steps.build.outputs.build_result }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+      
+      - name: Set up JDK
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          
+      - name: Cache Maven packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+          
+      - name: Setup Maven Settings
+        run: |
+          if [ -f ".mvn/community-maven.settings.xml" ]; then
+            mkdir -p ~/.m2
+            cp .mvn/community-maven.settings.xml ~/.m2/settings.xml
+            echo "📝 Maven settings configured from .mvn/community-maven.settings.xml"
+          else
+            echo "📝 No custom Maven settings found, using defaults"
+          fi
+        
+      - name: "Run Java Build"
+        id: build
+        uses: ./.github/actions/java-build
+        with:
+          generate_coverage: true
+          maven_profile: ${{ vars.MAVEN_PROFILE || 'core,azure' }}
+
+  node-build:
+    name: "Dependabot Node Build Validation"
+    needs: check-repo-state
+    if: needs.check-repo-state.outputs.archetype == 'node-typescript-azure' && needs.check-repo-state.outputs.closed != 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      build_result: ${{ steps.build.outputs.build_result }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: "Run Node Build"
+        id: build
+        uses: ./.github/actions/node-build
+        with:
+          working_directory: ${{ needs.check-repo-state.outputs.source_path }}
+          node_version: ${{ needs.check-repo-state.outputs.node_version }}
+
+  docker-build:
+    # The name must differ from validate.yml's "Docker Build", which also reports on these
+    # PRs. Advisory only: the required summary passes Dependabot through.
+    name: "Dependabot Docker Build"
+    needs: [check-repo-state, java-build, node-build]
+    if: |
+      always() &&
+      (needs.java-build.outputs.build_result == 'success' ||
+       needs.node-build.outputs.build_result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: "Docker Build (validate-only)"
+        uses: ./.github/actions/docker-build
+        with:
+          push: 'false'
+          image_name: ${{ vars.SERVICE_NAME || github.event.repository.name }}
+          build_kind: ${{ needs.check-repo-state.outputs.archetype == 'node-typescript-azure' && 'source' || 'maven-jar' }}
+          build_context: ${{ needs.check-repo-state.outputs.image_context }}
+          dockerfile_path: ${{ needs.check-repo-state.outputs.image_dockerfile }}
+          jar_file: ${{ vars.SERVICE_TARGET_JAR || format('provider/{0}-azure/target/*-spring-boot.jar', vars.SERVICE_NAME || github.event.repository.name) }}
