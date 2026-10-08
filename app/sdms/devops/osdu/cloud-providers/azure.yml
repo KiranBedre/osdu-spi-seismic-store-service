@@ -36,14 +36,6 @@ variables:
     - rm -Rf tests/utest/dao
     - rm -Rf tests/utest/services
     - sed -i 's|#{SDMS_PREFIX}#|'$AZURE_SDMS_PREFIX'|' ./docs/api/openapi.yaml
-    - jq "del(.prisma)" package.json > cleaned_package.json
-    - mv cleaned_package.json package.json
-    - export directoryToScan=$PWD
-    - export currentDirectory=$PWD
-    - chmod +x devops/scripts/detect_unused_packages.sh
-    - devops/scripts/detect_unused_packages.sh
-    - chmod +x devops/scripts/clean_package_json.sh
-    - devops/scripts/clean_package_json.sh
 
 sdms_azure_containerize:
   extends:
