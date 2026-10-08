@@ -159,6 +159,22 @@ export class TestAzureRestoreOperationStatus {
         });
 
         Tx.test(async () => {
+            this.readStub.resolves({
+                resource: {
+                    operationId: 'op-123',
+                    tenant: 'tenant-b'
+                }
+            });
+
+            try {
+                await this.storage.getRestoreOperationStatus('op-123', 'tenant-a');
+                expect.fail('Expected cross-tenant status lookup to return not found');
+            } catch (error) {
+                expect(error.error.code).to.equal(404);
+            }
+        });
+
+        Tx.test(async () => {
             try {
                 await this.storage.getRestoreOperationStatus('op-123', '');
             } catch (error) {
@@ -191,14 +207,15 @@ export class TestAzureRestoreOperationStatus {
         Tx.test(async () => {
             this.fetchAllStub.resolves({ resources: [{ operationId: 'op-123' }] });
 
-            const result = await this.storage.getActiveRestoreOperationId('tenant-a');
+            const result = await this.storage.getActiveRestoreOperationId('tenant-a', 'storage-a');
 
             expect(result).to.equal('op-123');
             sinon.assert.calledOnceWithExactly(this.queryStub, {
                 query: 'SELECT TOP 1 c.operationId FROM c ' +
-                    'WHERE c.tenant = @tenant AND c.status IN (@enqueued, @inProgress)',
+                    'WHERE c.storageAccountName = @storageAccountName ' +
+                    'AND c.status IN (@enqueued, @inProgress)',
                 parameters: [
-                    { name: '@tenant', value: 'tenant-a' },
+                    { name: '@storageAccountName', value: 'storage-a' },
                     { name: '@enqueued', value: 'Enqueued' },
                     { name: '@inProgress', value: 'InProgress' }
                 ]
@@ -208,7 +225,7 @@ export class TestAzureRestoreOperationStatus {
         Tx.test(async () => {
             this.fetchAllStub.resolves({ resources: [] });
 
-            const result = await this.storage.getActiveRestoreOperationId('tenant-a');
+            const result = await this.storage.getActiveRestoreOperationId('tenant-a', 'storage-a');
 
             expect(result).to.equal(null);
         });

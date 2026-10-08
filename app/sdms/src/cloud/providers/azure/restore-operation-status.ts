@@ -117,7 +117,7 @@ export class AzureRestoreOperationStatusStorage {
         const container = await this.getContainer(tenant);
         const { resource } = await container.item(operationId, operationId).read();
 
-        if (!resource) {
+        if (!resource || resource.tenant !== tenant) {
             throw Error.make(Error.Status.NOT_FOUND, `Restore operation not found for operationId: '${operationId}'`);
         }
 
@@ -148,21 +148,23 @@ export class AzureRestoreOperationStatusStorage {
     }
 
     /**
-     * Secondary check: queries Cosmos for any active (non-terminal) restore in this data partition.
+     * Secondary check: queries Cosmos for an active restore targeting the same storage account.
      * Used as a fallback when Redis lock state may be lost (e.g., Redis restart or lock TTL expiry).
      * A restore is considered active while its status is 'Enqueued' or 'InProgress'; both must block
      * a new restore so that an operation stuck at 'Enqueued' (never picked up by the sidecar) is not
      * silently overtaken once the Redis lock expires.
      * Returns the operationId if found, null otherwise.
      */
-    public async getActiveRestoreOperationId(tenant: string): Promise<string | null> {
+    public async getActiveRestoreOperationId(
+        tenant: string, storageAccountName: string): Promise<string | null> {
         const container = await this.getContainer(tenant);
 
         const query = {
             query: 'SELECT TOP 1 c.operationId FROM c ' +
-                'WHERE c.tenant = @tenant AND c.status IN (@enqueued, @inProgress)',
+                'WHERE c.storageAccountName = @storageAccountName ' +
+                'AND c.status IN (@enqueued, @inProgress)',
             parameters: [
-                { name: '@tenant', value: tenant },
+                { name: '@storageAccountName', value: storageAccountName },
                 { name: '@enqueued', value: 'Enqueued' },
                 { name: '@inProgress', value: 'InProgress' }
             ]

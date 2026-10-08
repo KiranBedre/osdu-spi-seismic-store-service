@@ -280,8 +280,9 @@ export class Handler {
                 'Restore service temporarily unavailable. Please try again later.');
         }
 
-        // Step 2: Check Cosmos for active operations (covers Redis TTL expiry edge case)
-        const inProgressOperationId = await restoreStatusStorage.getActiveRestoreOperationId(parsedPath.tenant);
+        // Step 2: Check Cosmos for active operations on the same storage account.
+        const inProgressOperationId = await restoreStatusStorage.getActiveRestoreOperationId(
+            parsedPath.tenant, storageAccountName);
         if (inProgressOperationId) {
             this.logger.info({
                 message: `Restore rejected: Cosmos shows active operationId ${inProgressOperationId}`,
