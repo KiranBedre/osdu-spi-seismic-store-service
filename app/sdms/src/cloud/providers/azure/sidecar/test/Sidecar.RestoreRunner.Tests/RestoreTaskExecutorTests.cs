@@ -356,6 +356,34 @@ public class RestoreTaskExecutorTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Fact]
+    public async Task ProcessAsync_RetryableBlobStartAndStatusSaveFailure_RetainsLocks()
+    {
+        _ = _blobRestoreServiceMock
+            .Setup(m => m.StartBlobRestoreAsync(
+                It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Common.Exceptions.RetryableRestoreException(
+                "PITR was accepted but its restore id is not visible"));
+        _ = _statusStorageMock
+            .Setup(m => m.SaveStatusAsync(
+                It.IsAny<string>(), It.IsAny<TrackedRestoreStatus>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TimeoutException("Cosmos write timed out"));
+        var message = CreateMessage();
+
+        var act = () => _executor.ProcessAsync(message.Object, CancellationToken.None);
+
+        _ = await act.Should().ThrowAsync<Exception>()
+            .WithMessage("*could not be started yet*");
+        _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(
+            It.IsAny<WriteLockSession>()), Times.Never);
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
+            It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())), Times.Once);
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
+            It.Is<WriteLockSession>(s => s.Key == OperationLockKey())), Times.Once);
+        _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Failed));
+    }
+
     // ------------------------------------------------------------------------
     // POTENTIALLY-INCONSISTENT failures → status stays InProgress, locks RETAINED
     // ------------------------------------------------------------------------

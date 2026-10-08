@@ -432,13 +432,27 @@ public class BlobRestoreService(
                 $"Storage PITR request failed with status {(int)response.StatusCode}: {responseBody}");
         }
 
-        var restoreId = await ParseRestoreIdFromResponseAsync(response, ct);
-        if (string.IsNullOrWhiteSpace(restoreId))
+        string? restoreId;
+        try
         {
-            // Some responses omit the id in the body; recover it from the account status.
-            var (accountRestoreId, _, _, _, _) = await GetAccountBlobRestoreStatusAsync(
-                subscriptionId, resourceGroupName, storageAccountName, ct);
-            restoreId = accountRestoreId;
+            restoreId = await ParseRestoreIdFromResponseAsync(response, ct);
+            if (string.IsNullOrWhiteSpace(restoreId))
+            {
+                // Some responses omit the id in the body; recover it from the account status.
+                var (accountRestoreId, _, _, _, _) = await GetAccountBlobRestoreStatusAsync(
+                    subscriptionId, resourceGroupName, storageAccountName, ct);
+                restoreId = accountRestoreId;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new RetryableRestoreException(
+                $"PITR request was accepted but its restoreId could not be recovered. OperationId: {operationId}",
+                ex);
         }
 
         if (string.IsNullOrWhiteSpace(restoreId))

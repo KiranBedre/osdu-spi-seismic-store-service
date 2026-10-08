@@ -376,6 +376,21 @@ public class BlobRestoreServiceTests
             .WithMessage("*restoreId is not visible yet*");
     }
 
+    [Fact]
+    public async Task StartBlobRestoreAsync_AcceptedButStatusLookupFails_ThrowsRetryable()
+    {
+        _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
+        _handler.EnqueueJson(HttpStatusCode.Accepted, string.Empty);
+        _handler.EnqueueJson(HttpStatusCode.ServiceUnavailable, "temporarily unavailable");
+        var sut = CreateSut();
+
+        var act = async () => await sut.StartBlobRestoreAsync(
+            DataPartition, StorageInfo(), RestorePoint, OperationId, null, CancellationToken.None);
+
+        _ = await act.Should().ThrowAsync<Sidecar.Common.Exceptions.RetryableRestoreException>()
+            .WithMessage("*accepted*restoreId could not be recovered*");
+    }
+
     // ------------------------------------------------------------------------
     // StartBlobRestoreAsync — resume / idempotency against an existing restore id
     // ------------------------------------------------------------------------

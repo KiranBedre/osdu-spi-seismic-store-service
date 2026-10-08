@@ -291,23 +291,27 @@ public class LockManager : ILockManager
             return false;
         }
 
-        var lockValue = await GetLockAsync(session.Key);
-        if (lockValue is string s)
+        try
         {
-            if (s.Equals(session.Wid))
+            var lockValue = await GetLockAsync(session.Key);
+            if (lockValue is string s)
             {
-                // Re-set the key with no expiry to remove the TTL, making the lock indefinite.
-                var persisted = await _locksRedis.SetAsync(session.Key, session.Wid);
-                await ReleaseMutexAsync(session.Key, mutex);
-                _logger.LogWarning("Write Lock for {key} made indefinite (no TTL).", session.Key);
-                return persisted;
+                if (s.Equals(session.Wid))
+                {
+                    // Re-set the key with no expiry to remove the TTL, making the lock indefinite.
+                    var persisted = await _locksRedis.SetAsync(session.Key, session.Wid);
+                    _logger.LogWarning("Write Lock for {key} made indefinite (no TTL).", session.Key);
+                    return persisted;
+                }
+                _logger.LogError("Could not make lock indefinite for {key}. {value} is not a current lock value.", session.Key, lockValue);
+                return false;
             }
-            _logger.LogError("Could not make lock indefinite for {key}. {value} is not a current lock value.", session.Key, lockValue);
-            await ReleaseMutexAsync(session.Key, mutex);
+            _logger.LogError("Could not make lock indefinite for {key}. Lock not found.", session.Key);
             return false;
         }
-        _logger.LogError("Could not make lock indefinite for {key}. Lock not found.", session.Key);
-        await ReleaseMutexAsync(session.Key, mutex);
-        return false;
+        finally
+        {
+            await ReleaseMutexAsync(session.Key, mutex);
+        }
     }
 }

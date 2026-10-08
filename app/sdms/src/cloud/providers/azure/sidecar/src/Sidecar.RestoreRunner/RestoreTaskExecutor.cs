@@ -279,7 +279,7 @@ public class RestoreTaskExecutor(
                     "Blob restore hit a retryable condition while starting; will resume on redelivery - OperationId: {OperationId}",
                     message.OperationId);
                 trackedStatus.Document.ErrorDetails = $"Blob restore start deferred (will retry): {ex.Message}";
-                trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
+                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
                 throw new RestoreRetryableException("Blob restore could not be started yet", ex);
             }
             catch (Exception ex)

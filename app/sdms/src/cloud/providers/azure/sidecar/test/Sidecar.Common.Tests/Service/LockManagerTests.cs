@@ -334,6 +334,28 @@ public class LockManagerTests
         Assert.False(result);
     }
 
+    [Fact]
+    public async Task MakeWriteLockIndefinite_SetFails_ReleasesMutexForNextAttempt()
+    {
+        var key = "/path/file.tst";
+        var lockValue = "W24D0X03";
+        _ = _cache.StringSet(key, lockValue);
+        var writeLockSession = new WriteLockSession { Key = key, Wid = lockValue, Locked = true };
+        _ = _redisHandlerMock
+            .Setup(r => r.SetAsync(key, lockValue))
+            .ThrowsAsync(new InvalidOperationException("Redis write failed"));
+
+        _ = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _lockManager.MakeWriteLockIndefiniteAsync(writeLockSession));
+
+        _ = _redisHandlerMock
+            .Setup(r => r.SetAsync(key, lockValue))
+            .ReturnsAsync(true);
+        var result = await _lockManager.MakeWriteLockIndefiniteAsync(writeLockSession);
+
+        Assert.True(result);
+    }
+
     #region Idempotent Lock Tests
 
     [Fact]
