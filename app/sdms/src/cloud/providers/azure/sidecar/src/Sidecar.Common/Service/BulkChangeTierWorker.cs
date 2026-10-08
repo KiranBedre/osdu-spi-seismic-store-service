@@ -129,7 +129,11 @@ public class BulkChangeTierWorker(
 
             try
             {
-                await _metadataTierUpdater.UpdateTier(dataPartitionId, datasetId, _tier.ToString());
+                await _metadataTierUpdater.UpdateTier(
+                    dataPartitionId,
+                    datasetId,
+                    _tier.ToString(),
+                    operationId);
                 await _changeTierTasks.IncrementCountAsync(operationId, Constants.ChangeTierOperationStatus.COMPLETED_CNT, ct);
             }
             catch (Exception e) when (e is not OperationCanceledException)

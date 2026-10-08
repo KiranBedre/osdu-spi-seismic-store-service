@@ -25,21 +25,35 @@ public class MetadataTierUpdateWorkerTests
         // Arrange
         var loggerMock = new Mock<ILogger<MetadataTierUpdater>>();
         var dataAccessMock = new Mock<IDataAccess>();
-        _ = dataAccessMock.Setup(d => d.UpdateMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>())).ReturnsAsync(true);
+        _ = dataAccessMock.Setup(d => d.UpdateMetadataAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, object>>(),
+            null)).ReturnsAsync(true);
+        var archiveServiceMock = new Mock<IArchiveService>();
 
         var tenant = "tenant";
         var cs = "secret";
 
         var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
-        _ = cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionStringAsync(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
+        _ = cosmosClientFactoryMock.Setup(o =>
+            o.GetCosmosConnectionEndpointAsync(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 
-        var changeTierWorker = new MetadataTierUpdater(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
+        var changeTierWorker = new MetadataTierUpdater(
+            loggerMock.Object,
+            dataAccessMock.Object,
+            cosmosClientFactoryMock.Object,
+            archiveServiceMock.Object);
 
         // Act
         await changeTierWorker.UpdateTier(tenant, "metadataId", "");
 
         // Assert
-        dataAccessMock.Verify(d => d.UpdateMetadataAsync(cs, "metadataId", It.IsAny<Dictionary<string, object>>()), Times.Once);
+        dataAccessMock.Verify(d => d.UpdateMetadataAsync(
+            cs,
+            "metadataId",
+            It.IsAny<Dictionary<string, object>>(),
+            null), Times.Once);
     }
 
     [Fact]
@@ -48,23 +62,37 @@ public class MetadataTierUpdateWorkerTests
         // Arrange
         var loggerMock = new Mock<ILogger<MetadataTierUpdater>>();
         var dataAccessMock = new Mock<IDataAccess>();
-        _ = dataAccessMock.SetupSequence(d => d.UpdateMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+        _ = dataAccessMock.SetupSequence(d => d.UpdateMetadataAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, object>>(),
+            null))
             .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0))
             .ReturnsAsync(true);
+        var archiveServiceMock = new Mock<IArchiveService>();
 
         var tenant = "tenant";
         var cs = "secret";
 
         var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
-        _ = cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionStringAsync(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
+        _ = cosmosClientFactoryMock.Setup(o =>
+            o.GetCosmosConnectionEndpointAsync(tenant, It.IsAny<CancellationToken>())).ReturnsAsync(cs);
 
-        var changeTierWorker = new MetadataTierUpdater(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
+        var changeTierWorker = new MetadataTierUpdater(
+            loggerMock.Object,
+            dataAccessMock.Object,
+            cosmosClientFactoryMock.Object,
+            archiveServiceMock.Object);
 
         // Act
         await changeTierWorker.UpdateTier(tenant, "metadataId", "");
 
         // Assert
-        dataAccessMock.Verify(d => d.UpdateMetadataAsync(cs, "metadataId", It.IsAny<Dictionary<string, object>>()), Times.Exactly(2));
+        dataAccessMock.Verify(d => d.UpdateMetadataAsync(
+            cs,
+            "metadataId",
+            It.IsAny<Dictionary<string, object>>(),
+            null), Times.Exactly(2));
     }
 
     [Fact]
@@ -73,20 +101,34 @@ public class MetadataTierUpdateWorkerTests
         // Arrange
         var loggerMock = new Mock<ILogger<MetadataTierUpdater>>();
         var dataAccessMock = new Mock<IDataAccess>();
-        _ = dataAccessMock.Setup(d => d.UpdateMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+        _ = dataAccessMock.Setup(d => d.UpdateMetadataAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, object>>(),
+            null))
             .ThrowsAsync(new CosmosException("Error", System.Net.HttpStatusCode.NotFound, 0, "123", 0));
+        var archiveServiceMock = new Mock<IArchiveService>();
 
         var maxRetries = 5;
 
         var cosmosClientFactoryMock = new Mock<ICosmosClientFactory>();
-        _ = cosmosClientFactoryMock.Setup(o => o.GetCosmosConnectionStringAsync("tenant", It.IsAny<CancellationToken>())).ReturnsAsync("cs");
+        _ = cosmosClientFactoryMock.Setup(o =>
+            o.GetCosmosConnectionEndpointAsync("tenant", It.IsAny<CancellationToken>())).ReturnsAsync("cs");
 
-        var metadataChangeTierWorker = new MetadataTierUpdater(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
+        var metadataChangeTierWorker = new MetadataTierUpdater(
+            loggerMock.Object,
+            dataAccessMock.Object,
+            cosmosClientFactoryMock.Object,
+            archiveServiceMock.Object);
 
         // Act & Assert
         _ = await Assert.ThrowsAsync<CosmosException>(async () => await metadataChangeTierWorker.UpdateTier("partitionId", "id", ""));
 
         // Assert that the DeleteMetadata method was called the expected number of times (MaxRetries)
-        dataAccessMock.Verify(d => d.UpdateMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()), Times.Exactly(maxRetries));
+        dataAccessMock.Verify(d => d.UpdateMetadataAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, object>>(),
+            null), Times.Exactly(maxRetries));
     }
 }

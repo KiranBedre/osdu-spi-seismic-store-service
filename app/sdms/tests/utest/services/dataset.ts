@@ -22,6 +22,7 @@ import { Auth, AuthProviderFactory } from '../../../src/auth';
 import { IAuthProvider } from '../../../src/auth/auth';
 import { Config, google, StorageFactory } from '../../../src/cloud';
 import { DatasetPostProcessorFactory, DefaultDatasetPostProcessor, IDatasetPostProcessor } from '../../../src/cloud/postprocessor';
+import { ArchiveOperation, AzureArchiveService } from '../../../src/cloud/providers/azure/archive-service';
 import { DESStorage, DESUtils } from '../../../src/dataecosystem';
 import { IStorage } from '../../../src/cloud/storage';
 import { DatasetAuth, DatasetDAO, DatasetModel } from '../../../src/services/dataset';
@@ -32,7 +33,7 @@ import { DatasetOP } from '../../../src/services/dataset/optype';
 import { DatasetParser } from '../../../src/services/dataset/parser';
 import { SubProjectDAO, SubProjectModel } from '../../../src/services/subproject';
 import { TenantDAO, TenantModel } from '../../../src/services/tenant';
-import { Response } from '../../../src/shared';
+import { Feature, FeatureFlags, Response } from '../../../src/shared';
 import { ImpersonationTokenModel, ImpersonationTokenContextModel } from '../../../src/services/impersonation_token/model';
 import { Utils } from '../../../src/shared';
 import { Tx } from '../utils';
@@ -415,15 +416,22 @@ export class TestDatasetSVC {
                 subproject: 'subproject-a',
                 tenant: 'tenant-a',
             } as IDatasetModel;
-            this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, 'key']);
+            this.sandbox.replace(Config, 'FALLBACK_DATASET_DELETE', true);
+            this.sandbox.stub(FeatureFlags, 'isEnabled').withArgs(Feature.RESTORE).returns(true);
+            this.sandbox.stub(DatasetDAO, 'get').resolves([dataset, { partitionKey: 'dataset-id' }]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetDAO, 'update').resolves();
-            this.sandbox.stub(DatasetDAO, 'delete').resolves();
+            const deleteStub = this.sandbox.stub(DatasetDAO, 'delete').resolves();
+            const archiveStub = this.sandbox.stub(
+                AzureArchiveService, 'archiveBeforeDelete').resolves();
             this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
             this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
             this.sandbox.stub(lockerInstance, 'unlock').resolves();
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Delete);
             Tx.check200(expRes.statusCode);
+            sinon.assert.calledOnceWithExactly(
+                archiveStub, 'dataset-id', 'tenant-a', ArchiveOperation.Delete);
+            sinon.assert.callOrder(archiveStub, deleteStub);
         });
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
@@ -672,6 +680,46 @@ export class TestDatasetSVC {
             await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
 
             Tx.check409(expRes.statusCode);
+        });
+
+        Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {
+            const dataset = {
+                filemetadata: {},
+                name: 'dataset-01',
+                path: 'path/',
+                subproject: 'test-subproject',
+                tenant: 'test-tenant',
+            } as DatasetModel;
+            const datasetPatchRequest: IDatasetPatchRequest = {
+                dataset,
+                newName: 'new-dataset-01',
+                closeId: undefined,
+                applyChangeTier: undefined,
+            };
+            const oldKey = { partitionKey: 'old-dataset-id' };
+
+            this.sandbox.stub(FeatureFlags, 'isEnabled').withArgs(Feature.RESTORE).returns(true);
+            this.sandbox.stub(DatasetParser, 'patch').returns(datasetPatchRequest);
+            this.sandbox.stub(DatasetDAO, 'get').callsFake(async (_journal, requestedDataset) =>
+                requestedDataset.name === 'new-dataset-01'
+                    ? [undefined, undefined]
+                    : [dataset, oldKey] as any);
+            this.sandbox.stub(DatasetDAO, 'getKey').returns({ partitionKey: 'new-dataset-id' } as any);
+            this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
+            this.sandbox.stub(DESUtils, 'getDataPartitionID').returns('test-tenant');
+            this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
+            this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
+            const deleteStub = this.sandbox.stub(DatasetDAO, 'delete').resolves();
+            this.sandbox.stub(DatasetDAO, 'register').resolves();
+            const archiveStub = this.sandbox.stub(
+                AzureArchiveService, 'archiveBeforeDelete').resolves();
+
+            await DatasetHandler.handler(expReq, expRes, DatasetOP.Patch);
+
+            Tx.check200(expRes.statusCode);
+            sinon.assert.calledOnceWithExactly(
+                archiveStub, 'old-dataset-id', 'test-tenant', ArchiveOperation.Rename);
+            sinon.assert.callOrder(archiveStub, deleteStub);
         });
 
         Tx.testExpAsync(async (expReq: expRequest, expRes: expResponse) => {

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2025, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,11 +23,12 @@ import { AbstractJournal, AbstractJournalTransaction, IJournalExtendedQueryModel
 import { TenantModel } from '../../../services/tenant';
 import { AzureDataEcosystemServices } from './dataecosystem';
 import { AzureConfig } from './config';
-import { Config } from '../..';
+import { Config, LoggerFactory } from '../..';
 import { CallContext, Error, Feature, FeatureFlags, Utils } from '../../../shared';
 import { Operator } from '../../../services/dataset/model';
 import { DatasetUtils } from '../../../services/dataset';
 import { StorageFactory } from '../../../cloud';
+import { AzureArchiveService } from './archive-service';
 
 
 import axios, { AxiosInstance } from 'axios';
@@ -38,6 +39,7 @@ import { DatasetModel, ListDatasetsParams, QueryFilter, QueryFilterVisitor, AndQ
 export class AzureCosmosDbDAO extends AbstractJournal {
 
     public KEY = Symbol('id');
+    private get logger() { return LoggerFactory.build(Config.CLOUDPROVIDER); }
     private dataPartition: string;
     private tenant: TenantModel;
     private static containerCache: { [key: string]: Container; } = {};
@@ -112,6 +114,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             datasetEntity = [datasetEntity];
         }
 
+        const container = await this.getCosmoContainer();
+
         for (const entity of datasetEntity) {
             const item = {
                 id: entity.key.partitionKey,
@@ -119,7 +123,20 @@ export class AzureCosmosDbDAO extends AbstractJournal {
             }
             if(!(item.id.startsWith('job-collection') || item.id.startsWith('dp-job-collection'))) {
                 item.data[this.KEY.toString()] = entity.key;}
-            await (await this.getCosmoContainer()).items.upsert(item);
+            try {
+                // Archive only dataset entities (prefix 'ds-') before mutation
+                if (FeatureFlags.isEnabled(Feature.RESTORE)
+                    && item.id.startsWith(AzureConfig.DATASET_ENTITY_PREFIX)) {
+                    await AzureArchiveService.archiveBeforeSave(item.id, this.dataPartition);
+                }
+                await container.items.upsert(item);
+            } catch (error) {
+                this.logger.error({
+                    message: `Cosmos save failed for id: ${item.id}: ${error?.message || error}`,
+                    context: 'CosmosDB.save'
+                });
+                throw error;
+            }
         }
     }
 
@@ -194,19 +211,28 @@ export class AzureCosmosDbDAO extends AbstractJournal {
 
         const container = await this.getCosmoContainer();
         const operations: OperationInput[] = [];
-        for (let ii=0; ii<keys.length; ii++) {
+        const batchKeys: string[] = [];
+        for (let ii = 0; ii < keys.length; ii++) {
             operations.push({
                 operationType: BulkOperationType.Delete,
                 id: keys[ii],
                 partitionKey: keys[ii],
             });
-            if ((ii+1)%100 === 0) {
+            batchKeys.push(keys[ii]);
+            if ((ii + 1) % 100 === 0) {
+                if (FeatureFlags.isEnabled(Feature.RESTORE)) {
+                    await AzureArchiveService.archiveBatch(batchKeys, this.dataPartition);
+                }
                 await container.items.bulk(operations);
                 operations.length = 0;
+                batchKeys.length = 0;
             }
         }
 
-        if(operations.length) {
+        if (operations.length) {
+            if (FeatureFlags.isEnabled(Feature.RESTORE)) {
+                await AzureArchiveService.archiveBatch(batchKeys, this.dataPartition);
+            }
             await container.items.bulk(operations);
         }
 
@@ -256,7 +282,18 @@ export class AzureCosmosDbDAO extends AbstractJournal {
     }
 
     public async delete(key: any): Promise<void> {
-        await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).delete();
+        try {
+            // No archival here — single dataset delete is preceded by a save(status=DELETE)
+            // which already archives the pre-delete state via archiveBeforeSave.
+            // Bulk delete (deleteMulti) archives separately since it skips the status update.
+            await (await this.getCosmoContainer()).item(key.partitionKey, key.partitionKey).delete();
+        } catch (error) {
+            this.logger.error({
+                message: `Cosmos delete failed for key: ${key.partitionKey}: ${error?.message || error}`,
+                context: 'CosmosDB.delete'
+            });
+            throw error;
+        }
     }
 
     public createQuery(namespace: string, kind: string): IJournalQueryModel {

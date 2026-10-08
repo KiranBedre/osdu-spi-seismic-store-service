@@ -187,6 +187,31 @@ export class Locker {
         return await this.redisClient.del(key);
     }
 
+    /**
+     * Atomic SET NX with TTL — sets key only if it does not exist.
+     * @returns 'OK' if the lock was acquired, null if the key already exists.
+     */
+    public async setNX(key: string, value: string, ttlSeconds: number): Promise<string | null> {
+        return await this.redisClient.set(key, value, 'EX', ttlSeconds, 'NX');
+    }
+
+    /**
+     * Conditional delete — deletes key only if its value matches.
+     * Uses a Lua script for atomicity.
+     * @returns true if the key was deleted, false if value didn't match or key doesn't exist.
+     */
+    public async delIfMatch(key: string, expectedValue: string): Promise<boolean> {
+        const script = `
+            if redis.call("get", KEYS[1]) == ARGV[1] then
+                return redis.call("del", KEYS[1])
+            else
+                return 0
+            end
+        `;
+        const result = await this.redisClient.eval(script, 1, key, expectedValue);
+        return result === 1;
+    }
+
     private async getTTL(key: string): Promise<number> {
         return await this.redisClient.ttl(key);
     }

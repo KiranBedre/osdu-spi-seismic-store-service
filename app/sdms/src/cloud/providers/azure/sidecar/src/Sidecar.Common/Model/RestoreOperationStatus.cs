@@ -1,0 +1,95 @@
+// ============================================================================
+// Copyright 2026, Microsoft Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+namespace Sidecar.Common.Model;
+
+using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Sidecar.Common.Interface;
+using Sidecar.Common.Utility;
+
+/// <summary>
+/// Cosmos DB status document for a restore operation.
+/// Stored in the RestoreOperationStatus container, partitioned by OperationId.
+/// </summary>
+public class RestoreOperationStatus : RestoreOperationMessage, IRestoreOperationStatus
+{
+    /// <summary>
+    /// Cosmos DB document ID — equals OperationId for direct point reads.
+    /// </summary>
+    [JsonPropertyName("id")]
+    [JsonProperty("id")]
+    public string Id
+    {
+        get => OperationId;
+        set => OperationId = value;
+    }
+
+    [JsonPropertyName("tenant")]
+    [JsonProperty("tenant")]
+    public string? Tenant { get; set; }
+
+    [JsonPropertyName("subproject")]
+    [JsonProperty("subproject")]
+    public string? Subproject { get; set; }
+
+    [JsonPropertyName("startedAt")]
+    [JsonProperty("startedAt")]
+    public string StartedAt { get; set; } = DateTimeExtensions.UtcNowISOString();
+
+    [JsonPropertyName("completedAt")]
+    [JsonProperty("completedAt")]
+    public string? CompletedAt { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    [JsonProperty("createdAt")]
+    public string? CreatedAt { get; set; }
+
+    [JsonPropertyName("lastUpdatedAt")]
+    [JsonProperty("lastUpdatedAt")]
+    public string LastUpdatedAt { get; set; } = DateTimeExtensions.UtcNowISOString();
+
+    /// <summary>
+    /// Operation lifecycle status.
+    /// Values: "Enqueued" | "InProgress" | "Succeeded" | "Failed" | "Rejected".
+    /// "Enqueued" is the initial status written by the SDMS API when the restore message is
+    /// queued; the sidecar then transitions it to "InProgress" and finally to a terminal state.
+    /// </summary>
+    [JsonPropertyName("status")]
+    [JsonProperty("status")]
+    public string Status { get; set; } = "";
+
+    /// <summary>
+    /// Detailed error stack trace if available (for debugging).
+    /// </summary>
+    [JsonPropertyName("errorDetails")]
+    [JsonProperty("errorDetails")]
+    public string? ErrorDetails { get; set; }
+
+    [JsonPropertyName("requiresManualRecovery")]
+    [JsonProperty("requiresManualRecovery")]
+    public bool RequiresManualRecovery { get; set; }
+
+    /// <summary>
+    /// Azure Storage Point-in-Time Restore (PITR) identifier for the blob-range restore.
+    /// Persisted as soon as the restore is accepted so a redelivered message resumes the
+    /// same restore (Azure serializes one restore per account) instead of starting a new one.
+    /// Null until blob restore has been initiated.
+    /// </summary>
+    [JsonPropertyName("blobRestoreId")]
+    [JsonProperty("blobRestoreId")]
+    public string? BlobRestoreId { get; set; }
+}

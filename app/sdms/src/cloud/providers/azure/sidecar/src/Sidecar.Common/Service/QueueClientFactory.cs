@@ -9,11 +9,11 @@ public class QueueClientFactory(IOptionsStorageQueue opts, TokenCredential crede
     private readonly IOptionsStorageQueue _opts = opts;
     private readonly TokenCredential _credential = credential;
 
-    public QueueClient Build()
+    public QueueClient Build(string? queueName = null)
     {
         var queueUri = new QueueUriBuilder(new(_opts.StorageQueueEndpoint))
         {
-            QueueName = _opts.TaskStorageQueueName,
+            QueueName = queueName ?? _opts.TaskStorageQueueName,
         }.ToUri();
 
         var queueClientOptions = new QueueClientOptions

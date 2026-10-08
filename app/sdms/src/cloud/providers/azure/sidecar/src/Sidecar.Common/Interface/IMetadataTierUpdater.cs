@@ -19,4 +19,5 @@ namespace Sidecar.Common.Interface;
 public interface IMetadataTierUpdater
 {
     Task UpdateTier(string dataPartitionId, string id, string tier);
+    Task UpdateTier(string dataPartitionId, string id, string tier, string? operationId);
 }

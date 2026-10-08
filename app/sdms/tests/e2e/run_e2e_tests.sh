@@ -268,6 +268,26 @@ if [ -f "./node_modules/newman/bin/newman.js" ]; then
          --bail
    }
 
+   runRestoreTests() {
+      if [ -f "./tests/e2e/seismic_restore_test_collection.json" ]; then
+         echo "--------------------------------------------"
+         echo "Running Restore Integration Tests"
+         echo "--------------------------------------------"
+         ./node_modules/newman/bin/newman.js run ./tests/e2e/seismic_restore_test_collection.json \
+            --env-var host=${hostname#https://} \
+            --env-var access_token=${user_idtoken} \
+            --env-var data_partition_id=${datapartition} \
+            --insecure \
+            --timeout 1800000 \
+            --verbose \
+            --reporters cli,junit,htmlextra \
+            --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
+            --reporter-htmlextra-showBody \
+            --reporter-htmlextra-export ./tests/e2e/results/restore_tests_iteration$1.html \
+            --reporter-junit-export ./newman/restore_tests_iteration$1.xml
+      fi
+   }
+
 else
    npm install -g newman
    npm install -g newman-reporter-htmlextra
@@ -290,6 +310,25 @@ else
          --reporter-junit-export ./newman/e2e_tests.xml \
          --bail
    }
+   runRestoreTests() {
+      if [ -f "./tests/e2e/seismic_restore_test_collection.json" ]; then
+         echo "--------------------------------------------"
+         echo "Running Restore Integration Tests"
+         echo "--------------------------------------------"
+         newman run ./tests/e2e/seismic_restore_test_collection.json \
+            --env-var host=${hostname#https://} \
+            --env-var access_token=${user_idtoken} \
+            --env-var data_partition_id=${datapartition} \
+            --insecure \
+            --timeout 1800000 \
+            --verbose \
+            --reporters cli,junit,htmlextra \
+            --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
+            --reporter-htmlextra-showBody \
+            --reporter-htmlextra-export ./tests/e2e/results/restore_tests_iteration$1.html \
+            --reporter-junit-export ./newman/restore_tests.xml
+      fi
+   }
 fi
 
 
@@ -304,6 +343,10 @@ do
   ((i++))
 done
 
+# Run restore tests after main tests.
+runRestoreTests "$i"
+resRestore=$?
+
 # restore configuration and remove installed dependencies
 cp -f ./tests/e2e/postman_env_original.json ./tests/e2e/postman_env.json
 rm -f ./tests/e2e/postman_env_original.json
@@ -314,4 +357,28 @@ sleep 30
 
 # exit the script
 printf "%s\n" "--------------------------------------------"
-if [ $resTest -ne 0 ]; then exit 1; fi
+printf "%s\n" "INTEGRATION TEST RESULTS SUMMARY"
+printf "%s\n" "--------------------------------------------"
+
+# Display status for Main E2E Tests
+if [ $resTest -eq 0 ]; then
+  echo "[PASSED] Main E2E Tests"
+else
+  echo "[FAILED] Main E2E Tests (exit code: $resTest)"
+fi
+
+# Display status for Restore Integration Tests
+if [ $resRestore -eq 0 ]; then
+   echo "[PASSED] Restore Integration Tests"
+else
+   echo "[FAILED] Restore Integration Tests (exit code: $resRestore)"
+fi
+
+printf "%s\n" "--------------------------------------------"
+
+# Fail if any test fails.
+if [ $resTest -ne 0 ] || [ $resRestore -ne 0 ]; then
+  echo "PIPELINE FAILED: One or more test suites failed."
+  exit 1
+fi
+echo "PIPELINE PASSED: All test suites succeeded."

@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,4 +36,27 @@ export interface IBulkChangeTierOperationQueueTask extends IOperationQueueTask {
     query: string;
     tier: string;
     parameters: string;
+}
+
+export interface IRestoreOperationQueueTask extends IOperationQueueTask {
+    createdBy: string;
+    sdPath: string;
+    restorePointInTime: string;
+    storageAccountName: string;
+    correlationId?: string;
+}
+
+export interface IRestoreOperationStatus {
+    operationId: string;
+    status: string;
+    sdPath: string;
+    restorePointInTime: string;
+    tenant: string;
+    subproject: string;
+    createdBy: string;
+    errorDetails?: string;
+    requiresManualRecovery: boolean;
+    startedAt: string;
+    lastUpdatedAt?: string;
+    completedAt?: string;
 }

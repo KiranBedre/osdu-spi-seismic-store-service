@@ -2533,6 +2533,113 @@ paths:
         "404":
           description: Not found.
 
+  /operation/restore:
+    post:
+      summary: Trigger a point-in-time restore operation for a dataset. (Preview)
+      description: |-
+        <ul>
+          <li><b>Preview:</b> This feature is available on request for the Standard SKU. To enable it, create a support request in the Azure portal for Azure Data Manager for Energy. See the <a href="https://learn.microsoft.com/en-us/azure/energy-data-services/faq-energy-data-services#how-do-i-raise-a-support-request-for-azure-data-manager-for-energy">official support guidance</a>.</li>
+          <li><b>Description:</b> Initiates a point-in-time restore for the specified dataset. The request is validated synchronously, then the restore job is enqueued for asynchronous processing and the endpoint returns immediately with an operation id to poll. The dataset metadata and its blob storage are restored to the state they were in at <code>restorePointInTime</code>.</li>
+          <li><b>Required role:</b> Subproject admin (write authorization on the target subproject).</li>
+          <li><b>Concurrency:</b> Only one restore operation can be in progress per Azure Storage account at a time. Data partitions that share an account block each other's restore requests.</li>
+          <li><b>Constraints:</b> <code>restorePointInTime</code> must be in the past, within the configured retention window (<code>SDMS_RESTORE_MAX_DAYS</code>), and after the dataset creation time.</li>
+          <li><b>Note:</b> A <code>202</code> only means the request was accepted and enqueued. The dataset write-lock check and the actual restore run asynchronously; poll <code>GET /operation/restore/{operationId}</code> for the terminal outcome (including a rejection reason in <code>errorDetails</code>).</li>
+        </ul>
+      operationId: operation-restore-post
+      tags:
+        - Operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestoreRequest"
+      responses:
+        "202":
+          description: Restore operation accepted and enqueued for asynchronous processing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestoreAccepted"
+        "400":
+          description: |-
+            Bad Request. Possible reasons:
+            <ul>
+              <li>sdPath is required and must be a string.</li>
+              <li>Invalid sdPath format (must be sd://tenant/subproject/path/dataset).</li>
+              <li>restorePointInTime is required and must be a valid ISO-8601 date.</li>
+              <li>restorePointInTime must be in the past.</li>
+              <li>restorePointInTime must be within the configured retention window.</li>
+              <li>restorePointInTime must be after the dataset creation time.</li>
+            </ul>
+        "401":
+          description: Unauthorized.
+        "403":
+          description: |-
+            Forbidden. Possible reasons:
+            <ul>
+              <li>The user is not registered in the data partition.</li>
+              <li>The user does not have the subproject admin role.</li>
+            </ul>
+        "404":
+          description: The dataset does not exist and has no archived state to restore from.
+        "409":
+          description: |-
+            Conflict. A restore operation is already in progress for this Azure Storage account;
+            only one restore can run at a time per storage account.
+        "501":
+          description: The restore feature flag is disabled.
+        "503":
+          description: |-
+            Service Unavailable. Possible reasons:
+            <ul>
+              <li>Storage backup retention is not configured for this instance.</li>
+              <li>The distributed lock service (Redis) is temporarily unavailable.</li>
+            </ul>
+
+  /operation/restore/{operationId}:
+    get:
+      summary: Get the status of a restore operation. (Preview)
+      description: |-
+        <ul>
+          <li><b>Preview:</b> This feature is available on request for the Standard SKU. To enable it, create a support request in the Azure portal for Azure Data Manager for Energy. See the <a href="https://learn.microsoft.com/en-us/azure/energy-data-services/faq-energy-data-services#how-do-i-raise-a-support-request-for-azure-data-manager-for-energy">official support guidance</a>.</li>
+          <li><b>Description:</b> Retrieves the current status of a previously initiated restore operation, including its terminal outcome and, for rejected or failed operations, a human-readable <code>errorDetails</code> message.</li>
+          <li><b>Required role:</b> Registered user in the data partition.</li>
+        </ul>
+      operationId: operation-restore-status
+      tags:
+        - Operations
+      parameters:
+        - description: "The restore operation id returned from POST /operation/restore."
+          in: path
+          name: operationId
+          required: true
+          schema:
+            type: string
+        - description: "Data partition id."
+          in: header
+          name: data-partition-id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Restore operation status retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestoreOperationStatus"
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: No restore operation was found for the given operationId.
+        "501":
+          description: The restore feature flag is disabled.
+
 # ===========================================================================
 # Endpoints Models Section
 # ===========================================================================
@@ -3448,3 +3555,93 @@ components:
         dataset_cnt: 1000
         completed_cnt: 997
         failed_cnt: 3
+    RestoreRequest:
+      type: object
+      required:
+        - sdPath
+        - restorePointInTime
+      properties:
+        sdPath:
+          type: string
+          description: "The dataset path in sd:// format (sd://tenant/subproject/path/dataset)."
+        restorePointInTime:
+          type: string
+          format: date-time
+          description: "ISO-8601 timestamp of the point in time to restore to. Must be in the past and within the configured retention window (SDMS_RESTORE_MAX_DAYS)."
+      example:
+        sdPath: "sd://opendes/test-subproject/surveys/dataset1"
+        restorePointInTime: "2026-07-10T08:30:00.000Z"
+    RestoreAccepted:
+      type: object
+      required:
+        - operation_id
+        - statusUrl
+      properties:
+        operation_id:
+          type: string
+          description: "Unique identifier of the restore operation. Use it to poll the status endpoint."
+        statusUrl:
+          type: string
+          description: "Relative URL to poll for the restore operation status."
+      example:
+        operation_id: "c3d282e6-e7d1-40d8-8ac2-edc15b6d174c"
+        statusUrl: "/seistore-svc/api/v3/operation/restore/c3d282e6-e7d1-40d8-8ac2-edc15b6d174c"
+    RestoreOperationStatus:
+      type: object
+      required:
+        - operationId
+        - status
+        - sdPath
+        - restorePointInTime
+        - requiresManualRecovery
+      properties:
+        operationId:
+          type: string
+          description: "Unique identifier of the restore operation."
+        status:
+          type: string
+          description: "Current status of the restore operation."
+          enum: [Enqueued, InProgress, Succeeded, Failed, Rejected]
+        sdPath:
+          type: string
+          description: "The dataset path being restored (sd:// format)."
+        restorePointInTime:
+          type: string
+          format: date-time
+          description: "The point in time the dataset is being restored to."
+        tenant:
+          type: string
+          description: "Tenant of the dataset."
+        subproject:
+          type: string
+          description: "Subproject of the dataset."
+        createdBy:
+          type: string
+          description: "Identifier of the user who initiated the restore."
+        errorDetails:
+          type: string
+          description: "Human-readable reason the operation was rejected or failed. Present only for Rejected/Failed operations."
+        requiresManualRecovery:
+          type: boolean
+          description: "Whether the operation left the dataset locked for operator recovery."
+        startedAt:
+          type: string
+          format: date-time
+          description: "When the restore operation was created."
+        lastUpdatedAt:
+          type: string
+          format: date-time
+          description: "When the operation status was last updated."
+        completedAt:
+          type: string
+          format: date-time
+          description: "When the operation reached a terminal state, if it has finished."
+      example:
+        operationId: "c3d282e6-e7d1-40d8-8ac2-edc15b6d174c"
+        status: "Rejected"
+        sdPath: "sd://opendes/test-subproject/surveys/dataset1"
+        restorePointInTime: "2026-07-10T08:30:00.000Z"
+        createdBy: "00000000-0000-0000-0000-000000000000"
+        errorDetails: "Restore rejected: the dataset is currently locked by another in-progress write operation. Wait for that operation to finish and release the lock, then retry this restore."
+        requiresManualRecovery: false
+        lastUpdatedAt: "2026-07-15T10:00:07.000Z"

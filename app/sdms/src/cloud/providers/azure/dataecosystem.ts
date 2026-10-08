@@ -61,7 +61,8 @@ export class AzureDataEcosystemServices extends AbstractDataEcosystemCore {
                 'Content-Type': 'application/json'
             }
         };
-        const url = AzureConfig.DES_SERVICE_HOST_PARTITION + '/api/partition/v1/partitions/' + dataPartitionID;
+        const url = AzureConfig.DES_SERVICE_HOST_PARTITION + '/api/partition/v1/partitions/'
+            + encodeURIComponent(dataPartitionID);
         const results = await axios.get(url, options).catch((error) => {
             throw (Error.makeForHTTPRequest(error));
         });
@@ -136,6 +137,29 @@ export class AzureDataEcosystemServices extends AbstractDataEcosystemCore {
 
         // return storageConfigs.value;
         return { endpoint: cosmosEndpointConfigs.value, key: cosmosKeyConfigs.value };
+    }
+
+    public static async getCosmosConnectionEndpoint(dataPartitionID: string): Promise<string> {
+        const cache = getInMemoryCacheInstance();
+        const cacheKey = 'azure-cosmos-endpoint-' + dataPartitionID;
+        const cachedEndpoint = cache.get<string>(cacheKey);
+        if (cachedEndpoint !== undefined) {
+            return cachedEndpoint;
+        }
+
+        const partitionConfiguration =
+            await AzureDataEcosystemServices.getPartitionConfiguration(dataPartitionID);
+        const endpointConfiguration = partitionConfiguration[KeyVault.DATA_PARTITION_COSMOS_ENDPOINT] as {
+            sensitive: boolean;
+            value: string;
+        };
+        if (endpointConfiguration.sensitive) {
+            endpointConfiguration.value = (await KeyVault.CreateSecretClient()
+                .getSecret(endpointConfiguration.value)).value;
+        }
+
+        cache.set<string>(cacheKey, endpointConfiguration.value, 3600);
+        return endpointConfiguration.value;
     }
 
 }

@@ -19,6 +19,7 @@ namespace Sidecar.Common.Service;
 using Azure.Storage.Blobs;
 using Sidecar.Common.Interface;
 using Azure.Storage.Blobs.Specialized;
+using Azure.Storage.Blobs.Models;
 
 /// <summary>
 /// Mockable alternative to the raw BlobServiceClient
@@ -26,6 +27,8 @@ using Azure.Storage.Blobs.Specialized;
 public class BlobClient(BlobServiceClient client) : IBlobClient
 {
     private readonly BlobServiceClient _client = client;
+
+    public Uri Uri => _client.Uri;
 
     public BlobContainerClient GetContainerClient(string containerName) => _client.GetBlobContainerClient(containerName);
 
@@ -36,4 +39,33 @@ public class BlobClient(BlobServiceClient client) : IBlobClient
         // note: there's extension method BlobServiceClient.GetBlobBatchClient(), but it's not
         // mockable either.
         new(_client);
+
+    public async Task<bool> ContainerExistsAsync(string containerName, CancellationToken ct = default)
+    {
+        var containerClient = _client.GetBlobContainerClient(containerName);
+        return await containerClient.ExistsAsync(ct);
+    }
+
+    public async Task<bool> TryUndeleteContainerAsync(string containerName, CancellationToken ct = default)
+    {
+        // Locate the soft-deleted container by exact name to obtain its deleted version,
+        // which is required to undelete it.
+        await foreach (var container in _client.GetBlobContainersAsync(
+            BlobContainerTraits.None,
+            BlobContainerStates.Deleted,
+            prefix: containerName,
+            cancellationToken: ct))
+        {
+            if (!container.IsDeleted.GetValueOrDefault() ||
+                !string.Equals(container.Name, containerName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            _ = await _client.UndeleteBlobContainerAsync(container.Name, container.VersionId, ct);
+            return true;
+        }
+
+        return false;
+    }
 }

@@ -77,4 +77,15 @@ export class SDPath {
         return sdPathRes;
     }
 
+    /**
+     * Builds a dataset sdPath (sd://tenant/subproject/path/name) from its components, shared by all
+     * writers/readers so the format stays identical. Returns `fallback` when tenant, subproject, or name is missing.
+     */
+    public static build(tenant: string, subproject: string, path: string, name: string, fallback = ''): string {
+        if (!tenant || !subproject || !name) { return fallback; }
+        const normalizedPath = path || '/';
+        const datasetPath = normalizedPath.endsWith('/') ? normalizedPath + name : normalizedPath + '/' + name;
+        return `${Config.SDPATHPREFIX}${tenant}/${subproject}${datasetPath}`;
+    }
+
 }

@@ -1,15 +1,17 @@
 # Docker Build Action
 
-Builds a service container image from Maven JAR artifacts or a checked-in
-source context and optionally pushes it to GHCR with SHA/branch tags and a
-public-visibility flip.
+Builds a service container image from a Maven JAR, a prebuilt Node runtime, or
+another complete runtime artifact, and optionally pushes it to GHCR with
+SHA/branch tags and a public-visibility flip.
 
 ## Purpose
 
 For `build_kind: maven-jar`, this action consumes the `build-artifacts`
 artifact from [`java-build`](../java-build) and uses the template-owned
-`build/Dockerfile`. For `build_kind: source`, it builds the checked-in context
-and Dockerfile declared by a schema v4 service descriptor. It does not run the
+`build/Dockerfile`. For `build_kind: source`, it restores the prebuilt Node
+runtime into the checked-in context declared by a schema v4 service descriptor.
+For `build_kind: artifact`, it uses the downloaded artifact as the complete
+build context and pairs it with a checked-in Dockerfile. It does not run a
 language build. A single `push` input selects between registry modes so one
 action can back both jobs in `validate.yml` (W5a):
 
@@ -23,6 +25,7 @@ action can back both jobs in `validate.yml` (W5a):
 ```
 java-build (uploads build-artifacts) -> docker-build (this action)
 node-build (validates checked-in source) -> docker-build (this action)
+other build (uploads a complete runtime) -> docker-build (this action)
 ```
 
 `validate.yml` (W5a) calls this action as two jobs:
@@ -39,10 +42,11 @@ node-build (validates checked-in source) -> docker-build (this action)
 | `image_name` | **Yes** | — | Short service name (e.g. `partition`); set from `vars.SERVICE_NAME` |
 | `dockerfile_path` | No | `build/Dockerfile` | Dockerfile path relative to the repo root. Defaults to the canonical Dockerfile the engineering system syncs to every fork (ADR-037) |
 | `build_context` | No | `.` | Docker build context directory |
-| `build_kind` | No | `maven-jar` | `maven-jar` downloads and resolves the build artifact; `source` builds the checked-in context directly |
+| `build_kind` | No | `maven-jar` | `maven-jar` resolves a JAR, `source` restores a Node runtime into the checked-in context, and `artifact` uses the downloaded runtime artifact as the complete context |
 | `registry` | No | `ghcr.io` | Container registry host |
 | `org` | No | _(repo owner)_ | Registry org/owner; falls back to the workflow `github.repository_owner` at runtime when omitted |
 | `jar_artifact_name` | No | `build-artifacts` | Name of the artifact containing the built JARs |
+| `source_artifact_name` | No | `node-runtime-artifacts` | Name of the prebuilt Node runtime (`source`) or complete runtime context (`artifact`) |
 | `jar_file` | No | — | Conventional path/glob of the service Spring Boot JAR (`validate.yml` passes `provider/<SERVICE_NAME>-azure/target/*-spring-boot.jar`, from `SERVICE_TARGET_JAR` or `SERVICE_NAME`). If it matches no file the action auto-discovers the Azure JAR (deviant modules like `entitlements-v2-azure`); `SERVICE_TARGET_JAR` only disambiguates a service that builds more than one |
 | `build_args` | No | — | Optional extra `--build-arg` values (newline-separated `KEY=VALUE`). The JAR is passed via `jar_file` (resolved), not here. **Never pass `GITHUB_TOKEN` here.** |
 | `push` | No | `'true'` | `'true'` logs in, pushes, tags, and flips visibility; `'false'` builds only |

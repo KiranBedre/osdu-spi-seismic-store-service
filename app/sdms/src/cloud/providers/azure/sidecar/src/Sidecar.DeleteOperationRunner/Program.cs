@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2023, Microsoft
+// Copyright 2017-2026, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -226,7 +226,9 @@ public class Program
             .AddSingleton<QueueClientFactory>()
             .AddSingleton<QueueClient>(sp => sp.GetRequiredService<QueueClientFactory>().Build())
             .AddSingleton<ILockManager, LockManager>()
-            .AddSingleton<IDataAccess, Cosmos>();
+            .AddSingleton<IDataAccess, Cosmos>()
+            .AddSingleton<IArchivedSnapshotSelector, ArchivedSnapshotSelector>()
+            .AddSingleton<IArchiveService, ArchiveService>();
 
         _ = services
             .AddHealthChecks()

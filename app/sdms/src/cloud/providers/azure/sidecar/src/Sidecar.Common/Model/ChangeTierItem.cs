@@ -17,6 +17,16 @@
 namespace Sidecar.Common.Model;
 
 using System.Text.Json.Serialization;
+using Sidecar.Common.Utility;
+
+public class DatasetAcl
+{
+    [JsonPropertyName("admins")]
+    public List<string> Admins { get; set; } = [];
+
+    [JsonPropertyName("viewers")]
+    public List<string> Viewers { get; set; } = [];
+}
 
 public class ChangeTierItem
 {
@@ -31,4 +41,36 @@ public class ChangeTierItem
 
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    [JsonPropertyName("tenant")]
+    public string Tenant { get; set; } = "";
+
+    [JsonPropertyName("subproject")]
+    public string Subproject { get; set; } = "";
+
+    /// <summary>
+    /// Dataset-level ACLs. Present only when subproject access_policy is 'dataset'.
+    /// Contains admin and viewer groups that have access to this specific dataset.
+    /// </summary>
+    [JsonPropertyName("acls")]
+    public DatasetAcl? Acls { get; set; }
+
+    /// <summary>
+    /// Gets the lock key path: {tenant}/{subproject}/{path}/{name}
+    /// </summary>
+    [JsonIgnore]
+    public string LockKeyPath
+    {
+        get
+        {
+            var datasetPath = Path.EndsWith("/") ? Path + Name : Path + "/" + Name;
+            return $"{Tenant}/{Subproject}{datasetPath}";
+        }
+    }
+
+    /// <summary>
+    /// Gets the full SD path (sd://tenant/subproject/path/name) or falls back to Id if tenant/subproject are missing.
+    /// </summary>
+    [JsonIgnore]
+    public string SdPath => SdPathParser.Build(Tenant, Subproject, Path, Name, Id);
 }

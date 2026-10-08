@@ -28,7 +28,8 @@ export enum Feature {
     BULK_DELETE,
     CHANGE_TIER,
     ANALYTICS,
-    TIER_STORAGE_BLOCK
+    TIER_STORAGE_BLOCK,
+    RESTORE
 }
 
 export class FeatureFlags {
@@ -44,6 +45,7 @@ export class FeatureFlags {
             flag === Feature.BULK_DELETE && Config.FEATURE_FLAG_ENABLE_BULK_DELETE ||
             flag === Feature.CHANGE_TIER && Config.FEATURE_FLAG_ENABLE_CHANGE_TIER ||
             flag === Feature.ANALYTICS && Config.FEATURE_FLAG_ENABLE_ANALYTICS ||
-            flag === Feature.TIER_STORAGE_BLOCK && Config.FEATURE_FLAG_TIER_STORAGE_BLOCK;
+            flag === Feature.TIER_STORAGE_BLOCK && Config.FEATURE_FLAG_TIER_STORAGE_BLOCK ||
+            flag === Feature.RESTORE && Config.FEATURE_FLAG_ENABLE_RESTORE;
     }
 }

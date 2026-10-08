@@ -1,0 +1,136 @@
+name: Restore Sidecar
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/actions/docker-build/**'
+      - '.github/workflows/service-restore-sidecar.yml'
+      - 'app/sdms/src/cloud/providers/azure/sidecar/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/actions/docker-build/**'
+      - '.github/workflows/service-restore-sidecar.yml'
+      - 'app/sdms/src/cloud/providers/azure/sidecar/**'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the restore image to GHCR'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  SIDECAR_PATH: app/sdms/src/cloud/providers/azure/sidecar
+  RESTORE_PROJECT: src/Sidecar.RestoreRunner/Sidecar.RestoreRunner.csproj
+  RESTORE_DOCKERFILE: app/sdms/src/cloud/providers/azure/sidecar/src/Sidecar.RestoreRunner/Dockerfile
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309  # v5.1.0
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        working-directory: ${{ env.SIDECAR_PATH }}
+        run: dotnet restore Sidecar.sln --source https://api.nuget.org/v3/index.json
+
+      - name: Build
+        working-directory: ${{ env.SIDECAR_PATH }}
+        run: dotnet build Sidecar.sln --no-restore --configuration Release
+
+      - name: Test
+        working-directory: ${{ env.SIDECAR_PATH }}
+        run: dotnet test Sidecar.sln --no-build --no-restore --configuration Release
+
+      - name: Publish restore runner
+        working-directory: ${{ env.SIDECAR_PATH }}
+        run: >-
+          dotnet publish "${{ env.RESTORE_PROJECT }}"
+          --no-build
+          --no-restore
+          --configuration Release
+          --output "${{ runner.temp }}/restore-runtime"
+          /p:UseAppHost=false
+
+      - name: Upload restore runtime
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        with:
+          name: restore-runtime
+          path: ${{ runner.temp }}/restore-runtime/
+          if-no-files-found: error
+          retention-days: 2
+
+  image-build:
+    name: Image Build
+    needs: build
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.publish != true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: Validate restore image
+        uses: ./.github/actions/docker-build
+        with:
+          push: 'false'
+          image_name: ${{ format('{0}-restore', github.event.repository.name) }}
+          build_kind: artifact
+          source_artifact_name: restore-runtime
+          dockerfile_path: ${{ env.RESTORE_DOCKERFILE }}
+
+  image-push:
+    name: Image Push
+    needs: build
+    if: |
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish == true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: Publish restore image
+        uses: ./.github/actions/docker-build
+        with:
+          push: 'true'
+          image_name: ${{ format('{0}-restore', github.event.repository.name) }}
+          build_kind: artifact
+          source_artifact_name: restore-runtime
+          dockerfile_path: ${{ env.RESTORE_DOCKERFILE }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  summary:
+    name: Restore Sidecar Summary
+    needs: [build, image-build, image-push]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify result
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          IMAGE_BUILD_RESULT: ${{ needs.image-build.result }}
+          IMAGE_PUSH_RESULT: ${{ needs.image-push.result }}
+        run: |
+          set -euo pipefail
+          if [ "$BUILD_RESULT" != "success" ]; then
+            echo "::error::Restore sidecar build and tests: $BUILD_RESULT"
+            exit 1
+          fi
+          if [ "$IMAGE_BUILD_RESULT" != "success" ] && [ "$IMAGE_PUSH_RESULT" != "success" ]; then
+            echo "::error::Restore sidecar image was not validated or published"
+            exit 1
+          fi
+          echo "Restore sidecar build, tests, and image validation passed."

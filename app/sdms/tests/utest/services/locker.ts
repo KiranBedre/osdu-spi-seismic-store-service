@@ -17,9 +17,10 @@
 import redis from 'ioredis-mock';
 import Redlock from 'redlock';
 import sinon from 'sinon';
+import { expect } from 'chai';
 import { google, JournalFactoryTenantClient } from '../../../src/cloud';
 import { DatasetDAO, DatasetModel } from '../../../src/services/dataset';
-import { Locker } from '../../../src/services/dataset/locker';
+import { Locker, lockerInstance } from '../../../src/services/dataset/locker';
 import { Tx } from '../utils';
 
 
@@ -589,4 +590,73 @@ export class TestLocker {
 	// }
 
 
+}
+
+export class TestLockerExtensions {
+
+	private static sandbox: sinon.SinonSandbox;
+	private static setStub: sinon.SinonStub;
+	private static evalStub: sinon.SinonStub;
+
+	public static run() {
+		describe(Tx.testInit('locker extensions (setNX, delIfMatch)'), () => {
+			beforeEach(() => {
+				this.sandbox = sinon.createSandbox();
+				// Ensure lockerInstance has a redisClient (ioredis-mock) if not already initialized
+				if (!(lockerInstance as any).redisClient) {
+					(lockerInstance as any).redisClient = new redis();
+				}
+				this.setStub = this.sandbox.stub((lockerInstance as any).redisClient, 'set');
+				this.evalStub = this.sandbox.stub((lockerInstance as any).redisClient, 'eval');
+			});
+
+			afterEach(() => {
+				this.sandbox.restore();
+			});
+
+			this.testSetNX();
+			this.testDelIfMatch();
+		});
+	}
+
+	private static testSetNX() {
+		Tx.sectionInit('setNX');
+
+		Tx.test(async () => {
+			this.setStub.resolves('OK');
+			const result = await lockerInstance.setNX('restore-op-lock:tenant-a', 'op-123', 7200);
+			expect(result).to.equal('OK');
+		});
+
+		Tx.test(async () => {
+			this.setStub.resolves(null);
+			const result = await lockerInstance.setNX('restore-op-lock:tenant-a', 'op-123', 7200);
+			expect(result).to.equal(null);
+		});
+
+		Tx.test(async () => {
+			this.setStub.resolves('OK');
+			await lockerInstance.setNX('restore-op-lock:tenant-a', 'op-123', 7200);
+			sinon.assert.calledOnceWithExactly(
+				this.setStub,
+				'restore-op-lock:tenant-a', 'op-123', 'EX', 7200, 'NX'
+			);
+		});
+	}
+
+	private static testDelIfMatch() {
+		Tx.sectionInit('delIfMatch');
+
+		Tx.test(async () => {
+			this.evalStub.resolves(1);
+			const result = await lockerInstance.delIfMatch('restore-op-lock:tenant-a', 'op-123');
+			expect(result).to.equal(true);
+		});
+
+		Tx.test(async () => {
+			this.evalStub.resolves(0);
+			const result = await lockerInstance.delIfMatch('restore-op-lock:tenant-a', 'op-123');
+			expect(result).to.equal(false);
+		});
+	}
 }

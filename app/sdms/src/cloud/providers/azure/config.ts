@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,6 +54,34 @@ export class AzureConfig extends Config {
 
     // cosmo db max throughput settings
     public static COSMO_MAX_THROUGHPUT: number;
+    public static COSMO_CHANGE_TIER_MAX_THROUGHPUT: number;
+    public static COSMO_ARCHIVE_MAX_THROUGHPUT: number;
+    public static COSMO_RESTORE_STATUS_MAX_THROUGHPUT: number;
+
+    // Cosmos DB database and container names
+    public static COSMOS_DATABASE_ID = 'sdms-db';
+    public static COSMOS_DATA_CONTAINER = 'data';
+    public static COSMOS_CHANGE_TIER_STATUS_CONTAINER = 'ChangeTierOperationStatus';
+    public static COSMOS_CHANGE_TIER_FAILURE_CONTAINER = 'ChangeTierFailure';
+    public static COSMOS_RESTORE_STATUS_CONTAINER = 'RestoreOperationStatus';
+    public static COSMOS_ARCHIVE_CONTAINER = 'ArchiveDatasetMetadata';
+    public static COSMOS_RESTORE_STATUS_PARTITION_KEY = '/operationId';
+    public static COSMOS_ARCHIVE_PARTITION_KEY = '/sdPath';
+
+    // Archive TTL derived from restore max days (Config.SDMS_RESTORE_MAX_DAYS)
+    public static get COSMOS_ARCHIVE_TTL_SECONDS(): number {
+        const maxDays = Config.SDMS_RESTORE_MAX_DAYS;
+        const validDays = Number.isInteger(maxDays) && maxDays > 0 ? maxDays : 30;
+        return validDays * 24 * 60 * 60;
+    }
+
+    // Dataset entity ID prefix — only entities with this prefix are archived
+    public static DATASET_ENTITY_PREFIX = 'ds-';
+
+    // Cosmos DB partition key paths
+    public static COSMOS_PARTITION_KEY_ID = '/id';
+    public static COSMOS_PARTITION_KEY_OPERATION_ID = '/operationId';
+    public static COSMOS_PARTITION_KEY_SDPATH = '/sdPath';
 
     // internal logging
     public static ENABLE_LOGGING_INFO: boolean;
@@ -135,6 +163,10 @@ export class AzureConfig extends Config {
             AzureConfig.SDMS_CHANGE_TIER_QUEUE = process.env.SDMS_CHANGE_TIER_QUEUE ||
                 AzureConfig.SDMS_CHANGE_TIER_QUEUE || 'sdms-queue-changetier';
 
+            // restore operation queue
+            AzureConfig.SDMS_RESTORE_QUEUE = process.env.SDMS_RESTORE_QUEUE ||
+                AzureConfig.SDMS_RESTORE_QUEUE || 'sdms-queue-restore';
+
             // storage queue endpoint
             AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT = AzureConfig.AZURE_STORAGE_QUEUE_ENDPOINT ||
                 process.env.AZURE_STORAGE_QUEUE_ENDPOINT;
@@ -151,6 +183,10 @@ export class AzureConfig extends Config {
 
             // cosmo throughput settings
             AzureConfig.COSMO_MAX_THROUGHPUT = +process.env.COSMO_MAX_THROUGHPUT || 40000;
+            AzureConfig.COSMO_CHANGE_TIER_MAX_THROUGHPUT = +process.env.COSMO_CHANGE_TIER_MAX_THROUGHPUT || 4000;
+            // Archive is written on every dataset mutation; restore status is low volume.
+            AzureConfig.COSMO_ARCHIVE_MAX_THROUGHPUT = +process.env.COSMO_ARCHIVE_MAX_THROUGHPUT || 4000;
+            AzureConfig.COSMO_RESTORE_STATUS_MAX_THROUGHPUT = +process.env.COSMO_RESTORE_STATUS_MAX_THROUGHPUT || 4000;
 
             // logging
             AzureConfig.ENABLE_LOGGING_INFO = process.env.ENABLE_LOGGING_INFO !== 'false'; // enabled by default
@@ -183,6 +219,7 @@ export class AzureConfig extends Config {
                 SMDS_DELETION_QUEUE: AzureConfig.SMDS_DELETION_QUEUE,
                 SDMS_COMPUTE_SIZE_QUEUE: AzureConfig.SDMS_COMPUTE_SIZE_QUEUE,
                 SDMS_CHANGE_TIER_QUEUE: AzureConfig.SDMS_CHANGE_TIER_QUEUE,
+                SDMS_RESTORE_QUEUE: AzureConfig.SDMS_RESTORE_QUEUE,
                 DES_SERVICE_HOST_COMPLIANCE: AzureConfig.DES_SERVICE_HOST_COMPLIANCE,
                 DES_SERVICE_HOST_ENTITLEMENT: AzureConfig.DES_SERVICE_HOST_ENTITLEMENT,
                 DES_SERVICE_HOST_STORAGE: AzureConfig.DES_SERVICE_HOST_STORAGE,
@@ -219,6 +256,7 @@ export class AzureConfig extends Config {
                 FEATURE_FLAG_ENABLE_CHANGE_TIER: process.env.FEATURE_FLAG_ENABLE_CHANGE_TIER === 'true' || false,
                 FEATURE_FLAG_ENABLE_ANALYTICS: process.env.FEATURE_FLAG_ENABLE_ANALYTICS === 'true',
                 FEATURE_FLAG_TIER_STORAGE_BLOCK: process.env.FEATURE_FLAG_TIER_STORAGE_BLOCK === 'true',
+                FEATURE_FLAG_ENABLE_RESTORE: process.env.FEATURE_FLAG_ENABLE_RESTORE === 'true' || false,
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,
                 CCM_TOKEN_SCOPE: AzureConfig.CCM_TOKEN_SCOPE,
                 CALLER_FORWARD_HEADERS: process.env.CALLER_FORWARD_HEADERS ?

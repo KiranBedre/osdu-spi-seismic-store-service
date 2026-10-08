@@ -29,3 +29,4 @@ coverage
 test-results.xml
 allure-results
 cimpl/allure-results
+.prompts/

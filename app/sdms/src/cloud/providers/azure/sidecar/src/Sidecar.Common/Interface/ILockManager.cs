@@ -37,6 +37,18 @@ public interface ILockManager
     Task<WriteLockSession> AcquireWriteLockAsync(string key);
 
     /// <summary>
+    /// Attempts to acquire a write lock with an operation-stable ID and TTL.
+    /// </summary>
+    /// <param name="key">The dataset to be locked.</param>
+    /// <param name="idempotentLockId">The operation-stable lock ID.</param>
+    /// <param name="ttl">Time-to-live for the lock.</param>
+    /// <returns>The acquired lock session, or an unlocked session when acquisition fails.</returns>
+    Task<WriteLockSession> AcquireWriteLockAsync(
+        string key,
+        string idempotentLockId,
+        TimeSpan ttl);
+
+    /// <summary>
     /// Attempts to remove a delete lock.
     /// </summary>
     /// <param name="key">The dataset to be unlocked</param>
@@ -49,4 +61,14 @@ public interface ILockManager
     /// <param name="session">Lock session to be removed.</param>
     /// <returns>`true` if the write lock could be removed, `false` otherwise.</returns>
     Task<bool> RemoveWriteLockAsync(WriteLockSession session);
+
+    /// <summary>
+    /// Converts an existing write lock into an indefinite (no-TTL) lock so it never expires.
+    /// Used to fence off a dataset that was left in a potentially inconsistent state by a failed
+    /// operation: the lock must be held until an operator manually recovers the dataset, so it must
+    /// not silently expire via TTL. The lock value must still match the session's <c>Wid</c>.
+    /// </summary>
+    /// <param name="session">Lock session to make indefinite.</param>
+    /// <returns>`true` if the lock's TTL was removed, `false` otherwise.</returns>
+    Task<bool> MakeWriteLockIndefiniteAsync(WriteLockSession session);
 }

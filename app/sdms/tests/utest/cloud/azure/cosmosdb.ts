@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2024, Schlumberger
+// Copyright 2017-2026, Schlumberger, Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import crypto from 'crypto'
 
 import { Container, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
 import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureConfig, AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
+import { AzureArchiveService } from '../../../../src/cloud/providers/azure/archive-service';
 import { DatasetModel, AndQueryFilter, MatchQueryFilter, QueryFilter, QueryFilterVisitor } from '../../../../src/services/dataset';
 import { Config } from '../../../../src/cloud';
+import { Feature, FeatureFlags } from '../../../../src/shared';
 import { IJournalQueryModel } from '../../../../src/cloud/journal';
 import { Tx } from '../../utils';
 import { CosmosDbTestHelper } from './cosmosdb-test-helper';
@@ -83,6 +85,7 @@ export class TestAzureCosmosDbDAO {
             this.save();
             this.get();
             this.delete();
+            this.saveArchivalFailure();
             this.createQuery();
             this.runQuery();
             this.createKey();
@@ -182,6 +185,32 @@ export class TestAzureCosmosDbDAO {
         Tx.test(async () => {
             this.sandbox.stub(Item.prototype, 'delete').resolves();
             await this.cosmos.delete({ partitionKey: 'entity' });
+        });
+    }
+
+    private static saveArchivalFailure() {
+        Tx.sectionInit('save should fail when archival fails');
+
+        Tx.test(async () => {
+            this.sandbox.stub(FeatureFlags, 'isEnabled').returns(true);
+            const archiveStub = this.sandbox.stub(AzureArchiveService, 'archiveBeforeSave')
+                .rejects(new Error('Archival failed'));
+            this.sandbox.stub(Items.prototype, 'upsert').resolves({} as any);
+
+            const mockEntity = {
+                key: { partitionKey: 'ds-test-entity' },
+                data: { id: 'test' }
+            };
+
+            try {
+                await this.cosmos.save(mockEntity);
+                assert.fail('Expected save to throw when archival fails');
+            } catch (err: any) {
+                assert.include(err.message, 'Archival failed');
+            }
+
+            // Verify upsert was never called (blocked by archival failure)
+            sinon.assert.notCalled(Items.prototype.upsert as sinon.SinonStub);
         });
     }
 

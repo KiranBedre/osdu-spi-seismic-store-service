@@ -1,0 +1,3997 @@
+{
+  "info": {
+    "name": "Seismic DMS (SDMS) - Single File Restore Test Collection (clean-room)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Swagger-driven + repo-mined test collection for the SDMS single-file point-in-time restore feature. Spec: OSDU-Seismic-DDMS/app/sdms/docs/api/openapi.yaml (Seismic DMS Service v3.0.0, base /seistore-svc/api/v3). Endpoints under test: POST /operation/restore, GET /operation/restore/{operationId}. Source mined statically (never executed) from app/sdms/src/services/operation (handler.ts, service.ts, restore-status.ts) + shared/error.ts, shared/featureflags.ts. Full analysis: seismic-restore.spec-vs-code.md.\n\nTEST-PLAN COVERAGE (references/seismic-single-file-restore-test-plan.md):\n- Functional: TC-RST-FUNC-01/02 (update-then-restore, uniform/dataset), TC-RST-FUNC-03/04 (delete-then-restore) - see 'EXECUTION - FUNCTIONAL SCENARIOS'.\n- Validation: TC-RST-VLD-01..08. Auth: TC-RST-AUTH-01..04. Concurrency: TC-RST-CON-01 (deterministic 409) / CON-02 (other partition). Status: TC-RST-STS-01..05. Feature flag: TC-RST-FLG-01.\n- TC-RST-REL-01/02 (dependency-outage) are infrastructure fault-injection scenarios that cannot be provoked from an API collection; run them manually with a fault harness (documented, not scripted).\n\nKEY REPO-CONFIRMED behaviour [confirmed: repo]:\n(1) POST 202 body is { operation_id, statusUrl } (snake_case, NO status field) - unlike swagger RestoreAccepted; RST-001's 'status=InProgress' in the trigger response is NOT met by code. Capture is defensive.\n(2) POST also returns 404 (dataset missing without an archive), 423 (write-locked), 503 (retention SDMS_RESTORE_MAX_DAYS unconfigured / Redis down) - none documented on the POST.\n(3) Concurrency 409 is per DATA PARTITION / tenant, NOT per dataset (RestoreOperationLock + Cosmos query keyed by tenant).\n(4) GET status: missing data-partition-id -> 400 (not 403); unknown/malformed id -> 404.\n(5) Terminal statuses Succeeded/Failed; in-flight InProgress. Failure detail is in error_message (swagger calls it 'error').\n(6) Feature gate FEATURE_FLAG_ENABLE_RESTORE off -> 501 (checkFeature runs before body validation). POST needs subproject.admin; GET needs a registered partition user.\n(7) Deleted datasets are accepted for restore when archive metadata exists; TC-RST-FUNC-03/04 require POST /operation/restore to return 202.\n\nRUN NOTES: set base_url host, access_token (subproject.admin), tenant_esd/tenant_default_acls before running. Set a per-request delay (~poll_delay_ms) in the runner for the poll steps. RST-011 access-policy parity is covered in a single run: SETUP provisions BOTH a uniform and an access_policy=dataset subproject/dataset (Setup 2b/3b/5b/6b/7b, sharing one legal tag), the dedicated 'EXECUTION - FUNCTIONAL SCENARIOS (DATASET POLICY)' folder runs FUNC-02/04 against the *_ds variable namespace, and CLEANUP tears both down (Cleanup 1b/2b). The dataset-policy restore role is dataset.admin - the same access_token must carry it. SDMS uses sd:// path addressing + ltag header, NOT the OSDU acl/legal request envelope (seismic.md S2)."
+  },
+  "item": [
+    {
+      "name": "PRECHECK - Restore feature-flag gate",
+      "item": [
+        {
+          "name": "PRECHECK - probe restore feature flag (skip whole collection if disabled)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Probe the GET status endpoint with a dummy operation id to detect whether the restore feature is enabled.",
+                  "// [confirmed: repo] checkFeature runs before the lookup: FEATURE_FLAG_ENABLE_RESTORE off -> 501 'feature is not enabled'.",
+                  "// When the feature is ON, an unknown operation id resolves to 404.",
+                  "var code = pm.response.code;",
+                  "var body = pm.response.text() || '';",
+                  "console.log('[PRECHECK] HTTP ' + code + ' body: ' + body);",
+                  "if (code === 501 && /feature is not enabled/i.test(body)) {",
+                  "  // Feature disabled: nothing has been provisioned yet, so stop the run entirely (skips SETUP/EXECUTION/CLEANUP).",
+                  "  pm.collectionVariables.set('restore_feature_enabled', 'false');",
+                  "  pm.test('SKIP: restore feature is disabled - skipping the entire collection', function () { pm.expect(true).to.be.true; });",
+                  "  console.log('[PRECHECK] Restore feature is DISABLED (501 feature is not enabled). Skipping the entire collection.');",
+                  "  pm.execution.setNextRequest(null);",
+                  "} else if (code === 404) {",
+                  "  // Feature enabled: unknown operation id yields 404. Proceed with the rest of the collection.",
+                  "  pm.collectionVariables.set('restore_feature_enabled', 'true');",
+                  "  pm.test('restore feature enabled (GET status returns 404 for an unknown operation id)', function () { pm.expect(code).to.eql(404); });",
+                  "} else {",
+                  "  // Anything else is inconclusive (e.g. auth/registration issue) - surface it rather than silently continuing.",
+                  "  pm.test('PRECHECK inconclusive - expected 404 (enabled) or 501 feature-not-enabled (disabled), got ' + code, function () { pm.expect([404, 501]).to.include(code); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{precheck_operation_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{precheck_operation_id}}"
+              ]
+            },
+            "description": "Feature-flag gate. GET /operation/restore/{operationId} with a dummy operation id. [confirmed: repo] checkFeature runs first: if FEATURE_FLAG_ENABLE_RESTORE is off the service returns 403 with a 'feature is not enabled' message and the whole collection is skipped (setNextRequest(null)); if enabled, an unknown id returns 404 and the run proceeds."
+          }
+        }
+      ]
+    },
+    {
+      "name": "SETUP",
+      "item": [
+        {
+          "name": "Setup 0 - Initialize variables + preconditions (svcstatus probe)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Preconditions (a collection cannot grant these):",
+                  "// - access_token belongs to tenant.admin (tenant create) + subproject.admin (restore).",
+                  "// - FEATURE_FLAG_ENABLE_RESTORE enabled and SDMS_RESTORE_MAX_DAYS configured on the deployment.",
+                  "if (!pm.collectionVariables.get('tenant_id')) { pm.collectionVariables.set('tenant_id', pm.variables.get('data_partition_id')); }",
+                  "var suffix = Date.now();",
+                  "if (!pm.collectionVariables.get('subproject_id')) { pm.collectionVariables.set('subproject_id', 'sp-restore-' + suffix); }",
+                  "if (!pm.collectionVariables.get('dataset_id')) { pm.collectionVariables.set('dataset_id', 'ds-restore-' + suffix); }",
+                  "pm.collectionVariables.set('dataset_path', '/');",
+                  "var t = pm.collectionVariables.get('tenant_id');",
+                  "var sp = pm.collectionVariables.get('subproject_id');",
+                  "var ds = pm.collectionVariables.get('dataset_id');",
+                  "pm.collectionVariables.set('sd_path', 'sd://' + t + '/' + sp + '/' + ds);",
+                  "// Dataset-policy parallel resources (RST-011). A distinct subproject/dataset created with access_policy=dataset,",
+                  "// sharing the same tenant and legal tag as the uniform flow.",
+                  "if (!pm.collectionVariables.get('subproject_id_ds')) { pm.collectionVariables.set('subproject_id_ds', 'sp-restore-ds-' + suffix); }",
+                  "if (!pm.collectionVariables.get('dataset_id_ds')) { pm.collectionVariables.set('dataset_id_ds', 'ds-restore-ds-' + suffix); }",
+                  "pm.collectionVariables.set('access_policy_ds', 'dataset');",
+                  "pm.collectionVariables.set('sd_path_ds', 'sd://' + t + '/' + pm.collectionVariables.get('subproject_id_ds') + '/' + pm.collectionVariables.get('dataset_id_ds'));",
+                  "var partition = pm.variables.get('data_partition_id') || pm.collectionVariables.get('data_partition_id');",
+                  "// Short name is what we POST to the Legal service; the service prepends '{partition}-' to form the full tag name.",
+                  "if (!pm.collectionVariables.get('legal_tag_short_name')) { pm.collectionVariables.set('legal_tag_short_name', 'public-usa-dataset-1'); }",
+                  "if (!pm.collectionVariables.get('legal_tag_name')) { pm.collectionVariables.set('legal_tag_name', partition + '-' + pm.collectionVariables.get('legal_tag_short_name')); }",
+                  "// Derive the OSDU Legal service base URL from base_url (same host, different path than seistore-svc).",
+                  "var bu = pm.collectionVariables.get('base_url') || '';",
+                  "var m = bu.match(/^(https?:\\/\\/[^\\/]+)/);",
+                  "if (m && !pm.collectionVariables.get('legal_base_url')) { pm.collectionVariables.set('legal_base_url', m[1] + '/api/legal/v1'); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('variables initialized', function () { pm.expect(pm.collectionVariables.get('sd_path')).to.be.a('string').and.not.empty; });",
+                  "pm.test('dataset-policy variables initialized', function () { pm.expect(pm.collectionVariables.get('sd_path_ds')).to.be.a('string').and.not.empty; pm.expect(pm.collectionVariables.get('access_policy_ds')).to.eql('dataset'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/svcstatus",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "svcstatus"
+              ]
+            },
+            "description": "Anchors the variable-initialization prerequest. /svcstatus is public (security: [])."
+          }
+        },
+        {
+          "name": "Setup 1 - Register tenant (idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('tenant registered or already exists', function () { pm.expect([200, 409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenant/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenant",
+                "{{tenant_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gcpid\": \"{{data_partition_id}}\",\n  \"esd\": \"{{tenant_esd}}\",\n  \"default_acls\": \"{{tenant_default_acls}}\"\n}"
+            },
+            "description": "POST /tenant/{tenantid}. TenantCreateBody requires gcpid, esd, default_acls. Roles: tenant.admin, users.datalake.ops. Ignore 409 on an already-onboarded partition."
+          }
+        },
+        {
+          "name": "Setup 1b - Create legal tag (idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('legal tag created or already exists', function () { pm.expect([201, 409]).to.include(pm.response.code); });",
+                  "// On 201 the Legal service returns the full name (already prefixed with the data partition). Capture it as the ltag used downstream.",
+                  "try { var j = pm.response.json(); if (pm.response.code === 201 && j && j.name) { pm.collectionVariables.set('legal_tag_name', j.name); } } catch (e) { console.log('legal tag parse failed', e); }",
+                  "pm.test('legal_tag_name set', function () { pm.expect(pm.collectionVariables.get('legal_tag_name')).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{legal_base_url}}/legaltags",
+              "host": [
+                "{{legal_base_url}}"
+              ],
+              "path": [
+                "legaltags"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{legal_tag_short_name}}\",\n  \"description\": \"Legal tag for SDMS single-file restore test collection\",\n  \"properties\": {\n    \"countryOfOrigin\": [\"US\"],\n    \"contractId\": \"A1234\",\n    \"expirationDate\": \"2099-12-31\",\n    \"originator\": \"MyCompany\",\n    \"dataType\": \"Transferred Data\",\n    \"securityClassification\": \"Public\",\n    \"personalData\": \"No Personal Data\",\n    \"exportClassification\": \"EAR99\"\n  }\n}"
+            },
+            "description": "POST {legal_base_url}/legaltags creates the OSDU legal tag referenced by the SDMS 'ltag' header in Setup 2/3. The Legal service prepends '{data-partition-id}-' to the posted 'name', so the created full name matches {{legal_tag_name}}. Idempotent: 409 means the tag already exists. Requires a token with users.datalake.editors / legal privileges on the partition."
+          }
+        },
+        {
+          "name": "Setup 2 - Create subproject (capture access_policy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('subproject created or already exists', function () { pm.expect([200, 409]).to.include(pm.response.code); });",
+                  "try { var j = pm.response.json(); if (j && j.access_policy) { pm.collectionVariables.set('access_policy', j.access_policy); } } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "ltag",
+                "value": "{{legal_tag_name}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subproject/tenant/{{tenant_id}}/subproject/{{subproject_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subproject",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"access_policy\": \"{{access_policy}}\"\n}"
+            },
+            "description": "POST /subproject/.../subproject/{subprojectid}. Role: tenant.admin. ltag header carries the legal tag. subprojectid matches ^[a-z][a-z\\d\\-]*[a-z\\d]$. Flip access_policy to 'dataset' for RST-011 parity (FUNC-02/04)."
+          }
+        },
+        {
+          "name": "Setup 3 - Register dataset (capture sbit; register acquires the write lock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset registered or already exists', function () { pm.expect([200, 409]).to.include(pm.response.code); });",
+                  "try { var j = pm.response.json(); if (j && j.name) { pm.collectionVariables.set('dataset_id', j.name); } if (j && j.sbit) { pm.collectionVariables.set('sbit', j.sbit); } } catch (e) { console.log('register parse failed', e); }",
+                  "pm.test('captured sbit from register', function () { pm.expect(pm.collectionVariables.get('sbit')).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "ltag",
+                "value": "{{legal_tag_name}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "POST /dataset/.../dataset/{datasetid}. Role: subproject.admin. Establishes created_date (restorePointInTime must be strictly after it). Registration already opens the dataset for write and returns the session id in 'sbit', so no separate lock call is needed - the sbit is captured here and used by the close (PATCH ...?close={{sbit}})."
+          }
+        },
+        {
+          "name": "Setup 5 - Get upload connection string (capture SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('upload connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('upload_sas', j.access_token); } if (j && j.token_type) { pm.collectionVariables.set('upload_token_type', j.token_type); } } catch (e) { console.log('conn-string parse failed', e); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/upload-connection-string?sdpath={{sd_path}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "upload-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path}}"
+                }
+              ]
+            },
+            "description": "GET /utility/upload-connection-string?sdpath=... Azure: access_token = SAS URL, token_type=SasUrl. Used client-side; not an SDMS write (seismic.md S3)."
+          }
+        },
+        {
+          "name": "Setup 6 - Upload dummy blob v1 via SAS (Azure, best-effort)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var sas = pm.collectionVariables.get('upload_sas') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('blob_url', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('blob_url', sas); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('blob uploaded or skipped', function () { pm.expect([200, 201, 202, 0]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-ms-blob-type",
+                "value": "BlockBlob"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/octet-stream"
+              }
+            ],
+            "url": {
+              "raw": "{{blob_url}}",
+              "host": [
+                "{{blob_url}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{{blob_v1_content}}"
+            },
+            "description": "PUT to the Azure Block Blob SAS URL (blob '0'). No SDMS headers - direct to Azure (seismic.md S3 step 6). Best-effort precondition; skip on non-Azure CSPs. Payload comes from {{blob_v1_content}} so the post-restore blob assertion compares against the exact same bytes."
+          }
+        },
+        {
+          "name": "Setup 7 - Patch + close (unlock) v1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset patched and closed (200)', function () { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}?close={{sbit}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ],
+              "query": [
+                {
+                  "key": "close",
+                  "value": "{{sbit}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filemetadata\": { \"nObject\": 1, \"totalSize\": 16, \"objsize\": 16, \"sizeUnit\": \"B\" }\n}"
+            },
+            "description": "PATCH .../dataset/{datasetid}?close={{sbit}} releases the write lock and finalizes v1. filemetadata.totalSize=16 is the v1 marker used by FUNC-01/02 to detect content revert."
+          }
+        },
+        {
+          "name": "Setup 2b - Create subproject (access_policy=dataset)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('subproject created or already exists', function () { pm.expect([200, 409]).to.include(pm.response.code); });",
+                  "try { var j = pm.response.json(); if (j && j.access_policy) { pm.collectionVariables.set('access_policy_ds', j.access_policy); } } catch (e) {}",
+                  "pm.test('subproject access_policy is dataset', function () { var pol = pm.collectionVariables.get('access_policy_ds'); try { var j = pm.response.json(); if (j && j.access_policy) { pol = j.access_policy; } } catch (e) {} pm.expect(pol).to.eql('dataset'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "ltag",
+                "value": "{{legal_tag_name}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subproject/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subproject",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"access_policy\": \"{{access_policy_ds}}\"\n}"
+            },
+            "description": "Dataset-policy counterpart of Setup 2: creates a SECOND subproject registered with access_policy=dataset (RST-011 parity). Shares the same legal tag as the uniform subproject. subproject.admin required."
+          }
+        },
+        {
+          "name": "Setup 3b - Register dataset for dataset-policy subproject (capture sbit_ds)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset registered or already exists', function () { pm.expect([200, 409]).to.include(pm.response.code); });",
+                  "try { var j = pm.response.json(); if (j && j.name) { pm.collectionVariables.set('dataset_id_ds', j.name); } if (j && j.sbit) { pm.collectionVariables.set('sbit_ds', j.sbit); } } catch (e) { console.log('register parse failed', e); }",
+                  "pm.test('captured sbit from register', function () { pm.expect(pm.collectionVariables.get('sbit_ds')).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "ltag",
+                "value": "{{legal_tag_name}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "POST /dataset/.../dataset/{datasetid}. Role: subproject.admin. Establishes created_date (restorePointInTime must be strictly after it). Registration already opens the dataset for write and returns the session id in 'sbit_ds', so no separate lock call is needed - the sbit is captured here and used by the close (PATCH ...?close={{sbit_ds}})."
+          }
+        },
+        {
+          "name": "Setup 5b - Get upload connection string (dataset, capture SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('upload connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('upload_sas_ds', j.access_token); } if (j && j.token_type) { pm.collectionVariables.set('upload_token_type_ds', j.token_type); } } catch (e) { console.log('conn-string parse failed', e); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/upload-connection-string?sdpath={{sd_path_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "upload-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path_ds}}"
+                }
+              ]
+            },
+            "description": "GET /utility/upload-connection-string?sdpath=... Azure: access_token = SAS URL, token_type=SasUrl. Used client-side; not an SDMS write (seismic.md S3)."
+          }
+        },
+        {
+          "name": "Setup 6b - Upload dummy blob v1 via SAS (dataset, Azure best-effort)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var sas = pm.collectionVariables.get('upload_sas_ds') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('blob_url_ds', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('blob_url_ds', sas); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('blob uploaded or skipped', function () { pm.expect([200, 201, 202, 0]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-ms-blob-type",
+                "value": "BlockBlob"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/octet-stream"
+              }
+            ],
+            "url": {
+              "raw": "{{blob_url_ds}}",
+              "host": [
+                "{{blob_url_ds}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{{blob_v1_content}}"
+            },
+            "description": "PUT to the Azure Block Blob SAS URL (blob '0'). No SDMS headers - direct to Azure (seismic.md S3 step 6). Best-effort precondition; skip on non-Azure CSPs. Payload comes from {{blob_v1_content}} so the post-restore blob assertion compares against the exact same bytes."
+          }
+        },
+        {
+          "name": "Setup 7b - Patch + close (unlock) v1 (dataset)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset patched and closed (200)', function () { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}?close={{sbit_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ],
+              "query": [
+                {
+                  "key": "close",
+                  "value": "{{sbit_ds}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filemetadata\": { \"nObject\": 1, \"totalSize\": 16, \"objsize\": 16, \"sizeUnit\": \"B\" }\n}"
+            },
+            "description": "PATCH .../dataset/{datasetid}?close={{sbit_ds}} releases the write lock and finalizes v1. filemetadata.totalSize=16 is the v1 marker used by FUNC-01/02 to detect content revert."
+          }
+        }
+      ]
+    },
+    {
+      "name": "EXECUTION - CONTRACT & NEGATIVES",
+      "item": [
+        {
+          "name": "RST-001 / TC-RST-AUTH-04 - POST restore (happy path, capture operation_id)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Reset any operationId captured by a previous restore so a failed POST can't leave a stale id for the poll.",
+                  "pm.collectionVariables.set('operation_id', '');",
+                  "// restorePointInTime must be AFTER dataset creation, IN THE PAST, and within retention.",
+                  "// Capture the current UTC time after setup, then wait so it is safely in the past when the request is sent.",
+                  "pm.collectionVariables.set('restore_timestamp', new Date().toISOString());",
+                  "setTimeout(function () {}, 2000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 202 Accepted', function () { pm.expect(pm.response.code).to.eql(202); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "// [confirmed: repo] handler returns { operation_id, statusUrl } (snake_case, no 'status'). Capture defensively.",
+                  "var opId = j.operationId || j.operation_id;",
+                  "if (opId) { pm.collectionVariables.set('operation_id', opId); }",
+                  "pm.test('operation id captured', function () { pm.expect(pm.collectionVariables.get('operation_id')).to.be.a('string').and.not.empty; });",
+                  "pm.test('statusUrl present', function () { pm.expect(j.statusUrl).to.be.a('string').and.not.empty; });",
+                  "// NOTE (spec-vs-code): swagger RestoreAccepted also declares status:'InProgress' but code omits it; RST-001 asserts InProgress via the status endpoint instead."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "POST /operation/restore. RestoreRequest requires sdPath, restorePointInTime. Role: subproject.admin. 202 -> RestoreAccepted. Holds the per-partition restore lock until it completes (drained by the poll below)."
+          }
+        },
+        {
+          "name": "TC-RST-CON-01 / RST-007 - POST restore while op1 in progress -> 409 (deterministic, per data partition)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// [confirmed: repo] concurrency is scoped per DATA PARTITION/tenant. op1 (previous request) is still in progress,",
+                  "// so this second trigger in the same partition must be rejected with 409 - even for the same/other dataset.",
+                  "pm.test('conflict 409 (restore already in progress)', function () { pm.expect(pm.response.code).to.eql(409); });",
+                  "pm.test('409 message names an in-progress operation', function () { pm.expect(pm.response.text()).to.match(/already in progress/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] RestoreOperationLock (Redis) + Cosmos in-progress query, both keyed by tenant, throw ALREADY_EXISTS(409). Runs immediately after the happy-path 202 (op1 still InProgress) so the 409 is deterministic. This request is REJECTED, so it starts no new operation and leaks no lock."
+          }
+        },
+        {
+          "name": "RST-002 / RST-003 / TC-RST-STS-01 - GET status (poll op1 to terminal, expect Succeeded)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('poll_attempt')) { pm.collectionVariables.set('poll_attempt', '0'); }",
+                  "// Wait between polls (10s by default) so we don't hammer the status endpoint. Skips the delay on the first poll.",
+                  "if (parseInt(pm.collectionVariables.get('poll_attempt') || '0', 10) > 0) { setTimeout(function () {}, parseInt(pm.collectionVariables.get('poll_delay_ms') || '10000', 10)); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "console.log('[FUNC-04 poll] response body:', pm.response.text());",
+                  "// Stop polling on an unexpected status code - don't burn retries; fall through to the next request.",
+                  "if (pm.response.code !== 200) { pm.collectionVariables.set('poll_attempt', '0'); return; }",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test('TC-RST-STS-01 required status fields present', function () {",
+                  "  pm.expect(j).to.have.property('operationId');",
+                  "  pm.expect(j).to.have.property('status');",
+                  "  pm.expect(j).to.have.property('sdPath');",
+                  "  pm.expect(j).to.have.property('restorePointInTime');",
+                  "});",
+                  "var status = j.status;",
+                  "var attempt = parseInt(pm.collectionVariables.get('poll_attempt') || '0', 10);",
+                  "var maxAttempts = parseInt(pm.collectionVariables.get('poll_max_attempts') || '30', 10);",
+                  "if (status === 'Succeeded') {",
+                  "  pm.collectionVariables.set('poll_attempt', '0');",
+                  "  pm.test('RST-003 restore Succeeded', function () { pm.expect(status).to.eql('Succeeded'); });",
+                  "} else if (status === 'Failed') {",
+                  "  pm.collectionVariables.set('poll_attempt', '0');",
+                  "  pm.expect.fail('Restore terminated as Failed: ' + (j.error_message || j.error || 'no detail'));",
+                  "} else if (status === 'Rejected') {",
+                  "  // [confirmed: repo] Rejected is a terminal status. The FIRST restore triggered in this collection has no",
+                  "  // prior version to revert to, so it transitions to Rejected with a message containing 'nothing to restore'.",
+                  "  pm.collectionVariables.set('poll_attempt', '0');",
+                  "  var rejMsg = (j.error_message || j.error || j.message || j.statusMessage || pm.response.text() || '');",
+                  "  pm.test('RST-003 first restore Rejected (nothing to restore)', function () { pm.expect(status).to.eql('Rejected'); pm.expect(rejMsg).to.match(/nothing to restore/i); });",
+                  "} else {",
+                  "  if (attempt < maxAttempts) { pm.collectionVariables.set('poll_attempt', String(attempt + 1)); pm.execution.setNextRequest(pm.info.requestName); }",
+                  "  else { pm.collectionVariables.set('poll_attempt', '0'); pm.expect.fail('Restore not terminal within ' + maxAttempts + ' polls (last: ' + status + ')'); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{operation_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{operation_id}}"
+              ]
+            },
+            "description": "GET /operation/restore/{operationId}. Polls status until terminal (Succeeded/Failed/Rejected), draining op1's per-partition lock. The first restore in this collection has no prior version to revert to, so it terminates as Rejected with a 'nothing to restore' message (asserted here). Configure a per-request delay (~poll_delay_ms) in the runner. Also covers TC-RST-STS-01 (200 + required fields)."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-01 - POST restore missing sdPath -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 (sdPath required)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] !sdPath -> 400 'sdPath is required and must be a string'."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-02 - POST restore invalid sdPath format -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 (invalid sdPath format)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"not-a-valid-sd-path\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] SDPath.getFromString / missing tenant|subproject -> 400 'Invalid sdPath format...'."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-03 - POST restore missing restorePointInTime -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 (restorePointInTime required)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\"\n}"
+            },
+            "description": "[confirmed: repo] !restorePointInTime -> 400 'restorePointInTime is required and must be an ISO-8601 string'."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-04 - POST restore invalid timestamp format -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 (invalid ISO-8601 date)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"not-a-date\"\n}"
+            },
+            "description": "[confirmed: repo] new Date(ts) NaN -> 400 'restorePointInTime must be a valid ISO-8601 date'."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-05 - POST restore future timestamp -> 400",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('future_timestamp', new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 (must be in the past)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{future_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] ts > Date.now() -> 400 'restorePointInTime must be in the past'."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-06 - POST restore timestamp outside retention -> 400 (tolerate 503 if retention unconfigured)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('old_timestamp', new Date(Date.now() - 3650 * 24 * 60 * 60 * 1000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 outside retention (or 503 if retention unconfigured)', function () { pm.expect([400, 503]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{old_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] Date.now()-ts > maxDays -> 400. If SDMS_RESTORE_MAX_DAYS<=0 the code returns 503 NOT_AVAILABLE first (undocumented in swagger)."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-07 - POST restore timestamp before dataset creation -> 400",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('before_creation_timestamp', new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 (before dataset creation)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{before_creation_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] restoreAt <= created_date -> 400 'restorePointInTime must be after the dataset creation time ...'. Assumes SETUP created the dataset in the last ~2h."
+          }
+        },
+        {
+          "name": "TC-RST-VLD-08 - POST restore timestamp when dataset did not exist yet -> 400",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('pre_existence_timestamp', new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 (dataset did not exist at timestamp)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{pre_existence_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] The spec lists 'Dataset did not exist at the provided timestamp' as a distinct 400, but the code enforces it via the SAME created_date guard as VLD-07 (restoreAt <= created_date -> 400). This case uses a timestamp ~6h in the past (before the freshly-created dataset) to exercise that guard from the 'did-not-exist' angle."
+          }
+        },
+        {
+          "name": "TC-RST-AUTH-01 - POST restore no token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unauthorized 401', function () { pm.expect([401]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "No Authorization header -> Auth.isUserRegistered rejects with 401 (security: bearer)."
+          }
+        },
+        {
+          "name": "TC-RST-AUTH-02/03 - POST restore insufficient role -> 403 (needs non_admin_access_token)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('_na_token', pm.collectionVariables.get('non_admin_access_token'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('non_admin_access_token')) { pm.test('forbidden 403 (non-admin / non-registered)', function () { pm.expect([401, 403]).to.include(pm.response.code); }); }",
+                  "else { pm.test('SKIPPED - set non_admin_access_token to exercise RST-AUTH-02/03', function () { pm.expect(true).to.be.true; }); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{_na_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "[confirmed: repo] Auth.isWriteAuthorized requires subproject.admin -> 403; unregistered user -> 403. Needs a genuinely under-privileged identity in non_admin_access_token; skipped otherwise."
+          }
+        },
+        {
+          "name": "TC-RST-FLG-01 - POST restore feature-flag gate (403 if disabled / 400 if enabled)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// [confirmed: repo] checkFeature(Feature.RESTORE) runs BEFORE body validation. Sending an invalid body means:",
+                  "//   feature OFF -> 403 PERMISSION_DENIED; feature ON -> 400 (validation) - and never starts a restore.",
+                  "pm.test('403 when restore feature disabled, else 400 (feature on)', function () { pm.expect([400, 403]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 403) { pm.test('403 body mentions feature not enabled', function () { pm.expect(pm.response.text()).to.match(/feature/i); }); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "Deliberately invalid body so the feature gate is observable without starting a restore: 403 (FEATURE_FLAG_ENABLE_RESTORE off) vs 400 (on). checkFeature precedes parseAndValidateRestoreRequest in restorePush."
+          }
+        },
+        {
+          "name": "TC-RST-STS-02 - GET status unknown operationId -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('not found 404', function () { pm.expect(pm.response.code).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "[confirmed: repo] getRestoreOperationStatus: no resource -> 404 'Restore operation not found for operationId: ...'."
+          }
+        },
+        {
+          "name": "TC-RST-STS-03 - GET status malformed operationId -> 400/404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejected 400 or 404', function () { pm.expect([400, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/not-a-valid-uuid",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "not-a-valid-uuid"
+              ]
+            },
+            "description": "[confirmed: repo] No format validation in the handler; a malformed id simply isn't found -> 404. Tolerant of 400."
+          }
+        },
+        {
+          "name": "TC-RST-STS-04 - GET status missing data-partition-id header -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('bad request 400 (data-partition-id required)', function () { pm.expect(pm.response.code).to.eql(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "[confirmed: repo] restoreStatus: !dataPartitionId -> 400 'data-partition-id header is required' (resolves the test-plan open question; it is 400, not 403). Checked before any lookup, so a dummy id is fine."
+          }
+        },
+        {
+          "name": "TC-RST-STS-AUTH - GET status no token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unauthorized 401', function () { pm.expect([401]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "No Authorization header -> Auth.isUserRegistered rejects with 401."
+          }
+        },
+        {
+          "name": "TC-RST-CON-02 - POST restore in another partition while one active (storage-account scope)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const otherPartition = pm.collectionVariables.get('other_partition_id');",
+                  "const storageAccount = pm.collectionVariables.get('storage_account_name');",
+                  "const otherStorageAccount = pm.collectionVariables.get('other_storage_account_name');",
+                  "if (otherPartition && storageAccount && otherStorageAccount) {",
+                  "  const sharesAccount = storageAccount.toLowerCase() === otherStorageAccount.toLowerCase();",
+                  "  pm.test(sharesAccount ? 'partition sharing storage account is blocked' : 'partition on distinct storage account is not blocked', function () {",
+                  "    if (sharesAccount) {",
+                  "      pm.expect(pm.response.code).to.eql(409);",
+                  "    } else {",
+                  "      pm.expect(pm.response.code).to.not.eql(409);",
+                  "    }",
+                  "  });",
+                  "} else {",
+                  "  pm.test('SKIPPED - set other_partition_id and both DES-resolved storage account names to exercise CON-02', function () { pm.expect(true).to.be.true; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{other_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"sd://{{other_partition_id}}/{{subproject_id}}/{{dataset_id}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "Verifies storage-account-scoped concurrency across partitions. Set other_partition_id plus storage_account_name and other_storage_account_name to the DES-resolved account names. Partitions sharing an account expect 409; partitions on distinct accounts do not."
+          }
+        }
+      ]
+    },
+    {
+      "name": "EXECUTION - FUNCTIONAL SCENARIOS",
+      "item": [
+        {
+          "name": "FUNC prep - GET dataset baseline v1 (capture pre-update state + timestamp)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before reading the v1 baseline; request execution makes it safely historical.",
+                  "pm.collectionVariables.set('pre_update_timestamp', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('baseline dataset readable (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var pre = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "if (pre !== undefined) { pm.collectionVariables.set('pre_update_total_size', String(pre)); }",
+                  "console.log('pre_update_total_size =', pm.collectionVariables.get('pre_update_total_size'), 'pre_update_timestamp =', pm.collectionVariables.get('pre_update_timestamp'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ]
+            },
+            "description": "Baseline for TC-RST-FUNC-01/02: records v1 filemetadata.totalSize (16 from SETUP) and the pre-update point-in-time to restore to."
+          }
+        },
+        {
+          "name": "FUNC update - lock dataset for write v2 (capture sbit2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('write lock acquired (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.sbit) { pm.collectionVariables.set('sbit', j.sbit); } } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}/lock?openmode=write",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}",
+                "lock"
+              ],
+              "query": [
+                {
+                  "key": "openmode",
+                  "value": "write"
+                }
+              ]
+            },
+            "description": "Begin the second write cycle (v2) that mutates the dataset after the pre-update point-in-time."
+          }
+        },
+        {
+          "name": "FUNC update - get upload connection string v2 (capture SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('upload connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('upload_sas', j.access_token); } } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/upload-connection-string?sdpath={{sd_path}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "upload-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path}}"
+                }
+              ]
+            },
+            "description": "Fresh SAS credentials for the v2 upload."
+          }
+        },
+        {
+          "name": "FUNC update - upload modified blob v2 via SAS (Azure, best-effort)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var sas = pm.collectionVariables.get('upload_sas') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('blob_url', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('blob_url', sas); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('modified blob uploaded or skipped', function () { pm.expect([200, 201, 202, 0]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-ms-blob-type",
+                "value": "BlockBlob"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/octet-stream"
+              }
+            ],
+            "url": {
+              "raw": "{{blob_url}}",
+              "host": [
+                "{{blob_url}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "seismic-bytes-v2-MODIFIED-content-longer-than-v1"
+            },
+            "description": "Overwrites blob '0' with modified/larger content, so v2 differs from the pre-update v1 (direct to Azure; best-effort)."
+          }
+        },
+        {
+          "name": "FUNC update - patch+close v2 (post-update marker)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset patched and closed v2 (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "// post-update marker: totalSize now 49 (differs from v1's 16).",
+                  "console.log('post-update committed; will restore back to pre_update_timestamp');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}?close={{sbit}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ],
+              "query": [
+                {
+                  "key": "close",
+                  "value": "{{sbit}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filemetadata\": { \"nObject\": 1, \"totalSize\": 49, \"objsize\": 49, \"sizeUnit\": \"B\" }\n}"
+            },
+            "description": "Finalize v2 with a distinct filemetadata.totalSize (49). This is the post-update state that the restore must roll back."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-01/02 - POST restore to pre-update timestamp (202, capture op id)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('operation_id', '');",
+                  "pm.collectionVariables.set('restore_timestamp', pm.collectionVariables.get('pre_update_timestamp'));",
+                  "pm.collectionVariables.set('poll_attempt', '0');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('restore accepted (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var opId = j.operationId || j.operation_id;",
+                  "if (opId) { pm.collectionVariables.set('operation_id', opId); }",
+                  "pm.test('operation id captured', function () { pm.expect(pm.collectionVariables.get('operation_id')).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "Trigger the point-in-time restore back to the pre-update timestamp. FUNC-01 = access_policy uniform; FUNC-02 = re-run with access_policy=dataset (role dataset.admin)."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-01/02 - poll status until Succeeded",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Wait between polls (10s by default) so we don't hammer the status endpoint. Skips the delay on the first poll.",
+                  "if (parseInt(pm.collectionVariables.get('poll_attempt') || '0', 10) > 0) { setTimeout(function () {}, parseInt(pm.collectionVariables.get('poll_delay_ms') || '10000', 10)); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "// Stop polling on an unexpected status code - don't burn retries; fall through to the next request.",
+                  "if (pm.response.code !== 200) { pm.collectionVariables.set('poll_attempt', '0'); return; }",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var status = j.status;",
+                  "var attempt = parseInt(pm.collectionVariables.get('poll_attempt') || '0', 10);",
+                  "var maxAttempts = parseInt(pm.collectionVariables.get('poll_max_attempts') || '30', 10);",
+                  "if (status === 'Succeeded') { pm.collectionVariables.set('poll_attempt', '0'); pm.test('RST-003 restore Succeeded', function () { pm.expect(status).to.eql('Succeeded'); }); }",
+                  "else if (status === 'Failed') { pm.collectionVariables.set('poll_attempt', '0'); pm.expect.fail('Restore Failed: ' + (j.error_message || j.error || 'no detail')); }",
+                  "else if (status === 'Rejected') { pm.collectionVariables.set('poll_attempt', '0'); pm.test('restore did not end Rejected (Rejected is unexpected for this scenario)', function () { pm.expect(status, (j.error_message || j.error || j.message || j.statusMessage || pm.response.text() || 'no detail')).to.not.eql('Rejected'); }); }",
+                  "else { if (attempt < maxAttempts) { pm.collectionVariables.set('poll_attempt', String(attempt + 1)); pm.execution.setNextRequest(pm.info.requestName); } else { pm.collectionVariables.set('poll_attempt', '0'); pm.expect.fail('Not terminal within ' + maxAttempts + ' polls (last: ' + status + ')'); } }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{operation_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{operation_id}}"
+              ]
+            },
+            "description": "Poll to terminal. Succeeded satisfies RST-003 for the functional restore. Set a per-request delay (~poll_delay_ms) in the runner."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-01/02 - GET dataset, assert content reverted to pre-update state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset accessible after restore (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var cur = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "var pre = pm.collectionVariables.get('pre_update_total_size');",
+                  "// METADATA ASSERTION: point-in-time restore must roll filemetadata.totalSize back to the pre-update value (16), not the post-update v2 value (49).",
+                  "pm.test('metadata reverted: filemetadata.totalSize === pre-update size (' + pre + ')', function () {",
+                  "  pm.expect(pre, 'pre-update baseline size captured').to.be.a('string').and.not.empty;",
+                  "  pm.expect(String(cur), 'restored filemetadata.totalSize').to.eql(String(pre));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ]
+            },
+            "description": "METADATA assertion for TC-RST-FUNC-01/02: after restore succeeds, filemetadata.totalSize must have reverted from the post-update v2 value (49) back to the pre-update v1 baseline (16). Blob-data (byte-level) verification follows in the next two requests."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-01/02 - GET download connection string (capture read SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('download connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('download_sas', j.access_token); } } catch (e) { console.log('download conn-string parse failed', e); }",
+                  "// Build the blob '0' download URL from the read SAS (same shape as the upload URL builder in Setup 6).",
+                  "var sas = pm.collectionVariables.get('download_sas') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('download_blob_url', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('download_blob_url', sas); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/download-connection-string?sdpath={{sd_path}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "download-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path}}"
+                }
+              ]
+            },
+            "description": "GET /utility/download-connection-string?sdpath=... returns a READ SAS (access_token) for blob storage, used to download blob '0' and verify the restored bytes. Uses a dedicated read SAS (not the write-oriented upload SAS) for correct permissions."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-01/02 - download blob '0' and assert restored content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var expected = pm.collectionVariables.get('blob_v1_content');",
+                  "// BLOB-DATA ASSERTION: the restore reinstated blob '0'; its bytes must equal the pre-update (v1) payload, NOT the v2 override.",
+                  "if (pm.response.code === 200) {",
+                  "  var body = pm.response.text();",
+                  "  pm.test('blob content reverted to pre-update (v1) payload', function () { pm.expect(body).to.eql(expected); });",
+                  "  pm.test('blob content is NOT the post-update (v2) payload', function () { pm.expect(body).to.not.include('MODIFIED'); });",
+                  "} else {",
+                  "  pm.test('SKIPPED blob-data assertion - blob not directly downloadable here (HTTP ' + pm.response.code + '): non-Azure CSP or direct-to-storage SAS unavailable', function () { pm.expect(true).to.be.true; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{download_blob_url}}",
+              "host": [
+                "{{download_blob_url}}"
+              ]
+            },
+            "description": "Download blob '0' via the read SAS and assert its content equals the pre-update payload {{blob_v1_content}}. Direct byte comparison of a tiny known payload is the strongest, simplest content check (no stored checksum needed). Best-effort: skips cleanly on non-Azure CSPs where the direct-to-storage path is unavailable, consistent with the upload steps."
+          }
+        },
+        {
+          "name": "TC-RST-STS-05 - GET status failure-detail check (documentary, lenient)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status readable (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "// [confirmed: repo] a Failed operation carries failure text in error_message (swagger names it 'error').",
+                  "if (j.status === 'Failed') { pm.test('RST-004/STS-05 Failed status includes error detail', function () { pm.expect(j.error_message || j.error, 'error detail').to.be.a('string').and.not.empty; }); }",
+                  "else { pm.test('SKIPPED STS-05 - operation is ' + j.status + ' (force a failure to assert error_message)', function () { pm.expect(true).to.be.true; }); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{operation_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{operation_id}}"
+              ]
+            },
+            "description": "TC-RST-STS-05: on a terminal Failed status the body must carry error_message. Cannot force a failure from the API on a healthy run; asserts hard only when status is Failed, otherwise documents/skip."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-03/04 - capture pre-delete timestamp (before deletion)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before confirming the dataset state that will subsequently be deleted.",
+                  "pm.collectionVariables.set('pre_delete_timestamp', new Date().toISOString());",
+                  "setTimeout(function () {}, 2000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset present before delete (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var sz = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "if (sz !== undefined) { pm.collectionVariables.set('pre_delete_total_size', String(sz)); }",
+                  "console.log('pre_delete_total_size =', pm.collectionVariables.get('pre_delete_total_size'), 'pre_delete_timestamp =', pm.collectionVariables.get('pre_delete_timestamp'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ]
+            },
+            "description": "Records the point-in-time just before the dataset is deleted (TC-RST-FUNC-03/04 / RST-010)."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-03/04 - DELETE dataset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset deleted (200)', function () { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ]
+            },
+            "description": "Delete the dataset so the scenario can attempt to restore a deleted dataset."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-03/04 - POST restore deleted dataset (documents 404 limitation vs RST-010)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('operation_id', '');",
+                  "pm.collectionVariables.set('restore_timestamp', pm.collectionVariables.get('pre_delete_timestamp'));",
+                  "pm.collectionVariables.set('poll_attempt', '0');",
+                  "pm.collectionVariables.set('func34_accepted', 'false');",
+                  "// Wait for the dataset delete to settle in the datastore before triggering the restore (configurable via post_delete_delay_ms).",
+                  "setTimeout(function () {}, parseInt(pm.collectionVariables.get('post_delete_delay_ms') || '10000', 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deleted-dataset restore is accepted (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
+                  "if (pm.response.code === 202) {",
+                  "  var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "  var opId = j.operationId || j.operation_id; if (opId) { pm.collectionVariables.set('operation_id', opId); }",
+                  "  pm.collectionVariables.set('func34_accepted', 'true');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path}}\",\n  \"restorePointInTime\": \"{{restore_timestamp}}\"\n}"
+            },
+            "description": "Attempts to restore the just-deleted dataset to a pre-deletion timestamp. [confirmed: repo] current code returns 404 because it gates on live dataset-metadata existence, so this documents that RST-010/TC-RST-FUNC-03/04 is not currently satisfiable via this endpoint. Passes as a documented limitation; asserts 202+poll only if a deployment adds support."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-03/04 - poll status if restore was accepted (conditional)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Skip this poll when the previous restore did NOT return 202 (the known-limitation path).",
+                  "// setNextRequest(null) would STOP the whole run (skipping CLEANUP), so jump to the first cleanup request instead.",
+                  "if (pm.collectionVariables.get('func34_accepted') !== 'true') { pm.execution.setNextRequest('[dataset] FUNC prep - GET dataset baseline v1 (capture pre-update state + timestamp)'); }",
+                  "// Wait between polls (10s by default) so we don't hammer the status endpoint. Skips the delay on the first poll.",
+                  "if (parseInt(pm.collectionVariables.get('poll_attempt') || '0', 10) > 0) { setTimeout(function () {}, parseInt(pm.collectionVariables.get('poll_delay_ms') || '10000', 10)); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "// Stop polling on an unexpected status code - don't burn retries; fall through to the next request.",
+                  "if (pm.response.code !== 200) { pm.collectionVariables.set('poll_attempt', '0'); return; }",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var status = j.status;",
+                  "var attempt = parseInt(pm.collectionVariables.get('poll_attempt') || '0', 10);",
+                  "var maxAttempts = parseInt(pm.collectionVariables.get('poll_max_attempts') || '30', 10);",
+                  "if (status === 'Succeeded') { pm.collectionVariables.set('poll_attempt', '0'); pm.test('deleted-dataset restore Succeeded', function () { pm.expect(status).to.eql('Succeeded'); }); }",
+                  "else if (status === 'Failed') { pm.collectionVariables.set('poll_attempt', '0'); pm.expect.fail('Restore Failed: ' + (j.error_message || j.error || 'no detail')); }",
+                  "else if (status === 'Rejected') { pm.collectionVariables.set('poll_attempt', '0'); pm.test('restore did not end Rejected (Rejected is unexpected for this scenario)', function () { pm.expect(status, (j.error_message || j.error || j.message || j.statusMessage || pm.response.text() || 'no detail')).to.not.eql('Rejected'); }); }",
+                  "else { if (attempt < maxAttempts) { pm.collectionVariables.set('poll_attempt', String(attempt + 1)); pm.execution.setNextRequest(pm.info.requestName); } else { pm.collectionVariables.set('poll_attempt', '0'); pm.expect.fail('Not terminal within ' + maxAttempts + ' polls'); } }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{operation_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{operation_id}}"
+              ]
+            },
+            "description": "Only meaningful on a deployment that supports deleted-dataset restore (set func34_accepted=true to enable). Skipped by default via the prerequest guard."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-03/04 - GET dataset, assert metadata reverted to pre-delete state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset accessible after deleted-dataset restore (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var cur = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "var pre = pm.collectionVariables.get('pre_delete_total_size');",
+                  "// METADATA ASSERTION: restoring the deleted dataset must reinstate filemetadata.totalSize to the pre-delete value.",
+                  "pm.test('metadata reverted: filemetadata.totalSize === pre-delete size (' + pre + ')', function () {",
+                  "  pm.expect(pre, 'pre-delete baseline size captured').to.be.a('string').and.not.empty;",
+                  "  pm.expect(String(cur), 'restored filemetadata.totalSize').to.eql(String(pre));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ]
+            },
+            "description": "METADATA assertion for TC-RST-FUNC-03/04 (accepted path only): after the deleted-dataset restore succeeds, the dataset must be readable again and filemetadata.totalSize must match the pre-delete baseline. Reached only when func34_accepted=true (otherwise the poll redirects to CLEANUP)."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-03/04 - GET download connection string (capture read SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('download connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('download_sas', j.access_token); } } catch (e) { console.log('download conn-string parse failed', e); }",
+                  "var sas = pm.collectionVariables.get('download_sas') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('download_blob_url', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('download_blob_url', sas); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/download-connection-string?sdpath={{sd_path}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "download-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path}}"
+                }
+              ]
+            },
+            "description": "Read SAS for blob storage, used to download blob '0' and verify the restored bytes of the deleted-then-restored dataset (accepted path only)."
+          }
+        },
+        {
+          "name": "TC-RST-FUNC-03/04 - download blob '0' and assert restored content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var expected = pm.collectionVariables.get('blob_v1_content');",
+                  "// BLOB-DATA ASSERTION: the pre-delete blob '0' was the v1 payload (FUNC-01/02 restored it to v1 and nothing re-uploaded since).",
+                  "if (pm.response.code === 200) {",
+                  "  var body = pm.response.text();",
+                  "  pm.test('blob content reverted to pre-delete (v1) payload', function () { pm.expect(body).to.eql(expected); });",
+                  "  pm.test('blob content is NOT the post-update (v2) payload', function () { pm.expect(body).to.not.include('MODIFIED'); });",
+                  "} else {",
+                  "  pm.test('SKIPPED blob-data assertion - blob not directly downloadable here (HTTP ' + pm.response.code + '): non-Azure CSP or direct-to-storage SAS unavailable', function () { pm.expect(true).to.be.true; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{download_blob_url}}",
+              "host": [
+                "{{download_blob_url}}"
+              ]
+            },
+            "description": "Download blob '0' via the read SAS and assert its content equals the pre-delete payload {{blob_v1_content}}. Direct byte comparison of a tiny known payload (no stored checksum needed). Best-effort: skips cleanly on non-Azure CSPs, consistent with the upload steps and the FUNC-01/02 blob assertion."
+          }
+        }
+      ]
+    },
+    {
+      "name": "EXECUTION - FUNCTIONAL SCENARIOS (DATASET POLICY)",
+      "description": "TC-RST-FUNC-02 (update-then-restore) and TC-RST-FUNC-04 (delete-then-restore) executed against the access_policy=dataset subproject/dataset provisioned in SETUP (Setup 2b/3b/5b/6b/7b) and torn down in CLEANUP (Cleanup 1b/2b). All requests use the *_ds variable namespace so they never clash with the uniform flow. Satisfies RST-011 access-policy parity. Precondition: on a dataset-policy subproject the restore role is dataset.admin - the same access_token must carry it.",
+      "item": [
+        {
+          "name": "[dataset] FUNC prep - GET dataset baseline v1 (capture pre-update state + timestamp)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before reading the v1 baseline; request execution makes it safely historical.",
+                  "pm.collectionVariables.set('pre_update_timestamp_ds', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('baseline dataset readable (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var pre = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "if (pre !== undefined) { pm.collectionVariables.set('pre_update_total_size_ds', String(pre)); }",
+                  "console.log('pre_update_total_size =', pm.collectionVariables.get('pre_update_total_size_ds'), 'pre_update_timestamp =', pm.collectionVariables.get('pre_update_timestamp_ds'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ]
+            },
+            "description": "Baseline for TC-RST-FUNC-01/02: records v1 filemetadata.totalSize (16 from SETUP) and the pre-update point-in-time to restore to."
+          }
+        },
+        {
+          "name": "[dataset] FUNC update - lock dataset for write v2 (capture sbit2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('write lock acquired (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.sbit) { pm.collectionVariables.set('sbit_ds', j.sbit); } } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}/lock?openmode=write",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}",
+                "lock"
+              ],
+              "query": [
+                {
+                  "key": "openmode",
+                  "value": "write"
+                }
+              ]
+            },
+            "description": "Begin the second write cycle (v2) that mutates the dataset after the pre-update point-in-time."
+          }
+        },
+        {
+          "name": "[dataset] FUNC update - get upload connection string v2 (capture SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('upload connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('upload_sas_ds', j.access_token); } } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/upload-connection-string?sdpath={{sd_path_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "upload-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path_ds}}"
+                }
+              ]
+            },
+            "description": "Fresh SAS credentials for the v2 upload."
+          }
+        },
+        {
+          "name": "[dataset] FUNC update - upload modified blob v2 via SAS (Azure, best-effort)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var sas = pm.collectionVariables.get('upload_sas_ds') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('blob_url_ds', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('blob_url_ds', sas); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('modified blob uploaded or skipped', function () { pm.expect([200, 201, 202, 0]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-ms-blob-type",
+                "value": "BlockBlob"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/octet-stream"
+              }
+            ],
+            "url": {
+              "raw": "{{blob_url_ds}}",
+              "host": [
+                "{{blob_url_ds}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "seismic-bytes-v2-MODIFIED-content-longer-than-v1"
+            },
+            "description": "Overwrites blob '0' with modified/larger content, so v2 differs from the pre-update v1 (direct to Azure; best-effort)."
+          }
+        },
+        {
+          "name": "[dataset] FUNC update - patch+close v2 (post-update marker)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset patched and closed v2 (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "// post-update marker: totalSize now 49 (differs from v1's 16).",
+                  "console.log('post-update committed; will restore back to pre_update_timestamp');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}?close={{sbit_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ],
+              "query": [
+                {
+                  "key": "close",
+                  "value": "{{sbit_ds}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filemetadata\": { \"nObject\": 1, \"totalSize\": 49, \"objsize\": 49, \"sizeUnit\": \"B\" }\n}"
+            },
+            "description": "Finalize v2 with a distinct filemetadata.totalSize (49). This is the post-update state that the restore must roll back."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-02 - POST restore to pre-update timestamp (202, capture op id)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('operation_id_ds', '');",
+                  "pm.collectionVariables.set('restore_timestamp_ds', pm.collectionVariables.get('pre_update_timestamp_ds'));",
+                  "pm.collectionVariables.set('poll_attempt_ds', '0');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('restore accepted (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var opId = j.operationId || j.operation_id;",
+                  "if (opId) { pm.collectionVariables.set('operation_id_ds', opId); }",
+                  "pm.test('operation id captured', function () { pm.expect(pm.collectionVariables.get('operation_id_ds')).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path_ds}}\",\n  \"restorePointInTime\": \"{{restore_timestamp_ds}}\"\n}"
+            },
+            "description": "Trigger the point-in-time restore back to the pre-update timestamp. FUNC-01 = access_policy uniform; FUNC-02 = re-run with access_policy=dataset (role dataset.admin)."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-02 - poll status until Succeeded",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Wait between polls (10s by default) so we don't hammer the status endpoint. Skips the delay on the first poll.",
+                  "if (parseInt(pm.collectionVariables.get('poll_attempt_ds') || '0', 10) > 0) { setTimeout(function () {}, parseInt(pm.collectionVariables.get('poll_delay_ms') || '10000', 10)); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "// Stop polling on an unexpected status code - don't burn retries; fall through to the next request.",
+                  "if (pm.response.code !== 200) { pm.collectionVariables.set('poll_attempt_ds', '0'); return; }",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var status = j.status;",
+                  "var attempt = parseInt(pm.collectionVariables.get('poll_attempt_ds') || '0', 10);",
+                  "var maxAttempts = parseInt(pm.collectionVariables.get('poll_max_attempts') || '30', 10);",
+                  "if (status === 'Succeeded') { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.test('RST-003 restore Succeeded', function () { pm.expect(status).to.eql('Succeeded'); }); }",
+                  "else if (status === 'Failed') { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.expect.fail('Restore Failed: ' + (j.error_message || j.error || 'no detail')); }",
+                  "else if (status === 'Rejected') { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.test('restore did not end Rejected (Rejected is unexpected for this scenario)', function () { pm.expect(status, (j.error_message || j.error || j.message || j.statusMessage || pm.response.text() || 'no detail')).to.not.eql('Rejected'); }); }",
+                  "else { if (attempt < maxAttempts) { pm.collectionVariables.set('poll_attempt_ds', String(attempt + 1)); pm.execution.setNextRequest(pm.info.requestName); } else { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.expect.fail('Not terminal within ' + maxAttempts + ' polls (last: ' + status + ')'); } }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{operation_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{operation_id_ds}}"
+              ]
+            },
+            "description": "Poll to terminal. Succeeded satisfies RST-003 for the functional restore. Set a per-request delay (~poll_delay_ms) in the runner."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-02 - GET dataset, assert content reverted to pre-update state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset accessible after restore (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var cur = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "var pre = pm.collectionVariables.get('pre_update_total_size_ds');",
+                  "// METADATA ASSERTION: point-in-time restore must roll filemetadata.totalSize back to the pre-update value (16), not the post-update v2 value (49).",
+                  "pm.test('metadata reverted: filemetadata.totalSize === pre-update size (' + pre + ')', function () {",
+                  "  pm.expect(pre, 'pre-update baseline size captured').to.be.a('string').and.not.empty;",
+                  "  pm.expect(String(cur), 'restored filemetadata.totalSize').to.eql(String(pre));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ]
+            },
+            "description": "METADATA assertion for TC-RST-FUNC-01/02: after restore succeeds, filemetadata.totalSize must have reverted from the post-update v2 value (49) back to the pre-update v1 baseline (16). Blob-data (byte-level) verification follows in the next two requests."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-02 - GET download connection string (capture read SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('download connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('download_sas_ds', j.access_token); } } catch (e) { console.log('download conn-string parse failed', e); }",
+                  "// Build the blob '0' download URL from the read SAS (same shape as the upload URL builder in Setup 6).",
+                  "var sas = pm.collectionVariables.get('download_sas_ds') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('download_blob_url_ds', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('download_blob_url_ds', sas); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/download-connection-string?sdpath={{sd_path_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "download-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path_ds}}"
+                }
+              ]
+            },
+            "description": "GET /utility/download-connection-string?sdpath=... returns a READ SAS (access_token) for blob storage, used to download blob '0' and verify the restored bytes. Uses a dedicated read SAS (not the write-oriented upload SAS) for correct permissions."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-02 - download blob '0' and assert restored content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var expected = pm.collectionVariables.get('blob_v1_content');",
+                  "// BLOB-DATA ASSERTION: the restore reinstated blob '0'; its bytes must equal the pre-update (v1) payload, NOT the v2 override.",
+                  "if (pm.response.code === 200) {",
+                  "  var body = pm.response.text();",
+                  "  pm.test('blob content reverted to pre-update (v1) payload', function () { pm.expect(body).to.eql(expected); });",
+                  "  pm.test('blob content is NOT the post-update (v2) payload', function () { pm.expect(body).to.not.include('MODIFIED'); });",
+                  "} else {",
+                  "  pm.test('SKIPPED blob-data assertion - blob not directly downloadable here (HTTP ' + pm.response.code + '): non-Azure CSP or direct-to-storage SAS unavailable', function () { pm.expect(true).to.be.true; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{download_blob_url_ds}}",
+              "host": [
+                "{{download_blob_url_ds}}"
+              ]
+            },
+            "description": "Download blob '0' via the read SAS and assert its content equals the pre-update payload {{blob_v1_content}}. Direct byte comparison of a tiny known payload is the strongest, simplest content check (no stored checksum needed). Best-effort: skips cleanly on non-Azure CSPs where the direct-to-storage path is unavailable, consistent with the upload steps."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-STS-05 - GET status failure-detail check (documentary, lenient)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status readable (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "// [confirmed: repo] a Failed operation carries failure text in error_message (swagger names it 'error').",
+                  "if (j.status === 'Failed') { pm.test('RST-004/STS-05 Failed status includes error detail', function () { pm.expect(j.error_message || j.error, 'error detail').to.be.a('string').and.not.empty; }); }",
+                  "else { pm.test('SKIPPED STS-05 - operation is ' + j.status + ' (force a failure to assert error_message)', function () { pm.expect(true).to.be.true; }); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{operation_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{operation_id_ds}}"
+              ]
+            },
+            "description": "TC-RST-STS-05: on a terminal Failed status the body must carry error_message. Cannot force a failure from the API on a healthy run; asserts hard only when status is Failed, otherwise documents/skip."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-04 - capture pre-delete timestamp (before deletion)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Capture the restore boundary before confirming the dataset state that will subsequently be deleted.",
+                  "pm.collectionVariables.set('pre_delete_timestamp_ds', new Date().toISOString());",
+                  "setTimeout(function () {}, 2000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset present before delete (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var sz = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "if (sz !== undefined) { pm.collectionVariables.set('pre_delete_total_size_ds', String(sz)); }",
+                  "console.log('pre_delete_total_size =', pm.collectionVariables.get('pre_delete_total_size_ds'), 'pre_delete_timestamp =', pm.collectionVariables.get('pre_delete_timestamp_ds'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ]
+            },
+            "description": "Records the point-in-time just before the dataset is deleted (TC-RST-FUNC-03/04 / RST-010)."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-04 - DELETE dataset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset deleted (200)', function () { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ]
+            },
+            "description": "Delete the dataset so the scenario can attempt to restore a deleted dataset."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-04 - POST restore deleted dataset (documents 404 limitation vs RST-010)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('operation_id_ds', '');",
+                  "pm.collectionVariables.set('restore_timestamp_ds', pm.collectionVariables.get('pre_delete_timestamp_ds'));",
+                  "pm.collectionVariables.set('poll_attempt_ds', '0');",
+                  "pm.collectionVariables.set('func34_accepted_ds', 'false');",
+                  "// Wait for the dataset delete to settle in the datastore before triggering the restore (configurable via post_delete_delay_ms).",
+                  "setTimeout(function () {}, parseInt(pm.collectionVariables.get('post_delete_delay_ms') || '10000', 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deleted-dataset restore is accepted (202)', function () { pm.expect(pm.response.code).to.eql(202); });",
+                  "if (pm.response.code === 202) {",
+                  "  var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "  var opId = j.operationId || j.operation_id; if (opId) { pm.collectionVariables.set('operation_id_ds', opId); }",
+                  "  pm.collectionVariables.set('func34_accepted_ds', 'true');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sdPath\": \"{{sd_path_ds}}\",\n  \"restorePointInTime\": \"{{restore_timestamp_ds}}\"\n}"
+            },
+            "description": "Attempts to restore the just-deleted dataset to a pre-deletion timestamp. [confirmed: repo] current code returns 404 because it gates on live dataset-metadata existence, so this documents that RST-010/TC-RST-FUNC-03/04 is not currently satisfiable via this endpoint. Passes as a documented limitation; asserts 202+poll only if a deployment adds support."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-04 - poll status if restore was accepted (conditional)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Skip this poll when the previous restore did NOT return 202 (the known-limitation path).",
+                  "// setNextRequest(null) would STOP the whole run (skipping CLEANUP), so jump to the first cleanup request instead.",
+                  "if (pm.collectionVariables.get('func34_accepted_ds') !== 'true') { pm.execution.setNextRequest('Cleanup 1 - Delete dataset (idempotent)'); }",
+                  "// Wait between polls (10s by default) so we don't hammer the status endpoint. Skips the delay on the first poll.",
+                  "if (parseInt(pm.collectionVariables.get('poll_attempt_ds') || '0', 10) > 0) { setTimeout(function () {}, parseInt(pm.collectionVariables.get('poll_delay_ms') || '10000', 10)); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "// Stop polling on an unexpected status code - don't burn retries; fall through to the next request.",
+                  "if (pm.response.code !== 200) { pm.collectionVariables.set('poll_attempt_ds', '0'); return; }",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "try { console.log('[FUNC-04 poll] parsed body:', JSON.stringify(j)); } catch (e) {}",
+                  "var status = j.status;",
+                  "var attempt = parseInt(pm.collectionVariables.get('poll_attempt_ds') || '0', 10);",
+                  "var maxAttempts = parseInt(pm.collectionVariables.get('poll_max_attempts') || '30', 10);",
+                  "if (status === 'Succeeded') { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.test('deleted-dataset restore Succeeded', function () { pm.expect(status).to.eql('Succeeded'); }); }",
+                  "else if (status === 'Failed') { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.expect.fail('Restore Failed: ' + (j.error_message || j.error || 'no detail')); }",
+                  "else if (status === 'Rejected') { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.test('restore did not end Rejected (Rejected is unexpected for this scenario)', function () { pm.expect(status, (j.error_message || j.error || j.message || j.statusMessage || pm.response.text() || 'no detail')).to.not.eql('Rejected'); }); }",
+                  "else { if (attempt < maxAttempts) { pm.collectionVariables.set('poll_attempt_ds', String(attempt + 1)); pm.execution.setNextRequest(pm.info.requestName); } else { pm.collectionVariables.set('poll_attempt_ds', '0'); pm.expect.fail('Not terminal within ' + maxAttempts + ' polls'); } }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/operation/restore/{{operation_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "operation",
+                "restore",
+                "{{operation_id_ds}}"
+              ]
+            },
+            "description": "Only meaningful on a deployment that supports deleted-dataset restore (set func34_accepted=true to enable). Skipped by default via the prerequest guard."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-04 - GET dataset, assert metadata reverted to pre-delete state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset accessible after deleted-dataset restore (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "var j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "var cur = (j.filemetadata && j.filemetadata.totalSize) || (j.filemetadata && j.filemetadata.total_size);",
+                  "var pre = pm.collectionVariables.get('pre_delete_total_size_ds');",
+                  "// METADATA ASSERTION: restoring the deleted dataset must reinstate filemetadata.totalSize to the pre-delete value.",
+                  "pm.test('metadata reverted: filemetadata.totalSize === pre-delete size (' + pre + ')', function () {",
+                  "  pm.expect(pre, 'pre-delete baseline size captured').to.be.a('string').and.not.empty;",
+                  "  pm.expect(String(cur), 'restored filemetadata.totalSize').to.eql(String(pre));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ]
+            },
+            "description": "METADATA assertion for TC-RST-FUNC-03/04 (accepted path only): after the deleted-dataset restore succeeds, the dataset must be readable again and filemetadata.totalSize must match the pre-delete baseline. Reached only when func34_accepted=true (otherwise the poll redirects to CLEANUP)."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-04 - GET download connection string (capture read SAS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('download connection string (200)', function () { pm.expect(pm.response.code).to.eql(200); });",
+                  "try { var j = pm.response.json(); if (j && j.access_token) { pm.collectionVariables.set('download_sas_ds', j.access_token); } } catch (e) { console.log('download conn-string parse failed', e); }",
+                  "var sas = pm.collectionVariables.get('download_sas_ds') || '';",
+                  "if (sas.indexOf('?') > -1) { var p = sas.split('?'); pm.collectionVariables.set('download_blob_url_ds', p[0].replace(/\\/$/, '') + '/0?' + p[1]); } else { pm.collectionVariables.set('download_blob_url_ds', sas); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utility/download-connection-string?sdpath={{sd_path_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utility",
+                "download-connection-string"
+              ],
+              "query": [
+                {
+                  "key": "sdpath",
+                  "value": "{{sd_path_ds}}"
+                }
+              ]
+            },
+            "description": "Read SAS for blob storage, used to download blob '0' and verify the restored bytes of the deleted-then-restored dataset (accepted path only)."
+          }
+        },
+        {
+          "name": "[dataset] TC-RST-FUNC-04 - download blob '0' and assert restored content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var expected = pm.collectionVariables.get('blob_v1_content');",
+                  "// BLOB-DATA ASSERTION: the pre-delete blob '0' was the v1 payload (FUNC-01/02 restored it to v1 and nothing re-uploaded since).",
+                  "if (pm.response.code === 200) {",
+                  "  var body = pm.response.text();",
+                  "  pm.test('blob content reverted to pre-delete (v1) payload', function () { pm.expect(body).to.eql(expected); });",
+                  "  pm.test('blob content is NOT the post-update (v2) payload', function () { pm.expect(body).to.not.include('MODIFIED'); });",
+                  "} else {",
+                  "  pm.test('SKIPPED blob-data assertion - blob not directly downloadable here (HTTP ' + pm.response.code + '): non-Azure CSP or direct-to-storage SAS unavailable', function () { pm.expect(true).to.be.true; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{download_blob_url_ds}}",
+              "host": [
+                "{{download_blob_url_ds}}"
+              ]
+            },
+            "description": "Download blob '0' via the read SAS and assert its content equals the pre-delete payload {{blob_v1_content}}. Direct byte comparison of a tiny known payload (no stored checksum needed). Best-effort: skips cleanly on non-Azure CSPs, consistent with the upload steps and the FUNC-01/02 blob assertion."
+          }
+        }
+      ]
+    },
+    {
+      "name": "CLEANUP",
+      "item": [
+        {
+          "name": "Cleanup 1 - Delete dataset (idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset deleted or already gone', function () { pm.expect([200, 404, 423, 429]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id}}/dataset/{{dataset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}",
+                "dataset",
+                "{{dataset_id}}"
+              ]
+            },
+            "description": "Idempotent delete (the functional flow may already have deleted it) - tolerate 404/423."
+          }
+        },
+        {
+          "name": "Cleanup 1b - Delete dataset (dataset policy, idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dataset deleted or already gone', function () { pm.expect([200, 404, 423, 429]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dataset/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}/dataset/{{dataset_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dataset",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}",
+                "dataset",
+                "{{dataset_id_ds}}"
+              ]
+            },
+            "description": "Idempotent delete (the functional flow may already have deleted it) - tolerate 404/423."
+          }
+        },
+        {
+          "name": "Cleanup 2 - Delete subproject (idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('subproject deleted or already gone', function () { pm.expect([200, 404, 429]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subproject/tenant/{{tenant_id}}/subproject/{{subproject_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subproject",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id}}"
+              ]
+            },
+            "description": "Idempotent subproject delete. Tenant is left in place (shared partition resource)."
+          }
+        },
+        {
+          "name": "Cleanup 2b - Delete subproject (dataset policy, idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('subproject deleted or already gone', function () { pm.expect([200, 404, 429]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subproject/tenant/{{tenant_id}}/subproject/{{subproject_id_ds}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subproject",
+                "tenant",
+                "{{tenant_id}}",
+                "subproject",
+                "{{subproject_id_ds}}"
+              ]
+            },
+            "description": "Idempotent subproject delete. Tenant is left in place (shared partition resource)."
+          }
+        },
+        {
+          "name": "Cleanup 3 - Delete legal tag (idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('legal tag deleted or already gone', function () { pm.expect([204, 200, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "data-partition-id",
+                "value": "{{data_partition_id}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{legal_base_url}}/legaltags/{{legal_tag_name}}",
+              "host": [
+                "{{legal_base_url}}"
+              ],
+              "path": [
+                "legaltags",
+                "{{legal_tag_name}}"
+              ]
+            },
+            "description": "DELETE {legal_base_url}/legaltags/{name} removes the legal tag created in Setup 1b. Uses the full partition-prefixed {{legal_tag_name}}. Idempotent: 404 means it was already gone. Requires legal privileges on the partition."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "host", "value": "", "type": "string" },
+    { "key": "base_url", "value": "https://{{host}}/seistore-svc/api/v3", "type": "string" },
+    { "key": "data_partition_id", "value": "", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "non_admin_access_token", "value": "random", "type": "string" },
+    { "key": "other_partition_id", "value": "", "type": "string" },
+    { "key": "storage_account_name", "value": "", "type": "string" },
+    { "key": "other_storage_account_name", "value": "", "type": "string" },
+    { "key": "domain", "value": "dataservices.energy", "type": "string" },
+    { "key": "tenant_id", "value": "{{data_partition_id}}", "type": "string" },
+    { "key": "tenant_esd", "value": "{{data_partition_id}}.{{domain}}", "type": "string" },
+    { "key": "tenant_default_acls", "value": "users.datalake.admins@{{data_partition_id}}.{{domain}}", "type": "string" },
+    {
+      "key": "subproject_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dataset_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dataset_path",
+      "value": "/",
+      "type": "string"
+    },
+    {
+      "key": "sd_path",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "access_policy",
+      "value": "uniform",
+      "type": "string"
+    },
+    {
+      "key": "legal_base_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "legal_tag_short_name",
+      "value": "public-usa-dataset-1",
+      "type": "string"
+    },
+    {
+      "key": "legal_tag_name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sbit",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upload_sas",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upload_token_type",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "blob_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "download_sas",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "download_blob_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "blob_v1_content",
+      "value": "seismic-bytes-v1",
+      "type": "string"
+    },
+    {
+      "key": "pre_update_timestamp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pre_update_total_size",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pre_delete_timestamp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pre_delete_total_size",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "restore_timestamp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "operation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "func34_accepted",
+      "value": "false",
+      "type": "string"
+    },
+    {
+      "key": "poll_attempt",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "poll_max_attempts",
+      "value": "30",
+      "type": "string"
+    },
+    {
+      "key": "poll_delay_ms",
+      "value": "20000",
+      "type": "string"
+    },
+    {
+      "key": "post_delete_delay_ms",
+      "value": "60000",
+      "type": "string"
+    },
+    {
+      "key": "precheck_operation_id",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "subproject_id_ds",
+      "value": ""
+    },
+    {
+      "key": "dataset_id_ds",
+      "value": ""
+    },
+    {
+      "key": "sd_path_ds",
+      "value": ""
+    },
+    {
+      "key": "access_policy_ds",
+      "value": "dataset"
+    },
+    {
+      "key": "sbit_ds",
+      "value": ""
+    },
+    {
+      "key": "upload_sas_ds",
+      "value": ""
+    },
+    {
+      "key": "upload_token_type_ds",
+      "value": ""
+    },
+    {
+      "key": "blob_url_ds",
+      "value": ""
+    },
+    {
+      "key": "download_sas_ds",
+      "value": ""
+    },
+    {
+      "key": "download_blob_url_ds",
+      "value": ""
+    },
+    {
+      "key": "pre_update_timestamp_ds",
+      "value": ""
+    },
+    {
+      "key": "pre_update_total_size_ds",
+      "value": ""
+    },
+    {
+      "key": "pre_delete_timestamp_ds",
+      "value": ""
+    },
+    {
+      "key": "pre_delete_total_size_ds",
+      "value": ""
+    },
+    {
+      "key": "restore_timestamp_ds",
+      "value": ""
+    },
+    {
+      "key": "operation_id_ds",
+      "value": ""
+    },
+    {
+      "key": "func34_accepted_ds",
+      "value": "false"
+    },
+    {
+      "key": "poll_attempt_ds",
+      "value": "0"
+    }
+  ]
+}

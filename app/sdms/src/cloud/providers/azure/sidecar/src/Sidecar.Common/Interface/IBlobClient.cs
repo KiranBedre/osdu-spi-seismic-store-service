@@ -21,6 +21,19 @@ using Azure.Storage.Blobs.Specialized;
 
 public interface IBlobClient
 {
+    Uri Uri { get; }
     BlobContainerClient GetContainerClient(string containerName);
     BlobBatchClient GetBatchClient();
+
+    /// <summary>
+    /// Returns true if the (live) container currently exists on the account.
+    /// </summary>
+    Task<bool> ContainerExistsAsync(string containerName, CancellationToken ct = default);
+
+    /// <summary>
+    /// Attempts to restore a soft-deleted container by exact name. Returns true if a matching
+    /// soft-deleted container was found and undeleted; false if no soft-deleted container with
+    /// that name exists (e.g. outside the retention window or never deleted).
+    /// </summary>
+    Task<bool> TryUndeleteContainerAsync(string containerName, CancellationToken ct = default);
 }

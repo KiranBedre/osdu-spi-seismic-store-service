@@ -26,6 +26,7 @@ public class StorageQueueWorker<T, TD, TE>(
     private readonly int _maxDequeueCount = opts.MaxDequeueCount;
     private readonly TimeSpan _lockDuration = opts.LockDuration;  // should be greater than _lockRenewalPeriod
     private readonly TimeSpan _lockRenewalPeriod = opts.LockRenewalPeriod;  // should be less than _lockDuration
+    private readonly QueueClient? _poisonQueueClient = opts.PoisonQueueClient;
 
     public async Task<ExecutionStatus> HandleNextTaskAsync(CancellationToken ct)
     {
@@ -141,9 +142,20 @@ public class StorageQueueWorker<T, TD, TE>(
             _logger.LogInformation("Received message {MessageId}", message.MessageId);
             if (message.DequeueCount > _maxDequeueCount)
             {
-                _logger.LogInformation(
-                    "Deleting message {MessageId}, dequeue count {DequeueCount} is too high",
-                    message.MessageId, message.DequeueCount);
+                if (_poisonQueueClient is not null)
+                {
+                    _logger.LogWarning(
+                        "Moving message {MessageId} to the poison queue after exceeding max dequeue count ({DequeueCount} > {MaxDequeueCount})",
+                        message.MessageId, message.DequeueCount, _maxDequeueCount);
+                    _ = await _poisonQueueClient.SendMessageAsync(message.MessageText, ct);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Deleting message {MessageId} after exceeding max dequeue count because no poison queue is configured ({DequeueCount} > {MaxDequeueCount})",
+                        message.MessageId, message.DequeueCount, _maxDequeueCount);
+                }
+
                 await DeleteFromQueueAsync(message, ct);
                 continue;
             }

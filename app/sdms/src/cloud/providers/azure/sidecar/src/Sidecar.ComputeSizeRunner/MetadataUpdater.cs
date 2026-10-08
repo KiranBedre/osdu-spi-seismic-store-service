@@ -50,7 +50,8 @@ public class MetadataUpdater(ILogger<MetadataUpdater> logger, IDataAccess dataAc
         {
             try
             {
-                var cs = await _cosmosClientFactory.GetCosmosConnectionStringAsync(dataPartitionId, cancellationToken);
+                var cs = await _cosmosClientFactory.GetCosmosConnectionEndpointAsync(
+                    dataPartitionId, cancellationToken);
                 _ = await _dataAccess.UpdateMetadataAsync(cs, metadataId, updates);
                 _consecutiveFailures = 0;
             }

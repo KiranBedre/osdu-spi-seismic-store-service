@@ -48,3 +48,34 @@ public enum Status
     [Description("Completed With Errors")]
     CompletedWithErrors = 3
 }
+
+public enum RestoreOperationStatus
+{
+    InProgress = 0,
+    Succeeded = 1,
+    Failed = 2,
+    Rejected = 3
+}
+
+/// <summary>
+/// Account-level blob point-in-time restore status as reported by the Azure Storage management
+/// plane (<c>properties.blobRestoreStatus.status</c>). Mirrors Azure's
+/// <c>BlobRestoreProgressStatus</c>, tolerating both the ARM schema value (<c>Complete</c>) and the
+/// value shown in the <c>restoreBlobRanges</c> response example (<c>Succeeded</c>) as terminal
+/// success. Use <see cref="Sidecar.Common.Utility.AzureBlobRestoreStatusParser"/> to map the raw
+/// API string onto these members.
+/// </summary>
+public enum AzureBlobRestoreStatus
+{
+    /// <summary>No status reported yet, or an unrecognized value.</summary>
+    Unknown = 0,
+
+    /// <summary>The restore is still running.</summary>
+    InProgress = 1,
+
+    /// <summary>The restore finished successfully ("Complete" or "Succeeded").</summary>
+    Complete = 2,
+
+    /// <summary>The restore failed terminally.</summary>
+    Failed = 3
+}
