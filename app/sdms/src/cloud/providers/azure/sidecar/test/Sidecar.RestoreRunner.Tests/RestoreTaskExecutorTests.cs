@@ -135,7 +135,7 @@ public class RestoreTaskExecutorTests
         _ = _containerRestoreServiceMock
             .Setup(m => m.EnsureContainerAvailableAsync(
                 It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(false);
         _ = _blobRestoreServiceMock
             .Setup(m => m.StartBlobRestoreAsync(
                 It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
@@ -165,6 +165,50 @@ public class RestoreTaskExecutorTests
             _containerRestoreServiceMock.Object,
             _dataAccessMock.Object,
             _cosmosClientFactoryMock.Object);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ContainerUndeletedThenBlobStartFails_RetainsLocks()
+    {
+        _ = _containerRestoreServiceMock
+            .Setup(m => m.EnsureContainerAvailableAsync(
+                It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _ = _blobRestoreServiceMock
+            .Setup(m => m.StartBlobRestoreAsync(
+                It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("start failed"));
+        var message = CreateMessage();
+
+        var exception = await Assert.ThrowsAnyAsync<Exception>(
+            () => _executor.ProcessAsync(message.Object, CancellationToken.None));
+        _ = exception.GetType().Name.Should().Be("RestoreRetryableException");
+
+        _lockManagerMock.Verify(
+            m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
+        _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Failed));
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ContainerUndeleteVisibilityFails_RetainsLocks()
+    {
+        _ = _containerRestoreServiceMock
+            .Setup(m => m.EnsureContainerAvailableAsync(
+                It.IsAny<string>(), It.IsAny<DatasetStorageInfo>(), It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContainerRestoreMutationException(
+                "undeleted but not visible", new InvalidOperationException("not visible")));
+        var message = CreateMessage();
+
+        var exception = await Assert.ThrowsAnyAsync<Exception>(
+            () => _executor.ProcessAsync(message.Object, CancellationToken.None));
+        _ = exception.GetType().Name.Should().Be("RestoreRetryableException");
+
+        _lockManagerMock.Verify(
+            m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Never);
+        _ = _recordedStatuses.Should().NotContain(nameof(StatusEnum.Failed));
     }
 
     // ------------------------------------------------------------------------
@@ -199,8 +243,8 @@ public class RestoreTaskExecutorTests
 
         // Dataset lock + operation lock both released → two RemoveWriteLockAsync calls.
         _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.IsAny<WriteLockSession>()), Times.Exactly(2));
-        // On success no lock is made indefinite.
-        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(It.IsAny<WriteLockSession>()), Times.Never);
+        // Both locks remain effective without TTL expiry until explicit release.
+        _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(It.IsAny<WriteLockSession>()), Times.Exactly(2));
         _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.Is<WriteLockSession>(s => s.Key == DatasetLockKey())), Times.Once);
         _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(It.Is<WriteLockSession>(s => s.Key == OperationLockKey() && s.Wid == TestOperationId)), Times.Once);
     }
@@ -837,7 +881,7 @@ public class RestoreTaskExecutorTests
         _lockManagerMock.Verify(m => m.RemoveWriteLockAsync(
             It.IsAny<WriteLockSession>()), Times.Exactly(2));
         _lockManagerMock.Verify(m => m.MakeWriteLockIndefiniteAsync(
-            It.IsAny<WriteLockSession>()), Times.Never);
+            It.IsAny<WriteLockSession>()), Times.Exactly(2));
     }
 
     [Fact]

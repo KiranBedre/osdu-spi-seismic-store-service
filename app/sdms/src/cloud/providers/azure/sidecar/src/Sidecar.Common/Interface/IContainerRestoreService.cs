@@ -30,13 +30,14 @@ public interface IContainerRestoreService
     /// If the dataset uses the 'dataset' access policy and its container is missing, attempts to
     /// undelete the soft-deleted container and waits until it becomes visible. No-op when the
     /// dataset is not deleted, for the 'uniform' access policy (shared container), or when the
-    /// container already exists.
+    /// container already exists. Returns true when a deleted dataset's dedicated container has
+    /// been undeleted, including on redelivery when that container is already visible.
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the container is missing and no soft-deleted copy can be restored, or when the
     /// undeleted container does not become visible within the expected window.
     /// </exception>
-    Task EnsureContainerAvailableAsync(
+    Task<bool> EnsureContainerAvailableAsync(
         string dataPartitionId,
         DatasetStorageInfo storageInfo,
         string operationId,

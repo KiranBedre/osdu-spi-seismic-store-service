@@ -124,7 +124,21 @@ public class RestoreTaskExecutor(
         // retried at the queue level instead of releasing locks. See the RestoreRetryableException
         // handler below.
         var retainLocksForRetry = false;
+        var containerRestoreMayHaveMutated = false;
         var blobRestoreMayHaveStarted = false;
+        var locksAreIndefinite = false;
+
+        async Task EnsureLocksIndefiniteAsync()
+        {
+            if (locksAreIndefinite)
+            {
+                return;
+            }
+
+            await MakeLocksIndefiniteAsync(
+                datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
+            locksAreIndefinite = true;
+        }
 
         try
         {
@@ -188,8 +202,7 @@ public class RestoreTaskExecutor(
                     if (trackedStatus.Document.RequiresManualRecovery)
                     {
                         retainLocksForRetry = true;
-                        await MakeLocksIndefiniteAsync(
-                            datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
+                        await EnsureLocksIndefiniteAsync();
                     }
                     return;
                 }
@@ -201,6 +214,10 @@ public class RestoreTaskExecutor(
                     _logger.LogInformation("Restore status set to InProgress - OperationId: {OperationId}", message.OperationId);
                 }
             }
+
+            // Both locks must outlive the combined container, blob, metadata, and validation
+            // stages. They are released explicitly after a safe terminal outcome.
+            await EnsureLocksIndefiniteAsync();
 
             // --- 3. Resolve storage location from current metadata ---
 
@@ -241,11 +258,26 @@ public class RestoreTaskExecutor(
             // soft-deleted container, otherwise the blob PITR below has no container to target.
             try
             {
-                await _containerRestoreService.EnsureContainerAvailableAsync(
+                containerRestoreMayHaveMutated =
+                    await _containerRestoreService.EnsureContainerAvailableAsync(
                     tenant,
                     storageInfo,
                     message.OperationId,
                     ct);
+            }
+            catch (ContainerRestoreMutationException ex)
+            {
+                containerRestoreMayHaveMutated = true;
+                _logger.LogError(ex,
+                    "Container was undeleted but did not become available; retaining locks for retry - OperationId: {OperationId}, Error: {Error}",
+                    message.OperationId, ex.Message);
+                trackedStatus.Document.ErrorDetails = $"Container undelete requires retry: {ex.Message}";
+                await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                if (ex.InnerException is OperationCanceledException cancellation)
+                {
+                    throw cancellation;
+                }
+                throw new RestoreRetryableException("Container undelete did not complete", ex);
             }
             catch (Exception ex)
             {
@@ -292,6 +324,14 @@ public class RestoreTaskExecutor(
             {
                 _logger.LogError(ex, "Blob restore could not be started - OperationId: {OperationId}, Error: {Error}",
                     message.OperationId, ex.Message);
+                if (containerRestoreMayHaveMutated)
+                {
+                    trackedStatus.Document.ErrorDetails =
+                        $"Blob restore could not be started after container recovery: {ex.Message}";
+                    await TryPersistStatusAsync(tenant, trackedStatus, message.OperationId, ct);
+                    throw new RestoreRetryableException(
+                        "Blob restore could not start after container recovery", ex);
+                }
                 trackedStatus.Document.ErrorDetails = $"Blob restore could not be started: {ex.Message}";
                 trackedStatus.Document.Status = ToStatusString(Common.RestoreOperationStatus.Failed);
                 trackedStatus = await _statusStorage.SaveStatusAsync(tenant, trackedStatus, ct);
@@ -534,14 +574,13 @@ public class RestoreTaskExecutor(
         }
         catch (OperationCanceledException)
         {
-            if (blobRestoreMayHaveStarted)
+            if (containerRestoreMayHaveMutated || blobRestoreMayHaveStarted)
             {
                 retainLocksForRetry = true;
                 _logger.LogWarning(
                     "Restore cancelled after blob PITR may have started; retaining locks for redelivery - OperationId: {OperationId}",
                     message.OperationId);
-                await MakeLocksIndefiniteAsync(
-                    datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
+                await EnsureLocksIndefiniteAsync();
             }
             else
             {
@@ -576,8 +615,7 @@ public class RestoreTaskExecutor(
             _logger.LogError(ex,
                 "Restore left in a potentially inconsistent state; retaining locks and retrying at queue level - OperationId: {OperationId}, Error: {Error}",
                 message.OperationId, ex.Message);
-            await MakeLocksIndefiniteAsync(
-                datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
+            await EnsureLocksIndefiniteAsync();
             throw;
         }
         catch (RestoreManualRecoveryException ex)
@@ -591,8 +629,7 @@ public class RestoreTaskExecutor(
             _logger.LogError(ex,
                 "Restore left in a potentially inconsistent state by a non-retriable error; retaining locks and stopping redelivery for manual recovery - OperationId: {OperationId}, Error: {Error}",
                 message.OperationId, ex.Message);
-            await MakeLocksIndefiniteAsync(
-                datasetLockSession, datasetLockKey, operationLockKey, message.OperationId);
+            await EnsureLocksIndefiniteAsync();
             // Intentionally not rethrown: the message is deleted (no retries); locks remain held.
         }
         catch (Exception ex)

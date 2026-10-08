@@ -17,6 +17,7 @@
 namespace Sidecar.Common.Service;
 
 using Microsoft.Extensions.Logging;
+using Sidecar.Common.Exceptions;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Model;
 using Sidecar.Common.Utility;
@@ -35,7 +36,7 @@ public class ContainerRestoreService(
     private readonly IBlobClientFactory _blobClientFactory = blobClientFactory ?? throw new ArgumentNullException(nameof(blobClientFactory));
 
     /// <inheritdoc/>
-    public async Task EnsureContainerAvailableAsync(
+    public async Task<bool> EnsureContainerAvailableAsync(
         string dataPartitionId,
         DatasetStorageInfo storageInfo,
         string operationId,
@@ -48,7 +49,7 @@ public class ContainerRestoreService(
             _logger.LogInformation(
                 "Dataset is not deleted; skipping container undelete - Container: {Container}, OperationId: {OperationId}",
                 storageInfo.ContainerName, operationId);
-            return;
+            return false;
         }
 
         // Only the 'dataset' access policy gives each dataset a dedicated container that is
@@ -59,7 +60,7 @@ public class ContainerRestoreService(
             _logger.LogInformation(
                 "Access policy is '{AccessPolicy}', skipping container undelete - Container: {Container}, OperationId: {OperationId}",
                 storageInfo.AccessPolicy, storageInfo.ContainerName, operationId);
-            return;
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(storageInfo.ContainerName))
@@ -67,7 +68,7 @@ public class ContainerRestoreService(
             _logger.LogWarning(
                 "Container name is empty; cannot ensure container availability - OperationId: {OperationId}",
                 operationId);
-            return;
+            return false;
         }
 
         var blobClient = await _blobClientFactory.GetBlobClientAsync(dataPartitionId, ct);
@@ -77,7 +78,7 @@ public class ContainerRestoreService(
             _logger.LogInformation(
                 "Container already exists; no undelete required - Container: {Container}, OperationId: {OperationId}",
                 storageInfo.ContainerName, operationId);
-            return;
+            return true;
         }
 
         _logger.LogInformation(
@@ -92,11 +93,21 @@ public class ContainerRestoreService(
                 $"(it may be outside the container soft-delete retention window). OperationId: {operationId}");
         }
 
-        await WaitForContainerVisibleAsync(blobClient, storageInfo.ContainerName, operationId, ct);
+        try
+        {
+            await WaitForContainerVisibleAsync(blobClient, storageInfo.ContainerName, operationId, ct);
+        }
+        catch (Exception ex)
+        {
+            throw new ContainerRestoreMutationException(
+                $"Container '{storageInfo.ContainerName}' was undeleted but did not become available.",
+                ex);
+        }
 
         _logger.LogInformation(
             "Container restored and visible - Container: {Container}, OperationId: {OperationId}",
             storageInfo.ContainerName, operationId);
+        return true;
     }
 
     /// <summary>
