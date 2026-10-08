@@ -100,6 +100,7 @@ export class TestAzureRestoreOperationStatus {
             expect(record.createdBy).to.equal('user@example.com');
             expect(record.status).to.equal('Enqueued');
             expect(record.errorDetails).to.be.undefined;
+            expect(record.requiresManualRecovery).to.equal(false);
             expect(record.startedAt).to.be.a('string');
             expect(record.lastUpdatedAt).to.be.a('string');
         });
@@ -119,6 +120,7 @@ export class TestAzureRestoreOperationStatus {
                     subproject: 'subproject-a',
                     createdBy: 'user@example.com',
                     errorDetails: '',
+                    requiresManualRecovery: true,
                     startedAt: '2026-06-20T10:05:00.000Z',
                     lastUpdatedAt: '2026-06-20T10:10:00.000Z',
                     completedAt: '2026-06-20T10:15:00.000Z'
@@ -136,6 +138,7 @@ export class TestAzureRestoreOperationStatus {
                 subproject: 'subproject-a',
                 createdBy: 'user@example.com',
                 errorDetails: '',
+                requiresManualRecovery: true,
                 startedAt: '2026-06-20T10:05:00.000Z',
                 lastUpdatedAt: '2026-06-20T10:10:00.000Z',
                 completedAt: '2026-06-20T10:15:00.000Z'

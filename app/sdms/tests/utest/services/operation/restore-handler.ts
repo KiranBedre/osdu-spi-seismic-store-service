@@ -369,6 +369,7 @@ export class TestRestoreHandler {
                 tenant: 'tenant',
                 subproject: 'subproject',
                 createdBy: 'user@example.com',
+                requiresManualRecovery: false,
                 startedAt: '2026-06-15T10:00:00.000Z',
                 completedAt: '2026-06-15T10:02:00.000Z',
             });

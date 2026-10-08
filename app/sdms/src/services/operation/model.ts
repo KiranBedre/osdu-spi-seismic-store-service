@@ -54,6 +54,7 @@ export interface IRestoreOperationStatus {
     subproject: string;
     createdBy: string;
     errorDetails?: string;
+    requiresManualRecovery: boolean;
     startedAt: string;
     lastUpdatedAt?: string;
     completedAt?: string;

@@ -3593,6 +3593,7 @@ components:
         - status
         - sdPath
         - restorePointInTime
+        - requiresManualRecovery
       properties:
         operationId:
           type: string
@@ -3620,6 +3621,9 @@ components:
         errorDetails:
           type: string
           description: "Human-readable reason the operation was rejected or failed. Present only for Rejected/Failed operations."
+        requiresManualRecovery:
+          type: boolean
+          description: "Whether the operation left the dataset locked for operator recovery."
         startedAt:
           type: string
           format: date-time
@@ -3639,4 +3643,5 @@ components:
         restorePointInTime: "2026-07-10T08:30:00.000Z"
         createdBy: "00000000-0000-0000-0000-000000000000"
         errorDetails: "Restore rejected: the dataset is currently locked by another in-progress write operation. Wait for that operation to finish and release the lock, then retry this restore."
+        requiresManualRecovery: false
         lastUpdatedAt: "2026-07-15T10:00:07.000Z"

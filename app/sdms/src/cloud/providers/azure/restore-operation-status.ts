@@ -91,6 +91,7 @@ export class AzureRestoreOperationStatusStorage {
                 createdBy: params.createdBy,
                 status: 'Enqueued',
                 errorDetails: undefined,
+                requiresManualRecovery: false,
                 startedAt: new Date().toISOString(),
                 lastUpdatedAt: new Date().toISOString(),
             };
@@ -127,6 +128,7 @@ export class AzureRestoreOperationStatusStorage {
             subproject: resource.subproject,
             createdBy: resource.createdBy,
             errorDetails: resource.errorDetails,
+            requiresManualRecovery: resource.requiresManualRecovery === true,
             startedAt: resource.startedAt,
             lastUpdatedAt: resource.lastUpdatedAt,
             completedAt: resource.completedAt,
