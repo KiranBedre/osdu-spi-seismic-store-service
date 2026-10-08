@@ -264,7 +264,7 @@ if [ -f "./node_modules/newman/bin/newman.js" ]; then
          $ALLURE_OPT \
          --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
          --reporter-htmlextra-export ./tests/e2e/results/e2e_tests_iteration$1.html \
-         --reporter-junit-export ./newman/e2e_tests_iteration$1.xml \
+         --reporter-junit-export ./newman/e2e_tests.xml \
          --bail
    }
 
@@ -287,7 +287,7 @@ else
          $ALLURE_OPT \
          --reporter-htmlextra-skipHeaders "Authorization appkey x-api-key" \
          --reporter-htmlextra-export ./tests/e2e/results/e2e_tests_iteration$1.html \
-         --reporter-junit-export ./newman/e2e_tests_iteration$1.xml \
+         --reporter-junit-export ./newman/e2e_tests.xml \
          --bail
    }
 fi
