@@ -1,13 +1,10 @@
 name: CodeQL Analysis
 
-# Advanced setup, not default setup: default setup skips pull requests from forks, which
-# leaves the required "CodeQL" check absent and the PR unmergeable (the ruleset has no bypass).
-
 on:
   push:
-    branches: [main]
+    branches: [ main, fork_upstream, fork_integration ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Mondays at 6 AM UTC
   workflow_dispatch:
@@ -18,21 +15,144 @@ permissions:
   security-events: write
 
 jobs:
+  check-paths:
+    name: Check if Code Changes Present
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.filter.outputs.should-run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check for code changes
+        id: filter
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "Running CodeQL: Scheduled or manual trigger"
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || echo "")
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "Running CodeQL: Unable to determine changed files"
+            exit 0
+          fi
+
+          # Skip only when every changed file is Markdown. Markdown is not an analyzed
+          # language, so this can never hide a finding.
+          SHOULD_RUN=false
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              *.md) continue ;;
+            esac
+            SHOULD_RUN=true
+            break
+          done <<< "$CHANGED_FILES"
+
+          if [ "$SHOULD_RUN" = "true" ]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "Running CodeQL: non-Markdown changes detected"
+          else
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            echo "Skipping CodeQL: only Markdown files changed"
+          fi
+
+  detect-languages:
+    needs: check-paths
+    if: needs.check-paths.outputs.should-run == 'true'
+    name: Detect Project Languages
+    runs-on: ubuntu-latest
+    outputs:
+      languages: ${{ steps.detect.outputs.languages }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: Detect languages
+        id: detect
+        run: |
+          LANGUAGES='[]'
+
+          if [ -f "pom.xml" ] || [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["java-kotlin"]')
+          fi
+
+          if [ -f "setup.py" ] || [ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || \
+             find . -name "*.py" \
+               -not -path "./.*" \
+               -not -path "*/build/*" \
+               -not -path "*/build-*/*" \
+               -not -path "*/target/*" \
+               -not -path "*/dist/*" \
+               -not -path "*/__pycache__/*" \
+               -not -path "*/.venv/*" \
+               -not -path "*/venv/*" \
+               -not -path "*/.pytest_cache/*" \
+               -not -path "*/.mypy_cache/*" \
+               -not -path "*/node_modules/*" | grep -q .; then
+            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["python"]')
+          fi
+
+          if [ -f "package.json" ] || find . -name "*.js" -o -name "*.ts" -not -path "./node_modules/*" -not -path "./.*" | grep -q .; then
+            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["javascript-typescript"]')
+          fi
+
+          if [ -f "go.mod" ] || find . -name "*.go" -not -path "./.*" | grep -q .; then
+            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["go"]')
+          fi
+
+          # OSDU services are Java; an undetected tree still gets the Java analysis.
+          if [ "$LANGUAGES" = "[]" ]; then
+            LANGUAGES='["java-kotlin"]'
+          fi
+
+          # actions is always analyzed: every fork ships .github/workflows/, and workflow
+          # YAML is precisely what this analysis exists to review.
+          LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["actions"]')
+
+          echo "languages=$LANGUAGES" >> $GITHUB_OUTPUT
+          echo "Analyzing languages: $LANGUAGES"
+
   analyze:
     name: Analyze Code
+    needs: [check-paths, detect-languages]
+    if: needs.check-paths.outputs.should-run == 'true' && needs.detect-languages.outputs.languages != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 360
 
     strategy:
       fail-fast: false
       matrix:
-        # actions is the point of this repository: 35 of its 46 YAML files are
-        # workflows or composite actions. python covers the upstream filter engine.
-        language: [actions, python]
+        language: ${{ fromJSON(needs.detect-languages.outputs.languages) }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: Setup Java
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
 
       - name: Setup Python
         if: matrix.language == 'python'
@@ -40,8 +160,15 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Setup Node.js
+        if: matrix.language == 'javascript-typescript'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6.3.0
+        with:
+          node-version: '18'
+          cache: 'npm'
+
       - name: Initialize CodeQL
-        # Commit SHA, not the annotated-tag object SHA: Dependabot cannot resolve or bump a tag object.
+        # Pinned to the commit, not the annotated tag object: Dependabot cannot resolve a tag object.
         uses: github/codeql-action/init@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
         with:
           languages: ${{ matrix.language }}
@@ -49,102 +176,56 @@ jobs:
           build-mode: none
           config: |
             paths-ignore:
-              - '.github/local-actions/upstream-filter-tests/fixtures/**'
-              - 'doc/src/javascripts/**'
+              - '**/build/**'
+              - '**/build-*/**'
+              - '**/target/**'
+              - '**/dist/**'
+              - '**/__pycache__/**'
+              - '**/.venv/**'
+              - '**/venv/**'
+              - '**/node_modules/**'
+              - '**/.pytest_cache/**'
+              - '**/.mypy_cache/**'
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
         with:
           category: "/language:${{matrix.language}}"
 
-  # The actions extractor only reads .github/workflows/, so template-workflows/ is staged there
-  # and analyzed as a fork would see it. Nothing is uploaded: the findings belong to the forks'
-  # own scans. Diff-informed analysis is off because the staged paths never appear in a PR diff,
-  # and PR runs would otherwise keep only the non-dataflow findings.
-  template-workflows:
-    name: Analyze Template Workflows
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    env:
-      CODEQL_ACTION_DIFF_INFORMED_QUERIES: "false"
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
-
-      - name: Stage template workflows as fork workflows
-        run: |
-          set -euo pipefail
-          rm -f .github/workflows/*.yml
-          cp .github/template-workflows/*.yml .github/workflows/
-          ls .github/workflows
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
-        with:
-          languages: actions
-          queries: security-extended
-          build-mode: none
-          config: |
-            paths-ignore:
-              - '.github/local-actions/**'
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@f443b600d91635bebf5b0d9ebc620189c0d6fba5  # v4.30.8
-        with:
-          category: "/language:actions/template-workflows"
-          upload: never
-          upload-database: false
-          output: template-workflows-sarif
-
-      - name: Fail on findings
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          sarifs=(template-workflows-sarif/*.sarif)
-          if [ "${#sarifs[@]}" -eq 0 ]; then
-            echo "❌ No SARIF produced for template-workflows; the analysis did not run"
-            exit 1
-          fi
-          total=0
-          for sarif in "${sarifs[@]}"; do
-            count=$(jq '[.runs[] | (.results // [])[]] | length' "$sarif")
-            # Point the annotation at the template file, not the staged copy.
-            jq -r '.runs[] | (.results // [])[]
-              | "::error file=\((.locations[0].physicalLocation.artifactLocation.uri // "unknown") | sub("^\\.github/workflows/"; ".github/template-workflows/")),line=\(.locations[0].physicalLocation.region.startLine // 0)::\(.ruleId // "unknown"): \((.message.text // "") | gsub("%"; "%25") | gsub("\r"; "%0D") | gsub("\n"; "%0A"))"' "$sarif"
-            total=$((total + count))
-          done
-          if [ "$total" -gt 0 ]; then
-            echo "❌ $total CodeQL finding(s) in template-workflows would reach every fork"
-            exit 1
-          fi
-          echo "✅ template-workflows are clean"
-
-  # Summary job for the required "CodeQL" check (ADR-030). always() so the context reports
-  # even when the matrix does not complete; a check that never arrives wedges the PR.
+  # Summary job reporting as "CodeQL", the required check context in the rulesets (ADR-030).
   CodeQL:
     name: CodeQL
     runs-on: ubuntu-latest
-    needs: [analyze, template-workflows]
+    needs: [check-paths, detect-languages, analyze]
     if: always()
     steps:
       - name: Report CodeQL Status
         run: |
-          status=0
-          for job in "analyze=${{ needs.analyze.result }}" "template-workflows=${{ needs.template-workflows.result }}"; do
-            case "${job#*=}" in
-              success)
-                echo "✅ ${job%%=*} passed"
-                ;;
-              skipped)
-                echo "✅ ${job%%=*} skipped"
-                ;;
-              *)
-                echo "❌ ${job%%=*} ${job#*=}"
-                status=1
-                ;;
-            esac
-          done
-          exit "$status"
+          if [ "${{ needs.check-paths.result }}" != "success" ]; then
+            echo "❌ Code path check failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.check-paths.outputs.should-run }}" = "false" ]; then
+            echo "✅ CodeQL skipped - only Markdown files changed"
+            exit 0
+          fi
+
+          if [ "${{ needs.detect-languages.result }}" != "success" ]; then
+            echo "❌ Language detection failed"
+            exit 1
+          fi
+
+          # The language list always holds actions, so a skipped analyze means the job
+          # never started: an infrastructure fault, not a pass.
+          if [ "${{ needs.analyze.result }}" = "skipped" ]; then
+            echo "❌ CodeQL analysis did not run despite non-Markdown changes"
+            exit 1
+          fi
+
+          if [ "${{ needs.analyze.result }}" = "failure" ] || [ "${{ needs.analyze.result }}" = "cancelled" ]; then
+            echo "❌ CodeQL analysis failed or was cancelled"
+            exit 1
+          fi
+
+          echo "✅ CodeQL checks completed successfully"

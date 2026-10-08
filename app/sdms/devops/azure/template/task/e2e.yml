@@ -1,0 +1,21 @@
+parameters:
+  installRequirements: false
+  isGitlab: false
+steps:
+    # self to trigger clone of the current repo.
+    - checkout: self
+      persistCredentials: true
+    - template: install-e2e-requirements.yml
+      parameters:
+        installRequirements: ${{ parameters.installRequirements }}
+    - template: generate-token.yml
+      parameters:
+        isGitlab: ${{ parameters.isGitlab }}
+    - template: run-e2e.yml
+      parameters:
+        isGitlab: ${{ parameters.isGitlab }}
+    - task: PublishTestResults@1
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(System.DefaultWorkingDirectory)/newman/*.xml'
+        failTaskOnFailedTests: false

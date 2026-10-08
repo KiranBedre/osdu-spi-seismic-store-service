@@ -1,0 +1,409 @@
+// ============================================================================
+// Copyright 2017-2021, Schlumberger
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ============================================================================
+
+import { Request as expRequest } from 'express';
+import { DatasetListRequest, DatasetPatchRequest, DatasetModel, MatchQueryFilter } from '.';
+import { DatasetFilterParser } from './filter-parser';
+import { Auth } from '../../auth';
+import { Config } from '../../cloud';
+import { Error, Params, Utils } from '../../shared';
+import { SchemaManagerFactory } from './schema-manager';
+import { ImpersonationTokenHandler } from '../impersonation_token/handler';
+
+export class DatasetParser {
+
+    public static checkCTag(req: expRequest): { tenantID: string, dataPartitionID: string, dataset: DatasetModel; } {
+
+        const dataset = this.createDatasetModelFromRequest(req);
+        Params.checkString(req.query.ctag, 'ctag');
+        let ctag: string;
+        if (typeof req.query.ctag === 'string') {
+            ctag = req.query.ctag;
+        } else {
+            throw Error.make(Error.Status.BAD_REQUEST, 'The \'ctag\' query parameter is not a valid string.');
+        }
+        // Check if 'ctag' has the correct length (at least 19 characters)
+        if (ctag.length < 19) { // ctag (16) + project (3 at least)
+            throw Error.make(Error.Status.BAD_REQUEST, "The 'ctag' query parameter is in a wrong format.");
+        }
+        // Process the 'ctag' value and extract necessary parts
+        dataset.ctag = ctag.substring(0, 16);  // First 16 characters for 'ctag'
+        const tmp = ctag.substring(16); // Extract the remaining part
+        const [tenantID, dataPartitionID] = tmp.split(';');
+        if (!tenantID || !dataPartitionID) {
+            throw Error.make(Error.Status.BAD_REQUEST, "Invalid 'ctag' format: missing tenantID or dataPartitionID.");
+        }
+        return { tenantID, dataPartitionID, dataset };
+
+    }
+
+    public static async register(req: expRequest): Promise<DatasetModel> {
+
+        // Init the dataset model from user input parameters
+        const dataset = this.createDatasetModelFromRequest(req);
+        dataset.ltag = (req.headers.ltag) as string;
+        dataset.type = req.body ? req.body.type : undefined;
+        if (Auth.isImpersonationToken(req.headers.authorization)) {
+            const context = req.get('impersonation-token-context');
+            if (context === undefined) {
+                dataset.created_by = await Utils.getUserId(
+                    req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
+
+                /* FIXME: This is a workaround to use impersonation tokens without having to provide the context.
+                Should add back this "throw" code change once impersonation-Token-Context is properly enforced
+                */
+                // throw (Error.make(Error.Status.BAD_REQUEST,
+                //     'The request impersonation-token-context header has not been specified.'));
+            }
+            else {
+                const tokenContext = ImpersonationTokenHandler.decodeContext(context);
+                dataset.created_by = tokenContext.user;
+            }
+        }
+        else {
+            dataset.created_by = await Utils.getUserId(
+                req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
+        }
+
+        dataset.created_date = dataset.last_modified_date = new Date().toString();
+        dataset.gtags = req.body ? req.body.gtags : undefined;
+
+        // Check the parameters
+        Params.checkString(dataset.type, 'type', false);
+        Params.checkString(dataset.ltag, 'ltag', false);
+
+        DatasetParser.validateStorageSchemaRecord(req, dataset);
+
+        dataset.acls = req.body && 'acls' in req.body ? req.body.acls : undefined;
+
+        DatasetParser.validateAcls(dataset);
+
+        return dataset;
+
+    }
+
+    private static validateAcls(dataset: DatasetModel) {
+
+        if (dataset.acls) {
+
+            if (!('admins' in dataset.acls) || !('viewers' in dataset.acls)) {
+                throw Error.make(Error.Status.BAD_REQUEST,
+                    'Admins and viewers properties are both required in the acls ');
+            }
+
+            if (dataset.acls.admins.length === 0 || dataset.acls.viewers.length === 0) {
+                throw Error.make(Error.Status.BAD_REQUEST,
+                    'Admins and viewers groups must each have at least one group email');
+            }
+
+            for (const adminGroupEmail of dataset.acls.admins) {
+                Params.checkEmail(adminGroupEmail, 'acls.admins', true);
+            }
+
+            for (const viewerGroupEmail of dataset.acls.viewers) {
+                Params.checkEmail(viewerGroupEmail, 'acls.viewers', true);
+            }
+
+        }
+    }
+
+    public static get(req: expRequest): [DatasetModel, boolean, boolean, string] {
+        let userInfo = true;
+        if (req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+            userInfo = false;
+        }
+        const seismicMetaRecordVersion = req.query['record-version'] ?
+            req.query['record-version'] as string : undefined;
+        return [this.createDatasetModelFromRequest(req),
+        req.query.seismicmeta === 'true', userInfo, seismicMetaRecordVersion];
+
+    }
+
+    public static list(req: expRequest): DatasetListRequest {
+        const isPost = req.method === 'POST';
+        const params = isPost ? req.body : req.query;
+
+        let userInfo = true;
+        if (req.query['translate-user-info'] === 'false' || req.query['subid-to-email'] === 'false') {
+            userInfo = false;
+        }
+
+        const input = {
+            dataset: this.createDatasetModelFromRequest(req),
+            pagination: null,
+            userInfo: userInfo.valueOf()
+        } as DatasetListRequest;
+
+        if (!params) return input;
+
+        Params.checkString(params.cursor, 'cursor', false);
+
+        function checkGtags(gtags?: string | string[]) {
+            if (gtags) {
+                if (isPost) { Params.checkArray(gtags, 'gtags', false); }
+                if (!(gtags instanceof Array)) {
+                    input.dataset.gtags = [gtags as string];
+                } else {
+                    input.dataset.gtags = gtags as string[];
+                }
+            }
+        }
+
+        checkGtags(params.gtags);
+
+        // check gtag for backward compatibility
+        checkGtags(params.gtag);
+
+        if (params.limit || params.cursor) {
+            if (isPost) {
+                Params.checkString(params.limit, 'limit', false);
+                input.pagination = { limit: +params.limit, cursor: params.cursor };
+            }
+            else {
+                input.pagination = {
+                    limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
+                    cursor: req.query.cursor as string
+                };
+            }
+        }
+        if (input.pagination?.limit < 0 && input.pagination?.limit !== -1) {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The \'limit\' input param cannot be less than zero.'));
+        }
+        if (input.pagination?.cursor === '') {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The \'cursor\' input param cannot be empty if supplied'));
+        }
+
+        if (params.search) {
+            if (!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The \'search\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
+            }
+            input.search = params.search as string;
+        }
+
+        if (params.select && typeof params.select === 'string') {
+            if (!Config.ENABLE_SEARCH_AND_SELECT_CRITERIA_IN_LIST) {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The \'select\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
+            }
+            input.select = params.select.slice(1, -1).split(',');
+        }
+
+        if (params.filter) {
+            if (!Config.ENABLE_ADVANCED_QUERY_FILTERS) {
+                throw (Error.make(Error.Status.NOT_IMPLEMENTED,
+                    'The \'filter\' parameter is not supported in ' + Config.CLOUDPROVIDER + ' implementation.'));
+            }
+            try {
+                input.filter = DatasetFilterParser.parseFilter(params.filter);
+            } catch (error) {
+                throw (Error.make(Error.Status.BAD_REQUEST, error.message));
+            }
+        }
+
+        delete input.dataset.path;
+        return input;
+    }
+
+    public static delete(req: expRequest): DatasetModel {
+        return this.createDatasetModelFromRequest(req);
+    }
+
+    public static patch(req: expRequest): DatasetPatchRequest {
+
+        const input = {
+            dataset: this.createDatasetModelFromRequest(req),
+        } as DatasetPatchRequest;
+
+        input.closeId = req.query.close as string;
+        Params.checkString(input.closeId, 'close', false);
+        Params.checkBody(req.body, input.closeId === undefined); // body is required only if is not a closing request
+
+        // Patch meta data
+        input.dataset.metadata = req.body.metadata;
+        input.dataset.filemetadata = req.body.filemetadata;
+        Params.checkObject(input.dataset.metadata, 'metadata', false);
+        Params.checkObject(input.dataset.filemetadata, 'filemetadata', false);
+
+        // Trigger storage tier change
+        input.applyChangeTier = req.body.change_tier as string;
+        Params.checkString(input.applyChangeTier, 'change_tier', false);
+
+        // Patch tags
+        input.dataset.gtags = req.body.gtags;
+        input.dataset.ltag = req.body.ltag;
+        Params.checkArray(input.dataset.gtags, 'gtags', false);
+        Params.checkString(input.dataset.ltag, 'ltag', false);
+
+        // readonly
+        Params.checkBoolean(req.body.readonly, 'readonly', false);
+        input.dataset.readonly = req.body.readonly;
+
+        // status
+        Params.checkString(req.body.status, 'status', false);
+        input.dataset.status = req.body.status;
+
+        // remove the parameter... this field should always update when patch
+        input.dataset.last_modified_date = new Date().toString();
+
+        // Patch newName
+        input.newName = req.body.dataset_new_name;
+        Params.checkString(input.newName, 'dataset_new_name', false);
+
+        input.dataset.acls = req.body && 'acls' in req.body ? req.body.acls : undefined;
+        DatasetParser.validateAcls(input.dataset);
+
+        DatasetParser.validateStorageSchemaRecord(req, input.dataset);
+
+        return input;
+    }
+
+    public static lock(req: expRequest): { dataset: DatasetModel, open4write: boolean, wid: string; } {
+        let openMode = req.query.openmode;
+        Params.checkString(req.query.openmode, 'openmode');
+
+        openMode = (req.query.openmode as string).toLowerCase();
+        if (openMode !== 'read' && openMode !== 'write') {
+            throw (Error.make(Error.Status.BAD_REQUEST,
+                'The \'openmode\' query parameter must be \'read\' or \'write\'.'));
+        }
+        const open4write = openMode === 'write';
+
+        const wid = req.query.wid as string;
+        Params.checkString(req.query.wid, wid, false);
+
+        const dataset = this.createDatasetModelFromRequest(req);
+
+        return { dataset, open4write, wid };
+    }
+
+    public static unlock(req: expRequest): DatasetModel {
+        return this.createDatasetModelFromRequest(req);
+    }
+
+    public static exists(req: expRequest): DatasetModel[] {
+
+        Params.checkBody(req.body);
+
+        const datasetBody = req.body.datasets;
+        Params.checkArray(datasetBody, 'datasets');
+
+        if (datasetBody.length === 0) {
+            throw (Error.make(Error.Status.BAD_REQUEST, 'The \'datasets\' body field is empty.'));
+        }
+        const datasets: DatasetModel[] = [];
+        for (const item of datasetBody) {
+
+            Params.checkString(item, 'datasets', false);
+            if (item.length === 0) {
+                throw (Error.make(Error.Status.BAD_REQUEST,
+                    'The \'datasets\' body field cannot contain empty elements.'));
+            }
+
+            const dataset = this.createDatasetModelFromRequest(req);
+
+            dataset.path = '/' + (item.lastIndexOf('/') === 0 ?
+                '/' : item.substring(0, item.lastIndexOf('/') + 1)) + '/';
+            while (dataset.path.indexOf('//') !== -1) { dataset.path = dataset.path.replace('//', '/'); }
+            dataset.name = item.substring(item.lastIndexOf('/') + 1);
+            datasets.push(dataset);
+
+        }
+
+        return datasets;
+
+    }
+
+    public static sizes(req: expRequest): DatasetModel[] {
+        return this.exists(req);
+    }
+
+    public static size(req: expRequest): DatasetModel {
+        return this.createDatasetModelFromRequest(req);
+    }
+
+    public static listContent(req: expRequest): DatasetModel {
+        return this.createDatasetModelFromRequest(req);
+    }
+
+    public static checkPermissions(req: expRequest): DatasetModel {
+        return this.createDatasetModelFromRequest(req);
+    }
+
+    public static putTags(req: expRequest): DatasetModel {
+        const dataset = this.createDatasetModelFromRequest(req);
+        dataset.gtags = req.query.gtag as string[];
+        return dataset;
+    }
+
+    private static createDatasetModelFromRequest(req: expRequest) {
+        const dataset: DatasetModel = {} as DatasetModel;
+        this.getSDPathFromRequest(dataset, req);
+        return dataset;
+    }
+
+    private static getSDPathFromRequest(dataset: DatasetModel, req: expRequest) {
+        if (req.params.datasetid) {
+            dataset.name = req.params.datasetid;
+        } else if (req.query.datasetid) {
+            dataset.name = decodeURIComponent(req.query.datasetid as string);
+        }
+
+        dataset.tenant = req.params.tenantid;
+        dataset.subproject = req.params.subprojectid;
+
+        const path = req.query.path ? '/' + decodeURIComponent(req.query.path as string) + '/' : '/';
+        Params.checkDatasetPath(path, 'path', true);
+        dataset.path = path;
+
+        while (dataset.path.indexOf('//') !== -1) { dataset.path = dataset.path.replace('//', '/'); }
+    }
+
+    private static validateStorageSchemaRecord(req: expRequest, dataset: DatasetModel) {
+        const supportedStorageRecordSchemaTypes = SchemaManagerFactory.getSupportedSchemaTypes();
+
+        const payloadStorageRecordSchemaTypes = supportedStorageRecordSchemaTypes
+            .filter(storageRecordSchema => storageRecordSchema in req.body);
+
+        if (payloadStorageRecordSchemaTypes.length > 1) {
+
+            const supportedSchemaTypesStr = supportedStorageRecordSchemaTypes.join(',');
+            // eslint-disable-next-line @stylistic/max-len
+            throw Error.make(Error.Status.BAD_REQUEST, 'Only one of ' + supportedSchemaTypesStr + ' is allowed in the request payload body.');
+        }
+
+        const payloadStorageRecordSchemaType = payloadStorageRecordSchemaTypes[0];
+
+        Params.checkObject(req.body[payloadStorageRecordSchemaType], payloadStorageRecordSchemaTypes[0], false);
+
+
+        if (payloadStorageRecordSchemaType) {
+            const validationResult = SchemaManagerFactory
+                .build(payloadStorageRecordSchemaType)
+                .validate(req.body[payloadStorageRecordSchemaType]);
+
+            if (validationResult.err) {
+                throw Error.make(Error.Status.BAD_REQUEST, validationResult.err);
+            }
+
+            dataset.storageSchemaRecordType = payloadStorageRecordSchemaType;
+            dataset.storageSchemaRecord = req.body[payloadStorageRecordSchemaType];
+        }
+    }
+
+}

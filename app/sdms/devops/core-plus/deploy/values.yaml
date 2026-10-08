@@ -1,0 +1,44 @@
+global:
+  domain: ""
+  limitsEnabled: true
+  dataPartitionId: ""
+
+data:
+  # Configmap
+  logLevel: "ERROR"
+  port: "5000"
+  partitionHost: "http://partition"
+  storageHost: "http://storage"
+  legalHost: "http://legal"
+  entitlementsHost: "http://entitlements"
+  redisSdmsHost: ""
+  redisSdmsPort: "6379"
+  redisSdmsTlsDisabled: true
+  redisSharedHost: ""
+  redisSharedPort: "6379"
+  redisSharedTlsDisabled: true
+  serviceEnv: "dev"
+  # Deployment
+  requestsCpu: "15m"
+  requestsMemory: "150Mi"
+  limitsCpu: "1"
+  limitsMemory: "1G"
+  serviceAccountName: "seismic-store"
+  imagePullPolicy: "IfNotPresent"
+  redisImage: "docker.io/library/redis:7.2-alpine"
+  image: ""
+
+conf:
+  configmap: "seismic-store-config"
+  appName: "seismic-store"
+  database: "seismic-store-db-secret"
+  keycloak: "seismic-store-keycloak-secret"
+  s3SecretName: "seismic-seaweedfs-secret"
+  sdmsRedisSecretName: "seismic-store-redis-secret" # pragma: allowlist secret
+  replicas: 1
+
+istio:
+  proxyCPU: "6m"
+  proxyCPULimit: "500m"
+  proxyMemory: "50Mi"
+  proxyMemoryLimit: "512Mi"

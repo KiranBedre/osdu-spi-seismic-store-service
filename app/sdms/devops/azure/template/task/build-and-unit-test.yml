@@ -1,0 +1,11 @@
+steps:
+  - task: Bash@3
+    displayName: "Build & Run Unit Test"
+    inputs:
+      targetType: "inline"
+      script: |
+        cd $(Build.Repository.LocalPath)
+        sudo docker build -t builder_sdms:latest --file docker/builder.Dockerfile .
+        sudo docker run -e UTEST=ON -e CLOUDPROVIDER=google -e UTEST_PROVIDER=google -e APP_ENVIRONMENT_IDENTIFIER=evd -v '$(Build.Repository.LocalPath):$(utest_mount_dir)' -w '$(utest_mount_dir)' --rm builder_sdms:latest /bin/bash -c 'chmod +x devops/scripts/utest_build_run.sh;devops/scripts/utest_build_run.sh'
+        mkdir $(Build.SourcesDirectory)/seistore-osdu
+        cp -r $(Build.SourcesDirectory)/coverage $(Build.SourcesDirectory)/seistore-osdu/.

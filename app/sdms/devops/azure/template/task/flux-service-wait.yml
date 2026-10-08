@@ -1,0 +1,77 @@
+#  Copyright � Microsoft Corporation
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+# This template is responsible for detecting a service being alive.
+steps:
+  - task: AzureCLI@1
+    displayName: 'Flux Deployment Wait'
+    env:
+      #IMAGE: $(CONTAINER_REGISTRY_NAME).azurecr.io/${{ parameters.imageRepoName }}-${{ parameters.environment }}:$(Build.SourceVersion)
+      IMAGE: $(CONTAINER_REGISTRY_NAME).azurecr.io/$(utest_runtime_image):$(Build.SourceBranchName)-$(Build.BuildNumber)
+      SERVICE_NAME: ${{parameters.serviceName}}
+      BASE_NAME_SR: $(base-name-sr)
+    inputs:
+      azureSubscription: '$(SERVICE_CONNECTION_NAME)'
+      addSpnToEnvironment: true
+      scriptLocation: inlineScript
+      inlineScript: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        echo "Logging in to AKS"
+        echo "------------------------------------"
+        sudo az aks install-cli
+        az aks get-credentials -g $BASE_NAME_SR-rg -n $BASE_NAME_SR-aks
+
+        echo "Checking Deployment $SERVICE_NAME Exists"
+        echo "----------------------------------------"
+        attempt_counter=0
+        max_attempts=30
+        until kubectl get deployment $SERVICE_NAME -n osdu
+        do
+          if [ ${attempt_counter} -eq ${max_attempts} ];then
+            echo "Deployment Image not updated, integration tests are skipped"
+            exit 1
+          fi
+          attempt_counter=$(($attempt_counter+1))
+          sleep 30
+        done
+
+
+
+        echo "Checking Deployment $IMAGE updated"
+        echo "------------------------------------"
+        attempt_counter=0
+        max_attempts=30
+        echo $(kubectl get deployment $SERVICE_NAME -n osdu -o=jsonpath='{$.spec.template.spec.containers[1:2].image}')
+        echo $IMAGE
+        echo "------------------------------------"
+        while [ $(kubectl get deployment $SERVICE_NAME -n osdu -o=jsonpath='{$.spec.template.spec.containers[1:2].image}') != $IMAGE ]
+        do
+          if [ ${attempt_counter} -eq ${max_attempts} ];then
+            echo "Deployment Image not updated, integration tests are skipped"
+            exit 1
+          fi
+          attempt_counter=$(($attempt_counter+1))
+          sleep 30
+        done
+
+
+        echo "Checking Deployment $SERVICE_NAME Available"
+        echo "----------------------------------------"
+        kubectl wait --for=condition=available --timeout=600s deployment/$SERVICE_NAME -n osdu
+
+        echo "Checking for deployment $SERVICE_NAME READY!!"
+        echo "----------------------------------------"
+        kubectl rollout status deployment.v1.apps/$SERVICE_NAME -n osdu --timeout=900s

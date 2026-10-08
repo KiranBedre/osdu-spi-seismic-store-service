@@ -1,0 +1,9 @@
+{
+   "color": "true",
+   "require": "ts-node/register",
+   "timeout": 5000,
+   "opts": false,
+   "diff": true,
+   "sort": true,
+   "spec": "./tests/utest/**.ts"
+}

@@ -1,0 +1,30 @@
+sdms_lint:
+  image: node:${SDMS_COMPILE_NODE_VERSION}
+  stage: scan
+  needs: ['sdms_compile-and-unit-test']
+  tags: ['osdu-medium']
+  before_script:
+    - cd app/$SDMS_SERVICE
+  script:
+    - >
+      npm install -g eslint
+      npm install -g @eslint/js
+      npm install -g @types/eslint__js
+      npm install -g typescript
+      npm install -g typescript-eslint
+    - npm install
+    - npm run lint
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: always

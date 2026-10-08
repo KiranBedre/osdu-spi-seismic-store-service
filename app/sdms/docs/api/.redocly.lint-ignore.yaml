@@ -1,0 +1,50 @@
+# This file instructs Redocly's linter to ignore the rules contained for specific parts of your API.
+# See https://redocly.com/docs/cli/ for more information.
+../schemas/openzgy/FileCollection.Slb.OpenZGY.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractAccessControlList.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractLegalTags.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractLegalParentList.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractMetaItem.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+    - '#/oneOf/0/properties/kind/const'
+    - '#/oneOf/1/properties/kind/const'
+    - '#/oneOf/2/properties/kind/const'
+    - '#/oneOf/3/properties/kind/const'
+../schemas/abstract/AbstractCommonResources.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractDataset.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractFileCollectionSchema.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractFileSourceInfoSchema.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/segy/FileCollection.SEGY.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'
+../schemas/abstract/AbstractVectorHeaderMapping.1.0.0.json:
+  struct:
+    - '#/$id'
+    - '#/$schema'

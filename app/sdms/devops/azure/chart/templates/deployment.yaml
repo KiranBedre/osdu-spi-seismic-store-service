@@ -1,0 +1,90 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        aadpodidbinding: {{ .Values.global.podidentity }}
+    spec: 
+{{- if .Values.global.isAutoscalingEnabled }}
+      nodeSelector:
+        nodepool: {{ .Values.global.nodepool }} 
+{{- end }}   
+      containers:
+        - name: sidecar
+          image: {{ .Values.sidecarImage.repository }}:{{ .Values.image.tag }}
+          livenessProbe:
+            tcpSocket:
+              port: 7138
+            initialDelaySeconds: 20
+            timeoutSeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            tcpSocket:
+              port: 7138
+            initialDelaySeconds: 20
+            timeoutSeconds: 30
+            periodSeconds: 60  
+          ports:
+            - protocol: TCP
+              containerPort: 7138
+          env:
+          - name: KEYVAULT_URL
+            valueFrom:
+              configMapKeyRef:
+                name: osdu-svc-properties
+                key: ENV_KEYVAULT
+          envFrom:
+            - configMapRef:
+                name: seistore-svc-sidecar-properties
+        - name: {{ .Release.Name }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "1Gi"
+            limits:
+              cpu: "500m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.configEnv.sdmsPrefix }}/svcstatus
+              port: 80
+              httpHeaders:
+                - name: X-Api-Key
+                  value: ""
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.configEnv.sdmsPrefix }}/svcstatus/readiness
+              port: 80
+              httpHeaders:
+                - name: X-Api-Key
+                  value: ""
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            periodSeconds: 60  
+          ports:
+            - protocol: TCP
+              containerPort: 80
+          env:
+          - name: KEYVAULT_URL
+            valueFrom:
+              configMapKeyRef:
+                name: osdu-svc-properties
+                key: ENV_KEYVAULT
+          envFrom:
+            - configMapRef:
+                name: seistore-svc-properties

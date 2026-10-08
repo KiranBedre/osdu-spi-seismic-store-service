@@ -1,0 +1,54 @@
+parameters:
+  isGitlab: false
+steps:
+    - task: Bash@3
+      displayName: "Generate token"
+      condition: |
+        eq(${{ parameters.isGitlab }},true)
+      env:
+        AZURE_AD_APP_RESOURCE_ID: $(aad-client-id)
+        AZURE_TENANT_ID: $(tenant-id)
+        INTEGRATION_TESTER: $(app-dev-sp-username)
+        AZURE_TESTER_SERVICEPRINCIPAL_SECRET: $(app-dev-sp-password)
+      inputs:
+        targetType: "inline"
+        script: |
+         #!/usr/bin/env bash
+         python3 -m pip install wheel
+         python3 setup.py bdist_wheel 
+         python3 -m pip install --upgrade "pip < 21.0"
+         python3 -m pip install --upgrade setuptools
+         python3 -m pip install msal
+         svctoken=$(python3 devops/scripts/azure_jwt_client.py)
+         echo "##vso[task.setvariable variable=e2eIdToken]$svctoken"
+    - task: Bash@3
+      displayName: "Generate tokens"
+      condition: |
+        eq(${{ parameters.isGitlab }},false)
+      env:
+        e2esauthurl: $(e2esauthurl)
+        sauthSvcApiKey: $(sauthSvcApiKey)
+        e2eProjectId: $(e2eProjectId)
+        e2eServiceId: $(e2eServiceId)
+        e2esauthTesterSvcAccountSecret: $(sauthTesterSvcAccountSecret)
+        e2eTargetProjId: $(e2eTargetProjectId)
+        e2eTargetServiceId: $(e2eTargetServiceId)
+      inputs:
+        targetType: "inline"
+        script: |
+          #!/usr/bin/env bash
+
+          svctoken=$(curl -X POST ${e2esauthurl} \
+          -H 'Cache-Control: no-cache' \
+          -H 'Content-Type: application/json' \
+          -H 'x-api-key: '"${sauthSvcApiKey}"'' \
+          -d '{
+                "projectid": "'"${e2eProjectId}"'", 
+                "serviceid": "'"${e2eServiceId}"'",
+                "secret": "'"${e2esauthTesterSvcAccountSecret}"'",
+                "targetserviceid": "'"${e2eTargetServiceId}"'",
+                "targetprojid": "'"${e2eTargetProjId}"'"
+              }' | jq ."svctoken" -r )
+          echo "##vso[task.setvariable variable=e2eIdToken]$svctoken"
+
+          if [ -z "${svctoken}" ]; then exit 1; fi

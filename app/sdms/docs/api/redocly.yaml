@@ -1,0 +1,24 @@
+# Redocly configuration for the SDMS V3 OpenAPI spec.
+#
+# no-undefined-server-variable: the server URL uses the GitLab CI template
+# substitution syntax #{SDMS_PREFIX}# which is replaced at deployment time.
+# This is intentional and not a valid OpenAPI server variable.
+#
+# struct: kept at `error` severity so that any new structural mistake in
+# openapi.yaml fails the lint. The only tolerated violations are the 26
+# pre-existing ones coming from the canonical OSDU WKS schemas that
+# openzgy_v1 and segy_v1 $ref (JSON Schema draft-07 files containing $id,
+# $schema and x-osdu-* keywords that OpenAPI 3.0 does not allow). Those are
+# recorded as an explicit baseline in .redocly.lint-ignore.yaml. The OSDU
+# schemas are upstream artifacts and must not be modified.
+#
+# To refresh the baseline after a legitimate OSDU schema update, run:
+#   npx @redocly/cli lint --generate-ignore-file
+# and review the resulting diff — new entries for openapi.yaml itself are a
+# red flag and should be fixed rather than ignored.
+apis:
+  main:
+    root: openapi.yaml
+rules:
+  no-undefined-server-variable: off
+  struct: error

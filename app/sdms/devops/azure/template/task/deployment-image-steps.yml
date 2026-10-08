@@ -1,0 +1,17 @@
+parameters:
+  serviceName: ''
+  providerName: ''
+  environment: ""
+  secureFile: ""
+  installRequirements: false
+steps:
+  - template: download-build-artifact.yml
+    parameters:
+      providerName: ${{ parameters.providerName }}
+  - template: push-runtime-image.yml
+    parameters:
+      serviceName: ${{ parameters.serviceName }}
+      providerName: ${{ parameters.providerName }}
+      environment: ${{ parameters.environment }}
+      secureFile: ${{ parameters.secureFile }}
+      installRequirements: ${{ parameters.installRequirements }}

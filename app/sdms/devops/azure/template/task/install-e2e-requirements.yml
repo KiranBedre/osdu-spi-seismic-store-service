@@ -1,0 +1,17 @@
+parameters:
+  installRequirements: false
+steps:
+    - task: Bash@3
+      displayName: "Install requirements in container"
+      condition: ${{ parameters.installRequirements }} 
+      inputs:
+        targetType: "inline"
+        script: |
+          
+          apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata
+          apt-get update -y
+          apt-get install -y curl
+          apt-get install -y jq
+          apt-get install -y nodejs
+          apt-get install -y npm
+          npm install -g newman

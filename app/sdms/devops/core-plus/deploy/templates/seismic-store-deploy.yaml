@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.conf.appName | quote  }}
+    type: ddms
+    source: typescript
+  name: {{ .Values.conf.appName  | quote }}
+  namespace: {{ .Release.Namespace  | quote }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.conf.appName  | quote }}
+  replicas: {{ .Values.conf.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.conf.appName  | quote }}
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+        sidecar.istio.io/proxyCPU: {{ .Values.istio.proxyCPU | quote }}
+        sidecar.istio.io/proxyMemory: {{ .Values.istio.proxyMemory | quote }}
+        sidecar.istio.io/proxyCPULimit: {{ .Values.istio.proxyCPULimit | quote }}
+        sidecar.istio.io/proxyMemoryLimit: {{ .Values.istio.proxyMemoryLimit | quote }}
+    spec:
+      containers:
+        - name: {{ .Values.conf.appName | quote }}
+          image: {{ .Values.data.image | quote }}
+          imagePullPolicy: {{ .Values.data.imagePullPolicy | quote }}
+          env:
+          - name: DES_REDIS_INSTANCE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.conf.sdmsRedisSecretName | quote }}
+                key: REDIS_PASSWORD
+          - name: LOCKSMAP_REDIS_INSTANCE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.conf.sdmsRedisSecretName | quote }}
+                key: REDIS_PASSWORD
+          - name: REDIS_SHARED_INSTANCE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.conf.sdmsRedisSecretName | quote }}
+                key: REDIS_PASSWORD
+          envFrom:
+          - configMapRef:
+              name: {{ printf "%s-config" .Values.conf.appName | quote }}
+          - secretRef:
+              name: {{ .Values.conf.database | quote }}
+          - secretRef:
+              name: {{ .Values.conf.keycloak | quote }}
+          - secretRef:
+              name: {{ printf "%s-%s" .Values.global.dataPartitionId .Values.conf.s3SecretName | quote }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+          ports:
+            - containerPort: 5000
+          livenessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /api/seismic-store/v3/svcstatus
+                port: 5000
+              initialDelaySeconds: 15
+              periodSeconds: 60
+          readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /api/seismic-store/v3/svcstatus/readiness
+                port: 5000
+              initialDelaySeconds: 15
+              periodSeconds: 15
+          resources:
+            requests:
+              cpu: {{ .Values.data.requestsCpu | quote }}
+              memory: {{ .Values.data.requestsMemory | quote }}
+            {{- if .Values.global.limitsEnabled }}
+            limits:
+              cpu: {{ .Values.data.limitsCpu | quote }}
+              memory: {{ .Values.data.limitsMemory | quote }}
+            {{- end }}
+      serviceAccountName: {{ .Values.data.serviceAccountName | quote }}

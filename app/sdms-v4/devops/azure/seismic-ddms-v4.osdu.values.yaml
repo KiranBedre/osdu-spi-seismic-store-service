@@ -1,0 +1,55 @@
+  #####################################
+  # Seismic ddms V4 Service # 
+  #####################################
+deployment:
+  replicaCount: 1
+  deploymentAnnotations:
+    secret.reloader.stakater.com/reload: "{{.Release.Name }}-secret"
+
+configuration:
+  - service: seismic-ddms-v4
+    container:
+      image: seismic-ddms-v4
+      containerPort: "5000"
+    path: /seistore-svc/api/v4
+    probe: 
+      readiness:
+        path: /seistore-svc/api/v4/status
+      liveness:
+        path: /seistore-svc/api/v4/status
+    auth:
+      disable:
+        - "/"
+        - "*/index.html" 
+        - "*/v2/api-docs" 
+        - "*/configuration/ui"
+        - "*/configuration/security" 
+        - "*/swagger" 
+        - "*/swagger-ui.html/"
+        - "*/swagger-ui.html/swagger-ui-bundle.js"
+        - "*/swagger-ui.html/swagger-ui-init.js"
+        - "*/swagger-ui.html/swagger-ui-standalone-preset.js" 
+        - "*/swagger-ui.html/swagger-ui.css"
+        - "*/swagger-ui.html" 
+        - "*/swagger-ui.html*" 
+        - "*/swagger-ui.html/*"
+        - "*/swagger-resources"
+        - "/seismic-ddms-v4/swagger-resources/*"
+        - "/seismic-ddms-v4/webjars/*"
+        - "/seismic-ddms-v4/status"
+        - "/seismic-ddms-v4/info"
+    config:
+      CLOUD_PROVIDER: azure
+      KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+      CORE_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+      APIS_BASE_PATH: /seistore-svc/api/v4
+    request:
+      cpu: 0.1
+      memory: 1Gi
+    limit:
+      cpu: 1
+      memory: 4Gi
+  - service: seismic-ddms-v4-ms-sync-v3v4
+    container:
+      image: seismic-ddms-v4-ms-sync-v3v4
+      containerPort: "5000"

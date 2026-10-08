@@ -1,0 +1,8 @@
+steps:
+  - task: PublishTestResults@2
+    displayName: 'Publish Unit Test Results'
+    inputs:
+      testResultsFiles: 'test-results.xml'
+      searchFolder: '$(Build.SourcesDirectory)'
+      failTaskOnFailedTests: true
+      testRunTitle: 'Mocha test results in JUnit format'

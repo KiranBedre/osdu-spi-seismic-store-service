@@ -1,0 +1,21 @@
+parameters:
+  serviceName: ''
+  provider: []
+  
+stages:
+- ${{ each provider in parameters.providers }}:
+  - stage: 'Build_${{ provider.name }}'
+    variables:
+    - group: '${{ provider.name }} Service Release - ${{ parameters.serviceName }}'
+  
+    jobs:
+    - job: Build
+      pool:
+        name: $(AGENT_POOL)
+        vmImage: $(AGENT_IMAGE)
+      workspace:
+        clean: all
+      steps:
+      - template: task/build-steps.yml
+        parameters:
+          providerName: ${{ provider.name }}

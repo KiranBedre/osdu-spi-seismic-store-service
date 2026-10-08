@@ -1,0 +1,56 @@
+include:
+  # PIPELINE LOGIC
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "standard-setup.yml"
+
+  # SCANNERS
+  # ultimate
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "scanners/gitlab-ultimate.yml"
+
+  # overwrite logic
+  - local: devops/osdu/scanners/gitlab-ultimate.yml
+
+  # virus scan
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "scanners/virus-scan.yml"
+
+  # CLOUD PROVIDERS
+  # azure
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/azure.yml"
+
+  # overwrite logic
+  - local: devops/osdu/cloud-providers/azure.yml
+
+  # gc
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/gc-global.yml"
+
+  # overwrite logic
+  - local: devops/osdu/cloud-providers/gc-global.yml
+
+  # cimpl
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/cimpl-global.yml"
+
+  # overwrite logic
+  - local: devops/osdu/cloud-providers/cimpl-global.yml
+
+  # ibm
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "cloud-providers/ibm.yml"
+
+  # overwrite logic
+  - local: devops/osdu/cloud-providers/ibm.yml
+
+  # REPORTING
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "reporting/reporting.yml"
+
+  # SERVICES (APPS)
+  # sdms
+  - local: app/sdms/.gitlab-ci.yml
+
+  # sdms v4
+  - local: app/sdms-v4/.gitlab-ci.yml

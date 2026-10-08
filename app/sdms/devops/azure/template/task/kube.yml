@@ -1,0 +1,18 @@
+parameters:
+  serviceName: ""  
+  fluxEnabled: false
+
+steps:
+  - task: Bash@3
+    displayName: "Rollout image"
+    condition: |
+      eq(${{ parameters.fluxEnabled }},false)
+    env:
+      SERVICE_NAME: ${{ parameters.serviceName }}
+    inputs:
+      targetType: "inline"
+      script: |
+        #!/usr/bin/env bash
+        gcloud container clusters get-credentials $(cluster_name) --zone $(cluster_zone) --project $(gcp_project)
+        kubectl set image deployment/$SERVICE_NAME $SERVICE_NAME=$(CONTAINER_REGISTRY_NAME)/$(container_registry_path)/$(utest_runtime_image):$(Build.SourceBranchName)-$(Build.BuildNumber)
+        kubectl rollout status deployment/$SERVICE_NAME --watch

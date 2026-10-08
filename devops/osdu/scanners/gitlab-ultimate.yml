@@ -1,0 +1,11 @@
+dependency_scanning:
+  needs: []
+
+gemnasium-python-dependency_scanning:
+  dependencies: []
+
+sast:
+  needs: []
+
+secret_detection:
+  needs: []

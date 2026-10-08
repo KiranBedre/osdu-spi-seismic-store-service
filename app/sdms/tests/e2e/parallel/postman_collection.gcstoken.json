@@ -1,0 +1,66 @@
+{
+	"info": {
+		"_postman_id": "bcb4d2f8-dfbe-49a5-a07f-d7d921fd3a55",
+		"name": "test_get_storage_access_token",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET STORAGE ACCESS TOKEN",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "14dafa87-5743-48f8-b616-d33515a8b304",
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Validate Subproject Details\", function () {",
+							"    pm.expect(jsonData.access_token).to.exist;",
+							"    pm.expect(jsonData.expires_in).to.eql(3599);",
+							"    pm.expect(jsonData.token_type).to.eql('Bearer');",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{STOKEN}}"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{SVC_API_KEY}}"
+					}
+				],
+				"url": {
+					"raw": "{{SVC_URL}}/utility/gcs-access-token?sdpath=sd://{{tenant}}/{{subproject}}",
+					"host": [
+						"{{SVC_URL}}"
+					],
+					"path": [
+						"utility",
+						"gcs-access-token"
+					],
+					"query": [
+						{
+							"key": "sdpath",
+							"value": "sd://{{tenant}}/{{subproject}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

@@ -1,0 +1,106 @@
+#  Copyright © Microsoft Corporation
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+parameters:
+  serviceName: ""
+  providerName: ""
+  environment: ""
+  chartPath: ""
+  skipDeploy: false
+  hldRegPath: ""
+  generationPath: "generated"
+  manifestRepo: ""
+  fluxEnabled: false
+  installRequirements: false
+
+steps:
+  # self to trigger clone of the current repo.
+  - checkout: self
+    persistCredentials: true
+  - checkout: FluxRepo
+    persistCredentials: true
+  - task: Bash@3
+    displayName: "Install requirements in container"
+    condition: ${{ parameters.installRequirements }}
+    inputs:
+      targetType: "inline"
+      script: |
+        apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata
+        apt-get install -y curl
+        apt-get install -y zip
+        apt-get install -y git
+        apt-get install -y unzip
+  - task: Bash@3
+    displayName: "Install requirements in container with no flux"
+    condition: and(eq(${{ parameters.fluxEnabled }},false),${{ parameters.installRequirements }})
+    inputs:
+      targetType: "inline"
+      script: |
+        apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata
+        apt-get update -y
+        curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x ./kubectl
+        mv ./kubectl /usr/local/bin/kubectl
+  - task: Bash@3
+    displayName: "Install Google Cloud requirements"
+    condition: |
+      and(succeeded(), eq('${{ parameters.providerName }}', 'GCP'),${{ parameters.installRequirements }})
+    inputs:
+      targetType: "inline"
+      script: |
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        apt-get install -y apt-transport-https ca-certificates gnupg
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+        apt-get update -y
+        apt-get install -y google-cloud-sdk
+  - task: "HelmInstaller@1"
+    displayName: "Helm Install"
+    condition: |
+      and(eq(${{ parameters.fluxEnabled }},true),${{ parameters.installRequirements }})
+    inputs:
+      helmVersionToInstall: 3.3.0
+  - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+    displayName: "Helm Values"
+    env:
+      KEYVAULT_NAME: "$(ENVIRONMENT_RG_PREFIX)-kv"
+    condition: |
+      eq(${{ parameters.fluxEnabled }},true)
+    inputs:
+      targetFiles: |
+        $(Build.SourcesDirectory)/$(Build.Repository.Name)/${{parameters.chartPath}}/helm-config.yaml => $(Build.SourcesDirectory)/$(Build.Repository.Name)/${{parameters.chartPath}}/values.yaml
+  - template: helm-template.yml
+    parameters:
+      serviceName: ${{parameters.serviceName}}
+      chartPath: ${{ parameters.chartPath }}
+      generationPath: ${{parameters.generationPath}}
+      fluxEnabled: ${{ parameters.fluxEnabled }}
+  - template: gitops.yml
+    parameters:
+      serviceName: ${{parameters.serviceName}}
+      chartPath: ${{ parameters.chartPath }}
+      generationPath: ${{parameters.generationPath}}
+      branchName: ${{parameters.environment}}
+      hldRegPath: ${{parameters.hldRegPath}}
+      skipDeploy: ${{parameters.skipDeploy}}
+      manifestRepo: ${{ parameters.manifestRepo }}
+      fluxEnabled: ${{ parameters.fluxEnabled }}
+  - template: flux-service-wait.yml
+    parameters:
+      serviceName: ${{parameters.serviceName}}
+      environment: ${{ parameters.environment }}
+      imageRepoName: "${{ parameters.serviceName }}"
+  - template: kube.yml
+    parameters:
+      fluxEnabled: ${{ parameters.fluxEnabled }}
+      serviceName: ${{parameters.serviceName}}

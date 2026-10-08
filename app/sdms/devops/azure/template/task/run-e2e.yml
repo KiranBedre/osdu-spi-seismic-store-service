@@ -1,0 +1,70 @@
+parameters:
+  pathSuffix: "."
+  isGitlab: false
+steps:
+    - task: Bash@3
+      displayName: "Run tests"
+      condition: |
+        eq(${{ parameters.isGitlab }},true)
+      env:
+        serviceUrlSuffix: $(serviceUrlSuffix)
+        e2eAdminEmail: $(e2eAdminEmail)
+        e2eDataPartition: $(e2eDataPartition)
+        e2eLegaltag01: $(e2eLegaltag01)
+        e2eLegaltag02: $(e2eLegaltag02)
+        e2eIdToken: $(e2eIdToken)
+        e2eSubproject: $(e2eSubproject)
+        e2eTenant: $(e2eTenant)
+        isGitlab: "${{ parameters.isGitlab }}"
+        newuser: $(e2eAdminEmail)
+      inputs:
+        targetType: "inline"
+        script: |
+          cd ${{ parameters.pathSuffix }}
+          chmod +x ./tests/e2e/run_e2e_tests.sh
+          export COLORTERM=true
+          ./tests/e2e/run_e2e_tests.sh \
+            --seistore-svc-url="https://${DNS_HOST}/${serviceUrlSuffix}" \
+            --seistore-svc-api-key="NA" \
+            --user-idtoken="${e2eIdToken}" \
+            --tenant="${e2eTenant}" \
+            --subproject="${e2eSubproject}" \
+            --admin-email="${e2eAdminEmail}" \
+            --datapartition="${e2eDataPartition}" \
+            --legaltag01="${e2eLegaltag01}" \
+            --legaltag02="${e2eLegaltag02}" \
+            --VCS_Provider="${isGitlab}"
+    - task: Bash@3
+      displayName: "Run e2e"
+      condition: |
+        eq(${{ parameters.isGitlab }},false)
+      env:
+        DNS_HOST: $(DNS_HOST)
+        serviceUrlSuffix: $(serviceUrlSuffix)
+        sauthSvcApiKey: $(sauthSvcApiKey)
+        e2eIdToken: $(e2eIdToken)
+        e2eTenant: $(e2eTenant)
+        e2eSubproject: $(e2eSubproject)
+        e2eAdminEmail: $(e2eAdminEmail)
+        e2eDataPartition: $(e2eDataPartition)
+        e2eLegaltag01: $(e2eLegaltag01)
+        e2eLegaltag02: $(e2eLegaltag02)
+        e2eNewUser: $(e2eNewUser)
+        e2eDE_APP_KEY: $(e2eDE_APP_KEY)
+      inputs:
+        targetType: "inline"
+        script: |
+          cd ${{ parameters.pathSuffix }}
+          chmod +x ./tests/e2e/run_e2e_tests.sh
+          export COLORTERM=true
+          ./tests/e2e/run_e2e_tests.sh \
+            --seistore-svc-url="https://${DNS_HOST}/${serviceUrlSuffix}" \
+            --seistore-svc-api-key="${sauthSvcApiKey}" \
+            --user-idtoken="${e2eIdToken}" \
+            --tenant="${e2eTenant}" \
+            --admin-email="${e2eAdminEmail}" \
+            --datapartition="${e2eDataPartition}" \
+            --legaltag01="${e2eLegaltag01}" \
+            --legaltag02="${e2eLegaltag02}" \
+            --newuser="${e2eNewUser}" \
+            --de-app-key="${e2eDE_APP_KEY}"

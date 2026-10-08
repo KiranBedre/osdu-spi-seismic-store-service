@@ -1,0 +1,36 @@
+global:
+  replicaCount: #{REPLICA_COUNT}#
+  namespace: osdu
+  podidentity: osdu-identity
+  nodepool: services
+  isAutoscalingEnabled: false
+  minReplicaCount: #{SDMS_MIN_REPLICAS}#
+  maxReplicaCount: #{SDMS_MAX_REPLICAS}#
+ 
+ 
+configEnv:
+  cloudProvider: #{PROVIDER_NAME}#
+  keyvaultUrl: #{KEYVAULT_NAME}#
+  desServiceHost: #{DNS_HOST}#
+  redisInstanceAddress: #{REDIS_HOST}#
+  redisInstanceKey: #{REDIS_KEY}#
+  redisInstancePort: #{REDIS_PORT}#
+  appEnvironmentIdentifier: #{ENVIRONMENT_NAME}#
+  port: #{PORT}#
+  sdmsPrefix: #{SDMS_PREFIX}#
+  sidecarUrl: #{SIDECAR_URL}#
+  sidecarEnableQuery: #{SDMS_SIDECAR_ENABLE_QUERY}#
+  sidecarEnvironment: #{SDMS_SIDECAR_ENV}#
+  sidecarUrls: #{SIDECAR_URLS}#
+
+image:
+  repository: #{CONTAINER_REGISTRY_NAME}#
+  branch: master
+  tag: #{IMAGE_TAG}#
+
+sidecarImage:
+  repository: #{CONTAINER_SIDECAR_REGISTRY_NAME}#
+  tag: #{IMAGE_SIDECAR_TAG}#
+
+jobStatistics:
+  repository: #{CONTAINER_REGISTRY_NAME}#

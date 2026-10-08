@@ -1,0 +1,15 @@
+parameters:
+  providerName: ""
+steps:
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Pull Build Artifacts'
+    inputs:
+      artifactName: '${{ parameters.providerName }}_$(utest_runtime_image)'
+      downloadPath: '$(System.DefaultWorkingDirectory)'
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Pull Build Artifacts'
+    condition:
+      eq('${{ parameters.providerName }}','Azure')
+    inputs:
+      artifactName: '${{ parameters.providerName }}_$(sidecar_runtime_image)'
+      downloadPath: '$(System.DefaultWorkingDirectory)'

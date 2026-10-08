@@ -1,0 +1,8 @@
+parameters:
+  installRequirements: false
+  isGitlab: false
+steps:
+  - template: e2e.yml
+    parameters:
+      installRequirements: ${{ parameters.installRequirements }}
+      isGitlab: ${{ parameters.isGitlab }}

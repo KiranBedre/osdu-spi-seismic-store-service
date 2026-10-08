@@ -1,0 +1,64 @@
+#  ***************************************************************************
+#  Copyright 2017 - 2023, Schlumberger
+#
+#  Licensed under the Apache License, Version 2.0(the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#  ***************************************************************************
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}
+  minReplicas: {{ .Values.global.minReplicaCount }}
+  maxReplicas: {{ .Values.global.maxReplicaCount }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 40
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 40
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      # Either remove 20% of current pods or 2 pods (whichever is lower) every 15 seconds until the the HPA stabilizes
+      selectPolicy: Min
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 15
+      - type: Pods
+        value: 2
+        periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      # Either add 85% of current pods or 10 pods (whichever is higher) every 1 second until the the HPA stabilizes
+      selectPolicy: Max
+      policies:
+      - type: Percent
+        value: 85
+        periodSeconds: 1
+      - type: Pods
+        value: 10
+        periodSeconds: 1

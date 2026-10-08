@@ -1,0 +1,205 @@
+#  Copyright © Microsoft Corporation
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+# Annotation to support the key rotation for redis password in keyvault
+deployment:
+  replicaCount: 2
+  deploymentAnnotations:
+    secret.reloader.stakater.com/reload: "{{.Release.Name }}-secret"
+
+azure:
+  keyvault:
+    secrets:
+    - key: k8.redis.password
+      obj: redis-password
+
+configuration:
+  ###################
+  # Seismic Service #
+  ###################
+# seismic sdms
+  - service: seismic-ddms
+    container:
+      image: seismic-ddms
+      tag: latest
+      containerPort: 8080
+    path: /seistore-svc/api/v3
+    destinationRule:
+      enabled: false
+  # FIXME: Prometheus instrumentation needs to be implemented for Seismic DDMS and Seismic File Metadata
+  # podAnnotations:
+    # prometheus.io/path: /seistore-svc/api/v3/metrics
+    # prometheus.io/port: "80"
+    # prometheus.io/scrape: "true"
+#    autoscale:
+#      minReplicas: 1
+#      maxReplicas: 5
+    probe:
+      readiness:
+        path: /seistore-svc/api/v3/svcstatus/readiness
+      liveness:
+        path: /seistore-svc/api/v3/svcstatus
+    auth:
+      disable:
+        - "/seistore-svc/api/v3/swagger-ui.html*"
+        - "/seistore-svc/api/v3/svcstatus"
+        - "/seistore-svc/api/v3/svcstatus/readiness"
+        - "/seistore-svc/api/v3/api-doc"
+        - "/seistore-svc/api/v3/info"
+    config:
+      DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+      REDIS_INSTANCE_PORT: "6380"
+      APP_ENVIRONMENT_IDENTIFIER: "cloud"
+      CLOUDPROVIDER: "azure"
+      PORT: "8080"
+      KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+      SIDECAR_URL: "https://localhost:7138"
+      SIDECAR_ENABLE_QUERY: "true"
+      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
+      FEATURE_FLAG_ENABLE_CHANGE_TIER: "true"
+      SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
+      FEATURE_FLAG_ENABLE_BULK_DELETE: "true"
+      FEATURE_FLAG_TIER_STORAGE_BLOCK: "true"
+      AZURE_MSI_ISENABLED: "false"
+      REDIS_CLIENT_ID: "{{ .Values.azure.identity_id }}"
+    # Use only for secret rotation
+    secrets:
+      - name: AZ_REDIS_PASSWORD
+        key: k8.redis.password
+    request:
+      cpu: 0.1
+      memory: 1Gi
+    limit:
+      cpu: 1
+      memory: 4Gi
+# sidecar sdms
+    sidecar:
+      name: seismic-ddms-sidecar
+      container:
+        image: seismic-ddms-sidecar
+        tag: latest
+        containerPort: 7138
+      config:
+        ASPNETCORE_URLS: "https://+:7138;http://+:5160"
+        ASPNETCORE_ENVIRONMENT: "Development"
+        ASPNETCORE_Kestrel__Certificates__Default__Path: /app/aspnetapp.pfx
+        KEYVAULT_URL: "{{ .Values.azure.keyvault.name }}"
+      request:
+        cpu: 0.1
+        memory: 1Gi
+      limit:
+        cpu: 1
+        memory: 2Gi
+  #####################################
+  # Seismic metadata deletion Service #
+  #####################################
+  - service: seismic-ddms-deletion-service
+    container:
+      image: seismic-ddms-deletion-service
+      tag: latest
+      containerPort: 8001
+    destinationRule:
+      enabled: false
+    probe:
+      liveness:
+        path: /healthz
+    config:
+      HOST_PORT: "8001"
+      DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+      SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+      SDMS_REDIS_QUEUE_NAME: "sdms-queue-bulkdelete"
+      SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
+      SDMS_REDIS_QUEUE_PORT: "6380"
+      SDMS_REDIS_LOCKS_PORT: "6380"
+      AZURE_MSI_ISENABLED: "false"
+      REDIS_CLIENT_ID: "{{ .Values.azure.identity_id }}"
+    request:
+      cpu: 0.1
+      memory: 1Gi
+    limit:
+      cpu: 1
+      memory: 4Gi
+  # #####################################
+  # # Seismic compute size Service #
+  # #####################################
+  # - service: seismic-ddms-computesize-service
+  #   container:
+  #     image: seismic-ddms-computesize-service
+  #     tag: latest
+  #     containerPort: 8002
+  #   probe:
+  #     liveness:
+  #       path: /healthz
+  #   config:
+  #     HOST_PORT: "8002"
+  #     DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+  #     SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+  #     SDMS_COMPUTE_SIZE_QUEUE: "sdms-queue-computesize"
+  #     SDMS_REDIS_QUEUE_PORT: "6380"
+  #     SDMS_REDIS_LOCKS_PORT: "6380"
+  #   request:
+  #     cpu: 0.1
+  #     memory: 1Gi
+  #   limit:
+  #     cpu: 1
+  #     memory: 4Gi
+  #####################################
+  # Seismic change tier Service #
+  #####################################
+  - service: seismic-ddms-changetier-service
+    container:
+      image: seismic-ddms-changetier-service
+      tag: latest
+      containerPort: 8003
+    destinationRule:
+      enabled: false
+    probe:
+      liveness:
+        path: /healthz
+    config:
+      HOST_PORT: "8003"
+      DES_SERVICE_HOST: "https://{{ .Values.ingress.dns }}"
+      SDMS_KEYVAULT_URL: "https://{{ .Values.azure.keyvault.name }}.vault.azure.net/"
+      SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
+      SDMS_REDIS_QUEUE_PORT: "6380"
+      SDMS_REDIS_LOCKS_PORT: "6380"
+      AZURE_MSI_ISENABLED: "false"
+      REDIS_CLIENT_ID: "{{ .Values.azure.identity_id }}"
+  # #####################################
+  # # Job statistics #
+  # #####################################
+  - service: seismic-ddms-statistics-job
+    container:
+      image: seismic-ddms-statistics-job
+      containerPort: 8080
+    destinationRule:
+      enabled: false
+    path: "/"
+    pathRewrite: "/"
+    cronjobEnabled: true
+    schedule: "0 0 * * *"
+    backOffLimit: "0"
+    activeDeadlineSeconds: "3600"
+    successfulJobsHistoryLimit: "3"
+    startingDeadlineSeconds: "500"
+    failedJobsHistoryLimit: "5"
+    config:
+      KEYVAULT_URL: "{{ .Values.azure.keyvault.name }}"
+      OSDU_SERVICES_HOST_URL: "https://{{ .Values.ingress.dns }}"
+    request:
+      cpu: 0.1
+      memory: 1Gi
+    limit:
+      cpu: 1
+      memory: 4Gi

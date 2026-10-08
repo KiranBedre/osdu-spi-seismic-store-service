@@ -1,0 +1,46 @@
+cimpl-dev-deploy:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-acceptance-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-reset:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-acceptance-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-dev-check-openapi-spec:
+  stage: acceptance
+  needs: []
+  extends: []
+  script:
+    - "true"
+  rules:
+    - when: never
+
+

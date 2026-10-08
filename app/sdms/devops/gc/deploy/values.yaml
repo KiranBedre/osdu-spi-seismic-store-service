@@ -1,0 +1,66 @@
+global:
+  domain: ""
+  limitsEnabled: true
+  tier: ""
+  autoscalingMode: "cpu"
+  logLevel: "ERROR"
+
+data:
+  # Configmap
+  logLevel: ""
+  partitionHost: "http://partition"
+  storageHost: "http://storage"
+  legalHost: "http://legal"
+  entitlementsHost: "http://entitlements"
+  redisSdmsHost: ""
+  redisSdmsPort: "6379"
+  # Deployment
+  requestsCpu: "50m"
+  requestsMemory: "150Mi"
+  limitsCpu: "1"
+  limitsMemory: "1G"
+  serviceAccountName: "seismic-store"
+  imagePullPolicy: "IfNotPresent"
+  redisImage: "docker.io/library/redis:7.2-alpine"
+  image: ""
+  affinityLabelsSpot:
+    cloud.google.com/gke-provisioning:
+      - spot
+  
+conf:
+  configmap: "seismic-store-config"
+  appName: "seismic-store"
+  sdmsRedisSecretName: "seismic-store-redis-secret" # pragma: allowlist secret
+
+istio:
+  proxyCPU: "5m"
+  proxyCPULimit: "200m"
+  proxyMemory: "64Mi"
+  proxyMemoryLimit: "256Mi"
+  sidecarInject: true
+
+hpa:
+  minReplicas: 1
+  maxReplicas: 6
+  cpu:
+    utilization: 200
+    scaleUpStabilizationWindowSeconds: 30
+    scaleUpValue: 200
+    scaleUpPeriod: 15
+    scaleDownStabilizationWindowSeconds: 150
+    scaleDownValue: 100
+    scaleDownPeriod: 15
+  requests:
+    targetType: "AverageValue"
+    targetValue: 20
+    scaleUpStabilizationWindowSeconds: 10
+    scaleUpValue: 50
+    scaleUpPeriod: 15
+    scaleDownStabilizationWindowSeconds: 60
+    scaleDownValue: 25
+    scaleDownPeriod: 60
+
+limits:
+  maxTokens: 12
+  tokensPerFill: 12
+  fillInterval: "1s"

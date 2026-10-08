@@ -1,0 +1,14 @@
+gc-deploy:
+  extends: []
+  script:
+    - echo "Not implemented"
+  rules:
+    - when: never
+
+gc-acceptance-test:
+  stage: acceptance
+  extends: []
+  script:
+    - echo "Not implemented"
+  rules:
+    - when: never

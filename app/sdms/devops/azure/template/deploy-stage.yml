@@ -1,0 +1,66 @@
+parameters:
+  serviceName: ''
+  providers: []
+  manifestRepo: ''
+  environmentPrefix: ""
+  fluxEnabled: true
+  installRequirements: false
+  isGitlab: false
+
+stages:
+
+- ${{ each provider in parameters.providers }}:
+  - ${{ each environment in provider.environments }}:
+    - stage: 'Deploy_${{ provider.name }}_${{ environment.name }}'
+      variables:
+      - group: '${{ provider.name }} Target Env - ${{ environment.name }}'
+      - group: '${{ provider.name }} Target Env Secrets - ${{ environment.name }}'
+      - group: '${{ provider.name }} Service Release - ${{ parameters.serviceName }}'
+      jobs:
+      - deployment: Deploy_Image
+        environment: ${{ parameters.environmentPrefix }}${{ environment.name }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - download: none
+              - template: task/deployment-image-steps.yml
+                parameters:
+                  serviceName: ${{ parameters.serviceName }}
+                  providerName: ${{ provider.name }}
+                  environment: ${{ environment.name }}
+                  secureFile: ${{ environment.secureFile }}
+                  installRequirements: ${{ parameters.installRequirements }}
+      - deployment: Deploy_To_Cluster
+        dependsOn: Deploy_Image
+        workspace:
+          clean: all
+        environment: ${{ parameters.environmentPrefix }}${{ environment.name }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - download: none
+              - template: task/deployment-helm-steps.yml
+                parameters:
+                  serviceName: ${{ parameters.serviceName }}
+                  providerName: ${{ provider.name }}
+                  chartPath: $(chartPath)
+                  hldRegPath: "$(hldRegPath)"
+                  environment: ${{ environment.name }}
+                  fluxEnabled: ${{ environment.fluxEnabled }}
+                  installRequirements: ${{ parameters.installRequirements }}
+                  manifestRepo: ${{ parameters.manifestRepo }}
+      - job: E2E
+        dependsOn: Deploy_To_Cluster
+        pool:
+          name: $(AGENT_POOL)
+          vmImage: $(AGENT_IMAGE)
+        workspace:
+          clean: all
+        condition: ${{ environment.performE2Etests }}
+        steps:
+        - template: task/e2e-steps.yml
+          parameters:
+            installRequirements: ${{ parameters.installRequirements }}
+            isGitlab: ${{ parameters.isGitlab }}

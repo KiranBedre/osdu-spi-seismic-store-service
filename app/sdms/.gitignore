@@ -1,0 +1,44 @@
+# node
+**/node_modules/**
+dist
+
+# python
+*.pyc
+
+# Log Files
+*.log
+
+# test
+.nyc_output
+coverage
+test-results.xml
+
+# artifact
+artifact
+seismic-store-service.tar.gz
+
+# keyfiles
+keys
+
+# vscode configurations
+.vscode
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# newman junit output
+newman
+
+.DS_Store
+.idea
+
+# backup files
+*.bak
+
+# dump file
+*.rdb
+
+# dev docs copy
+src/docs

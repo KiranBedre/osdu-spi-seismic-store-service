@@ -1,0 +1,11 @@
+include:
+  - local: "app/sdms/devops/osdu/cloud-providers/gc-containerize.yml"
+  - local: devops/osdu/cloud-providers/gc-bootstrap.yml
+  - local: "app/sdms/devops/osdu/cloud-providers/gc-com-gke.yml"
+  - local: "app/sdms/devops/osdu/cloud-providers/gc-helm.yml"
+  - local: "app/sdms/devops/osdu/cloud-providers/gc-preship-gke.yml"
+
+variables:
+  GC_SDMS_PREFIX: /api/seismic-store/v3
+  GC_GCR_REGISTRY: gcr.io/osdu-gcp
+  BUILD_PATH: "devops/anthos/runtime.Dockerfile"

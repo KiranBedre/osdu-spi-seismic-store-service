@@ -1,0 +1,42 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}
+  namespace: osdu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}
+  minReplicas: {{ .Values.global.minReplicaCount }}
+  maxReplicas: {{ .Values.global.maxReplicaCount }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      # Either remove 20% of current pods or 2 pods (whichever is lower) every 15 seconds until the the HPA stabilizes
+      selectPolicy: Min
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 15
+      - type: Pods
+        value: 2
+        periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      # Either add 100% of current pods or 4 pods (whichever is higher) every 1 second until the the HPA stabilizes
+      selectPolicy: Max
+      policies:
+      - type: Percent
+        value: 85
+        periodSeconds: 1
+      - type: Pods
+        value: 4
+        periodSeconds: 1

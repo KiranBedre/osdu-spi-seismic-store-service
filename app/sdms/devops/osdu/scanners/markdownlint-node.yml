@@ -1,0 +1,30 @@
+sdms_markdownlint:
+  image: node
+  stage: scan
+  needs: ['sdms_compile-and-unit-test']
+  before_script:
+    - cd app/$SDMS_SERVICE
+  script:
+    - cp ../../.markdownlint.json .
+    - npm install -g typescript
+    - npm install -g markdownlint-cli2
+    - markdownlint-cli2 "**/*.md" "#**/node_modules" --config .markdownlint.json > markdownlint_report.txt
+  artifacts:
+    paths:
+      - app/$SDMS_SERVICE/markdownlint_report.txt
+    when: always
+    expire_in: 2 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^release/'
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ '/^trusted-'
+      when: always
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - devops/**/*
+        - app/sdms/**/*
+      when: always

@@ -1,0 +1,18 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["filterJson"]
+}
+
+model SeismicData {
+  id        Int  @id @default(autoincrement())
+  name      String 
+  key       String 
+  data      Json
+
+  @@unique(fields: [key, name], name: "key_name")
+}

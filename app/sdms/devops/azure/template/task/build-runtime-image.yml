@@ -1,0 +1,24 @@
+parameters:
+  providerName: ""
+steps:
+  - task: Bash@3
+    displayName: "Build Runtime Image"
+    inputs:
+      targetType: "inline"
+      script: |
+        cd $(Build.Repository.LocalPath)
+        sudo docker build -t $(utest_runtime_image) --file docker/runtime.Dockerfile --build-arg docker_builder_image=builder_sdms .
+        mkdir ${{ parameters.providerName }}
+        docker save -o ${{ parameters.providerName }}/$(utest_runtime_image).tar $(utest_runtime_image)
+  - task: Bash@3
+    displayName: "Build Sidecar Image"
+    condition:
+      eq('${{ parameters.providerName }}','Azure')
+    inputs:
+      targetType: "inline"
+      script: |
+        cd $(Build.Repository.LocalPath)/src/cloud/providers/azure/sidecar
+        sudo docker build --build-arg PASS=$(SIDECAR_CERT_PASS) -t $(sidecar_runtime_image) .
+        cd $(Build.Repository.LocalPath)
+        mkdir ${{ parameters.providerName }}
+        docker save -o ${{ parameters.providerName }}/$(sidecar_runtime_image).tar $(sidecar_runtime_image)

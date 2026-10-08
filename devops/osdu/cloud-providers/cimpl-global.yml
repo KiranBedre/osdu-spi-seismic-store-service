@@ -1,0 +1,6 @@
+include:
+  - local: devops/osdu/cloud-providers/cimpl-containerize.yml
+  - local: devops/osdu/cloud-providers/cimpl-helm.yml
+  - local: devops/osdu/cloud-providers/cimpl-dev-rosa.yml
+  - local: devops/osdu/cloud-providers/cimpl-dev-backup-rosa.yml
+  - local: devops/osdu/cloud-providers/cimpl-prod-rosa.yml

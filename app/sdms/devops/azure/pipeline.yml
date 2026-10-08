@@ -1,0 +1,51 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+  paths:
+    exclude:
+      - /**/*.md
+      - .gitignore
+      - /docs
+
+resources:
+  repositories:
+  - repository: FluxRepo
+    type: git
+    name: k8-gitops-manifests
+
+
+variables:
+  - group: 'Azure - OSDU'
+  - name: serviceName
+    value: "seismic-store-service"
+  - name: environmentPrefix
+    value: ""
+  - name: chartPath
+    value: "devops/azure/chart"
+  - name: valuesFile
+    value: "devops/azure/chart/helm-config.yaml"
+  - name: 'MANIFEST_REPO'
+    value: $[ resources.repositories['FluxRepo'].name ]
+    
+stages:
+
+  - template: template/build-stage.yml
+    parameters:
+      serviceName: ${{ variables.serviceName }}
+      providers:
+        -  name: Azure
+  - template: template/deploy-stage.yml
+    parameters:
+      serviceName: ${{ variables.serviceName }}
+      environmentPrefix: ${{ variables.environmentPrefix }}
+      installRequirements: false
+      isGitlab: true
+      providers:
+        -  name: Azure
+           environments:
+             - name: 'demo'
+               performE2Etests: false
+               fluxEnabled: true
+               isGitlab: true

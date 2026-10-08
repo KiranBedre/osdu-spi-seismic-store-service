@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seistore-svc-properties
+  namespace: {{ .Values.global.namespace }}
+data:
+  CLOUDPROVIDER: {{ .Values.configEnv.cloudProvider }}
+  DES_SERVICE_HOST: https://{{ .Values.configEnv.desServiceHost }}
+  REDIS_INSTANCE_ADDRESS: "{{ .Values.configEnv.redisInstanceAddress }}"
+  REDIS_INSTANCE_KEY: "{{ .Values.configEnv.redisInstanceKey }}"
+  REDIS_INSTANCE_PORT: "{{ .Values.configEnv.redisInstancePort }}"
+  REDIS_SHARED_INSTANCE_PORT: "{{ .Values.configEnv.redisInstancePort }}"
+  APP_ENVIRONMENT_IDENTIFIER: {{ .Values.configEnv.appEnvironmentIdentifier }}
+  PORT: "{{ .Values.configEnv.port }}"
+  SDMS_PREFIX: "{{ .Values.configEnv.sdmsPrefix }}"
+  SIDECAR_URL: "{{ .Values.configEnv.sidecarUrl}}"
+  SIDECAR_ENABLE_QUERY: "{{ .Values.configEnv.sidecarEnableQuery}}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seistore-svc-sidecar-properties
+  namespace: {{ .Values.global.namespace }}
+data:
+  ASPNETCORE_URLS: "{{ .Values.configEnv.sidecarUrls }}"
+  ASPNETCORE_Kestrel__Certificates__Default__Path: "/app/aspnetapp.pfx"
+  ASPNETCORE_ENVIRONMENT: {{ .Values.configEnv.sidecarEnvironment }}

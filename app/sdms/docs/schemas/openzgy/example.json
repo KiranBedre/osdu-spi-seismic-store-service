@@ -1,0 +1,79 @@
+{
+   "data": {
+      "ResourceHomeRegionID": "opendes:reference-data--OSDURegion:AWSEastUSA:",
+      "ResourceHostRegionIDs": [
+         "opendes:reference-data--OSDURegion:AWSEastUSA:"
+      ],
+      "ResourceCurationStatus": "opendes:reference-data--ResourceCurationStatus:CREATED:",
+      "ResourceLifecycleStatus": "opendes:reference-data--ResourceLifecycleStatus:LOADING:",
+      "ResourceSecurityClassification": "opendes:reference-data--ResourceSecurityClassification:RESTRICTED:",
+      "Source": "Example Data Source",
+      "ExistenceKind": "opendes:reference-data--ExistenceKind:Prototype:",
+      "Name": "Dataset X221/15",
+      "Description": "As originally delivered by ACME.com.",
+      "TotalSize": "13245217273",
+      "EncodingFormatTypeID": "opendes:reference-data--EncodingFormatType:text%2Fcsv:",
+      "SchemaFormatTypeID": "opendes:reference-data--SchemaFormatType:CWLS%20LAS3:",
+      "Endian": "BIG",
+      "DatasetProperties": {
+         "FileCollectionPath": "s3://default_bucket/opendes/data/vds-dataset/",
+         "IndexFilePath": "s3://default_bucket/opendes/data/vds-dataset/vds-dataset.index",
+         "FileSourceInfos": [
+            {
+               "FileSource": "s3://default_bucket/opendes/data/vds-dataset/vds-file-1",
+               "PreloadFilePath": "s3://staging-area/r7/raw-data/provided/documents/vds-file-1",
+               "Name": "vds-file-1",
+               "PreloadFileCreateUser": "somebody@acme.org",
+               "PreloadFileCreateDate": "2019-12-16T11:46:20.163Z",
+               "PreloadFileModifyUser": "somebody.else@acme.org",
+               "PreloadFileModifyDate": "2019-12-20T17:20:05.356Z",
+               "FileSize": "439452464",
+               "Checksum": "checksum-value",
+               "ChecksumAlgorithm": "MD5"
+            },
+            {
+               "FileSource": "s3://default_bucket/opendes/data/vds-dataset/vds-file-2",
+               "PreloadFilePath": "s3://staging-area/r7/raw-data/provided/documents/vds-file-2",
+               "Name": "vds-file-2",
+               "PreloadFileCreateUser": "somebody@acme.org",
+               "PreloadFileCreateDate": "2019-12-16T11:50:40.321Z",
+               "PreloadFileModifyUser": "somebody.else@acme.org",
+               "PreloadFileModifyDate": "2019-12-20T17:59:03.456Z",
+               "FileSize": "433645463",
+               "Checksum": "checksum-value",
+               "ChecksumAlgorithm": "MD5"
+            }
+         ],
+         "Checksum": "checksum-value"
+      },
+      "ExtensionProperties": {}
+   },
+   "meta": [],
+   "id": "opendes:dataset--FileCollection.Slb.OpenZGY:5771c352-dc52-5d26-9351-2b8dbc9eb474",
+   "version": 1637208623527796,
+   "kind": "osdu:wks:dataset--FileCollection.Slb.OpenZGY:1.0.0",
+   "acl": {
+      "viewers": [
+         "data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com"
+      ],
+      "owners": [
+         "data.default.viewers@opendes.enterprisedata.cloud.slb-ds.com"
+      ]
+   },
+   "legal": {
+      "legaltags": [
+         "opendes-seistore-test-01"
+      ],
+      "otherRelevantDataCountries": [
+         "US"
+      ],
+      "status": "compliant"
+   },
+   "tags": {
+      "NameOfKey": "String value"
+   },
+   "createUser": "vmanohar@slb.com",
+   "createTime": "2021-11-16T02:08:16.420Z",
+   "modifyUser": "39916b94-71a9-409e-856e-0f29558fa908",
+   "modifyTime": "2021-11-18T04:10:23.817Z"
+}

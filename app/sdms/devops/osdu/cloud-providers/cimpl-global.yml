@@ -1,0 +1,10 @@
+include:
+  - local: "app/sdms/devops/osdu/cloud-providers/cimpl-containerize.yml"
+  - local: "app/sdms/devops/osdu/cloud-providers/cimpl-rosa.yml"
+  - local: "app/sdms/devops/osdu/cloud-providers/cimpl-helm.yml"
+
+variables:
+  CIMPL_SDMS_PREFIX: /api/seismic-store/v3
+  CIMPL_BUILD_PATH: "devops/anthos/runtime.Dockerfile"
+  CIMPL_SERVICE: seismic-store
+  CIMPL_HELM_DEPLOYMENT_DIR: "app/sdms/devops/core-plus/deploy"

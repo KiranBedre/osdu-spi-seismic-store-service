@@ -1,0 +1,17 @@
+parameters:
+  serviceName: ''
+  providerName: ''
+  chartPath: ''
+  manifestRepo: ''
+  hldRegPath: ''
+  environment: ''
+steps:
+  - template: rollback.yml
+    parameters:
+      serviceName: ${{ parameters.serviceName }}
+      providerName: ${{ parameters.providerName }}
+      environment: ${{ parameters.environment }}
+      chartPath: ${{ parameters.chartPath }}
+      hldRegPath: ${{ parameters.hldRegPath }}
+      skipDeploy: ${{ parameters.skipDeploy }}
+      manifestRepo: ${{ parameters.manifestRepo }}

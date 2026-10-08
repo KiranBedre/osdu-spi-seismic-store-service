@@ -1,0 +1,39 @@
+{
+	"id": "8d28be66-bc3c-4f31-8a00-69a8189e25bb",
+	"name": "seistore-test-e2e-env",
+	"values": [
+		{
+			"key": "SVC_API_KEY",
+			"value": "#{SVC_API_KEY}#",
+			"enabled": true
+		},
+		{
+			"key": "SVC_URL",
+			"value": "#{SVC_URL}#",
+			"enabled": true
+		},
+		{
+			"key": "STOKEN",
+			"value": "#{STOKEN}#",
+			"enabled": true
+		},
+		{
+			"key": "tenant",
+			"value": "#{TENANT}#",
+			"enabled": true
+		},
+		{
+			"key": "subproject",
+			"value": "#{SUBPROJECT}#",
+			"enabled": true
+		},
+		{
+			"key": "subprojectLongName",
+			"value": "#{SUBPROJECTLONGNAME}#",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2020-10-05T07:38:21.456Z",
+	"_postman_exported_using": "Postman/7.33.1"
+}

@@ -1,0 +1,42 @@
+---
+# Source: /devops/azure/chart/templates/virtual-service.yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}
+  namespace: osdu
+spec:
+  hosts:
+  - {{ .Values.configEnv.desServiceHost }}
+  gateways:
+  - istio-gateway
+  http:  
+  - match:
+    - uri:
+        prefix: "{{ .Values.configEnv.sdmsPrefix }}"
+    route:
+    - destination:
+        host: {{ .Release.Name }}
+        port:
+          number: 80
+    corsPolicy:
+      maxAge: "60m"
+      allowCredentials: true
+      allowHeaders:
+      - Authorization
+      - Data-Partition-Id
+      - Correlation-Id
+      - Content-Type
+      - x-api-key
+      - ltag
+      - impersonation-token
+      - impersonation-token-context
+      - user-token
+      allowMethods:
+      - POST
+      - GET
+      - PUT
+      - PATCH
+      - DELETE
+      allowOrigins:
+      - prefix: "*" 

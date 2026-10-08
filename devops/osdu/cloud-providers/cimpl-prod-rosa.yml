@@ -1,0 +1,40 @@
+cimpl-prod-deploy:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-acceptance-test:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-acceptance-test-python:
+  needs: []
+  extends: []
+  rules:
+    - when: never
+
+cimpl-prod-check-openapi-spec:
+  stage: acceptance
+  needs: []
+  extends: []
+  script:
+    - "true"
+  rules:
+    - when: never
+
+

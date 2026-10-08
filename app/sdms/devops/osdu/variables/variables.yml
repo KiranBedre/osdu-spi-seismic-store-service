@@ -1,0 +1,10 @@
+variables:
+  #seismic store service variables
+  SDMS_SERVICE: sdms
+  SDMS_PROJECT_TITLE: seismic-dms-service
+  SDMS_PROJECT_NAME: seismic-store-service
+  ISGITLAB: "true"
+  SDMS_UTEST_RUNTIME_IMAGE: seistore-svc-runtime
+  SDMS_RUNTIME_NODE_VERSION: 22.22.1-alpine
+  SDMS_COMPILE_NODE_VERSION: 22.22.1-bookworm
+  SDMS_NODE_VERSION: 22

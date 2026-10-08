@@ -1,1 +1,0 @@
-- **Security Features:** Enable in Settings → Security & analysis

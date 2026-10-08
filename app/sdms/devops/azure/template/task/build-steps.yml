@@ -1,0 +1,13 @@
+parameters:
+  providerName: ""
+steps:
+  - template: build-and-unit-test.yml
+  - template: publish-unit-test-results.yml
+  - template: copy-code-coverage-report.yml
+  - template: publish-code-coverage.yml
+  - template: build-runtime-image.yml
+    parameters:
+      providerName: ${{ parameters.providerName }}
+  - template: publish-build-artifact.yml
+    parameters:
+      providerName: ${{ parameters.providerName }}

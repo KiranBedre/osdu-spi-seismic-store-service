@@ -1,0 +1,69 @@
+{
+	"info": {
+		"_postman_id": "cd1981ec-707c-4a3d-a0aa-b90319298f97",
+		"name": "parallel_delete_dataSet",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "DATASET WRITE LOCK",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "7f3022c0-01e8-4bb7-91ad-011bd557a58f",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{STOKEN}}"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{SVC_API_KEY}}"
+					}
+				],
+				"url": {
+					"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{subproject}}/dataset/dsxABC5/lock?path=a%2Fb%2Fc&openmode=write",
+					"host": [
+						"{{SVC_URL}}"
+					],
+					"path": [
+						"dataset",
+						"tenant",
+						"{{tenant}}",
+						"subproject",
+						"{{subproject}}",
+						"dataset",
+						"dsxABC5",
+						"lock"
+					],
+					"query": [
+						{
+							"key": "path",
+							"value": "a%2Fb%2Fc"
+						},
+						{
+							"key": "openmode",
+							"value": "write"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
