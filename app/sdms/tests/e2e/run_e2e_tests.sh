@@ -178,10 +178,6 @@ if [ -z "${entitlements_user}" ]; then
       });
    ')
 fi
-if [ -z "${entitlements_user}" ]; then
-   usage "entitlements_user not defined and the bearer token has no application identity"
-   exit 1
-fi
 
 
 # required parameter should be skipped for GitLab

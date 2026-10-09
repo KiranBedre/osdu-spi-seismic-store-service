@@ -833,7 +833,10 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									""
+									"const entitlementsUser = pm.environment.get('entitlement_user');",
+									"if (!entitlementsUser) {",
+									"    throw new Error('entitlement_user is required for Azure and Anthos tenant setup');",
+									"}"
 								],
 								"type": "text/javascript"
 							}
