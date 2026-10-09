@@ -17,7 +17,7 @@
 import sinon from 'sinon';
 import crypto from 'crypto'
 
-import { Container, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
+import { Container, Databases, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
 import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureConfig,
     AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
 import { primaryCosmosClientOptions } from '../../../../src/cloud/providers/azure/cosmosdb';
@@ -40,6 +40,7 @@ export class TestAzureCosmosDbDAO {
     private static axiosInstance: AxiosInstance;
     private static buffer: Buffer;
     private static tmpAxios: AxiosInstance;
+    private static getContainerStub: sinon.SinonStub;
 
     public static run() {
 
@@ -71,7 +72,7 @@ export class TestAzureCosmosDbDAO {
             beforeEach(() => {
                 this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
 
-                this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
+                this.getContainerStub = this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
                     new Container(undefined, 'id', undefined));
 
                 // replace axiosInstance to our stub. Unfortunately, we can't do this with sandbox methods.
@@ -85,6 +86,7 @@ export class TestAzureCosmosDbDAO {
             });
 
             this.getSize();
+            this.workloadIdentityContainer();
             this.workloadIdentityClientOptions();
             this.save();
             this.get();
@@ -103,6 +105,37 @@ export class TestAzureCosmosDbDAO {
             this.querySelect();
             this.listFolders();
             this.pathExists();
+        });
+    }
+
+    private static workloadIdentityContainer() {
+        Tx.sectionInit('workload identity container');
+
+        Tx.test(async () => {
+            this.getContainerStub.restore();
+            (AzureCosmosDbDAO as any).containerCache = {};
+
+            const endpointStub = this.sandbox.stub(
+                AzureDataEcosystemServices, 'getCosmosConnectionEndpoint')
+                .resolves('https://test-cosmos.documents.azure.com:443/');
+            const legacyParamsStub = this.sandbox.stub(
+                AzureDataEcosystemServices, 'getCosmosConnectionParams')
+                .rejects(new Error('Cosmos account keys must not be requested'));
+            this.sandbox.stub(AzureCredentials, 'defaultAzureCredential').value({});
+            const createContainerStub = this.sandbox.stub().resolves({
+                container: new Container(undefined, 'data', undefined)
+            });
+            this.sandbox.stub(Databases.prototype, 'createIfNotExists').resolves({
+                database: {
+                    containers: { createIfNotExists: createContainerStub }
+                }
+            } as any);
+
+            await this.cosmos.getCosmoContainer();
+
+            sinon.assert.calledOnceWithExactly(endpointStub, 'gcpid@domain');
+            sinon.assert.notCalled(legacyParamsStub);
+            sinon.assert.calledOnce(createContainerStub);
         });
     }
 
