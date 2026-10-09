@@ -164,6 +164,25 @@ if [ -z "${datapartition}" ]; then usage "datapartition not defined" && exit 1; 
 if [ -z "${legaltag01}" ]; then usage "legaltag01 not defined" && exit 1; fi
 if [ -z "${legaltag02}" ]; then usage "legaltag02 not defined" && exit 1; fi
 
+if [ -z "${entitlements_user}" ]; then
+   entitlements_user=$(printf "%s" "${user_idtoken}" | node -e '
+      let token = "";
+      process.stdin.on("data", chunk => token += chunk);
+      process.stdin.on("end", () => {
+         const parts = token.split(".");
+         if (parts.length !== 3) {
+            process.exit(1);
+         }
+         const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+         process.stdout.write(claims.azp || claims.appid || "");
+      });
+   ')
+fi
+if [ -z "${entitlements_user}" ]; then
+   usage "entitlements_user not defined and the bearer token has no application identity"
+   exit 1
+fi
+
 
 # required parameter should be skipped for GitLab
 if [[ "${VCS_Provider}" == true || "${VCS_Provider}" == "true" || "${VCS_Provider}" == "gitlab" ]]; then

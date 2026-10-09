@@ -18,7 +18,7 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 
 import { ContainerClient, BlockBlobClient, BlobBatchClient, BlobServiceClient } from '@azure/storage-blob';
-import { AzureCloudStorage } from '../../../../src/cloud/providers/azure';
+import { AzureCloudStorage, AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
 import { Config } from '../../../../src/cloud';
 import { Tx } from '../../utils';
 
@@ -50,6 +50,7 @@ export class TestAzureStorage {
             this.deleteFiles();
             this.deleteObjects();
             this.getStorageTiers();
+            this.getStorageAccountRedundancy();
         });
     }
 
@@ -115,6 +116,22 @@ export class TestAzureStorage {
             expect(tiers).to.include('Cool');
             expect(tiers).to.include('Cold');
             expect(tiers).to.not.include('Archive');
+        });
+    }
+
+    private static getStorageAccountRedundancy() {
+        Tx.sectionInit('getStorageAccountRedundancy');
+        Tx.test(async () => {
+            const keyStub = this.sandbox.stub(AzureDataEcosystemServices, 'getStorageResourceKey')
+                .rejects(new Error('Storage account keys must not be requested'));
+            this.sandbox.stub(BlobServiceClient.prototype, 'getAccountInfo').resolves({
+                skuName: 'Standard_GRS'
+            } as any);
+
+            const redundancy = await this.storage.getStorageAccountRedundancy();
+
+            expect(redundancy).to.equal('Standard_GRS');
+            sinon.assert.notCalled(keyStub);
         });
     }
 

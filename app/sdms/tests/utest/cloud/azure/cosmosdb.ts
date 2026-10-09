@@ -18,8 +18,11 @@ import sinon from 'sinon';
 import crypto from 'crypto'
 
 import { Container, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
-import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureConfig, AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
+import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureConfig,
+    AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
+import { primaryCosmosClientOptions } from '../../../../src/cloud/providers/azure/cosmosdb';
 import { AzureArchiveService } from '../../../../src/cloud/providers/azure/archive-service';
+import { AzureCredentials } from '../../../../src/cloud/providers/azure/credentials';
 import { DatasetModel, AndQueryFilter, MatchQueryFilter, QueryFilter, QueryFilterVisitor } from '../../../../src/services/dataset';
 import { Config } from '../../../../src/cloud';
 import { Feature, FeatureFlags } from '../../../../src/shared';
@@ -82,6 +85,7 @@ export class TestAzureCosmosDbDAO {
             });
 
             this.getSize();
+            this.workloadIdentityClientOptions();
             this.save();
             this.get();
             this.delete();
@@ -99,6 +103,21 @@ export class TestAzureCosmosDbDAO {
             this.querySelect();
             this.listFolders();
             this.pathExists();
+        });
+    }
+
+    private static workloadIdentityClientOptions() {
+        Tx.sectionInit('workload identity client options');
+
+        Tx.test(() => {
+            const credential = {};
+            this.sandbox.stub(AzureCredentials, 'defaultAzureCredential').value(credential);
+
+            const options = primaryCosmosClientOptions('https://test-cosmos.documents.azure.com:443/');
+
+            expect(options.endpoint).to.equal('https://test-cosmos.documents.azure.com:443/');
+            expect(options.aadCredentials).to.equal(credential);
+            expect(options).not.to.have.property('key');
         });
     }
 
