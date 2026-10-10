@@ -43,6 +43,8 @@ export class TestAzureDataEcosystemServices {
             });
 
             this.getPartitionConfiguration_encodesPartitionId();
+            this.getStorageResourceName_usesStandardPartitionProperty();
+            this.getStorageResourceName_rejectsMissingPartitionProperty();
         });
     }
 
@@ -57,6 +59,45 @@ export class TestAzureDataEcosystemServices {
             assert.equal(
                 getStub.firstCall.args[0],
                 'https://partition.example/api/partition/v1/partitions/..%2Fadmin%3Finclude%3Dsecrets'
+            );
+        });
+    }
+
+    private static getStorageResourceName_usesStandardPartitionProperty() {
+        Tx.sectionInit('getStorageResourceName - uses the standard partition property');
+
+        Tx.test(async () => {
+            this.sandbox.stub(AzureDataEcosystemServices, 'getPartitionConfiguration').resolves({
+                'storage-account-name': {
+                    sensitive: false,
+                    value: 'storage-account'
+                }
+            });
+
+            const account = await AzureDataEcosystemServices.getStorageResourceName(
+                'standard-property-test'
+            );
+
+            assert.equal(account, 'storage-account');
+        });
+    }
+
+    private static getStorageResourceName_rejectsMissingPartitionProperty() {
+        Tx.sectionInit('getStorageResourceName - rejects a missing partition property');
+
+        Tx.test(async () => {
+            this.sandbox.stub(AzureDataEcosystemServices, 'getPartitionConfiguration').resolves({});
+
+            let caught: unknown;
+            try {
+                await AzureDataEcosystemServices.getStorageResourceName('missing-property-test');
+            } catch (error) {
+                caught = error;
+            }
+            assert.instanceOf(caught, Error);
+            assert.equal(
+                (caught as Error).message,
+                'missing partition configuration: storage-account-name'
             );
         });
     }
