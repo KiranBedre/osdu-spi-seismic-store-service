@@ -179,6 +179,28 @@ if [ -z "${entitlements_user}" ]; then
    ')
 fi
 
+trusted_application_id=$(printf "%s" "${user_idtoken}" | node -e '
+   let token = "";
+   process.stdin.on("data", chunk => token += chunk);
+   process.stdin.on("end", () => {
+      const parts = token.split(".");
+      if (parts.length !== 3) {
+         process.exit(1);
+      }
+      const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+      process.stdout.write(claims.sub || "");
+   });
+')
+
+if [ -z "${entitlements_user}" ]; then
+   usage "user-idtoken does not contain an azp or appid claim"
+   exit 1
+fi
+if [ -z "${trusted_application_id}" ]; then
+   usage "user-idtoken does not contain a sub claim"
+   exit 1
+fi
+
 
 # required parameter should be skipped for GitLab
 if [[ "${VCS_Provider}" == true || "${VCS_Provider}" == "true" || "${VCS_Provider}" == "gitlab" ]]; then
@@ -237,6 +259,7 @@ then
    sed -i "s/#{DOMAINNAME}#/${domain_name}/g" ./tests/e2e/postman_env.json
    sed -i "s,#{HOSTNAME}#,${hostname},g" ./tests/e2e/postman_env.json
    sed -i "s/#{ENTITLEMENTS_USER}#/${entitlements_user}/g" ./tests/e2e/postman_env.json
+   sed -i "s/#{TRUSTED_APPLICATION_ID}#/${trusted_application_id}/g" ./tests/e2e/postman_env.json
    sed -i "s/#{testBulkDelete}#/${testBulkDelete}/g" ./tests/e2e/postman_env.json
    sed -i "s/#{testComputeSize}#/${testComputeSize}/g" ./tests/e2e/postman_env.json
    cp ./tests/e2e/postman_env.json ./tests/e2e/postman_env_initiated.json

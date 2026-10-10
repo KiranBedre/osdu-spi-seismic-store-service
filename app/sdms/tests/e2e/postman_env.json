@@ -105,6 +105,12 @@
 			"enabled": true
 		},
 		{
+			"key": "trusted_application_id",
+			"value": "#{TRUSTED_APPLICATION_ID}#",
+			"type": "default",
+			"enabled": true
+		},
+		{
 			"key": "testBulkDelete",
 			"value": "#{testBulkDelete}#",
 			"type": "default",
