@@ -16,8 +16,8 @@
 
 import crypto from 'crypto';
 
-import { CosmosClient, Container, FeedResponse, ItemResponse, OperationInput, BulkOperationType,
-    SqlParameter } from '@azure/cosmos';
+import { CosmosClient, CosmosClientOptions, Container, FeedResponse, ItemResponse, OperationInput,
+    BulkOperationType, SqlParameter } from '@azure/cosmos';
 import { AbstractJournal, AbstractJournalTransaction, IJournalExtendedQueryModel, IJournalQueryModel,
     IJournalTransaction, JournalFactory } from '../../journal';
 import { TenantModel } from '../../../services/tenant';
@@ -29,11 +29,19 @@ import { Operator } from '../../../services/dataset/model';
 import { DatasetUtils } from '../../../services/dataset';
 import { StorageFactory } from '../../../cloud';
 import { AzureArchiveService } from './archive-service';
+import { AzureCredentials } from './credentials';
 
 
 import axios, { AxiosInstance } from 'axios';
 import { DatasetModel, ListDatasetsParams, QueryFilter, QueryFilterVisitor, AndQueryFilter, MatchQueryFilter,
     NotQueryFilter, OrQueryFilter } from '../../../services/dataset';
+
+export function primaryCosmosClientOptions(endpoint: string): CosmosClientOptions {
+    return {
+        endpoint,
+        aadCredentials: AzureCredentials.defaultAzureCredential
+    };
+}
 
 @JournalFactory.register('azure')
 export class AzureCosmosDbDAO extends AbstractJournal {
@@ -51,11 +59,8 @@ export class AzureCosmosDbDAO extends AbstractJournal {
         const containerId = 'data';
 
         if (!AzureCosmosDbDAO.containerCache[this.dataPartition]) {
-            const connectionParams = await AzureDataEcosystemServices.getCosmosConnectionParams(this.dataPartition);
-            const cosmosClient = new CosmosClient({
-                endpoint: connectionParams.endpoint,
-                key: connectionParams.key
-            });
+            const endpoint = await AzureDataEcosystemServices.getCosmosConnectionEndpoint(this.dataPartition);
+            const cosmosClient = new CosmosClient(primaryCosmosClientOptions(endpoint));
             const { database } = await cosmosClient.databases.createIfNotExists({ id: databaseId });
             const { container } = await database.containers.createIfNotExists({
                 id: containerId,

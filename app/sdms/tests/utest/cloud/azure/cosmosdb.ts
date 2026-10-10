@@ -17,9 +17,12 @@
 import sinon from 'sinon';
 import crypto from 'crypto'
 
-import { Container, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
-import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureConfig, AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
+import { Container, Databases, FeedResponse, Item, Items, QueryIterator, SqlQuerySpec } from '@azure/cosmos';
+import { AzureCosmosDbDAO, AzureCosmosDbQuery, AzureConfig,
+    AzureDataEcosystemServices } from '../../../../src/cloud/providers/azure';
+import { primaryCosmosClientOptions } from '../../../../src/cloud/providers/azure/cosmosdb';
 import { AzureArchiveService } from '../../../../src/cloud/providers/azure/archive-service';
+import { AzureCredentials } from '../../../../src/cloud/providers/azure/credentials';
 import { DatasetModel, AndQueryFilter, MatchQueryFilter, QueryFilter, QueryFilterVisitor } from '../../../../src/services/dataset';
 import { Config } from '../../../../src/cloud';
 import { Feature, FeatureFlags } from '../../../../src/shared';
@@ -37,6 +40,7 @@ export class TestAzureCosmosDbDAO {
     private static axiosInstance: AxiosInstance;
     private static buffer: Buffer;
     private static tmpAxios: AxiosInstance;
+    private static getContainerStub: sinon.SinonStub;
 
     public static run() {
 
@@ -68,7 +72,7 @@ export class TestAzureCosmosDbDAO {
             beforeEach(() => {
                 this.sandbox.define(Config, 'CLOUDPROVIDER', 'azure');
 
-                this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
+                this.getContainerStub = this.sandbox.stub(AzureCosmosDbDAO.prototype, 'getCosmoContainer').resolves(
                     new Container(undefined, 'id', undefined));
 
                 // replace axiosInstance to our stub. Unfortunately, we can't do this with sandbox methods.
@@ -82,6 +86,8 @@ export class TestAzureCosmosDbDAO {
             });
 
             this.getSize();
+            this.workloadIdentityContainer();
+            this.workloadIdentityClientOptions();
             this.save();
             this.get();
             this.delete();
@@ -99,6 +105,52 @@ export class TestAzureCosmosDbDAO {
             this.querySelect();
             this.listFolders();
             this.pathExists();
+        });
+    }
+
+    private static workloadIdentityContainer() {
+        Tx.sectionInit('workload identity container');
+
+        Tx.test(async () => {
+            this.getContainerStub.restore();
+            (AzureCosmosDbDAO as any).containerCache = {};
+
+            const endpointStub = this.sandbox.stub(
+                AzureDataEcosystemServices, 'getCosmosConnectionEndpoint')
+                .resolves('https://test-cosmos.documents.azure.com:443/');
+            const legacyParamsStub = this.sandbox.stub(
+                AzureDataEcosystemServices, 'getCosmosConnectionParams')
+                .rejects(new Error('Cosmos account keys must not be requested'));
+            this.sandbox.stub(AzureCredentials, 'defaultAzureCredential').value({});
+            const createContainerStub = this.sandbox.stub().resolves({
+                container: new Container(undefined, 'data', undefined)
+            });
+            this.sandbox.stub(Databases.prototype, 'createIfNotExists').resolves({
+                database: {
+                    containers: { createIfNotExists: createContainerStub }
+                }
+            } as any);
+
+            await this.cosmos.getCosmoContainer();
+
+            sinon.assert.calledOnceWithExactly(endpointStub, 'gcpid@domain');
+            sinon.assert.notCalled(legacyParamsStub);
+            sinon.assert.calledOnce(createContainerStub);
+        });
+    }
+
+    private static workloadIdentityClientOptions() {
+        Tx.sectionInit('workload identity client options');
+
+        Tx.test(() => {
+            const credential = {};
+            this.sandbox.stub(AzureCredentials, 'defaultAzureCredential').value(credential);
+
+            const options = primaryCosmosClientOptions('https://test-cosmos.documents.azure.com:443/');
+
+            expect(options.endpoint).to.equal('https://test-cosmos.documents.azure.com:443/');
+            expect(options.aadCredentials).to.equal(credential);
+            expect(options).not.to.have.property('key');
         });
     }
 

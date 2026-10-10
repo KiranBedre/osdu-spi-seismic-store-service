@@ -15,8 +15,7 @@
 // ============================================================================
 
 import { TokenCredential } from '@azure/identity';
-import { AccessTier, BlobBatchClient, BlobItem, BlobServiceClient,
-    StorageSharedKeyCredential } from '@azure/storage-blob';
+import { AccessTier, BlobBatchClient, BlobItem, BlobServiceClient } from '@azure/storage-blob';
 import { BlockBlobTier } from '@azure/storage-blob';
 import { Readable } from 'stream';
 import { AzureInsightsLogger } from '.';
@@ -239,17 +238,7 @@ export class AzureCloudStorage extends AbstractStorage {
     }
 
     public async getStorageAccountRedundancy(): Promise<string> {
-        const accountName = await AzureDataEcosystemServices.getStorageResourceName(this.dataPartition);
-        const accountKey = await AzureDataEcosystemServices.getStorageResourceKey(this.dataPartition);
-        const key = new StorageSharedKeyCredential(
-            accountName,
-            accountKey
-        );
-        const client = new BlobServiceClient(
-            `https://${accountName}.blob.core.windows.net`,
-            key
-        );
-        const info = await client.getAccountInfo();
+        const info = await (await this.getBlobServiceClient()).getAccountInfo();
         return info.skuName;
     }
 
