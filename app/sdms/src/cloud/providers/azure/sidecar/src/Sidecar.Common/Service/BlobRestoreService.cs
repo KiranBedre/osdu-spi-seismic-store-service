@@ -476,9 +476,9 @@ public class BlobRestoreService(
         if (string.IsNullOrWhiteSpace(storageInfo.VirtualFolder))
         {
             // Azure parses a range endpoint as "<container>/<blob>" and rejects an empty blob
-            // name. Control characters are invalid in Azure blob names, so a space is the lowest
-            // valid blob-name prefix and keeps the range inside this dedicated container.
-            return ($"{storageInfo.ContainerName}/ ", $"{storageInfo.ContainerName}0");
+            // name. Azure trims a trailing space from the range, so use the lowest non-whitespace
+            // prefix before the numeric object names stored in dedicated dataset containers.
+            return ($"{storageInfo.ContainerName}/!", $"{storageInfo.ContainerName}0");
         }
 
         var folderPrefix = $"{storageInfo.ContainerName}/{storageInfo.VirtualFolder.Trim('/')}/";

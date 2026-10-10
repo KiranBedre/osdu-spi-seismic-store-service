@@ -206,7 +206,7 @@ public class BlobRestoreServiceTests
 
         var body = _handler.Requests[1].Body!;
         _ = body.Should().Contain("\"timeToRestore\":");
-        _ = body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}/ \"");
+        _ = body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}/!\"");
         _ = body.Should().Contain($"\"endRange\":\"{DatasetPolicyContainer}0\"");
     }
 
@@ -262,7 +262,7 @@ public class BlobRestoreServiceTests
         _handler.EnqueueJson(HttpStatusCode.Conflict, string.Empty);
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
             "inflight-id", "InProgress", RestorePoint,
-            ($"{DefaultContainer}/ ", $"{DefaultContainer}0")));
+            ($"{DefaultContainer}/!", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
@@ -299,7 +299,7 @@ public class BlobRestoreServiceTests
         // GET should be issued; no POST.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
             "adopted-id", "InProgress", RestorePoint,
-            ($"{DefaultContainer}/ ", $"{DefaultContainer}0")));
+            ($"{DefaultContainer}/!", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
@@ -436,7 +436,7 @@ public class BlobRestoreServiceTests
         // instead of the stale tracked id \u2014 no re-submit.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
             "latest-id", "InProgress", RestorePoint,
-            ($"{DefaultContainer}/ ", $"{DefaultContainer}0")));
+            ($"{DefaultContainer}/!", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
