@@ -469,7 +469,7 @@ public class BlobRestoreService(
 
     /// <summary>
     /// Builds the half-open PITR range <c>[startRange, endRange)</c> for a dataset: dataset policy
-    /// uses the whole container <c>["c/ ", "c0")</c>; uniform policy uses <c>["c/folder/", "c/folder0")</c>.
+    /// uses the whole container <c>["c/!", "c0")</c>; uniform policy uses <c>["c/folder/", "c/folder0")</c>.
     /// </summary>
     private static (string StartRange, string EndRange) BuildBlobRestoreRange(DatasetStorageInfo storageInfo)
     {

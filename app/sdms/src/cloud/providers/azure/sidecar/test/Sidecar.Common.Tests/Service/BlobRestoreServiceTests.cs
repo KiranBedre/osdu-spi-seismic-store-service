@@ -193,9 +193,9 @@ public class BlobRestoreServiceTests
         // UUID (hyphen-joined), and there is NO virtual folder. gcsurl example:
         //   ss-local-psmb3nw5vxy8n52-64cc33b9-e313-4453-994f-400bda80ef96
         //
-        // Azure rejects "<container>/" because the blob-name part is empty. A space is the
-        // lexicographically lowest valid Azure blob-name character, so the half-open range
-        // ["c/ ", "c0") covers the dedicated container without spilling into siblings.
+        // Azure rejects "<container>/" because the blob-name part is empty and trims a trailing
+        // space to the same value. The "!" sentinel sorts before the numeric object names, so
+        // ["c/!", "c0") covers the dedicated container without spilling into siblings.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-abc\"}");
         var sut = CreateSut();
