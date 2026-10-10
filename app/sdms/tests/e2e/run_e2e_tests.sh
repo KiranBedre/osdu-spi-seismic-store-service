@@ -196,6 +196,9 @@ if [ -z "${entitlements_user}" ]; then
    usage "user-idtoken does not contain an azp or appid claim"
    exit 1
 fi
+if [ -z "${admin_email}" ]; then
+   admin_email="${entitlements_user}"
+fi
 if [ -z "${trusted_application_id}" ]; then
    usage "user-idtoken does not contain a sub claim"
    exit 1
