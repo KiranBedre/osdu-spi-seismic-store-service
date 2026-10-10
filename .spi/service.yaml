@@ -12,6 +12,7 @@ tests:
     type: script
     path: app/sdms
     entrypoint: tests/e2e/run_e2e_tests.sh
+    timeoutMinutes: 150
     arguments:
       - "--seistore-svc-url"
       - "${SVC_URL}"

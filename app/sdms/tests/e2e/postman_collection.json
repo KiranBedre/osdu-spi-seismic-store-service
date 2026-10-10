@@ -36858,7 +36858,7 @@
 							"script": {
 								"exec": [
 									"console.log('Dataset variables are initialized for datasets folder');",
-									"if ( (pm.environment.get('serviceCloudProvider') !== 'azure') ) {",
+									"if (pm.environment.get('serviceCloudProvider') === 'azure') {",
 									"    console.log('Skip the Change tier folder');",
 									"    pm.execution.setNextRequest(\"CHANGE-TIER CLEANUP STATUS UNSET: Cleanup test environment\");",
 									"}",
