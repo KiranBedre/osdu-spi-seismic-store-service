@@ -80,6 +80,11 @@ export class AzureDataEcosystemServices extends AbstractDataEcosystemCore {
         const storageConfigs = (dataPartitionConfigurations[KeyVault.DATA_PARTITION_STORAGE_ACCOUNT_NAME] as {
             sensitive: boolean, value: string;
         });
+        if (!storageConfigs) {
+            throw new globalThis.Error(
+                `missing partition configuration: ${KeyVault.DATA_PARTITION_STORAGE_ACCOUNT_NAME}`
+            );
+        }
         if (storageConfigs.sensitive) {
             storageConfigs.value = (await KeyVault.CreateSecretClient().getSecret(storageConfigs.value)).value;
         }
