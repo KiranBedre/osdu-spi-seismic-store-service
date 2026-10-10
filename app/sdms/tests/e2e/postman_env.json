@@ -105,7 +105,7 @@
 			"enabled": true
 		},
 		{
-			"key": "trusted_application_id",
+			"key": "trustedApplicationID",
 			"value": "#{TRUSTED_APPLICATION_ID}#",
 			"type": "default",
 			"enabled": true

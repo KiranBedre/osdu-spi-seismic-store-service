@@ -30715,8 +30715,6 @@
 							"script": {
 								"exec": [
 									"",
-									"pm.environment.set(\"trustedApplicationID\", pm.environment.get(\"trusted_application_id\"));",
-									"",
 									"pm.environment.set('execCounter', 1);",
 									"",
 									"console.log('The \\\"Impersonation token\\\" test suite variables have been set');"

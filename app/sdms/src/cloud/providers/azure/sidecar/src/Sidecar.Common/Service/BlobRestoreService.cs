@@ -469,13 +469,16 @@ public class BlobRestoreService(
 
     /// <summary>
     /// Builds the half-open PITR range <c>[startRange, endRange)</c> for a dataset: dataset policy
-    /// uses the whole container <c>["c/", "c0")</c>; uniform policy uses <c>["c/folder/", "c/folder0")</c>.
+    /// uses the whole container <c>["c/ ", "c0")</c>; uniform policy uses <c>["c/folder/", "c/folder0")</c>.
     /// </summary>
     private static (string StartRange, string EndRange) BuildBlobRestoreRange(DatasetStorageInfo storageInfo)
     {
         if (string.IsNullOrWhiteSpace(storageInfo.VirtualFolder))
         {
-            return ($"{storageInfo.ContainerName}/", $"{storageInfo.ContainerName}0");
+            // Azure parses a range endpoint as "<container>/<blob>" and rejects an empty blob
+            // name. Control characters are invalid in Azure blob names, so a space is the lowest
+            // valid blob-name prefix and keeps the range inside this dedicated container.
+            return ($"{storageInfo.ContainerName}/ ", $"{storageInfo.ContainerName}0");
         }
 
         var folderPrefix = $"{storageInfo.ContainerName}/{storageInfo.VirtualFolder.Trim('/')}/";
