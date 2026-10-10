@@ -193,11 +193,9 @@ public class BlobRestoreServiceTests
         // UUID (hyphen-joined), and there is NO virtual folder. gcsurl example:
         //   ss-local-psmb3nw5vxy8n52-64cc33b9-e313-4453-994f-400bda80ef96
         //
-        // The dataset owns the WHOLE dedicated container, so a container-level range is used with
-        // NO trailing slash. Azure parses each endpoint as "<container>/<blob>" and rejects an
-        // container is covered by the half-open range [startRange "c/", endRange "c0"):
-        // '/' sorts immediately before '0', so every "c/<blob>" key is captured without spilling
-        // into sibling containers.
+        // Azure rejects "<container>/" because the blob-name part is empty. A space is the
+        // lexicographically lowest valid Azure blob-name character, so the half-open range
+        // ["c/ ", "c0") covers the dedicated container without spilling into siblings.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(null, null));
         _handler.EnqueueJson(HttpStatusCode.Accepted, "{\"restoreId\":\"restore-abc\"}");
         var sut = CreateSut();
@@ -208,7 +206,7 @@ public class BlobRestoreServiceTests
 
         var body = _handler.Requests[1].Body!;
         _ = body.Should().Contain("\"timeToRestore\":");
-        _ = body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}/\"");
+        _ = body.Should().Contain($"\"startRange\":\"{DatasetPolicyContainer}/ \"");
         _ = body.Should().Contain($"\"endRange\":\"{DatasetPolicyContainer}0\"");
     }
 
@@ -264,7 +262,7 @@ public class BlobRestoreServiceTests
         _handler.EnqueueJson(HttpStatusCode.Conflict, string.Empty);
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
             "inflight-id", "InProgress", RestorePoint,
-            ($"{DefaultContainer}/", $"{DefaultContainer}0")));
+            ($"{DefaultContainer}/ ", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
@@ -301,7 +299,7 @@ public class BlobRestoreServiceTests
         // GET should be issued; no POST.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
             "adopted-id", "InProgress", RestorePoint,
-            ($"{DefaultContainer}/", $"{DefaultContainer}0")));
+            ($"{DefaultContainer}/ ", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
@@ -438,7 +436,7 @@ public class BlobRestoreServiceTests
         // instead of the stale tracked id \u2014 no re-submit.
         _handler.EnqueueJson(HttpStatusCode.OK, AccountStatusJson(
             "latest-id", "InProgress", RestorePoint,
-            ($"{DefaultContainer}/", $"{DefaultContainer}0")));
+            ($"{DefaultContainer}/ ", $"{DefaultContainer}0")));
         var sut = CreateSut();
 
         var result = await sut.StartBlobRestoreAsync(
