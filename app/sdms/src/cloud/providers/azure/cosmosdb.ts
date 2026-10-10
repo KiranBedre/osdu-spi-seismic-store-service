@@ -501,11 +501,14 @@ export class AzureCosmosDbDAO extends AbstractJournal {
                 if (cosmosQuery.pagingStart || cosmosQuery.pagingLimit) {
                     const querySpec = {
                         query: sqlQuery,
-                        parameters: sqlParams,
+                        parameters: sqlParams
+                    };
+                    const queryOptions = {
                         continuationToken: cosmosQuery.pagingStart,
                         maxItemCount: cosmosQuery.pagingLimit
                     };
-                    response = await (await this.getCosmoContainer()).items.query(querySpec).fetchNext();
+                    response = await (await this.getCosmoContainer()).items
+                        .query(querySpec, queryOptions).fetchNext();
                 } else {
                     const querySpec = {
                         query: sqlQuery,

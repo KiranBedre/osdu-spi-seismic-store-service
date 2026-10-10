@@ -138,9 +138,10 @@ export class TestAzureCosmosDbListDatasets {
                 return querySpec.parameters.length === 2 &&
                     querySpec.parameters[0].value === dataset.subproject &&
                     querySpec.parameters[1].value === dataset.path &&
-                    querySpec.continuationToken === pagination.cursor &&
-                    querySpec.maxItemCount === pagination.limit &&
                     expectedQueryRegExp.test(querySpec.query);
+            }), sinon.match((queryOptions) => {
+                return queryOptions.continuationToken === pagination.cursor &&
+                    queryOptions.maxItemCount === pagination.limit;
             }));
 
 
@@ -174,9 +175,10 @@ export class TestAzureCosmosDbListDatasets {
                     querySpec.parameters[1].value === dataset.path &&
                     querySpec.parameters[2].value === dataset.gtags[0] &&
                     querySpec.parameters[3].value === searchParam.split('=')[1] &&
-                    querySpec.continuationToken === pagination.cursor &&
-                    querySpec.maxItemCount === pagination.limit &&
                     expectedQueryRegExp.test(querySpec.query);
+            }), sinon.match((queryOptions) => {
+                return queryOptions.continuationToken === pagination.cursor &&
+                    queryOptions.maxItemCount === pagination.limit;
             }));
         });
 
@@ -243,9 +245,10 @@ export class TestAzureCosmosDbListDatasets {
                     querySpec.parameters[0].value === dataset.subproject &&
                     querySpec.parameters[1].value === tag &&
                     querySpec.parameters[2].value === fileName &&
-                    querySpec.continuationToken === pagination.cursor &&
-                    querySpec.maxItemCount === pagination.limit &&
                     expectedQueryRegExp.test(querySpec.query);
+            }), sinon.match((queryOptions) => {
+                return queryOptions.continuationToken === pagination.cursor &&
+                    queryOptions.maxItemCount === pagination.limit;
             }));
         });
 
@@ -301,9 +304,10 @@ export class TestAzureCosmosDbListDatasets {
                     querySpec.parameters[0].value === dataset.subproject &&
                     querySpec.parameters[1].value === value1 &&
                     querySpec.parameters[2].value === value2 &&
-                    querySpec.continuationToken === pagination.cursor &&
-                    querySpec.maxItemCount === pagination.limit &&
                     expectedQueryRegExp.test(querySpec.query);
+            }), sinon.match((queryOptions) => {
+                return queryOptions.continuationToken === pagination.cursor &&
+                    queryOptions.maxItemCount === pagination.limit;
             }));
         });
 
@@ -376,9 +380,10 @@ export class TestAzureCosmosDbListDatasets {
                     querySpec.parameters[1].value === value1 &&
                     querySpec.parameters[2].value === value2 &&
                     querySpec.parameters[3].value === value3 &&
-                    querySpec.continuationToken === pagination.cursor &&
-                    querySpec.maxItemCount === pagination.limit &&
                     expectedQueryRegExp.test(querySpec.query);
+            }), sinon.match((queryOptions) => {
+                return queryOptions.continuationToken === pagination.cursor &&
+                    queryOptions.maxItemCount === pagination.limit;
             }));
         });
 
@@ -486,9 +491,10 @@ export class TestAzureCosmosDbListDatasets {
                     querySpec.parameters[4].value === value4 &&
                     querySpec.parameters[5].value === value5 &&
                     querySpec.parameters[6].value === value6 &&
-                    querySpec.continuationToken === pagination.cursor &&
-                    querySpec.maxItemCount === pagination.limit &&
                     expectedQueryRegExp.test(querySpec.query);
+            }), sinon.match((queryOptions) => {
+                return queryOptions.continuationToken === pagination.cursor &&
+                    queryOptions.maxItemCount === pagination.limit;
             }));
         });
 
