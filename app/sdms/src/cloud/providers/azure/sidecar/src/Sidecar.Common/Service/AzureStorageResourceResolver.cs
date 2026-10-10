@@ -44,7 +44,14 @@ public class AzureStorageResourceResolver(
     public async Task<string> ResolveStorageAccountNameAsync(string dataPartitionId, CancellationToken ct)
     {
         var desConfig = await _desClient.GetPartitionConfigurationAsync(dataPartitionId, ct);
-        return await desConfig.StorageAccountName.GetActualValueAsync(_secretClient, ct);
+        var storageAccountName = await desConfig.StorageAccountName.GetActualValueAsync(_secretClient, ct);
+        if (string.IsNullOrWhiteSpace(storageAccountName))
+        {
+            throw new InvalidOperationException(
+                "Partition configuration must define storage-account-name for management-plane operations.");
+        }
+
+        return storageAccountName;
     }
 
     /// <inheritdoc/>

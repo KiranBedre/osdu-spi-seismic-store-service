@@ -17,9 +17,47 @@
 namespace Sidecar.Common.Tests.Service;
 
 using Azure.Security.KeyVault.Secrets;
+using Newtonsoft.Json;
 
 public class AzureStorageResourceResolverTests
 {
+    [Fact]
+    public async Task ResolveStorageAccountNameAsync_UsesStandardPartitionProperty()
+    {
+        var desResponse = JsonConvert.DeserializeObject<DesResponse>(
+            """{"storage-account-name":{"sensitive":false,"value":"storageaccount"}}""")!;
+        var desClient = new Mock<IDesClient>();
+        _ = desClient.Setup(client => client.GetPartitionConfigurationAsync(
+                "opendes", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(desResponse);
+        var sut = new AzureStorageResourceResolver(
+            new Mock<IOptionsAzureResourceScope>().Object,
+            desClient.Object,
+            new Mock<SecretClient>().Object);
+
+        var result = await sut.ResolveStorageAccountNameAsync("opendes", CancellationToken.None);
+
+        _ = result.Should().Be("storageaccount");
+    }
+
+    [Fact]
+    public async Task ResolveStorageAccountNameAsync_WhenMissing_Throws()
+    {
+        var desClient = new Mock<IDesClient>();
+        _ = desClient.Setup(client => client.GetPartitionConfigurationAsync(
+                "opendes", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DesResponse());
+        var sut = new AzureStorageResourceResolver(
+            new Mock<IOptionsAzureResourceScope>().Object,
+            desClient.Object,
+            new Mock<SecretClient>().Object);
+
+        var act = () => sut.ResolveStorageAccountNameAsync("opendes", CancellationToken.None);
+
+        _ = await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*storage-account-name*");
+    }
+
     [Fact]
     public void ResolveResourceGroupName_ReturnsConfiguredStorageResourceGroup()
     {
