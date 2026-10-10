@@ -335,10 +335,14 @@ export class TestAzureCosmosDbDAO {
             azureCosmosDbQuery.kind = 'datasets';
             azureCosmosDbQuery.queryFilter = new MatchQueryFilter('property', 'RegexMatch', {value: 'value'});
             this.sandbox.define(AzureConfig, 'SIDECAR_ENABLE_QUERY', false);
-            this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
+            const queryStub = this.sandbox.stub(Items.prototype, 'query').returns(queryIterator);
             this.sandbox.stub(this.cosmos as any, 'tierCheck').returns("");
             const res = await this.cosmos.runQuery(azureCosmosDbQuery as IJournalQueryModel);
-            Tx.checkTrue(res[1].endCursor === 'continuationToken');
+            Tx.checkTrue(
+                res[1].endCursor === 'continuationToken' &&
+                queryStub.firstCall.args[1].continuationToken === '"[pagingStart]"' &&
+                queryStub.firstCall.args[1].maxItemCount === 1
+            );
         });
 
         Tx.test(async () => {
