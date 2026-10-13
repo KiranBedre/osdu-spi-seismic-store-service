@@ -205,9 +205,11 @@ public class Program
             .AddSingleton<IOptionsRestore>(opts)
             .AddSingleton<IOptionsQueueRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsLocksRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
+            .AddSingleton<IOptionsStorageAccount>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsQueueNameRedis>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsDataEcosystemService>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsStorageQueue>(sp => sp.GetRequiredService<IOptionsRestore>())
+            .AddSingleton<IOptionsConfig>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsAzureResourceScope>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton<IOptionsRedisMsi>(sp => sp.GetRequiredService<IOptionsRestore>())
             .AddSingleton(new TaskQueueBackgroundServiceOptions
