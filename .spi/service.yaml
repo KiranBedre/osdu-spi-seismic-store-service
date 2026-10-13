@@ -10,6 +10,9 @@ service:
 tests:
   acceptance:
     type: script
+    requires:
+      loads:
+        - seismic
     path: app/sdms
     entrypoint: tests/e2e/run_e2e_tests.sh
     timeoutMinutes: 150
