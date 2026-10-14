@@ -17,7 +17,7 @@
 namespace Sidecar.Common.Interface;
 
 public interface IOptionsRestore :
-    IOptionsDataEcosystemService,
+    IOptionsConfig,
     IOptionsQueueRedis,
     IOptionsLocksRedis,
     IOptionsQueueNameRedis,
