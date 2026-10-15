@@ -1,0 +1,99 @@
+name: Python Build
+description: Install, lint, and test a requirements-based Python/FastAPI service
+
+inputs:
+  working_directory:
+    description: Repository-relative package root
+    required: true
+  python_version:
+    description: Python version supplied to actions/setup-python
+    required: true
+  requirements_file:
+    description: Runtime requirements file relative to working_directory
+    required: false
+    default: requirements.txt
+  test_requirements_file:
+    description: Test requirements file relative to working_directory
+    required: false
+    default: requirements-tests.in
+  build_script:
+    description: Repository-relative CI script owned by the service fork
+    required: false
+    default: .spi/ci/build.sh
+  test_report:
+    description: Repository-relative JUnit XML path
+    required: false
+    default: .spi/results/test-results.xml
+  coverage_file:
+    description: Repository-relative XML coverage path
+    required: false
+    default: .spi/results/coverage.xml
+
+outputs:
+  build_result:
+    description: success when the service script and evidence checks pass
+    value: ${{ steps.build.outputs.build_result }}
+  test_report:
+    description: Repository-relative JUnit report path
+    value: ${{ steps.config.outputs.test_report }}
+  coverage_file:
+    description: Repository-relative coverage report path
+    value: ${{ steps.config.outputs.coverage_file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate Python build inputs
+      id: config
+      shell: bash
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working_directory }}
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        REQUIREMENTS_FILE: ${{ inputs.requirements_file }}
+        TEST_REQUIREMENTS_FILE: ${{ inputs.test_requirements_file }}
+        BUILD_SCRIPT: ${{ inputs.build_script }}
+        TEST_REPORT: ${{ inputs.test_report }}
+        COVERAGE_FILE: ${{ inputs.coverage_file }}
+      run: "$GITHUB_ACTION_PATH/validate-inputs.sh"
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: ${{ inputs.python_version }}
+        cache: pip
+        cache-dependency-path: |
+          ${{ steps.config.outputs.requirements_file }}
+          ${{ steps.config.outputs.test_requirements_file }}
+
+    - name: Install dependencies
+      shell: bash
+      env:
+        REQUIREMENTS_FILE: ${{ steps.config.outputs.requirements_file }}
+        TEST_REQUIREMENTS_FILE: ${{ steps.config.outputs.test_requirements_file }}
+      run: |
+        set -euo pipefail
+        python -m pip install --requirement "$REQUIREMENTS_FILE"
+        python -m pip install --constraint "$REQUIREMENTS_FILE" \
+          --requirement "$TEST_REQUIREMENTS_FILE"
+        python -m pip install "pre-commit==4.3.0"
+
+    - name: Build and test
+      id: build
+      shell: bash
+      env:
+        SPI_SOURCE_PATH: ${{ inputs.working_directory }}
+        SPI_TEST_REPORT: ${{ steps.config.outputs.test_report }}
+        SPI_COVERAGE_FILE: ${{ steps.config.outputs.coverage_file }}
+        BUILD_SCRIPT: ${{ steps.config.outputs.build_script }}
+      run: "$GITHUB_ACTION_PATH/run-build.sh"
+
+    - name: Upload test and coverage evidence
+      if: always()
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+      with:
+        name: python-test-evidence
+        path: |
+          ${{ steps.config.outputs.test_report }}
+          ${{ steps.config.outputs.coverage_file }}
+        if-no-files-found: error
+        retention-days: 2

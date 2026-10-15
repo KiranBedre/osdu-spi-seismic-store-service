@@ -50,8 +50,9 @@ SECRET_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,126}$")
 SUFFIX_RE = re.compile(r"^[A-Za-z0-9._~:/@+-]{1,200}$")
 MAVEN_ARG_RE = re.compile(r"^[^\s\x00-\x1f\x7f]{1,240}$")
 ARGV_TOKEN_RE = re.compile(r"^[^\x00-\x1f\x7f]{1,240}$")
-PATH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$")
-NODE_VERSION_RE = re.compile(r"^[0-9]{1,2}(?:\.[0-9]{1,2}){0,2}$")
+PATH_RE = re.compile(r"^(?:\.|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$")
+RUNTIME_VERSION_RE = re.compile(r"^[0-9]{1,2}(?:\.[0-9]{1,2}){0,2}$")
+PYTHON_VERSION_RE = re.compile(r"^[0-9]{1,2}(?:\.[0-9]{1,2}){1,2}$")
 REPORT_PATH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/*?{}\[\]-]{0,199}$")
 TEMPLATE_REF_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]{0,127})\}")
 KEYVAULT_SOURCE_RE = re.compile(r"^keyvault:([A-Za-z0-9][A-Za-z0-9-]{0,126})$")
@@ -418,7 +419,8 @@ def validate_descriptor(data, suite="acceptance"):
         raise Halt("DESCRIPTOR_INVALID", "descriptor.service must be a mapping")
     _require_keys(
         service,
-        ("name", "archetype", "description", "sourcePath", "nodeVersion", "image"),
+        ("name", "archetype", "description", "sourcePath", "nodeVersion", "pythonVersion",
+         "image"),
         ("name", "archetype"),
         "descriptor.service",
     )
@@ -427,13 +429,17 @@ def validate_descriptor(data, suite="acceptance"):
     if version == 3 and archetype != "java-maven-azure":
         raise Halt("DESCRIPTOR_INVALID",
                    "descriptor.service.archetype must be java-maven-azure in schemaVersion 3")
-    if archetype not in ("java-maven-azure", "node-typescript-azure"):
+    if archetype not in (
+        "java-maven-azure",
+        "node-typescript-azure",
+        "python-fastapi-azure",
+    ):
         raise Halt("DESCRIPTOR_INVALID",
                    "descriptor.service.archetype must be java-maven-azure "
-                   "or node-typescript-azure")
-    if archetype == "node-typescript-azure" and version != 4:
+                   "or a supported schemaVersion 4 source archetype")
+    if archetype in ("node-typescript-azure", "python-fastapi-azure") and version != 4:
         raise Halt("DESCRIPTOR_INVALID",
-                   "node-typescript-azure requires schemaVersion 4")
+                   f"{archetype} requires schemaVersion 4")
     if "description" in service:
         description = _string_field(service, "description", "descriptor.service")
         if len(description) > 200:
@@ -470,16 +476,17 @@ def validate_descriptor(data, suite="acceptance"):
 
 def _validate_service_config(service, archetype):
     if archetype == "java-maven-azure":
-        for key in ("sourcePath", "nodeVersion", "image"):
+        for key in ("sourcePath", "nodeVersion", "pythonVersion", "image"):
             if key in service:
                 raise Halt("DESCRIPTOR_INVALID",
                            f"descriptor.service.{key} is only valid for "
-                           "node-typescript-azure")
+                           "source-based archetypes")
         return {
             "name": service["name"],
             "archetype": archetype,
             "source_path": ".",
             "node_version": "",
+            "python_version": "",
             "image": {
                 "context": ".",
                 "dockerfile": "build/Dockerfile",
@@ -487,13 +494,25 @@ def _validate_service_config(service, archetype):
         }
 
     where = "descriptor.service"
-    for key in ("sourcePath", "nodeVersion", "image"):
+    version_key = "nodeVersion" if archetype == "node-typescript-azure" else "pythonVersion"
+    disallowed_key = "pythonVersion" if archetype == "node-typescript-azure" else "nodeVersion"
+    if disallowed_key in service:
+        raise Halt(
+            "DESCRIPTOR_INVALID",
+            f"{where}.{disallowed_key} is not valid for {archetype}",
+        )
+    for key in ("sourcePath", version_key, "image"):
         if key not in service:
             raise Halt("MISSING_KEY", f"{where}.{key} is required for {archetype}")
     source_path = _string_field(service, "sourcePath", where, PATH_RE)
     if ".." in source_path.split("/"):
         raise Halt("DESCRIPTOR_INVALID", f"{where}.sourcePath must stay inside the repository")
-    node_version = _string_field(service, "nodeVersion", where, NODE_VERSION_RE)
+    node_version = ""
+    python_version = ""
+    if archetype == "node-typescript-azure":
+        node_version = _string_field(service, "nodeVersion", where, RUNTIME_VERSION_RE)
+    else:
+        python_version = _string_field(service, "pythonVersion", where, PYTHON_VERSION_RE)
     image = service["image"]
     if not isinstance(image, dict):
         raise Halt("DESCRIPTOR_INVALID", f"{where}.image must be a mapping")
@@ -510,6 +529,7 @@ def _validate_service_config(service, archetype):
         "archetype": archetype,
         "source_path": source_path,
         "node_version": node_version,
+        "python_version": python_version,
         "image": {
             "context": context,
             "dockerfile": dockerfile,

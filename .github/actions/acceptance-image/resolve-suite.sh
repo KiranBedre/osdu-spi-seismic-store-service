@@ -38,7 +38,9 @@ RESOLVER="${RESOLVER:-.github/actions/acceptance-resolver/resolve.py}"
 SUITE_DIR="${SERVICE_NAME}-acceptance-test"
 SUITE_DIRS="$SUITE_DIR"
 TEST_TYPE="maven"
+ARCHETYPE="java-maven-azure"
 NODE_VERSION=""
+PYTHON_VERSION=""
 SOURCE="default"
 if [[ -f "$DESCRIPTOR_PATH" ]]; then
   REPORT="$(mktemp)"
@@ -56,13 +58,25 @@ types = set(json.load(open(sys.argv[1]))['contract']['suite_types'].values())
 if len(types) != 1:
     raise SystemExit('all suites in one acceptance image must use the same type')
 print(types.pop())" "$REPORT")"
+  ARCHETYPE="$(python3 -c "
+import json, sys
+print(json.load(open(sys.argv[1]))['service_config']['archetype'])" "$REPORT")"
   NODE_VERSION="$(python3 -c "
 import json, sys
 print(json.load(open(sys.argv[1]))['service_config']['node_version'])" "$REPORT")"
+  PYTHON_VERSION="$(python3 -c "
+import json, sys
+print(json.load(open(sys.argv[1]))['service_config']['python_version'])" "$REPORT")"
   SOURCE="descriptor"
 fi
 
-if [[ "$TEST_TYPE" == "script" && ! "$NODE_VERSION" =~ ^(22|24)$ ]]; then
+if [[ "$ARCHETYPE" == "python-fastapi-azure" && "$TEST_TYPE" != "script" ]]; then
+  echo "::error::python-fastapi-azure acceptance suites must use type script"
+  exit 2
+elif [[ "$ARCHETYPE" == "python-fastapi-azure" && ! "$PYTHON_VERSION" =~ ^3\.11(\.[0-9]+)?$ ]]; then
+  echo "::error::Python acceptance images currently require pythonVersion 3.11, got '$PYTHON_VERSION'"
+  exit 2
+elif [[ "$TEST_TYPE" == "script" && "$ARCHETYPE" == "node-typescript-azure" && ! "$NODE_VERSION" =~ ^(22|24)$ ]]; then
   echo "::error::Script acceptance images currently require nodeVersion 22 or 24, got '$NODE_VERSION'"
   exit 2
 fi
@@ -87,7 +101,9 @@ done
   echo "suite_dir=$SUITE_DIR"
   echo "suite_dirs=$SUITE_DIRS"
   echo "test_type=$TEST_TYPE"
+  echo "archetype=$ARCHETYPE"
   echo "node_version=$NODE_VERSION"
+  echo "python_version=$PYTHON_VERSION"
   echo "buildable=$BUILDABLE"
   echo "reason=$REASON"
 } >> "${GITHUB_OUTPUT:-/dev/stdout}"

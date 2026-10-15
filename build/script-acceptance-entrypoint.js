@@ -35,7 +35,8 @@ if (!entrypoint) {
 
 const requestedWorkingDirectory = path.resolve(suiteRoot, suiteDir);
 const requestedExecutable = path.resolve(requestedWorkingDirectory, entrypoint);
-if (!requestedWorkingDirectory.startsWith(`${suiteRoot}${path.sep}`) ||
+if ((requestedWorkingDirectory !== suiteRoot &&
+     !requestedWorkingDirectory.startsWith(`${suiteRoot}${path.sep}`)) ||
     !requestedExecutable.startsWith(`${requestedWorkingDirectory}${path.sep}`)) {
   fail("suite directory and entrypoint must stay inside /suite");
 }
@@ -44,7 +45,8 @@ if (!fs.existsSync(requestedExecutable)) {
 }
 const workingDirectory = fs.realpathSync(requestedWorkingDirectory);
 const executable = fs.realpathSync(requestedExecutable);
-if (!workingDirectory.startsWith(`${suiteRoot}${path.sep}`) ||
+if ((workingDirectory !== suiteRoot &&
+     !workingDirectory.startsWith(`${suiteRoot}${path.sep}`)) ||
     !executable.startsWith(`${workingDirectory}${path.sep}`)) {
   fail("suite directory and entrypoint symlinks must stay inside /suite");
 }

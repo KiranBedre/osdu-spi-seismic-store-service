@@ -110,7 +110,13 @@ jobs:
             LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["python"]')
           fi
 
-          if [ -f "package.json" ] || find . -name "*.js" -o -name "*.ts" -not -path "./node_modules/*" -not -path "./.*" | grep -q .; then
+          if [ -f "package.json" ] || find . \( -name "*.js" -o -name "*.ts" \) \
+             -not -path "./.*" \
+             -not -path "*/build/*" \
+             -not -path "*/build-*/*" \
+             -not -path "*/target/*" \
+             -not -path "*/dist/*" \
+             -not -path "*/node_modules/*" | grep -q .; then
             LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["javascript-typescript"]')
           fi
 
@@ -166,7 +172,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-extended
-          build-mode: none
+          build-mode: ${{ matrix.language == 'go' && 'autobuild' || 'none' }}
           config: |
             paths-ignore:
               - '**/build/**'
