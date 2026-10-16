@@ -21,7 +21,7 @@ descriptor's `mavenArguments` array verbatim, never a shell string.
 ## What the image pins
 
 The suite source and a warmed local repository — not dependency *resolution*.
-The run is online by design; `dependency:go-offline` caches artifacts, not the
+The run is online by design; the prewarm caches artifacts, not the
 metadata a version range consults, so `--offline` fails wherever the upstream
 graph carries ranges (`os-core-test` pulls `io.cucumber` ranges today) and a
 later run can resolve a different set. Registry availability is still required.
@@ -45,14 +45,18 @@ a descriptor path is an assertion the fork made, and a typo in it must never
 read as "this fork has no acceptance suite".
 
 All suites in one image use the same runtime type. Maven suites use
-`build/acceptance.Dockerfile`. Schema v4 `script` suites use
-the Node 22 `build/script-acceptance.Dockerfile` or the Node 24
+`build/acceptance.Dockerfile`. Schema v4 Node `script` suites use the Node 22
+`build/script-acceptance.Dockerfile` or the Node 24
 `build/script-acceptance-node24.Dockerfile`, matching the descriptor's
-`nodeVersion`. Resolution halts for another Node major rather than silently
-running it on the wrong runtime. The image installs locked npm dependencies
-and invokes the declared repository-relative entrypoint directly. Script
-arguments remain argv tokens; the entrypoint expands only exact `${NAME}`
-references from the resolver-produced environment.
+`nodeVersion`. Python/FastAPI script suites use
+`build/script-acceptance-python.Dockerfile`, which installs the root runtime
+and test requirement files and carries the application source needed by
+pytest. Resolution halts for an unsupported runtime rather than silently
+running tests on the wrong one.
+
+Each script image invokes the declared repository-relative entrypoint
+directly. Script arguments remain argv tokens; the entrypoint expands only
+exact `${NAME}` references from the resolver-produced environment.
 
 ## Suite verdict
 
@@ -82,7 +86,7 @@ the service image.
 
 Differences, both deliberate:
 
-- **amd64-only.** This build RUNs Maven (`dependency:go-offline`); under
+- **amd64-only.** This build RUNs Maven (`dependency:resolve`); under
   QEMU arm64 emulation that costs many minutes per push for no consumer —
   CI runners are amd64 and Apple Silicon runs the amd64 image under
   emulation. A need for native arm64 local runs is the signal to revisit.

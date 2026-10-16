@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://azure.github.io/osdu-spi/schemas/service-descriptor-v4.schema.json",
   "title": "SPI service descriptor (schema v3 and v4)",
-  "description": "Fork-owned service and acceptance contract at .spi/service.yaml. Schema v3 remains the Java/Maven contract. Schema v4 adds a Node/TypeScript Azure archetype and argv-safe script suites. Bindings remain symbolic and are resolved per run against the stack facts envelope. The resolver engine (.github/actions/acceptance-resolver) is the authority on enforcement.",
+  "description": "Fork-owned service and acceptance contract at .spi/service.yaml. Schema v3 remains the Java/Maven contract. Schema v4 adds source-based Node/TypeScript and Python/FastAPI Azure archetypes plus argv-safe script suites. Bindings remain symbolic and are resolved per run against the stack facts envelope. The resolver engine (.github/actions/acceptance-resolver) is the authority on enforcement.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "service", "tests"],
   "properties": {
     "schemaVersion": {
       "enum": [3, 4],
-      "description": "Contract version. Version 3 is Java/Maven-only. Version 4 adds Node/TypeScript services and script acceptance suites."
+      "description": "Contract version. Version 3 is Java/Maven-only. Version 4 adds source-based services and script acceptance suites."
     },
     "service": {
       "type": "object",
@@ -22,8 +22,8 @@
           "description": "Service slug, e.g. partition."
         },
         "archetype": {
-          "enum": ["java-maven-azure", "node-typescript-azure"],
-          "description": "Build/test archetype. node-typescript-azure requires schemaVersion 4."
+          "enum": ["java-maven-azure", "node-typescript-azure", "python-fastapi-azure"],
+          "description": "Build/test archetype. Source-based Node and Python archetypes require schemaVersion 4."
         },
         "description": {
           "type": "string",
@@ -31,13 +31,18 @@
         },
         "sourcePath": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$",
-          "description": "Repository-relative package root. Required for node-typescript-azure."
+          "pattern": "^(\\.|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$",
+          "description": "Repository-relative package root. Required for source-based archetypes."
         },
         "nodeVersion": {
           "type": "string",
           "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2}){0,2}$",
           "description": "Node.js version supplied to actions/setup-node. Required for node-typescript-azure."
+        },
+        "pythonVersion": {
+          "type": "string",
+          "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2}){1,2}$",
+          "description": "Python version supplied to actions/setup-python. Required for python-fastapi-azure."
         },
         "image": {
           "type": "object",
@@ -46,14 +51,14 @@
           "properties": {
             "context": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$"
+              "pattern": "^(\\.|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
             },
             "dockerfile": {
               "type": "string",
               "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$"
             }
           },
-          "description": "Source-based service image inputs. Required for node-typescript-azure."
+          "description": "Source-based service image inputs. Required for Node and Python archetypes."
         }
       },
       "allOf": [
@@ -65,6 +70,16 @@
           },
           "then": {
             "required": ["sourcePath", "nodeVersion", "image"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "archetype": { "const": "python-fastapi-azure" }
+            }
+          },
+          "then": {
+            "required": ["sourcePath", "pythonVersion", "image"]
           }
         }
       ]

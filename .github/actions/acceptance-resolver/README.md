@@ -65,12 +65,25 @@ the suites to run. Descriptor violations exit 2 exactly as in the full modes.
 Schema version 3 remains the existing `java-maven-azure` contract. Its suites
 remain Maven-only and its build paths retain their conventional defaults.
 
-Schema version 4 adds `node-typescript-azure`. A Node service declares:
+Schema version 4 adds source-based service archetypes.
+
+A Node service declares:
 
 - `sourcePath`, the repository-relative package root containing `package.json`;
 - `nodeVersion`, the version supplied to `actions/setup-node`;
 - `image.context` and `image.dockerfile`, the source-based container build
   inputs.
+
+A Python service declares:
+
+- `sourcePath`, which may be `.` for a repository-root application;
+- `pythonVersion`, the version supplied to `actions/setup-python`; and
+- `image.context` and `image.dockerfile`, the source-based container build
+  inputs.
+
+`python-fastapi-azure` uses the fork-owned `.spi/ci/build.sh` for lint and unit
+tests. The script must emit the JUnit and coverage files the Python build action
+declares.
 
 Version 4 also adds `script` suites. A script suite declares a
 repository-relative `entrypoint`, an optional array of `arguments`, and one or

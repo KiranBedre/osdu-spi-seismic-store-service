@@ -120,6 +120,7 @@ jobs:
       archetype: ${{ steps.check_init.outputs.archetype }}
       source_path: ${{ steps.check_init.outputs.source_path }}
       node_version: ${{ steps.check_init.outputs.node_version }}
+      python_version: ${{ steps.check_init.outputs.python_version }}
       image_context: ${{ steps.check_init.outputs.image_context }}
       image_dockerfile: ${{ steps.check_init.outputs.image_dockerfile }}
     steps:
@@ -137,18 +138,21 @@ jobs:
             archetype=$(jq -r '.service_config.archetype' "$RUNNER_TEMP/service.json")
             source_path=$(jq -r '.service_config.source_path' "$RUNNER_TEMP/service.json")
             node_version=$(jq -r '.service_config.node_version' "$RUNNER_TEMP/service.json")
+            python_version=$(jq -r '.service_config.python_version' "$RUNNER_TEMP/service.json")
             image_context=$(jq -r '.service_config.image.context' "$RUNNER_TEMP/service.json")
             image_dockerfile=$(jq -r '.service_config.image.dockerfile' "$RUNNER_TEMP/service.json")
           elif [ -f "pom.xml" ] || [ -n "$(find . -name 'pom.xml' -type f)" ]; then
             archetype=java-maven-azure
             source_path=.
             node_version=
+            python_version=
             image_context=.
             image_dockerfile=build/Dockerfile
           else
             archetype=
             source_path=
             node_version=
+            python_version=
             image_context=
             image_dockerfile=
           fi
@@ -166,6 +170,7 @@ jobs:
           echo "archetype=$archetype" >> $GITHUB_OUTPUT
           echo "source_path=$source_path" >> $GITHUB_OUTPUT
           echo "node_version=$node_version" >> $GITHUB_OUTPUT
+          echo "python_version=$python_version" >> $GITHUB_OUTPUT
           echo "image_context=$image_context" >> $GITHUB_OUTPUT
           echo "image_dockerfile=$image_dockerfile" >> $GITHUB_OUTPUT
 
@@ -368,6 +373,40 @@ jobs:
           working_directory: ${{ needs.check-repo-state.outputs.source_path }}
           node_version: ${{ needs.check-repo-state.outputs.node_version }}
 
+  python-build:
+    name: "Python Build"
+    needs: [check-initialization, check-repo-state, check-paths]
+    if: |
+      needs.check-repo-state.outputs.is_initialized == 'true' &&
+      needs.check-repo-state.outputs.archetype == 'python-fastapi-azure' &&
+      needs.check-paths.outputs.should_run == 'true' &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    outputs:
+      build_result: ${{ steps.build.outputs.build_result }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: "Restore local actions for sync PRs"
+        if: |
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.base.ref == 'fork_upstream' &&
+          startsWith(github.event.pull_request.head.ref, 'sync/')
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git checkout origin/main -- .github/actions/
+
+      - name: "Run Python Build"
+        id: build
+        uses: ./.github/actions/python-build
+        with:
+          working_directory: ${{ needs.check-repo-state.outputs.source_path }}
+          python_version: ${{ needs.check-repo-state.outputs.python_version }}
+
   docker-build:
     # Validate-only build of both images; the trusted push is docker-push and the required check
     # is the summary job at the end.
@@ -375,11 +414,12 @@ jobs:
     # No pull_request_target lane and no checkout ref: a PR-head ref in a read-only job is a CodeQL
     # cache-poisoning finding in every fork (#164). Sync PRs get their image validated on the cascade PR.
     name: "Docker Build"
-    needs: [check-initialization, check-repo-state, java-build, node-build]
+    needs: [check-initialization, check-repo-state, java-build, node-build, python-build]
     if: |
       always() &&
       (needs.java-build.outputs.build_result == 'success' ||
-       needs.node-build.outputs.build_result == 'success') &&
+       needs.node-build.outputs.build_result == 'success' ||
+       needs.python-build.outputs.build_result == 'success') &&
       github.event_name != 'pull_request_target' &&
       (vars.SYNC_MODE == 'mirror' || vars.SYNC_MODE == 'passthrough' ||
        (github.base_ref != 'fork_upstream' && github.ref_name != 'fork_upstream'))
@@ -394,7 +434,7 @@ jobs:
         with:
           push: 'false'
           image_name: ${{ vars.SERVICE_NAME || github.event.repository.name }}
-          build_kind: ${{ needs.check-repo-state.outputs.archetype == 'node-typescript-azure' && 'source' || 'maven-jar' }}
+          build_kind: ${{ needs.check-repo-state.outputs.archetype == 'java-maven-azure' && 'maven-jar' || (needs.check-repo-state.outputs.archetype == 'node-typescript-azure' && 'source' || 'source-direct') }}
           build_context: ${{ needs.check-repo-state.outputs.image_context }}
           dockerfile_path: ${{ needs.check-repo-state.outputs.image_dockerfile }}
           # Conventional JAR path; the action auto-discovers the Azure JAR when a deviant module name
@@ -402,7 +442,7 @@ jobs:
           jar_file: ${{ vars.SERVICE_TARGET_JAR || format('provider/{0}-azure/target/*-spring-boot.jar', vars.SERVICE_NAME || github.event.repository.name) }}
 
       - name: "Acceptance Image"
-        # Proves every suite's go-offline build before the trusted lane bakes it; skips when no suite exists.
+        # Proves every suite's prewarm build before the trusted lane bakes it; skips when no suite exists.
         uses: ./.github/actions/acceptance-image
         with:
           push: 'false'
@@ -417,12 +457,13 @@ jobs:
 
   docker-push:
     name: "Docker Push"
-    needs: [check-initialization, check-repo-state, java-build, node-build, docker-build]
+    needs: [check-initialization, check-repo-state, java-build, node-build, python-build, docker-build]
     # Trust boundary (ADR-036): push to GHCR only on trusted events.
     if: |
       always() && (
         (needs.java-build.outputs.build_result == 'success' ||
-         needs.node-build.outputs.build_result == 'success') &&
+         needs.node-build.outputs.build_result == 'success' ||
+         needs.python-build.outputs.build_result == 'success') &&
         github.actor != 'dependabot[bot]' &&
         github.event_name != 'pull_request_target' &&
         github.event_name != 'workflow_dispatch' &&
@@ -454,7 +495,7 @@ jobs:
         with:
           push: 'true'
           image_name: ${{ vars.SERVICE_NAME || github.event.repository.name }}
-          build_kind: ${{ needs.check-repo-state.outputs.archetype == 'node-typescript-azure' && 'source' || 'maven-jar' }}
+          build_kind: ${{ needs.check-repo-state.outputs.archetype == 'java-maven-azure' && 'maven-jar' || (needs.check-repo-state.outputs.archetype == 'node-typescript-azure' && 'source' || 'source-direct') }}
           build_context: ${{ needs.check-repo-state.outputs.image_context }}
           dockerfile_path: ${{ needs.check-repo-state.outputs.image_dockerfile }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -556,7 +597,9 @@ jobs:
     # wants a human pause before a borrow adds required reviewers to the environment.
     name: "Deploy and Test"
     needs: [docker-push, deploy-gate]
-    if: needs.deploy-gate.outputs.run == 'true'
+    # docker-push has archetype-specific skipped dependencies. always() makes this
+    # job evaluate the gate output instead of inheriting those transitive skips.
+    if: always() && needs.deploy-gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     outputs:
       verdicts: ${{ steps.prove.outputs.verdicts }}
@@ -827,7 +870,7 @@ jobs:
 
   code-validation:
     name: "Check Code Quality"
-    needs: [check-initialization, check-repo-state, check-paths, java-build, node-build]
+    needs: [check-initialization, check-repo-state, check-paths, java-build, node-build, python-build]
     if: |
       always() &&
       needs.check-initialization.outputs.initialized == 'true'
@@ -934,7 +977,7 @@ jobs:
     # wedges the PR, and one table shows what ran, what was skipped, and why. always() bypasses
     # check-initialization's routing, so the lane test is repeated here.
     name: "Validation Summary"
-    needs: [check-initialization, check-repo-state, check-paths, java-build, node-build, docker-build, docker-push, deploy-gate, deploy-test, code-validation]
+    needs: [check-initialization, check-repo-state, check-paths, java-build, node-build, python-build, docker-build, docker-push, deploy-gate, deploy-test, code-validation]
     if: |
       always() &&
       (github.event_name != 'pull_request' ||
@@ -973,11 +1016,12 @@ jobs:
               --argjson needs "$NEEDS" '
               def names: {
                 "check-initialization": "Check Initialization", "check-repo-state": "Check Repository",
-                "check-paths": "Check Paths", "java-build": "Java Build", "node-build": "Node Build", "docker-build": "Docker Build",
+                "check-paths": "Check Paths", "java-build": "Java Build", "node-build": "Node Build",
+                "python-build": "Python Build", "docker-build": "Docker Build",
                 "code-validation": "Check Code Quality", "docker-push": "Docker Push",
                 "deploy-gate": "Deploy Gate", "deploy-test": "Deploy and Test"};
               def icon: {success: "✅", failure: "❌", cancelled: "⚠️", skipped: "⏭️"}[.] // .;
-              def build: . == "java-build" or . == "node-build" or . == "docker-build" or . == "docker-push";
+              def build: . == "java-build" or . == "node-build" or . == "python-build" or . == "docker-build" or . == "docker-push";
               def note:
                 if . == "deploy-test" and $gate != "" then $gate
                 elif $needs[.].result != "skipped" then ""
@@ -985,6 +1029,7 @@ jobs:
                 elif build and $relevant == "false" then "only configuration or docs changed"
                 elif . == "java-build" and $archetype != "java-maven-azure" then "archetype is \($archetype)"
                 elif . == "node-build" and $archetype != "node-typescript-azure" then "archetype is \($archetype)"
+                elif . == "python-build" and $archetype != "python-fastapi-azure" then "archetype is \($archetype)"
                 elif build and $archetype == "" then "service archetype is unavailable"
                 elif build and $event == "pull_request_target" then "sync lane; images validate on the cascade PR"
                 elif . == "docker-push" and $actor == "dependabot[bot]" then "Dependabot validates through dependabot-validation.yml"

@@ -40,6 +40,7 @@ jobs:
       archetype: ${{ steps.check_init.outputs.archetype }}
       source_path: ${{ steps.check_init.outputs.source_path }}
       node_version: ${{ steps.check_init.outputs.node_version }}
+      python_version: ${{ steps.check_init.outputs.python_version }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
         
@@ -53,14 +54,17 @@ jobs:
             archetype=$(jq -r '.service_config.archetype' "$RUNNER_TEMP/service.json")
             source_path=$(jq -r '.service_config.source_path' "$RUNNER_TEMP/service.json")
             node_version=$(jq -r '.service_config.node_version' "$RUNNER_TEMP/service.json")
+            python_version=$(jq -r '.service_config.python_version' "$RUNNER_TEMP/service.json")
           elif [ -f "pom.xml" ] || [ -n "$(find . -name 'pom.xml' -type f)" ]; then
             archetype=java-maven-azure
             source_path=.
             node_version=
+            python_version=
           else
             archetype=
             source_path=
             node_version=
+            python_version=
           fi
 
           if [ -n "$archetype" ] && [ -d "$source_path" ]; then
@@ -71,6 +75,7 @@ jobs:
           echo "archetype=$archetype" >> $GITHUB_OUTPUT
           echo "source_path=$source_path" >> $GITHUB_OUTPUT
           echo "node_version=$node_version" >> $GITHUB_OUTPUT
+          echo "python_version=$python_version" >> $GITHUB_OUTPUT
 
   java-build:
     name: "Java Build"
@@ -104,6 +109,23 @@ jobs:
           working_directory: ${{ needs.check-repo-state.outputs.source_path }}
           node_version: ${{ needs.check-repo-state.outputs.node_version }}
 
+  python-build:
+    name: "Python Build"
+    needs: check-repo-state
+    if: needs.check-repo-state.outputs.initialized == 'true' && needs.check-repo-state.outputs.archetype == 'python-fastapi-azure'
+    runs-on: ubuntu-latest
+    outputs:
+      build_result: ${{ steps.build.outputs.build_result }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: "Run Python Build"
+        id: build
+        uses: ./.github/actions/python-build
+        with:
+          working_directory: ${{ needs.check-repo-state.outputs.source_path }}
+          python_version: ${{ needs.check-repo-state.outputs.python_version }}
+
   code-coverage:
     name: "📊 Code Coverage"
     needs: [check-repo-state, java-build]
@@ -119,6 +141,9 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
+
+      - name: "Setup Maven"
+        uses: ./.github/actions/setup-maven
 
       - name: "Cache Maven Packages"
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0

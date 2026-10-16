@@ -14,7 +14,7 @@ inputs:
     required: false
     default: '.'
   build_kind:
-    description: 'maven-jar resolves a JAR, source restores a Node runtime, and artifact uses a downloaded runtime artifact as the complete context'
+    description: 'maven-jar resolves a JAR, source restores a Node runtime, source-direct builds the checked-in context, and artifact uses a downloaded runtime artifact as the complete context'
     required: false
     default: 'maven-jar'
   registry:
@@ -66,8 +66,8 @@ runs:
         BUILD_KIND: ${{ inputs.build_kind }}
       run: |
         case "$BUILD_KIND" in
-          maven-jar|source|artifact) ;;
-          *) echo "::error::build_kind must be maven-jar, source, or artifact"; exit 2 ;;
+          maven-jar|source|source-direct|artifact) ;;
+          *) echo "::error::build_kind must be maven-jar, source, source-direct, or artifact"; exit 2 ;;
         esac
 
     - name: "Validate push prerequisites"
@@ -198,6 +198,29 @@ runs:
         cp -a "$context/." "$target/"
         cp "$dockerfile" "$target/.spi.Dockerfile"
 
+    - name: "Compute source build metadata"
+      id: source-metadata
+      if: ${{ inputs.build_kind == 'source-direct' }}
+      shell: bash
+      run: |
+        commit_id="$(git rev-parse HEAD)"
+        build_date="$(git show -s --format=%cI "$commit_id")"
+        commit_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+        [ -n "$commit_branch" ] || commit_branch="$(git branch --show-current)"
+        [ -n "$commit_branch" ] || commit_branch="detached"
+        commit_message="$(git show -s --format=%s "$commit_id")"
+        release_version="$(git describe --tags --exact-match "$commit_id" 2>/dev/null \
+          || git describe --tags --always "$commit_id")"
+        {
+          echo "build_args<<EOF"
+          echo "build_date=$build_date"
+          echo "commit_id=$commit_id"
+          echo "commit_branch=$commit_branch"
+          echo "commit_message=$commit_message"
+          echo "release_version=$release_version"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
     - name: "Build container image"
       id: build
       uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
@@ -214,6 +237,7 @@ runs:
         tags: ${{ steps.tags.outputs.docker_tags }}
         build-args: |
           ${{ inputs.build_kind == 'maven-jar' && format('JAR_FILE={0}', steps.jar.outputs.jar_file) || '' }}
+          ${{ steps.source-metadata.outputs.build_args }}
           ${{ inputs.build_args }}
         # Links the package to its repo in the GHCR UI; this inherits permissions, not visibility.
         labels: |

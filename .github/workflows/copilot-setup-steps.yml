@@ -10,64 +10,72 @@ on:
       - .github/workflows/copilot-setup-steps.yml
 
 jobs:
-  # Copilot only picks up a job named copilot-setup-steps.
   copilot-setup-steps:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
-
     steps:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
 
+      - name: Detect project stacks
+        id: stacks
+        shell: bash
+        run: |
+          if [ -f pom.xml ] || [ -f build.gradle ] || [ -f build.gradle.kts ]; then
+            echo "java=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f requirements.txt ] || [ -f pyproject.toml ] || [ -f setup.py ]; then
+            echo "python=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f package.json ]; then
+            echo "node=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Azul Zulu JDK 17
+        if: steps.stacks.outputs.java == 'true'
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
-          distribution: 'zulu'
-          java-version: '17'
-          cache: 'maven'
+          distribution: zulu
+          java-version: "17"
+          cache: maven
+
+      - name: Setup pinned Maven
+        uses: ./.github/actions/setup-maven
 
       - name: Install Maven dependencies
-        continue-on-error: true
+        if: steps.stacks.outputs.java == 'true'
         env:
-          # Caps connection lifetime so Maven 3.9+ stops reusing stale connections on Actions runners.
           MAVEN_OPTS: "-Daether.connector.http.connectionMaxTtl=25"
+        run: mvn dependency:resolve dependency:resolve-sources -q
+
+      - name: Set up Python 3.11
+        if: steps.stacks.outputs.python == 'true'
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies
+        if: steps.stacks.outputs.python == 'true'
+        shell: bash
         run: |
-          MAX_ATTEMPTS=3
-          ATTEMPT=1
+          python -m pip install --upgrade pip
+          [ ! -f requirements.txt ] || python -m pip install -r requirements.txt
+          [ ! -f requirements-tests.in ] || python -m pip install -r requirements-tests.in
 
-          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-            echo "===== Maven Dependency Resolution Attempt: $ATTEMPT/$MAX_ATTEMPTS ====="
+      - name: Set up Node.js 24
+        if: steps.stacks.outputs.node == 'true'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6.3.0
+        with:
+          node-version: "24"
 
-            if mvn dependency:resolve dependency:resolve-sources -q; then
-              echo "✅ Maven dependencies resolved successfully"
-              exit 0
-            else
-              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
-                echo "⚠️ Attempt $ATTEMPT failed, retrying in 5 seconds..."
-                ATTEMPT=$((ATTEMPT + 1))
-                sleep 5
-              else
-                echo "❌ Maven dependency resolution failed after $MAX_ATTEMPTS attempts"
-                exit 1
-              fi
-            fi
-          done
-
-      - name: Install Trivy security scanner
-        continue-on-error: true
+      - name: Install Node.js dependencies
+        if: steps.stacks.outputs.node == 'true'
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install wget apt-transport-https gnupg lsb-release
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install trivy
-
-      - name: Verify Java installation
-        continue-on-error: true
-        run: |
-          java -version
-          mvn -version
-          trivy version || echo "⚠️ Trivy not available (installation may have failed)"
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi

@@ -41,8 +41,11 @@ outputs:
     description: 'Repository-relative service package root'
     value: ${{ steps.run.outputs.source_path }}
   node_version:
-    description: 'Node.js version for node-typescript-azure; empty for Java'
+    description: 'Node.js version for node-typescript-azure; empty for other archetypes'
     value: ${{ steps.run.outputs.node_version }}
+  python_version:
+    description: 'Python version for python-fastapi-azure; empty for other archetypes'
+    value: ${{ steps.run.outputs.python_version }}
   image_context:
     description: 'Repository-relative service image build context'
     value: ${{ steps.run.outputs.image_context }}
@@ -132,6 +135,7 @@ runs:
         emit("archetype", service["archetype"])
         emit("source_path", service["source_path"])
         emit("node_version", service["node_version"])
+        emit("python_version", service["python_version"])
         emit("image_context", service["image"]["context"])
         emit("image_dockerfile", service["image"]["dockerfile"])
         emit("test_type", contract["test_type"])

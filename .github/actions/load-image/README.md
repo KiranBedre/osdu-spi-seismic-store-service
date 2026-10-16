@@ -21,14 +21,16 @@ Arguments after the image are appended to `DeploySharedSchemas.py` verbatim.
 service carries a payload today, and the decision reads files, not the
 repository name:
 
-1. `deployments/shared-schemas/` absent (every fork but schema) → a **clean
-   skip**: `skipped=true`, reason on the step summary, exit 0. No login, no
-   Docker, no token demanded.
+1. `deployments/shared-schemas/` or
+   `deployments/scripts/DeploySharedSchemas.py` absent → a **clean skip**:
+   `skipped=true`, reason on the step summary, exit 0. No login, no Docker,
+   no token demanded. Some DDMS repositories use the same directory name for
+   unrelated schema assets.
 2. Payload present and `deployments/scripts/{DeploySharedSchemas.py,
    Utility.py, requirements.txt}` all present → build.
-3. Payload present but a loader file missing → exit 2 naming the file. That
-   is an upstream rename, and the fork's filter `expected_kept` entries catch
-   the same rename earlier, on the sync (ADR-038).
+3. The entrypoint present but a companion loader file missing → exit 2 naming
+   the file. That is an upstream rename, and the fork's filter `expected_kept`
+   entries catch the same rename earlier, on the sync (ADR-038).
 
 The paths are hard-coded in the script, `build/load.Dockerfile`, and its
 sidecar dockerignore alike; there is no override input, because the three

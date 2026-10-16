@@ -33,8 +33,11 @@ REASON=""
 if [[ ! -d "$PAYLOAD_DIR" ]]; then
   BUILDABLE="false"
   REASON="payload directory '$PAYLOAD_DIR' not present"
+elif [[ ! -f "$LOADER_DIR/${LOADER_FILES[0]}" ]]; then
+  BUILDABLE="false"
+  REASON="provider-neutral loader '$LOADER_DIR/${LOADER_FILES[0]}' not present"
 else
-  for file in "${LOADER_FILES[@]}"; do
+  for file in "${LOADER_FILES[@]:1}"; do
     if [[ ! -f "$LOADER_DIR/$file" ]]; then
       echo "::error::$PAYLOAD_DIR is present but the loader file '$LOADER_DIR/$file' is missing; the shared loader moved upstream"
       exit 2
