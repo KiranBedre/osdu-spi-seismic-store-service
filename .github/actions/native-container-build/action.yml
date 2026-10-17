@@ -1,0 +1,56 @@
+name: Native Container Build
+description: Build the fixed spi-test target and verify its CTest JUnit evidence
+
+inputs:
+  build_context:
+    description: Repository-relative Docker build context
+    required: true
+  dockerfile_path:
+    description: Repository-relative Dockerfile path
+    required: true
+
+outputs:
+  build_result:
+    description: success when the spi-test target emits passing CTest evidence
+    value: ${{ steps.verify.outputs.build_result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Stage validated build context
+      shell: bash
+      env:
+        BUILD_CONTEXT: ${{ inputs.build_context }}
+        DOCKERFILE_PATH: ${{ inputs.dockerfile_path }}
+      run: "$GITHUB_ACTION_PATH/stage-context.sh"
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5  # v4.1.0
+
+    - name: Build and run native tests
+      uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
+      with:
+        context: ${{ runner.temp }}/spi-native-test-context
+        file: ${{ runner.temp }}/spi-native-test-context/.spi.Dockerfile
+        target: spi-test
+        platforms: linux/amd64
+        outputs: type=local,dest=${{ runner.temp }}/spi-native-test-results,platform-split=false
+        cache-from: type=gha,scope=native-container-test
+        cache-to: type=gha,mode=max,scope=native-container-test
+
+    - name: Verify CTest evidence
+      id: verify
+      shell: bash
+      run: |
+        python3 "$GITHUB_ACTION_PATH/verify-junit.py" \
+          "$RUNNER_TEMP/spi-native-test-results/ctest.xml"
+        echo "build_result=success" >> "$GITHUB_OUTPUT"
+
+    - name: Upload CTest evidence
+      if: always()
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+      with:
+        name: native-container-test-evidence
+        path: ${{ runner.temp }}/spi-native-test-results/ctest.xml
+        if-no-files-found: error
+        retention-days: 2

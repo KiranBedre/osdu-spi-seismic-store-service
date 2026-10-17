@@ -1,5 +1,5 @@
 name: Python Build
-description: Install, lint, and test a requirements-based Python/FastAPI service
+description: Install, lint, and test a requirements-based Python service or Airflow DAG
 
 inputs:
   working_directory:
@@ -8,6 +8,15 @@ inputs:
   python_version:
     description: Python version supplied to actions/setup-python
     required: true
+  airflow_version:
+    description: Exact Airflow version for airflow-dag-azure; empty for other Python services
+    required: false
+  dag_path:
+    description: Repository-relative DAG file for airflow-dag-azure
+    required: false
+  dag_id:
+    description: DAG ID that parsing must discover for airflow-dag-azure
+    required: false
   requirements_file:
     description: Runtime requirements file relative to working_directory
     required: false
@@ -49,6 +58,9 @@ runs:
       env:
         WORKING_DIRECTORY: ${{ inputs.working_directory }}
         PYTHON_VERSION: ${{ inputs.python_version }}
+        AIRFLOW_VERSION: ${{ inputs.airflow_version }}
+        DAG_PATH: ${{ inputs.dag_path }}
+        DAG_ID: ${{ inputs.dag_id }}
         REQUIREMENTS_FILE: ${{ inputs.requirements_file }}
         TEST_REQUIREMENTS_FILE: ${{ inputs.test_requirements_file }}
         BUILD_SCRIPT: ${{ inputs.build_script }}
@@ -70,11 +82,21 @@ runs:
       env:
         REQUIREMENTS_FILE: ${{ steps.config.outputs.requirements_file }}
         TEST_REQUIREMENTS_FILE: ${{ steps.config.outputs.test_requirements_file }}
+        AIRFLOW_VERSION: ${{ inputs.airflow_version }}
+        PYTHON_VERSION: ${{ inputs.python_version }}
       run: |
         set -euo pipefail
-        python -m pip install --requirement "$REQUIREMENTS_FILE"
-        python -m pip install --constraint "$REQUIREMENTS_FILE" \
-          --requirement "$TEST_REQUIREMENTS_FILE"
+        if [ -n "$AIRFLOW_VERSION" ]; then
+          python_minor="$(printf '%s' "$PYTHON_VERSION" | cut -d. -f1,2)"
+          constraints="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${python_minor}.txt"
+          python -m pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "$constraints"
+          python -m pip install --requirement "$REQUIREMENTS_FILE" --constraint "$constraints"
+          python -m pip install --requirement "$TEST_REQUIREMENTS_FILE" --constraint "$constraints"
+        else
+          python -m pip install --requirement "$REQUIREMENTS_FILE"
+          python -m pip install --constraint "$REQUIREMENTS_FILE" \
+            --requirement "$TEST_REQUIREMENTS_FILE"
+        fi
         python -m pip install "pre-commit==4.3.0"
 
     - name: Build and test
@@ -87,7 +109,16 @@ runs:
         BUILD_SCRIPT: ${{ steps.config.outputs.build_script }}
       run: "$GITHUB_ACTION_PATH/run-build.sh"
 
-    - name: Upload test and coverage evidence
+    - name: Verify Airflow DAG
+      if: ${{ inputs.airflow_version != '' }}
+      shell: bash
+      env:
+        DAG_PATH: ${{ inputs.dag_path }}
+        DAG_ID: ${{ inputs.dag_id }}
+        EVIDENCE_PATH: .spi/results/airflow-dag.json
+      run: python "$GITHUB_ACTION_PATH/verify-airflow-dag.py"
+
+    - name: Upload build evidence
       if: always()
       uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
       with:
@@ -95,5 +126,6 @@ runs:
         path: |
           ${{ steps.config.outputs.test_report }}
           ${{ steps.config.outputs.coverage_file }}
+          ${{ inputs.airflow_version != '' && '.spi/results/airflow-dag.json' || '' }}
         if-no-files-found: error
         retention-days: 2

@@ -41,6 +41,11 @@ jobs:
       source_path: ${{ steps.check_init.outputs.source_path }}
       node_version: ${{ steps.check_init.outputs.node_version }}
       python_version: ${{ steps.check_init.outputs.python_version }}
+      airflow_version: ${{ steps.check_init.outputs.airflow_version }}
+      dag_path: ${{ steps.check_init.outputs.dag_path }}
+      dag_id: ${{ steps.check_init.outputs.dag_id }}
+      image_context: ${{ steps.check_init.outputs.image_context }}
+      image_dockerfile: ${{ steps.check_init.outputs.image_dockerfile }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
         
@@ -55,16 +60,31 @@ jobs:
             source_path=$(jq -r '.service_config.source_path' "$RUNNER_TEMP/service.json")
             node_version=$(jq -r '.service_config.node_version' "$RUNNER_TEMP/service.json")
             python_version=$(jq -r '.service_config.python_version' "$RUNNER_TEMP/service.json")
+            airflow_version=$(jq -r '.service_config.airflow_version' "$RUNNER_TEMP/service.json")
+            dag_path=$(jq -r '.service_config.dag_path' "$RUNNER_TEMP/service.json")
+            dag_id=$(jq -r '.service_config.dag_id' "$RUNNER_TEMP/service.json")
+            image_context=$(jq -r '.service_config.image.context' "$RUNNER_TEMP/service.json")
+            image_dockerfile=$(jq -r '.service_config.image.dockerfile' "$RUNNER_TEMP/service.json")
           elif [ -f "pom.xml" ] || [ -n "$(find . -name 'pom.xml' -type f)" ]; then
             archetype=java-maven-azure
             source_path=.
             node_version=
             python_version=
+            airflow_version=
+            dag_path=
+            dag_id=
+            image_context=.
+            image_dockerfile=build/Dockerfile
           else
             archetype=
             source_path=
             node_version=
             python_version=
+            airflow_version=
+            dag_path=
+            dag_id=
+            image_context=
+            image_dockerfile=
           fi
 
           if [ -n "$archetype" ] && [ -d "$source_path" ]; then
@@ -76,6 +96,11 @@ jobs:
           echo "source_path=$source_path" >> $GITHUB_OUTPUT
           echo "node_version=$node_version" >> $GITHUB_OUTPUT
           echo "python_version=$python_version" >> $GITHUB_OUTPUT
+          echo "airflow_version=$airflow_version" >> $GITHUB_OUTPUT
+          echo "dag_path=$dag_path" >> $GITHUB_OUTPUT
+          echo "dag_id=$dag_id" >> $GITHUB_OUTPUT
+          echo "image_context=$image_context" >> $GITHUB_OUTPUT
+          echo "image_dockerfile=$image_dockerfile" >> $GITHUB_OUTPUT
 
   java-build:
     name: "Java Build"
@@ -112,7 +137,10 @@ jobs:
   python-build:
     name: "Python Build"
     needs: check-repo-state
-    if: needs.check-repo-state.outputs.initialized == 'true' && needs.check-repo-state.outputs.archetype == 'python-fastapi-azure'
+    if: |
+      needs.check-repo-state.outputs.initialized == 'true' &&
+      (needs.check-repo-state.outputs.archetype == 'python-fastapi-azure' ||
+       needs.check-repo-state.outputs.archetype == 'airflow-dag-azure')
     runs-on: ubuntu-latest
     outputs:
       build_result: ${{ steps.build.outputs.build_result }}
@@ -125,6 +153,26 @@ jobs:
         with:
           working_directory: ${{ needs.check-repo-state.outputs.source_path }}
           python_version: ${{ needs.check-repo-state.outputs.python_version }}
+          airflow_version: ${{ needs.check-repo-state.outputs.airflow_version }}
+          dag_path: ${{ needs.check-repo-state.outputs.dag_path }}
+          dag_id: ${{ needs.check-repo-state.outputs.dag_id }}
+
+  native-container-build:
+    name: "Native Container Build"
+    needs: check-repo-state
+    if: needs.check-repo-state.outputs.initialized == 'true' && needs.check-repo-state.outputs.archetype == 'native-container-azure'
+    runs-on: ubuntu-latest
+    outputs:
+      build_result: ${{ steps.build.outputs.build_result }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: "Run Native Container Build"
+        id: build
+        uses: ./.github/actions/native-container-build
+        with:
+          build_context: ${{ needs.check-repo-state.outputs.image_context }}
+          dockerfile_path: ${{ needs.check-repo-state.outputs.image_dockerfile }}
 
   code-coverage:
     name: "📊 Code Coverage"
