@@ -39,7 +39,7 @@ case "$HEAD_REF" in
     ;;
 esac
 case "${SYNC_MODE:-filter}" in
-  mirror|passthrough) skip "${SYNC_MODE} mode has no ownership split" ;;
+  mirror|passthrough|snapshot) skip "${SYNC_MODE} mode has no ownership split" ;;
   filter) ;;
   *)
     echo "upstream-owned-files: unsupported SYNC_MODE '$SYNC_MODE'" >&2

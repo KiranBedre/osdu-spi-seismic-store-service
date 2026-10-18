@@ -85,6 +85,10 @@ A Python service declares:
 tests. The script must emit the JUnit and coverage files the Python build action
 declares.
 
+A native container service declares `sourcePath`, `image.context`, and
+`image.dockerfile`, but no language runtime version. Its Dockerfile must expose
+the fixed `spi-test` target described by the native container build action.
+
 Version 4 also adds `script` suites. A script suite declares a
 repository-relative `entrypoint`, an optional array of `arguments`, and one or
 more `reportPaths` containing JUnit XML. Consumers execute the entrypoint

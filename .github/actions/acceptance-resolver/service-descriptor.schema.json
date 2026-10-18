@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://azure.github.io/osdu-spi/schemas/service-descriptor-v4.schema.json",
   "title": "SPI service descriptor (schema v3 and v4)",
-  "description": "Fork-owned service and acceptance contract at .spi/service.yaml. Schema v3 remains the Java/Maven contract. Schema v4 adds source-based Node/TypeScript and Python/FastAPI Azure archetypes plus argv-safe script suites. Bindings remain symbolic and are resolved per run against the stack facts envelope. The resolver engine (.github/actions/acceptance-resolver) is the authority on enforcement.",
+  "description": "Fork-owned service and acceptance contract at .spi/service.yaml. Schema v3 remains the Java/Maven contract. Schema v4 adds source-based Node/TypeScript, Python/FastAPI, Airflow DAG, and native container Azure archetypes, an optional source-owned Airflow DAG companion image, and argv-safe script suites. Bindings remain symbolic and are resolved per run against the stack facts envelope. The resolver engine (.github/actions/acceptance-resolver) is the authority on enforcement.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "service", "tests"],
@@ -22,8 +22,8 @@
           "description": "Service slug, e.g. partition."
         },
         "archetype": {
-          "enum": ["java-maven-azure", "node-typescript-azure", "python-fastapi-azure"],
-          "description": "Build/test archetype. Source-based Node and Python archetypes require schemaVersion 4."
+          "enum": ["java-maven-azure", "node-typescript-azure", "python-fastapi-azure", "airflow-dag-azure", "native-container-azure"],
+          "description": "Build/test archetype. Source-based Node, Python, Airflow, and native container archetypes require schemaVersion 4."
         },
         "description": {
           "type": "string",
@@ -31,7 +31,7 @@
         },
         "sourcePath": {
           "type": "string",
-          "pattern": "^(\\.|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$",
+          "pattern": "^(\\.|\\.spi(?:/[A-Za-z0-9][A-Za-z0-9._/-]{0,119})?|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$",
           "description": "Repository-relative package root. Required for source-based archetypes."
         },
         "nodeVersion": {
@@ -42,7 +42,22 @@
         "pythonVersion": {
           "type": "string",
           "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2}){1,2}$",
-          "description": "Python version supplied to actions/setup-python. Required for python-fastapi-azure."
+          "description": "Python version supplied to actions/setup-python. Required for Python and Airflow archetypes."
+        },
+        "airflowVersion": {
+          "type": "string",
+          "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2}){1,2}$",
+          "description": "Exact Apache Airflow version used to parse the DAG. Required for airflow-dag-azure."
+        },
+        "dagPath": {
+          "type": "string",
+          "pattern": "^(?:\\.spi/[A-Za-z0-9][A-Za-z0-9._/-]{0,119}|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$",
+          "description": "Repository-relative rendered DAG file. Required for airflow-dag-azure."
+        },
+        "dagId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,249}$",
+          "description": "DAG identifier that must be present after parsing. Required for airflow-dag-azure."
         },
         "image": {
           "type": "object",
@@ -51,14 +66,22 @@
           "properties": {
             "context": {
               "type": "string",
-              "pattern": "^(\\.|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
+              "pattern": "^(\\.|\\.spi(?:/[A-Za-z0-9][A-Za-z0-9._/-]{0,119})?|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
             },
             "dockerfile": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$"
+              "pattern": "^(?:\\.spi/[A-Za-z0-9][A-Za-z0-9._/-]{0,119}|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
+            },
+            "platforms": {
+              "enum": ["linux/amd64", "linux/amd64,linux/arm64"],
+              "description": "Publication platforms for native-container-azure. Omit to retain the multi-architecture default."
             }
           },
-          "description": "Source-based service image inputs. Required for Node and Python archetypes."
+          "description": "Source-based service image inputs. Required for Node, Python, Airflow, and native container archetypes."
+        },
+        "companion": {
+          "$ref": "#/$defs/companion",
+          "description": "Optional source-owned companion image built, published, released, and advanced with the primary service image."
         }
       },
       "allOf": [
@@ -81,6 +104,33 @@
           "then": {
             "required": ["sourcePath", "pythonVersion", "image"]
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "archetype": { "const": "airflow-dag-azure" }
+            }
+          },
+          "then": {
+            "required": [
+              "sourcePath",
+              "pythonVersion",
+              "airflowVersion",
+              "dagPath",
+              "dagId",
+              "image"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "archetype": { "const": "native-container-azure" }
+            }
+          },
+          "then": {
+            "required": ["sourcePath", "image"]
+          }
         }
       ]
     },
@@ -102,6 +152,75 @@
     }
   },
   "$defs": {
+    "companion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "kind",
+        "packageSuffix",
+        "sourcePath",
+        "pythonVersion",
+        "airflowVersion",
+        "dagPath",
+        "dagId",
+        "image"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+          "description": "Companion artifact name used in reports."
+        },
+        "kind": {
+          "const": "airflow-dag",
+          "description": "Validation contract for the companion. airflow-dag runs the exact Airflow DagBag validation before image publication."
+        },
+        "packageSuffix": {
+          "type": "string",
+          "pattern": "^-[a-z0-9][a-z0-9-]{0,31}$",
+          "not": {
+            "enum": ["-acceptance", "-load"]
+          },
+          "description": "Suffix appended to the primary GHCR package name. The acceptance and load suffixes are reserved by the template."
+        },
+        "sourcePath": {
+          "type": "string",
+          "pattern": "^(\\.|\\.spi(?:/[A-Za-z0-9][A-Za-z0-9._/-]{0,119})?|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
+        },
+        "pythonVersion": {
+          "type": "string",
+          "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2}){1,2}$"
+        },
+        "airflowVersion": {
+          "type": "string",
+          "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2}){1,2}$"
+        },
+        "dagPath": {
+          "type": "string",
+          "pattern": "^(?:\\.spi/[A-Za-z0-9][A-Za-z0-9._/-]{0,119}|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
+        },
+        "dagId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,249}$"
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["context", "dockerfile"],
+          "properties": {
+            "context": {
+              "type": "string",
+              "pattern": "^(\\.|\\.spi(?:/[A-Za-z0-9][A-Za-z0-9._/-]{0,119})?|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
+            },
+            "dockerfile": {
+              "type": "string",
+              "pattern": "^(?:\\.spi/[A-Za-z0-9][A-Za-z0-9._/-]{0,119}|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$"
+            }
+          }
+        }
+      }
+    },
     "binding": {
       "type": "object",
       "additionalProperties": false,
@@ -140,7 +259,7 @@
         },
         "path": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$",
+          "pattern": "^(?:\\.|\\.spi(?:/[A-Za-z0-9][A-Za-z0-9._/-]{0,119})?|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$",
           "description": "Repository-relative working directory of the suite, e.g. the upstream <svc>-acceptance-test module."
         },
         "mavenArguments": {
@@ -156,7 +275,7 @@
         },
         "entrypoint": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$",
+          "pattern": "^(?:\\.spi/[A-Za-z0-9][A-Za-z0-9._/-]{0,119}|[A-Za-z0-9][A-Za-z0-9._/-]{0,119})$",
           "description": "Executable path relative to the suite path. Required for script suites."
         },
         "arguments": {
@@ -175,7 +294,7 @@
           "minItems": 1,
           "items": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._/*?{}\\[\\]-]{0,199}$"
+            "pattern": "^(?:\\.spi/[A-Za-z0-9][A-Za-z0-9._/*?{}\\[\\]-]{0,194}|[A-Za-z0-9][A-Za-z0-9._/*?{}\\[\\]-]{0,199})$"
           },
           "description": "JUnit XML globs relative to the suite directory. Required for script suites so a zero exit with no tests cannot pass."
         },

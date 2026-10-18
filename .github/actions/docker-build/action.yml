@@ -17,6 +17,10 @@ inputs:
     description: 'maven-jar resolves a JAR, source restores a Node runtime, source-direct builds the checked-in context, and artifact uses a downloaded runtime artifact as the complete context'
     required: false
     default: 'maven-jar'
+  platforms:
+    description: 'Publication platforms. Empty retains the action default; validate-only builds remain linux/amd64.'
+    required: false
+    default: ''
   registry:
     description: 'Container registry host'
     required: false
@@ -80,6 +84,27 @@ runs:
         fi
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+
+    - name: "Resolve image platforms"
+      id: platforms
+      shell: bash
+      env:
+        BUILD_KIND: ${{ inputs.build_kind }}
+        PUSH: ${{ inputs.push }}
+        REQUESTED_PLATFORMS: ${{ inputs.platforms }}
+      run: |
+        if [ "$PUSH" != "true" ] || [ "$BUILD_KIND" = "source" ]; then
+          platforms=linux/amd64
+        elif [ -n "$REQUESTED_PLATFORMS" ]; then
+          platforms=$REQUESTED_PLATFORMS
+        else
+          platforms=linux/amd64,linux/arm64
+        fi
+        case "$platforms" in
+          linux/amd64|linux/amd64,linux/arm64) ;;
+          *) echo "::error::platforms must be linux/amd64 or linux/amd64,linux/arm64"; exit 2 ;;
+        esac
+        echo "value=$platforms" >> "$GITHUB_OUTPUT"
 
     - name: "Compute image metadata"
       id: meta
@@ -145,7 +170,7 @@ runs:
 
     - name: "Set up QEMU"
       # Only the push path builds the emulated linux/arm64 leg.
-      if: ${{ inputs.push == 'true' }}
+      if: ${{ contains(steps.platforms.outputs.value, 'linux/arm64') }}
       uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3  # v4.1.0
 
     - name: "Set up Docker Buildx"
@@ -232,7 +257,7 @@ runs:
         # provenance:false keeps the pushed index to the two real platforms: the unknown/unknown
         # attestation manifest makes a bare docker pull miss on arm64.
         # Source artifacts are built on the amd64 Node runner and can contain native modules.
-        platforms: ${{ inputs.build_kind == 'source' && 'linux/amd64' || (inputs.push == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64') }}
+        platforms: ${{ steps.platforms.outputs.value }}
         provenance: false
         tags: ${{ steps.tags.outputs.docker_tags }}
         build-args: |

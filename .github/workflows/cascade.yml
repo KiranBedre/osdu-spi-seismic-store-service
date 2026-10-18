@@ -298,7 +298,7 @@ jobs:
           # Verbatim modes have no provider/core ownership split. A stamp rewrite would
           # permanently diverge upstream-owned pom lines, so both dependent steps stay off.
           case "${SYNC_MODE:-filter}" in
-            mirror|passthrough)
+            mirror|passthrough|snapshot)
               echo "exists=false" >> $GITHUB_OUTPUT
               echo "${SYNC_MODE} mode - skipping fork-owned path assertion and pom stamp"
               ;;
