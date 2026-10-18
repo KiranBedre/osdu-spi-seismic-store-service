@@ -1,14 +1,14 @@
 name: GHCR Retention
 
-# Prunes old image tags from GHCR for the service image and the two images
-# built beside it from the same commit, <service>-acceptance and <service>-load:
+# Prunes old image tags from GHCR for the service image, its descriptor-owned
+# companion when present, and the two template-owned images built beside it,
+# <service>-acceptance and <service>-load:
 #   :sha-<short>        delete when older than 30 days
 #   :<branch>-snapshot  keep the newest 5 per protected branch
 #   :<version> (semver) keep forever (never deleted)
-# One policy for all three keeps the acceptance and load images that go with a
-# service digest alive exactly as long as the digest. Scheduled runs prune for
-# real; manual runs default to a dry-run so the policy can be observed before it
-# deletes anything.
+# One policy keeps all images from a source commit alive exactly as long as the
+# primary digest. Scheduled runs prune for real; manual runs default to a
+# dry-run so the policy can be observed before it deletes anything.
 
 on:
   schedule:
@@ -31,6 +31,8 @@ jobs:
     if: ${{ vars.INITIALIZATION_COMPLETE == 'true' }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
       - name: "Prune old image tags"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,6 +45,12 @@ jobs:
 
           OWNER_LC=$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')
           SERVICE=$(printf '%s' "${SERVICE_NAME:-$REPO_NAME}" | tr '[:upper:]' '[:lower:]')
+          COMPANION_SUFFIX=""
+          if [ -f .spi/service.yaml ]; then
+            python3 .github/actions/acceptance-resolver/resolve.py \
+              --contract-only --descriptor .spi/service.yaml --report "$RUNNER_TEMP/service.json"
+            COMPANION_SUFFIX=$(jq -r '.service_config.companion.package_suffix' "$RUNNER_TEMP/service.json")
+          fi
 
           # Org packages live under /orgs/<org>/...; a user's own packages under /user/...
           OWNER_TYPE="$(gh api "/users/${OWNER_LC}" --jq '.type' 2>/dev/null || echo "")"
@@ -102,7 +110,11 @@ jobs:
             for id in $SNAP_IDS; do delete_version "$PKG" "$id" "snapshot beyond newest 5 per branch"; done
           }
 
-          for pkg in "$SERVICE" "${SERVICE}-acceptance" "${SERVICE}-load"; do
+          packages=("$SERVICE" "${SERVICE}-acceptance" "${SERVICE}-load")
+          if [ -n "$COMPANION_SUFFIX" ]; then
+            packages+=("${SERVICE}${COMPANION_SUFFIX}")
+          fi
+          for pkg in "${packages[@]}"; do
             prune_package "$pkg"
           done
           echo "Retention complete."

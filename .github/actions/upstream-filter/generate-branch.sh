@@ -28,13 +28,15 @@
 # so the no-change comparison is skipped and the commit carries the upstream
 # tip as its only parent.
 #
-# SYNC_MODE=mirror (customer tier, ADR-039) or passthrough (intact source,
-# ADR-043) takes the upstream tree verbatim: no extraction, no engine, no
-# report. <config_path> is accepted but never read, filter_rev is the mode
-# name, and the report= line is omitted.
+# SYNC_MODE=mirror (customer tier, ADR-039), passthrough (intact source,
+# ADR-043), or snapshot (GitHub-incompatible source history, ADR-049) takes
+# the upstream tree verbatim: no extraction, no engine, no report.
+# <config_path> is accepted but never read, filter_rev is the mode name, and
+# the report= line is omitted. Snapshot commits omit the upstream parent so
+# oversized or otherwise rejected source-history objects never reach GitHub.
 #
 # Writes key=value lines to <out_file>:
-#   filter_rev=<engine version + config hash, "mirror", or "passthrough">
+#   filter_rev=<engine version + config hash, "mirror", "passthrough", or "snapshot">
 #   report=<path to the engine's JSON report>  (omitted in mirror mode)
 #   tree=<generated tree sha>
 #   has_changes=true|false
@@ -54,7 +56,7 @@ OUT="$4"
 MODE="${SYNC_MODE:-filter}"
 
 case "$MODE" in
-  filter|mirror|passthrough) ;;
+  filter|mirror|passthrough|snapshot) ;;
   *)
     echo "generate-branch: unsupported SYNC_MODE '$MODE'" >&2
     exit 2
@@ -122,7 +124,9 @@ PARENTS=()
 if [ -n "$BASE_SHA" ]; then
   PARENTS+=(-p "$BASE_SHA")
 fi
-PARENTS+=(-p "$UPSTREAM_SHA")
+if [ "$MODE" != "snapshot" ]; then
+  PARENTS+=(-p "$UPSTREAM_SHA")
+fi
 if [ "$MODE" != "filter" ]; then
   MSG="chore: $MODE upstream tree"
 else

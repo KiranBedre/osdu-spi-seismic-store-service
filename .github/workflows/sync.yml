@@ -51,7 +51,7 @@ jobs:
         env:
           SYNC_MODE: ${{ vars.SYNC_MODE }}
         run: |
-          if [ "${SYNC_MODE:-filter}" = "passthrough" ]; then
+          if [ "${SYNC_MODE:-filter}" = "passthrough" ] || [ "$SYNC_MODE" = "snapshot" ]; then
             git fetch upstream --prune --no-tags
           else
             git fetch upstream --prune
@@ -117,7 +117,7 @@ jobs:
         if: steps.sync-state.outputs.should_create_pr == 'true' || steps.sync-state.outputs.should_update_branch == 'true'
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          # mirror and passthrough take the upstream tip verbatim, without the filter engine.
+          # Mirror, passthrough, and snapshot take the upstream tip tree verbatim.
           SYNC_MODE: ${{ vars.SYNC_MODE }}
         run: |
           echo "Sync mode: ${SYNC_MODE:-filter}"

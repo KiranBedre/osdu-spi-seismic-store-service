@@ -179,6 +179,41 @@ jobs:
           echo "Tagged \`${REPO}:${VERSION}\` from \`${SRC}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
 
+      - name: "Tag companion image with semver"
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+          REPO: ${{ steps.service_tag.outputs.repo }}
+        run: |
+          set -euo pipefail
+          if [ ! -f .spi/service.yaml ]; then
+            echo "No service descriptor; companion image retag skipped." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 .github/actions/acceptance-resolver/resolve.py \
+            --contract-only --descriptor .spi/service.yaml --report "$RUNNER_TEMP/service.json"
+          suffix=$(jq -r '.service_config.companion.package_suffix' "$RUNNER_TEMP/service.json")
+          if [ -z "$suffix" ]; then
+            echo "No companion image declared; companion image retag skipped." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          COMPANION_REPO="${REPO}${suffix}"
+          COMPANION_SRC="${COMPANION_REPO}:sha-${GITHUB_SHA:0:12}"
+          companion_found=false
+          for attempt in $(seq 1 60); do
+            if docker buildx imagetools inspect "$COMPANION_SRC" >/dev/null 2>&1; then
+              companion_found=true
+              break
+            fi
+            echo "Companion ${COMPANION_SRC} not present yet (attempt ${attempt}/60); waiting for its push…"
+            sleep 20
+          done
+          if [ "$companion_found" != "true" ]; then
+            echo "::error::Companion image ${COMPANION_SRC} did not appear within ~20 min; the companion push may have failed for this commit."
+            exit 1
+          fi
+          docker buildx imagetools create --tag "${COMPANION_REPO}:${VERSION}" "$COMPANION_SRC"
+          echo "Tagged \`${COMPANION_REPO}:${VERSION}\` from \`${COMPANION_SRC}\`" >> "$GITHUB_STEP_SUMMARY"
+
       - name: "Resolve acceptance suite"
         # After the service retag on purpose: a malformed .spi/service.yaml exits 2, and the
         # service image, which the descriptor has nothing to do with, must be tagged first.

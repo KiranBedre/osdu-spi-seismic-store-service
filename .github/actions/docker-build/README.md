@@ -46,6 +46,7 @@ other build (uploads a complete runtime) -> docker-build (this action)
 | `dockerfile_path` | No | `build/Dockerfile` | Dockerfile path relative to the repo root. Defaults to the canonical Dockerfile the engineering system syncs to every fork (ADR-037) |
 | `build_context` | No | `.` | Docker build context directory |
 | `build_kind` | No | `maven-jar` | `maven-jar` resolves a JAR, `source` restores a Node runtime, `source-direct` builds the checked-in context, and `artifact` uses a downloaded runtime artifact as the complete context |
+| `platforms` | No | _(action default)_ | Native-container publication platforms: `linux/amd64` or `linux/amd64,linux/arm64`. Validate-only builds remain amd64 |
 | `registry` | No | `ghcr.io` | Container registry host |
 | `org` | No | _(repo owner)_ | Registry org/owner; falls back to the workflow `github.repository_owner` at runtime when omitted |
 | `jar_artifact_name` | No | `build-artifacts` | Name of the artifact containing the built JARs |
@@ -83,10 +84,11 @@ other build (uploads a complete runtime) -> docker-build (this action)
 
 ## Platforms
 
-The `push: 'true'` (release) path builds multi-arch for `linux/amd64` and
-`linux/arm64`; the `arm64` leg is emulated via QEMU on the amd64 runner. The
-`push: 'false'` (validate-only) path builds `linux/amd64` only and skips QEMU
-entirely, avoiding emulation overhead on every PR.
+The `push: 'true'` (release) path defaults to `linux/amd64,linux/arm64`; the
+`arm64` leg is emulated via QEMU on the amd64 runner. Native-container
+descriptors can narrow publication to `linux/amd64` when the service or its
+deployment target does not support arm64. The `push: 'false'` (validate-only)
+path always builds `linux/amd64` and skips QEMU.
 
 `provenance: false` keeps the pushed manifest a clean two-platform index (no `unknown/unknown` attestation entry), so a bare `docker pull` resolves natively on Apple Silicon and amd64 alike — without it, a single-arch build still publishes as an index and `docker pull` fails to match on arm64.
 

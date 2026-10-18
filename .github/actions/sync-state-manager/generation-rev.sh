@@ -20,13 +20,14 @@
 # no-op upstream commit produce a different tree (ADR-024, ADR-038).
 #
 # Arguments: $1 repository root (optional, defaults to the enclosing work tree)
-# Env: SYNC_MODE ("mirror" or "passthrough" for verbatim trees; otherwise filter)
+# Env: SYNC_MODE ("mirror", "passthrough", or "snapshot" for verbatim trees;
+# otherwise filter)
 
 set -euo pipefail
 
 MODE="${SYNC_MODE:-filter}"
 
-if [[ "$MODE" == "mirror" || "$MODE" == "passthrough" ]]; then
+if [[ "$MODE" == "mirror" || "$MODE" == "passthrough" || "$MODE" == "snapshot" ]]; then
   # Verbatim generation copies the upstream tree unchanged. The engine and config
   # are never read, so the upstream commit is the only input.
   echo "$MODE"

@@ -27,6 +27,23 @@ if [[ ! "$PYTHON_VERSION" =~ ^[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]{1,2})?$ ]]; then
   echo "::error::PYTHON_VERSION must be a major.minor or major.minor.patch version"
   exit 2
 fi
+if [[ -n "$AIRFLOW_VERSION" ]]; then
+  if [[ ! "$AIRFLOW_VERSION" =~ ^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
+    echo "::error::AIRFLOW_VERSION must be an exact major.minor.patch version"
+    exit 2
+  fi
+  if ! safe_path "$DAG_PATH" || [[ "$DAG_PATH" == "." ]]; then
+    echo "::error::DAG_PATH must be a repository-relative file path without traversal"
+    exit 2
+  fi
+  if [[ ! "$DAG_ID" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,249}$ ]]; then
+    echo "::error::DAG_ID must contain only letters, digits, dots, underscores, and hyphens"
+    exit 2
+  fi
+elif [[ -n "$DAG_PATH" || -n "$DAG_ID" ]]; then
+  echo "::error::DAG_PATH and DAG_ID require AIRFLOW_VERSION"
+  exit 2
+fi
 if [[ ! -d "$WORKING_DIRECTORY" ]]; then
   echo "::error::Python working directory '$WORKING_DIRECTORY' does not exist"
   exit 2

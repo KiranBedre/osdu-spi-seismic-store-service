@@ -12,7 +12,7 @@ inputs:
     description: 'Default branch name (main/master)'
     required: true
   sync_mode:
-    description: 'Tree generation mode: filter, mirror, or passthrough'
+    description: 'Tree generation mode: filter, mirror, passthrough, or snapshot'
     required: false
     default: ''
 
