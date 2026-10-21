@@ -83,3 +83,5 @@ jobs:
         run: |
           bash .github/scripts/settings-apply/reconcile-ghcr-visibility.sh \
             "${{ github.repository_owner }}" "${{ vars.SERVICE_NAME || github.event.repository.name }}"
+          bash .github/scripts/settings-apply/reconcile-ghcr-visibility.sh \
+            "${{ github.repository_owner }}" "${{ vars.SERVICE_NAME || github.event.repository.name }}-dag"

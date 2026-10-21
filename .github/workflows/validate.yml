@@ -402,7 +402,7 @@ jobs:
           # core is activeByDefault, so a bare profile flag would drop it (ADR-035). Filter-mode
           # fork_upstream builds core only: its azure profile points at fork-owned directories that
           # exist only after the cascade merge. Verbatim modes carry the complete upstream tree.
-          maven_profile: ${{ ((github.base_ref == 'fork_upstream' || github.ref_name == 'fork_upstream') && (vars.SYNC_MODE == '' || vars.SYNC_MODE == 'filter')) && 'core' || vars.MAVEN_PROFILE || 'core,azure' }}
+          maven_profile: ${{ ((github.base_ref == 'fork_upstream' || github.ref_name == 'fork_upstream') && (vars.SYNC_MODE == '' || vars.SYNC_MODE == 'filter' || vars.SYNC_MODE == 'filtered-snapshot')) && 'core' || vars.MAVEN_PROFILE || 'core,azure' }}
 
   node-build:
     name: "Node Build"
@@ -644,10 +644,21 @@ jobs:
       acceptance_image_repository: ${{ steps.acceptance.outputs.image_repository }}
       acceptance_image_digest: ${{ steps.acceptance.outputs.image_digest }}
       acceptance_skipped: ${{ steps.acceptance.outputs.skipped }}
+      dag_artifact_repository: ${{ steps.dag.outputs.artifact_repository }}
+      dag_artifact_digest: ${{ steps.dag.outputs.artifact_digest }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: "Download Airflow DAG artifact"
+        if: >-
+          needs.check-repo-state.outputs.archetype == 'airflow-dag-azure' ||
+          needs.check-repo-state.outputs.companion_kind == 'airflow-dag'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: airflow-dag-artifact
+          path: .spi/artifacts
 
       - name: "Docker Build and Push"
         id: push
@@ -691,6 +702,17 @@ jobs:
         uses: ./.github/actions/load-image
         with:
           push: 'true'
+          image_name: ${{ vars.SERVICE_NAME || github.event.repository.name }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Airflow DAG Artifact Push"
+        id: dag
+        if: >-
+          needs.check-repo-state.outputs.archetype == 'airflow-dag-azure' ||
+          needs.check-repo-state.outputs.companion_kind == 'airflow-dag'
+        uses: ./.github/actions/dag-artifact
+        with:
+          push: "true"
           image_name: ${{ vars.SERVICE_NAME || github.event.repository.name }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 

@@ -118,6 +118,24 @@ runs:
         EVIDENCE_PATH: .spi/results/airflow-dag.json
       run: python "$GITHUB_ACTION_PATH/verify-airflow-dag.py"
 
+    - name: Verify Airflow DAG artifact
+      if: ${{ inputs.airflow_version != '' }}
+      uses: ./.github/actions/dag-artifact
+      with:
+        push: "false"
+
+    - name: Upload Airflow DAG artifact
+      if: ${{ inputs.airflow_version != '' }}
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+      with:
+        name: airflow-dag-artifact
+        path: |
+          .spi/artifacts/dag.zip
+          .spi/artifacts/dag.zip.sha256
+          .spi/artifacts/workflow.json
+        if-no-files-found: error
+        retention-days: 2
+
     - name: Upload build evidence
       if: always()
       uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0

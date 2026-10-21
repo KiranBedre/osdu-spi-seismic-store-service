@@ -222,6 +222,7 @@ jobs:
         if: steps.check_state.outputs.integration_in_process == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SYNC_MODE: ${{ vars.SYNC_MODE }}
         run: |
           echo "Merging upstream changes into fork_integration..."
           CONFLICTS_FOUND=false
@@ -234,7 +235,16 @@ jobs:
             exit 0
           fi
 
-          if git merge origin/fork_upstream --no-edit; then
+          MERGE_ARGS=(origin/fork_upstream --no-edit)
+          case "${SYNC_MODE:-filter}" in
+            snapshot|filtered-snapshot)
+              # Snapshot ancestry is intentionally disconnected from source and may
+              # also be disconnected from a pre-existing or squash-merged main.
+              MERGE_ARGS+=(--allow-unrelated-histories -X theirs)
+              ;;
+          esac
+
+          if git merge "${MERGE_ARGS[@]}"; then
             echo "✅ Clean merge of upstream changes achieved"
           else
             # ls-files -u lists every unmerged path, including the modify/delete
@@ -283,7 +293,8 @@ jobs:
               echo "conflicts=true" >> $GITHUB_OUTPUT
               exit 1
             else
-              echo "✅ Merge completed with automatic resolution"
+              echo "::error::Upstream merge failed without producing conflicts"
+              exit 1
             fi
           fi
           
@@ -302,7 +313,7 @@ jobs:
               echo "exists=false" >> $GITHUB_OUTPUT
               echo "${SYNC_MODE} mode - skipping fork-owned path assertion and pom stamp"
               ;;
-            filter)
+            filter|filtered-snapshot)
               if [ -f ".github/upstream-filter.yml" ]; then
                 echo "exists=true" >> $GITHUB_OUTPUT
               else

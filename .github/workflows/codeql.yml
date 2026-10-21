@@ -88,52 +88,9 @@ jobs:
       - name: Detect languages
         id: detect
         run: |
-          LANGUAGES='[]'
+          LANGUAGES="$(bash .github/actions/codeql-languages/detect.sh)"
 
-          if [ -f "pom.xml" ] || [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
-            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["java-kotlin"]')
-          fi
-
-          if [ -f "setup.py" ] || [ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || \
-             find . -name "*.py" \
-               -not -path "./.*" \
-               -not -path "*/build/*" \
-               -not -path "*/build-*/*" \
-               -not -path "*/target/*" \
-               -not -path "*/dist/*" \
-               -not -path "*/__pycache__/*" \
-               -not -path "*/.venv/*" \
-               -not -path "*/venv/*" \
-               -not -path "*/.pytest_cache/*" \
-               -not -path "*/.mypy_cache/*" \
-               -not -path "*/node_modules/*" | grep -q .; then
-            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["python"]')
-          fi
-
-          if [ -f "package.json" ] || find . \( -name "*.js" -o -name "*.ts" \) \
-             -not -path "./.*" \
-             -not -path "*/build/*" \
-             -not -path "*/build-*/*" \
-             -not -path "*/target/*" \
-             -not -path "*/dist/*" \
-             -not -path "*/node_modules/*" | grep -q .; then
-            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["javascript-typescript"]')
-          fi
-
-          if [ -f "go.mod" ] || find . -name "*.go" -not -path "./.*" | grep -q .; then
-            LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["go"]')
-          fi
-
-          # OSDU services are Java; an undetected tree still gets the Java analysis.
-          if [ "$LANGUAGES" = "[]" ]; then
-            LANGUAGES='["java-kotlin"]'
-          fi
-
-          # actions is always analyzed: every fork ships .github/workflows/, and workflow
-          # YAML is precisely what this analysis exists to review.
-          LANGUAGES=$(echo "$LANGUAGES" | jq -c '. + ["actions"]')
-
-          echo "languages=$LANGUAGES" >> $GITHUB_OUTPUT
+          echo "languages=$LANGUAGES" >> "$GITHUB_OUTPUT"
           echo "Analyzing languages: $LANGUAGES"
 
   analyze:
@@ -174,6 +131,9 @@ jobs:
           queries: security-extended
           build-mode: ${{ matrix.language == 'go' && 'autobuild' || 'none' }}
           config: |
+            paths:
+              - .
+              - .spi
             paths-ignore:
               - '**/build/**'
               - '**/build-*/**'

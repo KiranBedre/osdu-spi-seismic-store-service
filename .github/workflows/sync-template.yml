@@ -376,7 +376,9 @@ jobs:
           # file is fork-owned once planted, so a sync must never overwrite it, but a fork
           # without one should receive it whatever changed this cycle.
           FILTER_PLANTED=false
-          if [ ! -f ".github/upstream-filter.yml" ] && git show refs/remotes/template/main:".github/fork-resources/upstream-filter.yml" >/dev/null 2>&1; then
+          if [ "${{ vars.SYNC_MODE }}" != "standalone" ] \
+            && [ ! -f ".github/upstream-filter.yml" ] \
+            && git show refs/remotes/template/main:".github/fork-resources/upstream-filter.yml" >/dev/null 2>&1; then
             if [ -n "$UPSTREAM_URL" ]; then
               SERVICE_SLUG=$(basename "${UPSTREAM_URL%.git}")
               SERVICE_ESCAPED=${SERVICE_SLUG//&/\\&}

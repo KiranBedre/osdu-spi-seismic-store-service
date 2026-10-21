@@ -33,7 +33,10 @@ script_name() {
     || fail "$name must be one npm script name"
 }
 
-relative_path working_directory "$WORKING_DIRECTORY"
+# sourcePath `.` selects a package at the repository root.
+if [[ "$WORKING_DIRECTORY" != "." ]]; then
+  relative_path working_directory "$WORKING_DIRECTORY"
+fi
 relative_path test_report "$TEST_REPORT"
 relative_path coverage_file "$COVERAGE_FILE"
 [[ "$NODE_VERSION" =~ ^[0-9]{1,2}(\.[0-9]{1,2}){0,2}$ ]] \

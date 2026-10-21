@@ -63,7 +63,10 @@ jobs:
   tag-with-upstream:
     name: "🏷️ Update Release Tags"
     needs: [check-initialization, release-please]
-    if: needs.check-initialization.outputs.initialized == 'true' && needs.release-please.outputs.release_created
+    if: |
+      needs.check-initialization.outputs.initialized == 'true' &&
+      needs.release-please.outputs.release_created &&
+      vars.SYNC_MODE != 'standalone'
     runs-on: ubuntu-latest
     env:
       GH_REPO: ${{ github.repository }}
@@ -222,6 +225,41 @@ jobs:
         env:
           SERVICE_NAME: ${{ vars.SERVICE_NAME || github.event.repository.name }}
           RESOLVER: .github/actions/acceptance-resolver/resolve.py
+
+      - name: "Set up ORAS"
+        if: >-
+          steps.suite.outputs.archetype == 'airflow-dag-azure' ||
+          steps.suite.outputs.companion_kind == 'airflow-dag'
+        uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6  # v1
+        with:
+          version: 1.3.0
+
+      - name: "Tag Airflow DAG artifact with semver"
+        if: >-
+          steps.suite.outputs.archetype == 'airflow-dag-azure' ||
+          steps.suite.outputs.companion_kind == 'airflow-dag'
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+          REPO: ${{ steps.service_tag.outputs.repo }}
+        run: |
+          set -euo pipefail
+          DAG_REPO="${REPO}-dag"
+          DAG_SRC="${DAG_REPO}:sha-${GITHUB_SHA:0:12}"
+          dag_found=false
+          for attempt in $(seq 1 60); do
+            if oras manifest fetch "$DAG_SRC" >/dev/null 2>&1; then
+              dag_found=true
+              break
+            fi
+            echo "DAG artifact ${DAG_SRC} not present yet (attempt ${attempt}/60); waiting for its push…"
+            sleep 20
+          done
+          if [ "$dag_found" != "true" ]; then
+            echo "::error::DAG artifact ${DAG_SRC} did not appear within ~20 min; the artifact push may have failed for this commit."
+            exit 1
+          fi
+          oras cp "$DAG_SRC" "${DAG_REPO}:${VERSION}"
+          echo "Tagged \`${DAG_REPO}:${VERSION}\` from \`${DAG_SRC}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: "Tag acceptance image with semver"
         # Same commit as the service image, so "prove release X on stack Y" stays one command

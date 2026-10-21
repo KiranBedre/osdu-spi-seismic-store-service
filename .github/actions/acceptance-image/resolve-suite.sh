@@ -41,6 +41,7 @@ TEST_TYPE="maven"
 ARCHETYPE="java-maven-azure"
 NODE_VERSION=""
 PYTHON_VERSION=""
+COMPANION_KIND=""
 SOURCE="default"
 if [[ -f "$DESCRIPTOR_PATH" ]]; then
   REPORT="$(mktemp)"
@@ -67,6 +68,9 @@ print(json.load(open(sys.argv[1]))['service_config']['node_version'])" "$REPORT"
   PYTHON_VERSION="$(python3 -c "
 import json, sys
 print(json.load(open(sys.argv[1]))['service_config']['python_version'])" "$REPORT")"
+  COMPANION_KIND="$(python3 -c "
+import json, sys
+print(json.load(open(sys.argv[1]))['service_config']['companion']['kind'])" "$REPORT")"
   SOURCE="descriptor"
 fi
 
@@ -104,6 +108,7 @@ done
   echo "archetype=$ARCHETYPE"
   echo "node_version=$NODE_VERSION"
   echo "python_version=$PYTHON_VERSION"
+  echo "companion_kind=$COMPANION_KIND"
   echo "buildable=$BUILDABLE"
   echo "reason=$REASON"
 } >> "${GITHUB_OUTPUT:-/dev/stdout}"
