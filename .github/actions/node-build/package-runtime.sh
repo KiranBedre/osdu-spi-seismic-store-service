@@ -40,7 +40,9 @@ for lock_file in package-lock.json npm-shrinkwrap.json; do
 done
 [[ "${#files[@]}" -gt 3 ]] || fail "runtime package has no npm lockfile"
 
-npm --prefix "$package_root" ci --omit=dev
+# Prune instead of a second `npm ci`: reinstalling reruns `prepare`, which can
+# require development tools such as husky that --omit=dev excludes.
+npm --prefix "$package_root" prune --omit=dev
 
 mkdir -p "$(dirname "$RUNTIME_ARCHIVE")"
 tar -C "$package_root" -czf "$RUNTIME_ARCHIVE" "${files[@]}"

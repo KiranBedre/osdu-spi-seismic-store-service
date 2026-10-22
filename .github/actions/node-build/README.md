@@ -14,8 +14,11 @@ The action:
 4. requires a readable JUnit report with at least one executed test and no
    failures or errors;
 5. requires a non-empty LCOV file;
-6. recreates production dependencies with `npm ci --omit=dev` and uploads
-   them with the compiled output as the runtime artifact; and
+6. removes development dependencies from the locked install with
+   `npm prune --omit=dev` and uploads the remaining production dependencies
+   with the compiled output as the runtime artifact. Pruning does not rerun
+   lifecycle scripts, so a `prepare` hook that needs a development dependency
+   such as husky cannot break packaging; and
 7. uploads both evidence files.
 
 No input is evaluated as a shell command. Script inputs are npm script names,

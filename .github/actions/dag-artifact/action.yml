@@ -1,0 +1,86 @@
+name: Airflow DAG Artifact
+description: Validate and optionally publish the rendered DAG release contract
+
+inputs:
+  push:
+    description: Push the verified artifact to GHCR
+    required: false
+    default: "false"
+  image_name:
+    description: Base service package name; the artifact package adds -dag
+    required: false
+  github_token:
+    description: Token used to push to GHCR
+    required: false
+  artifact_path:
+    description: Directory containing dag.zip, dag.zip.sha256, and workflow.json
+    required: false
+    default: .spi/artifacts
+
+outputs:
+  artifact_repository:
+    description: GHCR repository containing the DAG artifact
+    value: ${{ steps.publish.outputs.artifact_repository }}
+  artifact_digest:
+    description: Immutable OCI manifest digest
+    value: ${{ steps.publish.outputs.artifact_digest }}
+  artifact_reference:
+    description: Immutable repository@digest reference
+    value: ${{ steps.publish.outputs.artifact_reference }}
+
+runs:
+  using: composite
+  steps:
+    - name: Verify DAG artifact
+      shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.artifact_path }}
+      run: python3 "$GITHUB_ACTION_PATH/verify.py" "$ARTIFACT_PATH"
+
+    - name: Set up ORAS
+      if: inputs.push == 'true'
+      uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6  # v1
+      with:
+        version: 1.3.0
+
+    - name: Publish DAG artifact
+      id: publish
+      if: inputs.push == 'true'
+      shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.artifact_path }}
+        IMAGE_NAME: ${{ inputs.image_name }}
+        GHCR_TOKEN: ${{ inputs.github_token }}
+      run: |
+        set -euo pipefail
+        if [ -z "$IMAGE_NAME" ] || [ -z "$GHCR_TOKEN" ]; then
+          echo "::error::image_name and github_token are required when push=true"
+          exit 2
+        fi
+
+        owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+        image=$(printf '%s' "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+        repository="ghcr.io/${owner}/${image}-dag"
+        reference="${repository}:sha-${GITHUB_SHA:0:12}"
+
+        printf '%s' "$GHCR_TOKEN" | oras login ghcr.io \
+          --username "$GITHUB_ACTOR" --password-stdin
+        (
+          cd "$ARTIFACT_PATH"
+          oras push "$reference" \
+            --artifact-type application/vnd.osdu.airflow.dag.v1 \
+            --annotation "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --annotation "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            "dag.zip:application/zip" \
+            "dag.zip.sha256:text/plain" \
+            "workflow.json:application/vnd.osdu.workflow.registration.v1+json"
+        )
+
+        digest=$(oras manifest fetch --descriptor "$reference" | jq -er '.digest')
+        echo "artifact_repository=$repository" >> "$GITHUB_OUTPUT"
+        echo "artifact_digest=$digest" >> "$GITHUB_OUTPUT"
+        echo "artifact_reference=${repository}@${digest}" >> "$GITHUB_OUTPUT"
+        echo "Published \`${repository}@${digest}\`" >> "$GITHUB_STEP_SUMMARY"
+
+        bash .github/scripts/settings-apply/reconcile-ghcr-visibility.sh \
+          "$GITHUB_REPOSITORY_OWNER" "${image}-dag"

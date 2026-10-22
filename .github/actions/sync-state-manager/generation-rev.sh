@@ -21,7 +21,7 @@
 #
 # Arguments: $1 repository root (optional, defaults to the enclosing work tree)
 # Env: SYNC_MODE ("mirror", "passthrough", or "snapshot" for verbatim trees;
-# otherwise filter)
+# "filter" or "filtered-snapshot" for filtered trees)
 
 set -euo pipefail
 
@@ -34,7 +34,7 @@ if [[ "$MODE" == "mirror" || "$MODE" == "passthrough" || "$MODE" == "snapshot" ]
   exit 0
 fi
 
-if [[ "$MODE" != "filter" ]]; then
+if [[ "$MODE" != "filter" && "$MODE" != "filtered-snapshot" ]]; then
   echo "generation-rev: unsupported SYNC_MODE '$MODE'" >&2
   exit 2
 fi
@@ -49,7 +49,7 @@ fi
 # Every input to the no-change comparison other than the upstream commit:
 # the config and engine decide what is kept, and generate-branch.sh decides how
 # the tree is extracted, serialized, and compared.
-REV="filter"
+REV="$MODE"
 for input in \
   "$REPO_ROOT/.github/upstream-filter.yml" \
   "$REPO_ROOT/.github/actions/upstream-filter/upstream_filter.py" \

@@ -34,6 +34,8 @@
 # <config_path> is accepted but never read, filter_rev is the mode name, and
 # the report= line is omitted. Snapshot commits omit the upstream parent so
 # oversized or otherwise rejected source-history objects never reach GitHub.
+# Filtered-snapshot mode (ADR-050) runs the filter but uses the same
+# destination-only ancestry as snapshot mode.
 #
 # Writes key=value lines to <out_file>:
 #   filter_rev=<engine version + config hash, "mirror", "passthrough", or "snapshot">
@@ -56,7 +58,7 @@ OUT="$4"
 MODE="${SYNC_MODE:-filter}"
 
 case "$MODE" in
-  filter|mirror|passthrough|snapshot) ;;
+  filter|filtered-snapshot|mirror|passthrough|snapshot) ;;
   *)
     echo "generate-branch: unsupported SYNC_MODE '$MODE'" >&2
     exit 2
@@ -82,7 +84,7 @@ REPORT="$WORKDIR/upstream-filter-report.json"
 rm -rf "$GEN" "$SCRATCH"
 mkdir -p "$GEN"
 
-if [ "$MODE" != "filter" ]; then
+if [ "$MODE" != "filter" ] && [ "$MODE" != "filtered-snapshot" ]; then
   # The upstream tip is the finished product. Remove any report left by a
   # prior filter run so failure handlers never read stale halt data.
   rm -f "$REPORT"
@@ -109,7 +111,7 @@ fi
 
 {
   echo "filter_rev=$FILTER_REV"
-  if [ "$MODE" = "filter" ]; then
+  if [ "$MODE" = "filter" ] || [ "$MODE" = "filtered-snapshot" ]; then
     echo "report=$REPORT"
   fi
   echo "tree=$TREE"
@@ -124,14 +126,15 @@ PARENTS=()
 if [ -n "$BASE_SHA" ]; then
   PARENTS+=(-p "$BASE_SHA")
 fi
-if [ "$MODE" != "snapshot" ]; then
-  PARENTS+=(-p "$UPSTREAM_SHA")
-fi
-if [ "$MODE" != "filter" ]; then
-  MSG="chore: $MODE upstream tree"
-else
-  MSG="chore: generate filtered upstream tree"
-fi
+case "$MODE" in
+  snapshot|filtered-snapshot) ;;
+  *) PARENTS+=(-p "$UPSTREAM_SHA") ;;
+esac
+case "$MODE" in
+  filter) MSG="chore: generate filtered upstream tree" ;;
+  filtered-snapshot) MSG="chore: generate filtered upstream snapshot" ;;
+  *) MSG="chore: $MODE upstream tree" ;;
+esac
 COMMIT=$(git commit-tree "$TREE" "${PARENTS[@]}" \
   -m "$MSG" \
   -m "Upstream-Sha: $UPSTREAM_SHA

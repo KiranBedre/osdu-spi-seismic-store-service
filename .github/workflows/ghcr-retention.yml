@@ -110,7 +110,7 @@ jobs:
             for id in $SNAP_IDS; do delete_version "$PKG" "$id" "snapshot beyond newest 5 per branch"; done
           }
 
-          packages=("$SERVICE" "${SERVICE}-acceptance" "${SERVICE}-load")
+          packages=("$SERVICE" "${SERVICE}-acceptance" "${SERVICE}-load" "${SERVICE}-dag")
           if [ -n "$COMPANION_SUFFIX" ]; then
             packages+=("${SERVICE}${COMPANION_SUFFIX}")
           fi
