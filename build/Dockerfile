@@ -3,9 +3,13 @@
 # Mirrors the OSDU community service-base-image: the JAR that java-build compiled is copied in
 # via JAR_FILE, and no Maven runs here.
 #
-# Multi-arch base so release images pull natively on Apple Silicon. Dependabot bumps the digest
-# in the template only; template-sync carries it to the forks.
-FROM mcr.microsoft.com/openjdk/jdk:17-azurelinux@sha256:fe3dae30eca535c630a72b0cef773daa0f7fc02bba584a973ad8f0e9258ad9e2
+# Multi-arch base so release images pull natively on Apple Silicon. JAVA_VERSION is the release
+# the fork's root pom declares (java-release action); one stage per release keeps each digest on
+# a FROM line where Dependabot bumps it in the template, and template-sync carries it to the forks.
+ARG JAVA_VERSION=17
+FROM mcr.microsoft.com/openjdk/jdk:17-azurelinux@sha256:292f02465cc26d7bc51eba3fb4de5ce58dc48a7f1c5fb1308ff3461fddb20403 AS runtime-17
+FROM mcr.microsoft.com/openjdk/jdk:25-azurelinux@sha256:730cf7e4a9e2c0698121604d0f627a283ca17e6184ab745734f971db6e91b26a AS runtime-25
+FROM runtime-${JAVA_VERSION}
 
 ARG JAR_FILE
 ARG APPLICATIONINSIGHTS_CONNECTION_STRING="dummy"

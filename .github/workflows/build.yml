@@ -146,6 +146,8 @@ jobs:
       - name: "Run Java Build"
         id: build
         uses: ./.github/actions/java-build
+        with:
+          build_env: ${{ vars.BUILD_ENV }}
 
   node-build:
     name: "Node Build"
@@ -234,10 +236,14 @@ jobs:
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
 
+      - name: "Resolve Java release"
+        id: java
+        uses: ./.github/actions/java-release
+
       - name: "Setup Java Environment"
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
-          java-version: '17'
+          java-version: ${{ steps.java.outputs.version }}
           distribution: 'temurin'
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
@@ -253,17 +259,25 @@ jobs:
             !~/.m2/repository/org/opengroup/osdu
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
 
+      - name: "Export build environment"
+        if: vars.BUILD_ENV != ''
+        env:
+          BUILD_ENV: ${{ vars.BUILD_ENV }}
+        run: bash .github/actions/java-build/build-env.sh
+
       - name: "Generate Coverage Report"
         env:
           MAVEN_OPTS: "-Dmaven.repo.local=$HOME/.m2/repository"
         run: |
-          MAVEN_CLI_OPTS="--batch-mode -Drevision=${GITHUB_REF_NAME}-SNAPSHOT"
+          # flatten substitutes the version into pom comments, so keep it to [A-Za-z0-9._-] with no '--'.
+          SAFE_REF=$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9._' '-' | tr -s '-')
+          MAVEN_CLI_OPTS="--batch-mode -Drevision=${SAFE_REF}-SNAPSHOT"
 
           if [ -f ".mvn/community-maven.settings.xml" ]; then
             MAVEN_CLI_OPTS="$MAVEN_CLI_OPTS --settings=.mvn/community-maven.settings.xml"
           fi
           
-          mvn $MAVEN_CLI_OPTS clean test org.jacoco:jacoco-maven-plugin:0.8.11:report
+          mvn $MAVEN_CLI_OPTS clean test org.jacoco:jacoco-maven-plugin:0.8.14:report
           echo "# Test Coverage Report" >> $GITHUB_STEP_SUMMARY
           echo "## Summary" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

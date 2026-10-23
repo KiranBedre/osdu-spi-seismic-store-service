@@ -32,15 +32,21 @@ jobs:
             echo "node=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Set up Azul Zulu JDK 17
+      - name: Resolve Java release
+        if: steps.stacks.outputs.java == 'true'
+        id: java
+        uses: ./.github/actions/java-release
+
+      - name: Set up Azul Zulu JDK
         if: steps.stacks.outputs.java == 'true'
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.2.0
         with:
           distribution: zulu
-          java-version: "17"
+          java-version: ${{ steps.java.outputs.version }}
           cache: maven
 
       - name: Setup pinned Maven
+        if: steps.stacks.outputs.java == 'true'
         uses: ./.github/actions/setup-maven
 
       - name: Install Maven dependencies
