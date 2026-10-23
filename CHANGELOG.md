@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.1](https://github.com/KiranBedre/osdu-spi-seismic-store-service/compare/v1.3.0...v1.3.1) (2026-10-23)
+
+
+### 🔧 Miscellaneous
+
+* Sync template updates ([#20](https://github.com/KiranBedre/osdu-spi-seismic-store-service/issues/20)) ([2d16712](https://github.com/KiranBedre/osdu-spi-seismic-store-service/commit/2d16712ff192bae8dc54672786aa652e5137aed7))
+* **template-sync:** Sync reconciled template ([dc3e870](https://github.com/KiranBedre/osdu-spi-seismic-store-service/commit/dc3e870e6029f022c2a7bcafbda3a11a367fb228))
+* **template-sync:** Sync template updates ([dce6fb9](https://github.com/KiranBedre/osdu-spi-seismic-store-service/commit/dce6fb919f2571f4d71f754ce4750cdcc98d570e))
+
 ## [1.3.0](https://github.com/KiranBedre/osdu-spi-seismic-store-service/compare/v1.2.0...v1.3.0) (2026-10-14)
 
 
