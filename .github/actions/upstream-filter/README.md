@@ -23,9 +23,9 @@ and commit trailers all depend on them, so changes here are breaking changes.
 ## Invocation
 
 ```
-python3 upstream_filter.py --mode {generate|verify|stamp|seed}
+python3 upstream_filter.py --mode {generate|verify|stamp|seed|paths}
                            --config <upstream-filter.yml>
-                           --checkout <dir>
+                           --checkout <dir>           # every mode but paths
                            [--seed-source <dir>]      # seed mode only
                            [--report <path>]          # JSON report also goes to stdout
 ```
@@ -101,8 +101,13 @@ Runs on `fork_integration` after the cascade merge, where the upstream version
 bump and the fork-owned poms first coexist. Reference versions are read from the
 merged upstream-owned poms: the root `pom.xml` version, the `testing/pom.xml`
 version, and `testing/<service>-test-core`'s own version. Every upstream-derived
-version string in the fork-owned poms (`provider/<service>-azure/**/pom.xml`,
-`testing/<service>-test-azure/**/pom.xml`) is rewritten to its reference value.
+version string in the poms under the fork-owned trees is rewritten to its
+reference value: trees under `testing/` follow the testing pom (or the root pom
+when there is no testing reactor), every other tree follows the root pom, and a
+`<service>-test-core` dependency follows test-core.
+With the conventional pair all three references are read; with an explicit
+`fork_owned` list only the ones its poms need, so a layout without a testing
+reactor does not halt on a missing `testing/pom.xml`.
 
 The mode is defined by its post-condition, not a site list: **after stamping, no
 pre-bump version string survives anywhere in the fork-owned poms**, and the
@@ -115,17 +120,52 @@ engine halts (`STAMP_AMBIGUOUS`) rather than guessing.
 
 ### `seed`
 
-Copies `provider/<service>-azure` and `testing/<service>-test-azure` from
-`--seed-source` (a checkout of the newest upstream commit that still contains
-them) into the checkout. Halts if a source tree is missing or lacks a
-`pom.xml`, or if a target already exists.
+Copies each fork-owned tree from `--seed-source` (a checkout of the newest
+upstream commit that still contains them) into the checkout. Halts if a target
+already exists, or if a source tree is missing. A conventional tree must also
+carry a root `pom.xml`; a tree from an explicit `fork_owned` list only has to be
+non-empty, since it may be a nested reactor or a non-Maven test suite.
 
-`seed-source.sh` materializes that checkout: it resolves each tree
-independently (upstream can delete them in different commits), preferring the
+`seed-source.sh` materializes that checkout from the trees `paths` lists: it
+resolves each tree independently (upstream can delete them in different commits), preferring the
 ref's tip and otherwise walking the deletion commit's parents, because
 simplified history returns nothing for a path deleted through a merge. It
-composes both trees into one directory through a scratch index and reports the
-per-tree source commits.
+composes the trees into one directory through a scratch index and writes a
+`Seeded-From: <tree> <commit>` trailer per tree.
+
+### `paths`
+
+Prints the fork-owned trees as `fork_owned` in the report: the explicit list
+when the config has one, otherwise `provider/<service>-azure` and
+`testing/<service>-test-azure`. Reads no checkout. Initialization's seed and
+survival check and the cascade's survival assertion iterate this list.
+
+## Fork resources from `fork_owned`
+
+`fork_resources.py` renders the planted files that name fork-owned paths from the
+same list. Without `fork_owned`, or without a config, it passes each template
+through byte for byte, so a conventional fork plants exactly what it did before.
+
+| Kind | Renders | From |
+| --- | --- | --- |
+| `dependabot` | The Maven `directories`: each listed tree with a root `pom.xml`, and for a tree without one, its modules one level down that have their own. A discovered module whose name is not letters, digits, `.`, `_` and `-` is skipped with a warning. A test suite with no pom contributes nothing. | `fork-resources/dependabot.yml` |
+| `codeowners` | One ownership line per listed tree, in the owners column, in place of the `provider/<service>-azure/` and `testing/<service>-test-azure/` lines. | `fork-resources/CODEOWNERS` |
+| `contributing` | The listed trees in the ownership row. | `fork-resources/CONTRIBUTING.md` |
+
+`explicit` exits 0 when the config lists `fork_owned` and 1 when it does not.
+Exit 2 is a config or template error, including a template that no longer
+carries the default lines and a listed path with characters other than letters,
+digits, `.`, `_`, `-` and `/`, which the three files can't carry unescaped. Exit 3 means no listed tree holds a pom, so there is
+no Maven directory to watch; initialization then plants no `dependabot.yml` and
+template sync removes it.
+
+Initialization renders all three. Template sync renders `dependabot.yml` on
+every sync for a fork with `fork_owned`, so the directories follow the fork's
+trees, and renders CODEOWNERS and CONTRIBUTING.md when it plants a missing one.
+A rendered `dependabot.yml` that no longer matches the fork's trees counts as an
+update by itself, so a module added or removed opens a sync PR without waiting
+for a template change. A fork that drops `fork_owned` returns to the template's
+`dependabot.yml` on the next template change to `fork-resources/`.
 
 ## Halt codes
 
@@ -133,7 +173,7 @@ per-tree source commits.
 | --- | --- |
 | `CONFIG_MISSING` | The config file does not exist. The sync fails closed; there is no fallback to the old merge path. |
 | `CONFIG_INVALID` | The config fails schema validation. |
-| `MODULE_PREFIX_MISMATCH` | `provider/<service>-azure` does not exist upstream. `service` is the module prefix, and the halt lists the prefixes `provider/` does carry. |
+| `MODULE_PREFIX_MISMATCH` | `provider/<service>-azure` does not exist upstream. `service` is the module prefix, and the halt lists the prefixes `provider/` does carry. Not raised with `fork_owned`: upstream may delete listed trees independently, and `seed-source.sh` fails at initialization on a listed path that never existed. |
 | `UNKNOWN_TOP_LEVEL` | A top-level entry has no verdict. |
 | `UNKNOWN_TESTING_ENTRY` | An entry under `testing/` has no verdict. |
 | `UNKNOWN_PROFILE` | A root pom profile id has no verdict. |
@@ -150,7 +190,7 @@ per-tree source commits.
 | `STAMP_NO_FORK_POMS` | Stamp mode found no fork-owned poms to stamp. |
 | `STAMP_AMBIGUOUS` | One pre-bump version string maps to two different reference values. |
 | `STAMP_INCOMPLETE` | A pre-bump version string survives after stamping. |
-| `SEED_SOURCE_MISSING` | A seed-source tree is missing or lacks a `pom.xml`. |
+| `SEED_SOURCE_MISSING` | A seed-source tree is missing, lacks its root `pom.xml` (conventional pair), or is empty (`fork_owned`). |
 | `SEED_TARGET_EXISTS` | A seed target already exists in the checkout. |
 
 ## Report
@@ -162,10 +202,10 @@ bytes to a file. The report carries no timestamps.
 {
   "schema": 1,
   "mode": "generate",
-  "engine_version": "1.0.0",
+  "engine_version": "1.1.0",
   "service": "partition",
   "config_sha256": "<full sha256 of the config bytes>",
-  "filter_rev": "1.0.0+<first 12 hex of config_sha256>",
+  "filter_rev": "1.1.0+<first 12 hex of config_sha256>",
   "ok": true,
   "halts": [{"code": "...", "detail": "..."}],
   "counts": {"initial_files": 421, "kept_files": 88, "discarded_files": 333},
@@ -175,7 +215,8 @@ bytes to a file. The report carries no timestamps.
 }
 ```
 
-`counts`/`discarded` appear for generate, `stamp` for stamp, `seeded` for seed.
+`counts`/`discarded` appear for generate, `stamp` for stamp, `seeded` for seed,
+`fork_owned` for paths. Stamp's `references` names only the references it read.
 The `discarded` list records removals at the granularity they were classified
 (a stripped directory is one entry, not one entry per file).
 
@@ -207,9 +248,23 @@ once, so keep and strip can never disagree.
 
 `service` is the Maven module prefix, not necessarily the repository name: the
 `entitlements` repository's modules are `entitlements-v2-*`, so its config would
-say `service: entitlements-v2`. Everything path-shaped derives from it:
-`provider/<service>-azure`, `testing/<service>-test-azure`, and the cascade's
-survival assertion all read this key.
+say `service: entitlements-v2`. By default everything path-shaped derives from
+it: the fork-owned trees are `provider/<service>-azure` and
+`testing/<service>-test-azure`.
+
+`fork_owned` is optional and replaces that pair for a service whose Azure
+footprint is laid out differently. Each entry is `provider/<entry>`,
+`testing/<entry>` (which needs a `fork` verdict), or a top-level `<entry>`
+(which needs a `strip` verdict), and every `testing` entry with a `fork`
+verdict must be listed. With the key present, `inject_testing_pom_azure_module`
+may be empty when upstream has no `testing/pom.xml`; generate halts with
+`CONFIG_INVALID` if a testing reactor exists and the injection is empty.
+
+```yaml
+fork_owned:
+  - provider/unit-azure
+  - testing/unit_test_azure
+```
 
 ```yaml
 service: partition
