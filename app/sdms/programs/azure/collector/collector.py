@@ -182,12 +182,17 @@ def collect_statistics(subproject: cosmos.Subproject, datasets: list([cosmos.Dat
             executor.submit(collect_dataset_statistics,
                             dataset, container_name, prefix)
 
-def push_report(container):
+def _results_container_name() -> str:
+    name = STORAGE_CONTAINER_RESULTS
+    if 'EXT' in os.environ:
+        name += f"-{os.environ['EXT']}"
+        if name.endswith('-'):
+            name = name[:-1]
+    return name
+
+def push_report() -> bool:
+    container = _results_container_name()
     try:
-        if 'EXT' in os.environ:
-            container += f"-{os.environ['EXT']}"
-            if container.endswith('-'):
-                container = container[:-1]
         blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
         storage_container_client = blob_service_client.get_container_client(container)
         if storage_container_client.exists() == False:
@@ -196,19 +201,22 @@ def push_report(container):
         with open(report_name, "rb") as local_file:
             with storage_container_client.get_blob_client(name) as blob_client:
                 blob_client.upload_blob(local_file, overwrite=OVERWRITE)
-        local_file.close()
+        return True
     except Exception as e:
-        print(f'Error: {e.status_code} - {e.message}')
+        print(f'> [report] ERROR uploading report to "{container}/{name}": {e}; '
+              f'checkpoint will NOT be advanced — report will be retried next run')
+        return False
 
 STATE_BLOB_PATH = '{partition_id}/last_run_state.json'
 
 def load_last_run_state(storage_cs: str, partition_id: str) -> dict:
     # Reads last-run timestamps per subproject from blob storage ({} if first run)
+    container_name = _results_container_name()
     blob_name = STATE_BLOB_PATH.format(partition_id=partition_id)
-    state_uri = f'{STORAGE_CONTAINER_RESULTS}/{blob_name}'
+    state_uri = f'{container_name}/{blob_name}'
     try:
         blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
-        container = blob_service_client.get_container_client(STORAGE_CONTAINER_RESULTS)
+        container = blob_service_client.get_container_client(container_name)
         blob_client = container.get_blob_client(blob_name)
         data = blob_client.download_blob().readall()
         state = json.loads(data)
@@ -227,11 +235,12 @@ def load_last_run_state(storage_cs: str, partition_id: str) -> dict:
 
 def save_last_run_state(storage_cs: str, partition_id: str, state: dict) -> None:
     #Persists the updated per-subproject last-run timestamps back to blob storage
+    container_name = _results_container_name()
     blob_name = STATE_BLOB_PATH.format(partition_id=partition_id)
-    state_uri = f'{STORAGE_CONTAINER_RESULTS}/{blob_name}'
+    state_uri = f'{container_name}/{blob_name}'
     try:
         blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
-        container = blob_service_client.get_container_client(STORAGE_CONTAINER_RESULTS)
+        container = blob_service_client.get_container_client(container_name)
         if not container.exists():
             container.create_container()
         blob_client = container.get_blob_client(blob_name)
@@ -344,16 +353,16 @@ if __name__ == "__main__":
                         scan_detail = f'since {last_run_ts}' if last_run_ts else 'no prior run recorded'
                         print(f'> [scan] {subproject_name}: {scan_type} ({scan_detail})')
                         sys.stdout.flush()
-                        datasets = cosmos.list_datasets(subproject_name, cosmos_cs, since=last_run_ts)
 
-                        print('\n# collect statistics from storage\n')
                         now = datetime.now(timezone.utc)
-
                         report_path = f'./results/{partition_id}/{subproject_name}/{now.year}/{"{:02d}".format(now.month)}/{"{:02d}".format(now.day)}'
                         if not os.path.exists(report_path):
                             os.makedirs(report_path)
-
                         report_name = f'{report_path}/report.csv'
+
+                        datasets = cosmos.list_datasets(subproject_name, cosmos_cs, since=last_run_ts)
+
+                        print('\n# collect statistics from storage\n')
 
                         file_out = FileWriter(report_name)
                         headers = 'name'
@@ -368,13 +377,13 @@ if __name__ == "__main__":
                         if utils.has_more_than_one_line(report_name):
                             print('\n# sort and push report to sdms')
                             utils.sort_csv_file(report_name)
-                            push_report(STORAGE_CONTAINER_RESULTS)
-                            # persist timestamp so next run only scans modified datasets
-                            previous_ts = last_run.get(subproject_name)
-                            last_run[subproject_name] = now.isoformat()
-                            print(f'> [state] {subproject_name}: advancing last_run '
-                                  f'{previous_ts or "(none)"} -> {now.isoformat()}')
-                            save_last_run_state(storage_cs, partition_id, last_run)
+                            # Only advance the checkpoint when the upload succeeds.
+                            if push_report():
+                                previous_ts = last_run.get(subproject_name)
+                                last_run[subproject_name] = now.isoformat()
+                                print(f'> [state] {subproject_name}: advancing last_run '
+                                      f'{previous_ts or "(none)"} -> {now.isoformat()}')
+                                save_last_run_state(storage_cs, partition_id, last_run)
                         else:
                             # no new/modified datasets this run — last_run is intentionally left unchanged
                             print(f'> [state] {subproject_name}: no datasets collected, '
