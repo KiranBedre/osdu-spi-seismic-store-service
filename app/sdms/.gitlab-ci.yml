@@ -67,6 +67,3 @@ include:
 
   # cimpl
   - local: "app/sdms/devops/osdu/cloud-providers/cimpl-global.yml"
-
-  # ibm
-  - local: "app/sdms/devops/osdu/cloud-providers/ibm.yml"

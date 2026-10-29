@@ -37,13 +37,6 @@ include:
   # overwrite logic
   - local: devops/osdu/cloud-providers/cimpl-global.yml
 
-  # ibm
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/ibm.yml"
-
-  # overwrite logic
-  - local: devops/osdu/cloud-providers/ibm.yml
-
   # REPORTING
   - project: "osdu/platform/ci-cd-pipelines"
     file: "reporting/reporting.yml"

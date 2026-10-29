@@ -74,7 +74,6 @@
     "@google-cloud/secret-manager": "^5.0.1",
     "@google-cloud/storage": "^6.1.0",
     "@google-cloud/trace-agent": "^5.1.6",
-    "@ibm-cloud/cloudant": "^0.8.2",
     "@prisma/client": "^4.16.2",
     "ajv": "^8.8.0",
     "ajv-formats": "^2.1.1",
@@ -158,17 +157,6 @@
     "@babel/core": {
       "@babel/traverse": "^7.23.2",
       "semver": "^6.3.1"
-    },
-    "@ibm-cloud/cloudant": {
-      "qs": "$qs",
-      "ibm-cloud-sdk-core": {
-        ".": "^5.6.2",
-        "expect": {
-          "jest-message-util": {
-            "micromatch": "^4.0.8"
-          }
-        }
-      }
     },
     "@types/node-fetch": {
       "form-data": "^3.0.5"

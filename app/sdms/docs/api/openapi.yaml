@@ -1476,14 +1476,6 @@ paths:
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
                             <br/>}
                           <br/><br/></li>
-                          <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
-                          <br/>
-                            <br/>{
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                            <br/>}
-                          <br/><br/></li>
                         </ul>
                       </li>
                       <li>Required roles:
@@ -1558,14 +1550,6 @@ paths:
                             <br/>{
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                            <br/>}
-                          <br/><br/></li>
-                          <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
-                          <br/>
-                            <br/>{
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
                             <br/>}
                           <br/><br/></li>
