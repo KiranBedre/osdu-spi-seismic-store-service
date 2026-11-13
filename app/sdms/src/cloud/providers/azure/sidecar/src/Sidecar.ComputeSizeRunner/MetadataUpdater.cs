@@ -18,6 +18,8 @@ namespace Sidecar.ComputeSizeRunner;
 
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Sidecar.Common.Interface;
+using Sidecar.Common.Utility;
 
 public class MetadataUpdater(ILogger<MetadataUpdater> logger, IDataAccess dataAccess, ICosmosClientFactory cosmosClientFactory, IDateFormatter dateFormatter) : IMetadataUpdater
 {
@@ -39,6 +41,9 @@ public class MetadataUpdater(ILogger<MetadataUpdater> logger, IDataAccess dataAc
             },
             {
                 "/data/computed_size_date", _dateFormatter.FormatDate(DateTime.Now)
+            },
+            {
+                "/data/last_modified_date", Utils.FormatDatasetLastModifiedDate(DateTime.UtcNow)
             }
         };
         await UpdateMetadataAsync(dataPartitionId, metadataId, updates, cancellationToken);

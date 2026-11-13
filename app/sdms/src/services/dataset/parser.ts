@@ -78,7 +78,8 @@ export class DatasetParser {
                 req.headers.authorization, req.get(Config.USER_ID_HEADER_KEY_NAME));
         }
 
-        dataset.created_date = dataset.last_modified_date = new Date().toString();
+        const now = Utils.formatDatasetLastModifiedDate();
+        dataset.created_date = dataset.last_modified_date = now;
         dataset.gtags = req.body ? req.body.gtags : undefined;
 
         // Check the parameters
@@ -257,9 +258,6 @@ export class DatasetParser {
         // status
         Params.checkString(req.body.status, 'status', false);
         input.dataset.status = req.body.status;
-
-        // remove the parameter... this field should always update when patch
-        input.dataset.last_modified_date = new Date().toString();
 
         // Patch newName
         input.newName = req.body.dataset_new_name;

@@ -679,12 +679,13 @@ export class TestDatasetSVC {
             expReq.query.close = 'Wid';
             
             this.sandbox.stub(lockerInstance, 'unlock').resolves({ id: 'id', cnt: 1 });
-            this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, undefined]);
+            this.sandbox.stub(DatasetDAO, 'get').resolves([this.dataset, { key: 'dataset_key' }]);
             this.sandbox.stub(Auth, 'isWriteAuthorized').resolves(true);
             this.sandbox.stub(DatasetAuth, 'getAuthGroups').returns([]);
             this.sandbox.stub(DESUtils, 'getDataPartitionID');
             this.sandbox.stub(lockerInstance, 'acquireMutex').resolves();
             this.sandbox.stub(lockerInstance, 'releaseMutex').resolves();
+            this.sandbox.stub(DatasetDAO, 'update').resolves();
 
             let postProcessorStub = this.sandbox.createStubInstance<IDatasetPostProcessor>(DefaultDatasetPostProcessor);
             const onDatasetCloseStub = postProcessorStub.onDatasetClose.resolves();

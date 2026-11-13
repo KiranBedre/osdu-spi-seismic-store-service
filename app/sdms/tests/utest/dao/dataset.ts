@@ -20,6 +20,7 @@ import { RunQueryResponse } from '@google-cloud/datastore/build/src/query';
 import sinon from 'sinon';
 import { Config } from '../../../src/cloud';
 import { google } from '../../../src/cloud/providers';
+import { Utils } from '../../../src/shared';
 import { DatasetModel } from '../../../src/services/dataset';
 import { DatasetDAO } from '../../../src/services/dataset/dao';
 import { lockerInstance } from '../../../src/services/dataset/locker';
@@ -80,7 +81,13 @@ export class TestDataset {
 
 		Tx.test(async () => {
 			this.journal.save.resolves({} as never);
-			await DatasetDAO.register(this.journal, { key: { 'key': 'dataset_key' }, data: TestDataset.dataset });
+			const data = { ...TestDataset.dataset } as DatasetModel;
+			delete data.last_modified_date;
+			delete data.created_date;
+			await DatasetDAO.register(this.journal, { key: { 'key': 'dataset_key' }, data });
+			const saved = this.journal.save.firstCall.args[0];
+			Tx.checkTrue(saved.data.last_modified_date === Utils.formatDatasetLastModifiedDate());
+			Tx.checkTrue(saved.data.created_date === saved.data.last_modified_date);
 		});
 
 		Tx.test(async () => {
@@ -139,12 +146,37 @@ export class TestDataset {
 		Tx.sectionInit('update');
 
 		Tx.test(async () => {
+			const clock = sinon.useFakeTimers(new Date('2020-06-15T12:00:00.000Z'));
 			this.journal.save.resolves();
+			const dataset = {
+				...TestDataset.dataset,
+				last_modified_date: 'Wed Oct 09 2019 16:50:10 GMT+0000 (UTC)',
+				ctag: 'previous-ctag',
+			} as DatasetModel;
 			await DatasetDAO.update(
 				this.journal,
-				this.dataset,
+				dataset,
 				this.journal.createKey({ namespace: 'datasets', path: '324' })
 			);
+			const saved = this.journal.save.firstCall.args[0];
+			Tx.checkTrue(saved.data.last_modified_date === Utils.formatDatasetLastModifiedDate());
+			Tx.checkTrue(saved.data.last_modified_date !== 'Wed Oct 09 2019 16:50:10 GMT+0000 (UTC)');
+			Tx.checkTrue(saved.data.ctag !== 'previous-ctag');
+			clock.restore();
+		});
+
+		Tx.test(async () => {
+			const clock = sinon.useFakeTimers(new Date('2021-01-01T00:00:00.000Z'));
+			this.journal.save.resolves();
+			const dataset = {
+				...TestDataset.dataset,
+				last_modified_date: 'stale',
+			} as DatasetModel;
+			await DatasetDAO.updateAll(this.journal, [{ data: dataset, key: { key: 'k1' } }]);
+			const saved = this.journal.save.firstCall.args[0];
+			Tx.checkTrue(saved[0].data.last_modified_date === Utils.formatDatasetLastModifiedDate());
+			Tx.checkTrue(saved[0].data.last_modified_date !== 'stale');
+			clock.restore();
 		});
 	}
 

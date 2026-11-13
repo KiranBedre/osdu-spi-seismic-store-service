@@ -410,7 +410,7 @@ export class UtilityHandler {
         datasetTo.subproject = sdPathTo.subproject;
         datasetTo.name = sdPathTo.dataset;
         datasetTo.path = sdPathTo.path;
-        datasetTo.last_modified_date = new Date().toString();
+        datasetTo.last_modified_date = Utils.formatDatasetLastModifiedDate();
         // get the gcs account from the cloud provider
         datasetTo.gcsurl = await SeistoreFactory.build(
             Config.CLOUDPROVIDER).getDatasetStorageResource(tenant, subproject);

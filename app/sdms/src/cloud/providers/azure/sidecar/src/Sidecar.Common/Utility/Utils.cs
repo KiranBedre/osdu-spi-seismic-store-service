@@ -56,4 +56,15 @@ public class Utils
                 $"Invalid item: {gcsurl} Could not extract gcsurl in the format <container>/<folder name> ")
         };
     }
+
+    /// <summary>
+    /// Matches JavaScript <c>Date.prototype.toString()</c> in UTC for Azure collector incremental scans.
+    /// </summary>
+    public static string FormatDatasetLastModifiedDate(DateTime date)
+    {
+        var utc = date.ToUniversalTime();
+        return utc.ToString(
+            "ddd MMM dd yyyy HH:mm:ss 'GMT+0000 (Coordinated Universal Time)'",
+            System.Globalization.CultureInfo.InvariantCulture);
+    }
 }
