@@ -34,7 +34,8 @@ public class TaskQueueBackgroundServiceTests
     public async Task ShouldSwallowExceptionsAndStopOnlyIfCancelled()
     {
         // ARRANGE
-        var cts = new CancellationTokenSource();
+        using var service = _service;
+        using var cts = new CancellationTokenSource();
         _ = _workerMock.SetupSequence(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => ExecutionStatus.TaskNotFound)
             .Throws<ArithmeticException>(() => new("this exception should be logged and swallowed"))
@@ -47,8 +48,9 @@ public class TaskQueueBackgroundServiceTests
             });
 
         // ACT
-        _ = await Assert.ThrowsAsync<OperationCanceledException>(
-            () => _service.StartAsync(cts.Token));
+        await _service.StartAsync(cts.Token);
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => _service.ExecuteTask!.WaitAsync(TimeSpan.FromSeconds(10)));
 
         // ASSERT
         _workerMock.Verify(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()), Times.Exactly(5));
@@ -59,5 +61,51 @@ public class TaskQueueBackgroundServiceTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()
         ), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ShouldCancelAnActiveWorkerWhenStopped()
+    {
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _ = _workerMock.Setup(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()))
+            .Returns(async (CancellationToken token) =>
+            {
+                started.SetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+                return ExecutionStatus.TaskCompleted;
+            });
+
+        using (_service)
+        using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+        {
+            await _service.StartAsync(timeout.Token);
+            await started.Task.WaitAsync(timeout.Token);
+            await _service.StopAsync(timeout.Token);
+
+            Assert.True(_service.ExecuteTask!.IsCanceled);
+            _workerMock.Verify(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+    }
+
+    [Fact]
+    public async Task ShouldCancelIdleDelayWhenStopped()
+    {
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _ = _workerMock.Setup(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                started.SetResult();
+                return ExecutionStatus.TaskNotFound;
+            });
+        using var service = new TaskQueueBackgroundService<ITaskQueueWorker>(
+            _loggerMock.Object, _workerMock.Object, new() { DelayWhenTaskNotFound = TimeSpan.FromMinutes(1) });
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        await service.StartAsync(timeout.Token);
+        await started.Task.WaitAsync(timeout.Token);
+        await service.StopAsync(timeout.Token);
+
+        Assert.True(service.ExecuteTask!.IsCanceled);
+        _workerMock.Verify(m => m.HandleNextTaskAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -36,7 +36,7 @@ sdms_compile-and-unit-test:
 
 sdms_sidecar_compile-and-unit-test:
   needs: ['sdms_compile-and-unit-test']
-  image: mcr.microsoft.com/dotnet/sdk:9.0
+  image: mcr.microsoft.com/dotnet/sdk:10.0-noble
   stage: build
   before_script:
     - cd app/$SDMS_SERVICE/src/cloud/providers/azure/sidecar
