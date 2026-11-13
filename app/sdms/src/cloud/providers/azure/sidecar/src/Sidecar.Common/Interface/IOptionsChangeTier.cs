@@ -24,4 +24,5 @@ public interface IOptionsChangeTier :
     IOptionsStorageQueue,
     IOptionsRedisMsi
 {
+    bool EnableSmartTier { get; set; }
 }

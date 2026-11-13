@@ -15,7 +15,7 @@
         "@azure/cosmos": "^3.14.1",
         "@azure/identity": "^4.4.1",
         "@azure/keyvault-secrets": "^4.3.0",
-        "@azure/storage-blob": "^12.10.0",
+        "@azure/storage-blob": "^12.34.0",
         "@azure/storage-queue": "^12.15.0",
         "@google-cloud/datastore": "^9.2.1",
         "@google-cloud/logging-winston": "^6.0.0",
@@ -456,16 +456,17 @@
       }
     },
     "node_modules/@azure/core-auth": {
-      "version": "1.8.0",
-      "resolved": "https://registry.npmjs.org/@azure/core-auth/-/core-auth-1.8.0.tgz",
-      "integrity": "sha512-YvFMowkXzLbXNM11yZtVLhUCmuG0ex7JKOH366ipjmHBhL3vpDcPAeWF+jf0X+jVXwFqo3UhsWUq4kH0ZPdu/g==",
+      "version": "1.11.0",
+      "resolved": "https://registry.npmjs.org/@azure/core-auth/-/core-auth-1.11.0.tgz",
+      "integrity": "sha512-IUZydyTUkDnYdstOW9pFOOUQlBjAepK5teihDE3x6yxsPJs/hsAaaYpeGxdxrgtOiJbBKSjKW7MDk7AEhb4LRg==",
+      "license": "MIT",
       "dependencies": {
-        "@azure/abort-controller": "^2.0.0",
-        "@azure/core-util": "^1.1.0",
+        "@azure/abort-controller": "^2.1.2",
+        "@azure/core-util": "^1.13.0",
         "tslib": "^2.6.2"
       },
       "engines": {
-        "node": ">=18.0.0"
+        "node": ">=22.0.0"
       }
     },
     "node_modules/@azure/core-auth/node_modules/@azure/abort-controller": {
@@ -480,20 +481,21 @@
       }
     },
     "node_modules/@azure/core-client": {
-      "version": "1.9.2",
-      "resolved": "https://registry.npmjs.org/@azure/core-client/-/core-client-1.9.2.tgz",
-      "integrity": "sha512-kRdry/rav3fUKHl/aDLd/pDLcB+4pOFwPPTVEExuMyaI5r+JBbMWqRbCY1pn5BniDaU3lRxO9eaQ1AmSMehl/w==",
+      "version": "1.11.2",
+      "resolved": "https://registry.npmjs.org/@azure/core-client/-/core-client-1.11.2.tgz",
+      "integrity": "sha512-ajuIU1aMoTs/ERYrKnIqQrV5Vz3RL8mwDC5RdedIXUvR7pi6cWzeYmt0LfNz6+W91CuCO4WJG0zA6+PhU1X+hw==",
+      "license": "MIT",
       "dependencies": {
-        "@azure/abort-controller": "^2.0.0",
-        "@azure/core-auth": "^1.4.0",
-        "@azure/core-rest-pipeline": "^1.9.1",
-        "@azure/core-tracing": "^1.0.0",
-        "@azure/core-util": "^1.6.1",
-        "@azure/logger": "^1.0.0",
+        "@azure/abort-controller": "^2.1.2",
+        "@azure/core-auth": "^1.10.0",
+        "@azure/core-rest-pipeline": "^1.22.0",
+        "@azure/core-tracing": "^1.3.0",
+        "@azure/core-util": "^1.13.0",
+        "@azure/logger": "^1.3.0",
         "tslib": "^2.6.2"
       },
       "engines": {
-        "node": ">=18.0.0"
+        "node": ">=22.0.0"
       }
     },
     "node_modules/@azure/core-client/node_modules/@azure/abort-controller": {
@@ -571,56 +573,71 @@
       }
     },
     "node_modules/@azure/core-paging": {
-      "version": "1.5.0",
-      "resolved": "https://registry.npmjs.org/@azure/core-paging/-/core-paging-1.5.0.tgz",
-      "integrity": "sha512-zqWdVIt+2Z+3wqxEOGzR5hXFZ8MGKK52x4vFLw8n58pR6ZfKRx3EXYTxTaYxYHc/PexPUTyimcTWFJbji9Z6Iw==",
+      "version": "1.7.0",
+      "resolved": "https://registry.npmjs.org/@azure/core-paging/-/core-paging-1.7.0.tgz",
+      "integrity": "sha512-7GEAoIsaoBr6KELNRb8nypowCqvk8dnCHFCYg4XD4lOQGY2GqjQg5IhkRjyBFRO18CGSMq05PaNqSOE9GQro3g==",
+      "license": "MIT",
       "dependencies": {
-        "tslib": "^2.2.0"
-      },
-      "engines": {
-        "node": ">=14.0.0"
-      }
-    },
-    "node_modules/@azure/core-rest-pipeline": {
-      "version": "1.10.3",
-      "resolved": "https://registry.npmjs.org/@azure/core-rest-pipeline/-/core-rest-pipeline-1.10.3.tgz",
-      "integrity": "sha512-AMQb0ttiGJ0MIV/r+4TVra6U4+90mPeOveehFnrqKlo7dknPJYdJ61wOzYJXJjDxF8LcCtSogfRelkq+fCGFTw==",
-      "dependencies": {
-        "@azure/abort-controller": "^1.0.0",
-        "@azure/core-auth": "^1.4.0",
-        "@azure/core-tracing": "^1.0.1",
-        "@azure/core-util": "^1.3.0",
-        "@azure/logger": "^1.0.0",
-        "form-data": "^4.0.4",
-        "http-proxy-agent": "^5.0.0",
-        "https-proxy-agent": "^5.0.0",
-        "tslib": "^2.2.0"
-      },
-      "engines": {
-        "node": ">=14.0.0"
-      }
-    },
-    "node_modules/@azure/core-tracing": {
-      "version": "1.0.1",
-      "resolved": "https://registry.npmjs.org/@azure/core-tracing/-/core-tracing-1.0.1.tgz",
-      "integrity": "sha512-I5CGMoLtX+pI17ZdiFJZgxMJApsK6jjfm85hpgp3oazCdq5Wxgh4wMr7ge/TTWW1B5WBuvIOI1fMU/FrOAMKrw==",
-      "dependencies": {
-        "tslib": "^2.2.0"
-      },
-      "engines": {
-        "node": ">=12.0.0"
-      }
-    },
-    "node_modules/@azure/core-util": {
-      "version": "1.10.0",
-      "resolved": "https://registry.npmjs.org/@azure/core-util/-/core-util-1.10.0.tgz",
-      "integrity": "sha512-dqLWQsh9Nro1YQU+405POVtXnwrIVqPyfUzc4zXCbThTg7+vNNaiMkwbX9AMXKyoFYFClxmB3s25ZFr3+jZkww==",
-      "dependencies": {
-        "@azure/abort-controller": "^2.0.0",
         "tslib": "^2.6.2"
       },
       "engines": {
-        "node": ">=18.0.0"
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@azure/core-rest-pipeline": {
+      "version": "1.25.1",
+      "resolved": "https://registry.npmjs.org/@azure/core-rest-pipeline/-/core-rest-pipeline-1.25.1.tgz",
+      "integrity": "sha512-fTIA3CAm/cdODqiXkO6jYOIkU2Ylld7vq65KGc70gTwl12sLQsC8v7I5t6tp2N2CfUONzZBXyeFw7KEu6Ks2zg==",
+      "license": "MIT",
+      "dependencies": {
+        "@azure/abort-controller": "^2.1.2",
+        "@azure/core-auth": "^1.10.0",
+        "@azure/core-tracing": "^1.3.0",
+        "@azure/core-util": "^1.13.0",
+        "@azure/logger": "^1.3.0",
+        "@typespec/ts-http-runtime": "^0.3.10",
+        "tslib": "^2.6.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@azure/core-rest-pipeline/node_modules/@azure/abort-controller": {
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/@azure/abort-controller/-/abort-controller-2.2.0.tgz",
+      "integrity": "sha512-fNAjWnA/nZ2jz31kxR/AqRaUT8ewHBw/WuBIosK0moMy1C9e5ValbDfFdIxJzVOOYaYkV/b2F1S4H/aHiqfVQg==",
+      "license": "MIT",
+      "dependencies": {
+        "tslib": "^2.6.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@azure/core-tracing": {
+      "version": "1.4.0",
+      "resolved": "https://registry.npmjs.org/@azure/core-tracing/-/core-tracing-1.4.0.tgz",
+      "integrity": "sha512-eGwxD0AtncrxeBM4tG8R55Pc3rdX1hNW2WibJAgYpCVA6E93mvvVH+LcssoVjOBrSKWS55yEIHsk0X8ctHmfOQ==",
+      "license": "MIT",
+      "dependencies": {
+        "tslib": "^2.6.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@azure/core-util": {
+      "version": "1.14.0",
+      "resolved": "https://registry.npmjs.org/@azure/core-util/-/core-util-1.14.0.tgz",
+      "integrity": "sha512-9n2pWK61veAuN0V20t9lOuoV4CFMdyAZ1ygZzvBGk/pBBJRib/PjL9PLXa/aI2CcPpyHfqVsxxqLCYl6uZlfDw==",
+      "license": "MIT",
+      "dependencies": {
+        "@azure/abort-controller": "^2.1.2",
+        "@typespec/ts-http-runtime": "^0.3.0",
+        "tslib": "^2.6.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
       }
     },
     "node_modules/@azure/core-util/node_modules/@azure/abort-controller": {
@@ -632,6 +649,19 @@
       },
       "engines": {
         "node": ">=18.0.0"
+      }
+    },
+    "node_modules/@azure/core-xml": {
+      "version": "1.6.1",
+      "resolved": "https://registry.npmjs.org/@azure/core-xml/-/core-xml-1.6.1.tgz",
+      "integrity": "sha512-u+SvC+010CAdbqfGJki2Ppk8LVReOpSRM/xbNqHe53IXgXEWkq4lJkCw3cBvHN8OtGAusQ2eI/AGfFmreaHFRw==",
+      "license": "MIT",
+      "dependencies": {
+        "fast-xml-parser": "^5.5.9",
+        "tslib": "^2.8.1"
+      },
+      "engines": {
+        "node": ">=22.0.0"
       }
     },
     "node_modules/@azure/cosmos": {
@@ -703,14 +733,16 @@
       }
     },
     "node_modules/@azure/logger": {
-      "version": "1.0.4",
-      "resolved": "https://registry.npmjs.org/@azure/logger/-/logger-1.0.4.tgz",
-      "integrity": "sha512-ustrPY8MryhloQj7OWGe+HrYx+aoiOxzbXTtgblbV3xwCqpzUK36phH3XNHQKj3EPonyFUuDTfR3qFhTEAuZEg==",
+      "version": "1.4.0",
+      "resolved": "https://registry.npmjs.org/@azure/logger/-/logger-1.4.0.tgz",
+      "integrity": "sha512-rbAE25KUfjU/s3XHUdJgceoCP5dEOpMx85J04kF+QMdta73XkuG9JGHHinch+XIoKpBdqljin+KqURpJriSzLA==",
+      "license": "MIT",
       "dependencies": {
-        "tslib": "^2.2.0"
+        "@typespec/ts-http-runtime": "^0.3.0",
+        "tslib": "^2.6.2"
       },
       "engines": {
-        "node": ">=14.0.0"
+        "node": ">=22.0.0"
       }
     },
     "node_modules/@azure/msal-browser": {
@@ -762,33 +794,105 @@
       }
     },
     "node_modules/@azure/storage-blob": {
-      "version": "12.14.0",
-      "resolved": "https://registry.npmjs.org/@azure/storage-blob/-/storage-blob-12.14.0.tgz",
-      "integrity": "sha512-g8GNUDpMisGXzBeD+sKphhH5yLwesB4JkHr1U6be/X3F+cAMcyGLPD1P89g2M7wbEtUJWoikry1rlr83nNRBzg==",
+      "version": "12.34.0",
+      "resolved": "https://registry.npmjs.org/@azure/storage-blob/-/storage-blob-12.34.0.tgz",
+      "integrity": "sha512-cXDTCAMwDx8Ng9yUe82kOOd2kPnZ8AQqe4FkLMcpaQ3Mvr3/PXVdvRhyP0FtY5/U5Oh6JGk3EcEibaFOymRLFw==",
+      "license": "MIT",
       "dependencies": {
-        "@azure/abort-controller": "^1.0.0",
-        "@azure/core-http": "^3.0.0",
+        "@azure/abort-controller": "^2.1.2",
+        "@azure/core-auth": "^1.9.0",
+        "@azure/core-client": "^1.9.3",
+        "@azure/core-http-compat": "^2.2.0",
         "@azure/core-lro": "^2.2.0",
-        "@azure/core-paging": "^1.1.1",
-        "@azure/core-tracing": "1.0.0-preview.13",
-        "@azure/logger": "^1.0.0",
+        "@azure/core-paging": "^1.6.2",
+        "@azure/core-rest-pipeline": "^1.19.1",
+        "@azure/core-tracing": "^1.2.0",
+        "@azure/core-util": "^1.11.0",
+        "@azure/core-xml": "^1.4.5",
+        "@azure/logger": "^1.1.4",
+        "@azure/storage-common": "^12.5.0",
+        "apache-arrow": "^21.1.0",
         "events": "^3.0.0",
-        "tslib": "^2.2.0"
+        "tslib": "^2.8.1"
       },
       "engines": {
-        "node": ">=14.0.0"
+        "node": ">=22.0.0"
       }
     },
-    "node_modules/@azure/storage-blob/node_modules/@azure/core-tracing": {
-      "version": "1.0.0-preview.13",
-      "resolved": "https://registry.npmjs.org/@azure/core-tracing/-/core-tracing-1.0.0-preview.13.tgz",
-      "integrity": "sha512-KxDlhXyMlh2Jhj2ykX6vNEU0Vou4nHr025KoSEiz7cS3BNiHNaZcdECk/DmLkEB0as5T7b/TpRcehJ5yV6NeXQ==",
+    "node_modules/@azure/storage-blob/node_modules/@azure/abort-controller": {
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/@azure/abort-controller/-/abort-controller-2.2.0.tgz",
+      "integrity": "sha512-fNAjWnA/nZ2jz31kxR/AqRaUT8ewHBw/WuBIosK0moMy1C9e5ValbDfFdIxJzVOOYaYkV/b2F1S4H/aHiqfVQg==",
+      "license": "MIT",
       "dependencies": {
-        "@opentelemetry/api": "^1.0.1",
-        "tslib": "^2.2.0"
+        "tslib": "^2.6.2"
       },
       "engines": {
-        "node": ">=12.0.0"
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@azure/storage-blob/node_modules/@azure/core-http-compat": {
+      "version": "2.5.0",
+      "resolved": "https://registry.npmjs.org/@azure/core-http-compat/-/core-http-compat-2.5.0.tgz",
+      "integrity": "sha512-BoSmXPx2er1Ai+wKlDvj29jIQespCNBwEmKyZVHO2kEFsWbGjAjwMCGzug3DJM5/QYIV3vej0S1zcU5bq9fa8w==",
+      "license": "MIT",
+      "dependencies": {
+        "@azure/abort-controller": "^2.1.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "peerDependencies": {
+        "@azure/core-client": "^1.10.0",
+        "@azure/core-rest-pipeline": "^1.22.0"
+      }
+    },
+    "node_modules/@azure/storage-common": {
+      "version": "12.5.0",
+      "resolved": "https://registry.npmjs.org/@azure/storage-common/-/storage-common-12.5.0.tgz",
+      "integrity": "sha512-bttzuhQiCIwrkzjPDA+AtAR7dg19L/CC6ztcqJ5LfvWpXuys9mHp0UQ0udYnoUvv9SCT9KTR5kqFvFr0e6k0lQ==",
+      "license": "MIT",
+      "dependencies": {
+        "@azure/abort-controller": "^2.1.2",
+        "@azure/core-auth": "^1.9.0",
+        "@azure/core-http-compat": "^2.4.0",
+        "@azure/core-rest-pipeline": "^1.24.0",
+        "@azure/core-tracing": "^1.2.0",
+        "@azure/core-util": "^1.11.0",
+        "@azure/logger": "^1.1.4",
+        "events": "^3.3.0",
+        "tslib": "^2.8.1"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@azure/storage-common/node_modules/@azure/abort-controller": {
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/@azure/abort-controller/-/abort-controller-2.2.0.tgz",
+      "integrity": "sha512-fNAjWnA/nZ2jz31kxR/AqRaUT8ewHBw/WuBIosK0moMy1C9e5ValbDfFdIxJzVOOYaYkV/b2F1S4H/aHiqfVQg==",
+      "license": "MIT",
+      "dependencies": {
+        "tslib": "^2.6.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@azure/storage-common/node_modules/@azure/core-http-compat": {
+      "version": "2.5.0",
+      "resolved": "https://registry.npmjs.org/@azure/core-http-compat/-/core-http-compat-2.5.0.tgz",
+      "integrity": "sha512-BoSmXPx2er1Ai+wKlDvj29jIQespCNBwEmKyZVHO2kEFsWbGjAjwMCGzug3DJM5/QYIV3vej0S1zcU5bq9fa8w==",
+      "license": "MIT",
+      "dependencies": {
+        "@azure/abort-controller": "^2.1.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "peerDependencies": {
+        "@azure/core-client": "^1.10.0",
+        "@azure/core-rest-pipeline": "^1.22.0"
       }
     },
     "node_modules/@azure/storage-queue": {
@@ -2880,6 +2984,18 @@
         "url": "https://paulmillr.com/funding/"
       }
     },
+    "node_modules/@nodable/entities": {
+      "version": "3.1.0",
+      "resolved": "https://registry.npmjs.org/@nodable/entities/-/entities-3.1.0.tgz",
+      "integrity": "sha512-LsS/DjHr+uDM647Gru/cA8+J3a3HfhttwCKLyuoyN7yXTFCxKBtSgMQBvrW9yNPa2/zDRUNuGPaH5QUFoa4arQ==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/nodable"
+        }
+      ],
+      "license": "MIT"
+    },
     "node_modules/@nodelib/fs.scandir": {
       "version": "2.1.5",
       "resolved": "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz",
@@ -4026,6 +4142,57 @@
         "url": "https://opencollective.com/eslint"
       }
     },
+    "node_modules/@typespec/ts-http-runtime": {
+      "version": "0.3.10",
+      "resolved": "https://registry.npmjs.org/@typespec/ts-http-runtime/-/ts-http-runtime-0.3.10.tgz",
+      "integrity": "sha512-vddvvtZ7sejSlCv+OIkn2ztjB1O31Fc2JsxI/YK725r3elXXlF/J3o3lbXJFRhoeWRWK1tjdZ+GTi6Fdtrp+EA==",
+      "license": "MIT",
+      "dependencies": {
+        "http-proxy-agent": "^9.1.0",
+        "https-proxy-agent": "^9.1.0",
+        "tslib": "^2.6.2"
+      },
+      "engines": {
+        "node": ">=22.0.0"
+      }
+    },
+    "node_modules/@typespec/ts-http-runtime/node_modules/agent-base": {
+      "version": "9.0.0",
+      "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-9.0.0.tgz",
+      "integrity": "sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 20"
+      }
+    },
+    "node_modules/@typespec/ts-http-runtime/node_modules/http-proxy-agent": {
+      "version": "9.1.0",
+      "resolved": "https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-9.1.0.tgz",
+      "integrity": "sha512-2NxoveTT58mjYT4n3RPTEfCZGLMbidoO8XEieXfpSYxu+PQJ1qpx4ypwH6N+uF9twBPIvRRgvkvW5HUTYWENig==",
+      "license": "MIT",
+      "dependencies": {
+        "agent-base": "9.0.0",
+        "debug": "^4.3.4",
+        "proxy-agent-negotiate": "1.1.0"
+      },
+      "engines": {
+        "node": ">= 20"
+      }
+    },
+    "node_modules/@typespec/ts-http-runtime/node_modules/https-proxy-agent": {
+      "version": "9.1.0",
+      "resolved": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-9.1.0.tgz",
+      "integrity": "sha512-ag87y7cJJ9/3+GxFr8Oy4O5faDsGRGnBGsJj/YjOSsSx/5eadKLYTMPlzuR6obgoCDDm0abAAZitXXQkMOPSpA==",
+      "license": "MIT",
+      "dependencies": {
+        "agent-base": "9.0.0",
+        "debug": "^4.3.4",
+        "proxy-agent-negotiate": "1.1.0"
+      },
+      "engines": {
+        "node": ">= 20"
+      }
+    },
     "node_modules/@ungap/promise-all-settled": {
       "version": "1.1.2",
       "resolved": "https://registry.npmjs.org/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz",
@@ -4243,6 +4410,42 @@
       },
       "funding": {
         "url": "https://github.com/sponsors/jonschlinkert"
+      }
+    },
+    "node_modules/anynum": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/anynum/-/anynum-1.0.1.tgz",
+      "integrity": "sha512-N6//FLET/tXYNM/F6ABca1oH6fWB+KlTt909Le28WMDBk8oaT4vY17DCrwg2MvmuqUKt3Ni4N5dGJ/EoBgcO6A==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/NaturalIntelligence"
+        }
+      ],
+      "license": "MIT"
+    },
+    "node_modules/apache-arrow": {
+      "version": "21.2.0",
+      "resolved": "https://registry.npmjs.org/apache-arrow/-/apache-arrow-21.2.0.tgz",
+      "integrity": "sha512-Hxe6Agq26gQOM954qpzYSllJBPJl+e16U5CkfuMUhLrNba+5nKkttIVlflaovN6oaTratqMGAO8H5u/aNhmHWQ==",
+      "license": "Apache-2.0",
+      "dependencies": {
+        "@types/node": "^25.2.0",
+        "flatbuffers": "^25.1.24",
+        "json-with-bigint": "^3.5.3",
+        "tslib": "^2.6.2"
+      },
+      "bin": {
+        "arrow2csv": "bin/arrow2csv.js"
+      }
+    },
+    "node_modules/apache-arrow/node_modules/@types/node": {
+      "version": "25.9.9",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-25.9.9.tgz",
+      "integrity": "sha512-b4e2xxj/yMeT2hNlD6x7zNFiQK2Dlmkb9CQ6v3/1G2RezKN4YS2lcEv8lzGm1mhs4f2lM4yNAMI/zUDBZBBt7w==",
+      "license": "MIT",
+      "dependencies": {
+        "undici-types": ">=7.24.0 <7.24.7"
       }
     },
     "node_modules/append-transform": {
@@ -6911,6 +7114,45 @@
       ],
       "license": "BSD-3-Clause"
     },
+    "node_modules/fast-xml-builder": {
+      "version": "1.3.1",
+      "resolved": "https://registry.npmjs.org/fast-xml-builder/-/fast-xml-builder-1.3.1.tgz",
+      "integrity": "sha512-pIM/1n3ntFXKYrUZwW7QCK0gAW7XY+wzj1YMIV3tLDvPj/V+zTGJK5e3/4WJfwj0qWw2ElNXiTixda/R+3YSug==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/NaturalIntelligence"
+        }
+      ],
+      "license": "MIT",
+      "dependencies": {
+        "path-expression-matcher": "^1.6.2",
+        "xml-naming": "^0.3.0"
+      }
+    },
+    "node_modules/fast-xml-parser": {
+      "version": "5.12.0",
+      "resolved": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-5.12.0.tgz",
+      "integrity": "sha512-/pXxRBtwxY9w8z7YbgsvIPPcPvFDsTbIkWwTQJhzNJPokj+TbN6ftmcv4j/pEQDvOCNnKGDzuk5Bo2oogIOiFg==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/NaturalIntelligence"
+        }
+      ],
+      "license": "MIT",
+      "dependencies": {
+        "@nodable/entities": "^3.1.0",
+        "fast-xml-builder": "^1.3.1",
+        "is-unsafe": "^2.0.3",
+        "path-expression-matcher": "^1.6.2",
+        "strnum": "^2.5.1",
+        "xml-naming": "^0.3.0"
+      },
+      "bin": {
+        "fxparser": "src/cli/cli.js"
+      }
+    },
     "node_modules/fastq": {
       "version": "1.17.1",
       "resolved": "https://registry.npmjs.org/fastq/-/fastq-1.17.1.tgz",
@@ -7144,6 +7386,12 @@
       "resolved": "https://registry.npmjs.org/flat-util/-/flat-util-1.1.9.tgz",
       "integrity": "sha512-BOTMw/6rbbxVjv5JQvwgGMc2/6wWGd2VeyTvnzvvE49VRjS0tTxLbry/QVP1yPw8SaAOBYsnixmzruXoqjdUHA==",
       "dev": true
+    },
+    "node_modules/flatbuffers": {
+      "version": "25.9.23",
+      "resolved": "https://registry.npmjs.org/flatbuffers/-/flatbuffers-25.9.23.tgz",
+      "integrity": "sha512-MI1qs7Lo4Syw0EOzUl0xjs2lsoeqFku44KpngfIduHBYvzm8h2+7K8YMQh1JtVVVrUvhLpNwqVi4DERegUJhPQ==",
+      "license": "Apache-2.0"
     },
     "node_modules/flatted": {
       "version": "3.4.2",
@@ -8819,6 +9067,18 @@
         "url": "https://github.com/sponsors/sindresorhus"
       }
     },
+    "node_modules/is-unsafe": {
+      "version": "2.0.3",
+      "resolved": "https://registry.npmjs.org/is-unsafe/-/is-unsafe-2.0.3.tgz",
+      "integrity": "sha512-ZBllczCCO267vgdFb6Tq3pv+LhHaCiGMdr+ZsuL+OopruAg7S+3ZDs1vD0RPC0uSrkjzbraxaGjtX1YBxjPeFQ==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/NaturalIntelligence"
+        }
+      ],
+      "license": "MIT"
+    },
     "node_modules/is-utf8": {
       "version": "0.2.1",
       "resolved": "https://registry.npmjs.org/is-utf8/-/is-utf8-0.2.1.tgz",
@@ -9172,6 +9432,12 @@
       "resolved": "https://registry.npmjs.org/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz",
       "integrity": "sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==",
       "dev": true
+    },
+    "node_modules/json-with-bigint": {
+      "version": "3.5.12",
+      "resolved": "https://registry.npmjs.org/json-with-bigint/-/json-with-bigint-3.5.12.tgz",
+      "integrity": "sha512-uwbF/wSSuOgC7qqlq27Xp5B6a2MHVug3t0idZdTqu0JnlFvgJuH7ju+KAk/J06C7GfhoYy2gnb9wz2INqcne7w==",
+      "license": "MIT"
     },
     "node_modules/json5": {
       "version": "2.2.3",
@@ -11063,6 +11329,21 @@
         "node": ">=8"
       }
     },
+    "node_modules/path-expression-matcher": {
+      "version": "1.6.2",
+      "resolved": "https://registry.npmjs.org/path-expression-matcher/-/path-expression-matcher-1.6.2.tgz",
+      "integrity": "sha512-enSlaiat05iasnzmgNxRj8reFdj3puY2QpNgP1aPIaVfT6nn9ICuPoFlKHk8EN22HcwewshO+mN2DGbkCEOtqQ==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/NaturalIntelligence"
+        }
+      ],
+      "license": "MIT",
+      "engines": {
+        "node": ">=14.0.0"
+      }
+    },
     "node_modules/path-is-absolute": {
       "version": "1.0.1",
       "resolved": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz",
@@ -11534,6 +11815,23 @@
       },
       "engines": {
         "node": ">= 0.10"
+      }
+    },
+    "node_modules/proxy-agent-negotiate": {
+      "version": "1.1.0",
+      "resolved": "https://registry.npmjs.org/proxy-agent-negotiate/-/proxy-agent-negotiate-1.1.0.tgz",
+      "integrity": "sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 20"
+      },
+      "peerDependencies": {
+        "kerberos": "^2.0.0"
+      },
+      "peerDependenciesMeta": {
+        "kerberos": {
+          "optional": true
+        }
       }
     },
     "node_modules/proxy-from-env": {
@@ -12728,6 +13026,21 @@
       "integrity": "sha512-g45ZOGzHDMe2bdYMdIvdAfCQkCTDMGBazSw1ypMowwGIee7ZQ5dU0rBJ8Jqgl+jAKIv4dbeE1jscZq9wid1Tkw==",
       "dev": true
     },
+    "node_modules/strnum": {
+      "version": "2.5.1",
+      "resolved": "https://registry.npmjs.org/strnum/-/strnum-2.5.1.tgz",
+      "integrity": "sha512-UM4nTLWzQiDBseVxUGxN0wJzIk0UU89Qi7pKXz9qISo+lhviJikTuikBsK/oFRlpvYHvSdz0TVoLyQ+sEpYwxA==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/NaturalIntelligence"
+        }
+      ],
+      "license": "MIT",
+      "dependencies": {
+        "anynum": "^1.0.1"
+      }
+    },
     "node_modules/stubs": {
       "version": "3.0.0",
       "resolved": "https://registry.npmjs.org/stubs/-/stubs-3.0.0.tgz",
@@ -13137,9 +13450,10 @@
       }
     },
     "node_modules/tslib": {
-      "version": "2.7.0",
-      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.7.0.tgz",
-      "integrity": "sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA=="
+      "version": "2.9.1",
+      "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.9.1.tgz",
+      "integrity": "sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==",
+      "license": "0BSD"
     },
     "node_modules/tunnel": {
       "version": "0.0.6",
@@ -13288,6 +13602,12 @@
       "resolved": "https://registry.npmjs.org/underscore/-/underscore-1.12.1.tgz",
       "integrity": "sha512-hEQt0+ZLDVUMhebKxL4x1BTtDY7bavVofhZ9KZ4aI26X9SRaE+Y3m83XUL1UP2jn8ynjndwCCpEHdUG+9pP1Tw==",
       "dev": true
+    },
+    "node_modules/undici-types": {
+      "version": "7.24.6",
+      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-7.24.6.tgz",
+      "integrity": "sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==",
+      "license": "MIT"
     },
     "node_modules/universal-user-agent": {
       "version": "6.0.0",
@@ -13672,6 +13992,21 @@
       "resolved": "https://registry.npmjs.org/xml/-/xml-1.0.1.tgz",
       "integrity": "sha512-huCv9IH9Tcf95zuYCsQraZtWnJvBtLVE0QHMOs8bWyZAFZNDcYjsPq1nEx8jKA9y+Beo9v+7OBPRisQTjinQMw==",
       "dev": true
+    },
+    "node_modules/xml-naming": {
+      "version": "0.3.0",
+      "resolved": "https://registry.npmjs.org/xml-naming/-/xml-naming-0.3.0.tgz",
+      "integrity": "sha512-ghig2TBE/H11aOVgmahA3MhimvkBr6JIYknH/Dhdk10nXwdbIqBJsbfMxpvFPG8bAw77gN29aQWvKpmVoPlvPQ==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/NaturalIntelligence"
+        }
+      ],
+      "license": "MIT",
+      "engines": {
+        "node": ">=16.0.0"
+      }
     },
     "node_modules/xml2js": {
       "version": "0.5.0",

@@ -30,21 +30,38 @@ public class BulkChangeTierWorker(
     ILogger<BulkChangeTierWorker> logger,
     IChangeTierTaskStatusStorage changeTierTasks,
     IMetadataTierUpdater metadataTierUpdater,
-    IBlobClientFactory blobClientFactory) : IBulkChangeTierWorker
+    IBlobClientFactory blobClientFactory,
+    IOptionsChangeTier options) : IBulkChangeTierWorker
 {
     private readonly ILogger<BulkChangeTierWorker> _logger = logger;
     private readonly IChangeTierTaskStatusStorage _changeTierTasks = changeTierTasks;
     private readonly IMetadataTierUpdater _metadataTierUpdater = metadataTierUpdater;
     private readonly IBlobClientFactory _blobClientFactory = blobClientFactory;
+    private readonly IOptionsChangeTier _options = options;
     private AccessTier _tier;
     private bool _foundErrors = false;
 
     public async Task<bool> RunBulkChangeTierAsync(string dataPartitionId, string operationId, string tier, List<ChangeTierItem> itemsToChangeTier, CancellationToken ct)
     {
+        if (!StorageTiers.IsSupported(tier, _options.EnableSmartTier))
+        {
+            var supported = string.Join(", ", StorageTiers.GetSupportedTiers(_options.EnableSmartTier));
+            _logger.LogError(
+                "Storage tier '{Tier}' is not supported. Available options: {SupportedTiers}", tier, supported);
+            await _changeTierTasks.UpdateFieldStatusOperationAsync(
+                operationId, Constants.ChangeTierOperationStatus.STATUS, Status.CompletedWithErrors.ToString(), ct);
+            await _changeTierTasks.UpdateFieldStatusOperationAsync(
+                operationId,
+                Constants.ChangeTierOperationStatus.STATUS_DESCRIPTION,
+                $"Unsupported storage tier. Available options: {supported}",
+                ct);
+            return true;
+        }
+
         var blobClient = await _blobClientFactory.GetBlobClientAsync(dataPartitionId, ct);
 
         _foundErrors = false;
-        _tier = tier;
+        _tier = new AccessTier(StorageTiers.TryGetCanonicalTier(tier)!);
 
         _logger.LogInformation("Started blob change tier, it will change tier of {Count} items", itemsToChangeTier.Count);
         await _changeTierTasks.UpdateFieldStatusOperationAsync(operationId, Constants.ChangeTierOperationStatus.STATUS, Status.InProgress.ToString(), ct);
@@ -151,7 +168,9 @@ public class BulkChangeTierWorker(
     private async Task ChangeBlobsTierInBulkAsync(IBlobClient blobClient, string containerName, string? virtualFolderName, BlobContainerClient containerClient, List<string> errors, CancellationToken ct)
     {
         var batchBlock = CreateBatchForBlobsToChangeTier(blobClient, errors, out var processItems, ct);
-        var blobs = virtualFolderName is not null ? containerClient.GetBlobsAsync(prefix: virtualFolderName + "/", cancellationToken: ct) : containerClient.GetBlobsAsync(cancellationToken: ct);
+        var blobs = virtualFolderName is not null
+            ? containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, virtualFolderName + "/", ct)
+            : containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: null, cancellationToken: ct);
 
         await foreach (var pages in blobs.AsPages().WithCancellation(ct))
         {

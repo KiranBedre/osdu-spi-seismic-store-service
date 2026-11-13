@@ -68,6 +68,7 @@ configuration:
       SIDECAR_ENABLE_QUERY: "true"
       SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
       FEATURE_FLAG_ENABLE_CHANGE_TIER: "true"
+      FEATURE_FLAG_ENABLE_SMART_TIER: "false"
       SMDS_DELETION_QUEUE: "sdms-queue-bulkdelete"
       FEATURE_FLAG_ENABLE_BULK_DELETE: "true"
       FEATURE_FLAG_TIER_STORAGE_BLOCK: "true"
@@ -174,6 +175,7 @@ configuration:
       SDMS_CHANGE_TIER_QUEUE: "sdms-queue-changetier"
       SDMS_REDIS_QUEUE_PORT: "6380"
       SDMS_REDIS_LOCKS_PORT: "6380"
+      FEATURE_FLAG_ENABLE_SMART_TIER: "false"
       AZURE_MSI_ISENABLED: "false"
       REDIS_CLIENT_ID: "{{ .Values.azure.identity_id }}"
   # #####################################

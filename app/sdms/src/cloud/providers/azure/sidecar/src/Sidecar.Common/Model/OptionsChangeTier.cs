@@ -88,4 +88,7 @@ public class OptionsChangeTier : IOptionsChangeTier
 
     [Option("syncTimeoutMilliseconds", Required = false, Default = "5000", HelpText = "Specifies the time in milliseconds that the system should allow for synchronous operations")]
     public string SyncTimeoutMilliseconds { get; set; }
+
+    [Option("enableSmartTier", Required = false, Default = false, HelpText = "Enable Azure Smart storage tier (FEATURE_FLAG_ENABLE_SMART_TIER)")]
+    public bool EnableSmartTier { get; set; }
 }

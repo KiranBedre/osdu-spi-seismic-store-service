@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Sidecar.Common.Utility;
@@ -24,7 +23,7 @@ OptionsQueryRunner ConfigureOptions()
     if (string.IsNullOrEmpty(opts.AppInsightsInstrumentationKey))
     {
         var url = opts.KeyVaultUrl.StartsWith("https") ? opts.KeyVaultUrl : $"https://{opts.KeyVaultUrl}.vault.azure.net";
-        var secretClient = new SecretClient(new Uri(url), new DefaultAzureCredential());
+        var secretClient = new SecretClient(new Uri(url), AzureCredentialFactory.CreateDefault());
         var secretResponse = secretClient.GetSecretAsync(Constants.SecretNames.APP_INSIGHTS_INSTRUMENTATION_KEY).Result;
         opts.AppInsightsInstrumentationKey = secretResponse.Value.Value;
     }

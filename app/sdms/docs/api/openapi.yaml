@@ -1306,7 +1306,7 @@ paths:
       summary: Retrieve the list of supported storage tiers
       description: |
         <ul>
-          <li>Return the list of storage tiers</li>
+          <li>Return the list of storage tiers. Azure returns Hot, Cool, and Cold; Smart is included when FEATURE_FLAG_ENABLE_SMART_TIER is enabled.</li>
           <li>Required roles: subproject.admin, subproject.viewer</li>
         </ul>
       operationId: utility-storage-tiers
@@ -2450,13 +2450,18 @@ paths:
           schema:
             type: string
             default: "/a/b/c/"
-        - description: "The target storage tier class: Hot, Cool, Cold"
+        - description: "The target storage tier class: Hot, Cool, Cold, or Smart (Smart requires FEATURE_FLAG_ENABLE_SMART_TIER)"
           in: query
           name: tier
           required: true
           schema:
             type: string
             default: "Hot"
+            enum:
+              - Hot
+              - Cool
+              - Cold
+              - Smart
       requestBody:
         content:
           application/json:

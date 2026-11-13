@@ -66,7 +66,7 @@
     "@azure/cosmos": "^3.14.1",
     "@azure/identity": "^4.4.1",
     "@azure/keyvault-secrets": "^4.3.0",
-    "@azure/storage-blob": "^12.10.0",
+    "@azure/storage-blob": "^12.34.0",
     "@azure/storage-queue": "^12.15.0",
     "@google-cloud/datastore": "^9.2.1",
     "@google-cloud/logging-winston": "^6.0.0",
