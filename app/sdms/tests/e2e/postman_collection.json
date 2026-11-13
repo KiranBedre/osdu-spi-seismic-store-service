@@ -32474,6 +32474,422 @@
 					"response": []
 				},
 				{
+					"name": "CP CROSS SUBPROJECT REGISTER: Create subproject cpCrossSubproject",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function makeID_Subproject(length) {",
+									"   var result           = '';",
+									"   var characters       = 'abcdefghijklmnopqrstuvwxyz';",
+									"   var charactersLength = characters.length;",
+									"   for ( var i = 0; i < length - 1; i++ ) {",
+									"      result += characters.charAt(Math.floor(Math.random() * charactersLength));",
+									"   }",
+									"   return result;",
+									"}",
+									"",
+									"pm.environment.set(\"cpCrossSubproject\", makeID_Subproject(16));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if ( (pm.response.code != 200) && (pm.response.code != 409)) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200 or 409\", function () {",
+									"        pm.expect(pm.response.code).to.be.oneOf([200,409]);",
+									"    });",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "******"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "ltag",
+								"value": "{{legaltag01}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"storage_class\": \"REGIONAL\",\n  \"storage_location\": \"US-CENTRAL1\"\n} \n"
+						},
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{cpCrossSubproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{cpCrossSubproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CP COPY X1 TO CROSS-SUBPROJECT: Copy dataset across subprojects",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 202) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 202\", function () {",
+									"        pm.response.to.have.status(202);",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "******"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/utility/cp?sdpath_from=sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}&sdpath_to=sd://{{tenant}}/{{cpCrossSubproject}}{{testPath01}}{{dsx01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"utility",
+								"cp"
+							],
+							"query": [
+								{
+									"key": "sdpath_from",
+									"value": "sd://{{tenant}}/{{subproject}}{{testPath01}}{{dsx01}}"
+								},
+								{
+									"key": "sdpath_to",
+									"value": "sd://{{tenant}}/{{cpCrossSubproject}}{{testPath01}}{{dsx01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CP CROSS DATASET GET: Verify copied dataset in cross subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    pm.test(\"Dataset name\", function () {",
+									"        pm.expect(jsonData.name).to.eql(pm.environment.get('dsx01'));",
+									"    });",
+									"    pm.test(\"Verify destination subproject\", function () {",
+									"        pm.expect(jsonData.subproject).to.eql(pm.environment.get(\"cpCrossSubproject\"));",
+									"    });",
+									"    pm.test(\"Verify Tenant\", function () {",
+									"        pm.expect(jsonData.tenant).to.eql(pm.environment.get(\"tenant\"));",
+									"    });",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "******"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{cpCrossSubproject}}/dataset/{{dsx01}}?path={{testPathEncoded01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{cpCrossSubproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CP CROSS DATASET DELETE: Delete copied dataset in cross subproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "******"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/dataset/tenant/{{tenant}}/subproject/{{cpCrossSubproject}}/dataset/{{dsx01}}?path={{testPathEncoded01}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"dataset",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{cpCrossSubproject}}",
+								"dataset",
+								"{{dsx01}}"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "{{testPathEncoded01}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CP CROSS SUBPROJECT DELETE: Delete subproject cpCrossSubproject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code != 200) {",
+									"    console.log(pm.response.text())",
+									"    var retryCounter = pm.environment.get('execCounter');",
+									"    const lodash = require('lodash');",
+									"    lodash.retryOnFailure(retryCounter, pm.response.code, pm.info.requestName, pm.environment.get(\"maxAmountOfRetries\"));",
+									"    ",
+									"    if ( retryCounter <= pm.environment.get(\"maxAmountOfRetries\") ) {",
+									"        retryCounter++;",
+									"        pm.environment.set('execCounter', retryCounter);",
+									"        pm.execution.setNextRequest(pm.info.requestName);",
+									"    } else {",
+									"        pm.environment.set('execCounter', 1);",
+									"    }",
+									"",
+									"} else {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.environment.set('execCounter', 1);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "******"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{datapartition}}"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{SVC_API_KEY}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "appkey",
+								"value": "{{DE_APP_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SVC_URL}}/subproject/tenant/{{tenant}}/subproject/{{cpCrossSubproject}}",
+							"host": [
+								"{{SVC_URL}}"
+							],
+							"path": [
+								"subproject",
+								"tenant",
+								"{{tenant}}",
+								"subproject",
+								"{{cpCrossSubproject}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "CP DATASET DELETE X1: Delete a dataset dsx01",
 					"event": [
 						{

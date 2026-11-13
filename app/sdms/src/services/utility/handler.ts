@@ -355,6 +355,8 @@ export class UtilityHandler {
 
         // retrieve the destination subproject info
         const subproject = await SubProjectDAO.get(journalClient, sdPathTo.tenant, sdPathTo.subproject);
+        const sourceSubproject = sdPathFrom.subproject === sdPathTo.subproject ? subproject :
+            await SubProjectDAO.get(journalClient, sdPathFrom.tenant, sdPathFrom.subproject);
 
         // retrieve the source dataset
         let datasetFrom = {} as DatasetModel;
@@ -364,7 +366,7 @@ export class UtilityHandler {
         datasetFrom.name = sdPathFrom.dataset;
 
         // Retrieve the dataset metadata
-        datasetFrom = subproject.enforce_key ?
+        datasetFrom = sourceSubproject.enforce_key ?
             await DatasetDAO.getByKey(journalClient, datasetFrom) :
             (await DatasetDAO.get(journalClient, datasetFrom))[0];
 
@@ -375,15 +377,18 @@ export class UtilityHandler {
                 sdPathFrom.path + sdPathFrom.dataset + ' does not exist exist'));
         }
 
-        await Promise.all([
+        const [canReadSource, canWriteDestination] = await Promise.all([
             Auth.isReadAuthorized(req.headers.authorization,
-                DatasetAuth.getAuthGroups(subproject, datasetFrom, AuthRoles.viewer, tenant.esd),
+                DatasetAuth.getAuthGroups(sourceSubproject, datasetFrom, AuthRoles.viewer, tenant.esd),
                 tenant, sdPathFrom.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string),
-            await Auth.isWriteAuthorized(req.headers.authorization,
+            Auth.isWriteAuthorized(req.headers.authorization,
                 SubprojectAuth.getAuthGroups(subproject, AuthRoles.admin, tenant.esd),
                 tenant, sdPathTo.subproject, req[Config.DE_FORWARD_APPKEY],
                 req.headers['impersonation-token-context'] as string)]);
+        if (!canReadSource || !canWriteDestination) {
+            throw Error.make(Error.Status.PERMISSION_DENIED, 'User not authorized to perform this operation');
+        }
 
         let seismicmeta: any;
 

@@ -30,6 +30,7 @@ import { lockerInstance } from '../../src/services/dataset/locker'
         const { TestServicesUserHandler } = require('./services/user/handler');
         const { TestImpersonationTokenHandler } = require('./services/impersonation_token/handler');
         const { TestServicesUtilityHandler } = require('./services/utility/handler');
+        require('./services/utility/copy-authorization');
         const { DatasetDAOTest } = require('./services/dataset/dao');
         const { ParserTest } = require('./services/dataset/parser');
         const { FilterParserTest } = require('./services/dataset/filter-parser');
