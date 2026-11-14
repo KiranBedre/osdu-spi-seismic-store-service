@@ -713,7 +713,6 @@ export class DatasetHandler {
                 }
             }
         }
-        if (datasetIN.last_modified_date) { datasetOUT.last_modified_date = datasetIN.last_modified_date; }
         if (datasetIN.readonly !== undefined) { datasetOUT.readonly = datasetIN.readonly; }
         if (datasetIN.gtags !== undefined && datasetIN.gtags.length > 0) { datasetOUT.gtags = datasetIN.gtags; }
         if (datasetIN.ltag) {
@@ -927,6 +926,9 @@ export class DatasetHandler {
         const unlockRes = await lockerInstance.unlock(lockKey, wid);
         dataset.sbit = unlockRes.id;
         dataset.sbit_count = unlockRes.cnt;
+
+        const datasetKey = await this.findDatasetKey(subproject, journalClient, datasetIN);
+        await DatasetDAO.update(journalClient, dataset, datasetKey);
 
         // attach the gcpid for fast check
         dataset.ctag = dataset.ctag + tenant.gcpid + ';' + DESUtils.getDataPartitionID(tenant.esd);

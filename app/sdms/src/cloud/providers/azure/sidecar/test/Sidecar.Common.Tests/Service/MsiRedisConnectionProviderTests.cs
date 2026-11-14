@@ -16,7 +16,6 @@
 
 namespace Sidecar.Common.Tests.Service;
 
-using Azure.Identity;
 using Sidecar.Common.Interface;
 using Sidecar.Common.Service;
 
@@ -36,14 +35,14 @@ public class MsiRedisConnectionProviderTests : IDisposable
 {
     private readonly Mock<ILogger<MsiRedisConnectionProvider>> _loggerMock;
     private readonly Mock<IOptionsRedisMsi> _msiOptionsMock;
-    private readonly ManagedIdentityCredential _credential;
+    private readonly Azure.Core.TokenCredential _credential;
     private readonly MsiRedisConnectionProvider _provider;
 
     public MsiRedisConnectionProviderTests()
     {
         _loggerMock = new Mock<ILogger<MsiRedisConnectionProvider>>();
         _msiOptionsMock = new Mock<IOptionsRedisMsi>();
-        _credential = new ManagedIdentityCredential();
+        _credential = AzureCredentialFactory.CreateManagedIdentity();
 
         _msiOptionsMock.Setup(x => x.RedisMsiEnabled).Returns("true");
         _msiOptionsMock.Setup(x => x.RedisClientId).Returns((string?)null);

@@ -17,6 +17,7 @@
 namespace Sidecar.ComputeSizeRunner;
 
 using Azure;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Utility;
 
@@ -47,7 +48,8 @@ public class DatasetSizeRetriever(ILogger<DatasetSizeRetriever> logger, IBlobCli
         try
         {
             // Call the listing operation and return pages of the specified size.
-            var blobPages = containerClient.GetBlobsAsync(prefix: virtualFolderName, cancellationToken: ct)
+            var blobPages = containerClient
+                .GetBlobsAsync(BlobTraits.None, BlobStates.None, virtualFolderName, ct)
                 .AsPages(default, 5000);
 
             // Enumerate the blobs returned for each page.

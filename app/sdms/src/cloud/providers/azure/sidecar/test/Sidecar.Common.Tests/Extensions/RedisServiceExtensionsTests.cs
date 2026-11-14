@@ -18,6 +18,7 @@ namespace Sidecar.Common.Tests.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
 using Sidecar.Common.Extensions;
+using Sidecar.Common.Service;
 
 public class RedisServiceExtensionsTests
 {
@@ -32,7 +33,7 @@ public class RedisServiceExtensionsTests
         // Add required dependencies
         services.AddSingleton<ILogger<MsiRedisConnectionProvider>>(Mock.Of<ILogger<MsiRedisConnectionProvider>>());
         services.AddSingleton(msiOptions.Object);
-        services.AddSingleton<Azure.Core.TokenCredential>(new Azure.Identity.DefaultAzureCredential());
+        services.AddSingleton<Azure.Core.TokenCredential>(AzureCredentialFactory.CreateDefault());
 
         // Act
         services.AddRedisConnectionFactory(msiOptions.Object, Mock.Of<ILogger>());
@@ -148,6 +149,6 @@ public class RedisServiceExtensionsTests
         // Should register DefaultAzureCredential
         var credential = serviceProvider.GetService<Azure.Core.TokenCredential>();
         credential.Should().NotBeNull();
-        credential.Should().BeOfType<Azure.Identity.DefaultAzureCredential>();
+        credential.Should().BeOfType<DefaultAzureCredential>();
     }
 }

@@ -114,6 +114,11 @@ export class Utils {
         return id;
     }
 
+    /** Same format as `new Date().toString()` used for dataset last_modified_date in Cosmos. */
+    public static formatDatasetLastModifiedDate(date: Date = new Date()): string {
+        return date.toString();
+    }
+
     public static getPayloadFromStringToken(base64JwtPayload: string): any {
 
         if (base64JwtPayload === undefined) { return undefined; }

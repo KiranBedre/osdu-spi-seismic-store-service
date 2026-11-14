@@ -1306,7 +1306,7 @@ paths:
       summary: Retrieve the list of supported storage tiers
       description: |
         <ul>
-          <li>Return the list of storage tiers</li>
+          <li>Return the list of storage tiers. Azure returns Hot, Cool, and Cold; Smart is included when FEATURE_FLAG_ENABLE_SMART_TIER is enabled.</li>
           <li>Required roles: subproject.admin, subproject.viewer</li>
         </ul>
       operationId: utility-storage-tiers
@@ -1476,14 +1476,6 @@ paths:
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
                             <br/>}
                           <br/><br/></li>
-                          <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
-                          <br/>
-                            <br/>{
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                            <br/>}
-                          <br/><br/></li>
                         </ul>
                       </li>
                       <li>Required roles:
@@ -1558,14 +1550,6 @@ paths:
                             <br/>{
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 3599
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
-                            <br/>}
-                          <br/><br/></li>
-                          <li><b>IBM</b>: double column separated string containing access key id, the access key secret and the session token
-                          <br/>
-                            <br/>{
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_token: 'accessKeyId:secretAccessKey:sessionToken'
-                              <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires_in: 7200
                               <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token_type: 'Bearer'
                             <br/>}
                           <br/><br/></li>
@@ -2466,13 +2450,18 @@ paths:
           schema:
             type: string
             default: "/a/b/c/"
-        - description: "The target storage tier class: Hot, Cool, Cold"
+        - description: "The target storage tier class: Hot, Cool, Cold, or Smart (Smart requires FEATURE_FLAG_ENABLE_SMART_TIER)"
           in: query
           name: tier
           required: true
           schema:
             type: string
             default: "Hot"
+            enum:
+              - Hot
+              - Cool
+              - Cold
+              - Smart
       requestBody:
         content:
           application/json:

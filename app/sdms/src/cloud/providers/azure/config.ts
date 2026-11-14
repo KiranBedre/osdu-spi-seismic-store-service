@@ -217,6 +217,7 @@ export class AzureConfig extends Config {
                     process.env.POST_PROCESS_ON_DATASET_CLOSE === 'true' || false,
                 FEATURE_FLAG_ENABLE_BULK_DELETE: process.env.FEATURE_FLAG_ENABLE_BULK_DELETE === 'true' || false,
                 FEATURE_FLAG_ENABLE_CHANGE_TIER: process.env.FEATURE_FLAG_ENABLE_CHANGE_TIER === 'true' || false,
+                FEATURE_FLAG_ENABLE_SMART_TIER: process.env.FEATURE_FLAG_ENABLE_SMART_TIER === 'true' || false,
                 FEATURE_FLAG_ENABLE_ANALYTICS: process.env.FEATURE_FLAG_ENABLE_ANALYTICS === 'true',
                 FEATURE_FLAG_TIER_STORAGE_BLOCK: process.env.FEATURE_FLAG_TIER_STORAGE_BLOCK === 'true',
                 CCM_SERVICE_URL: AzureConfig.CCM_SERVICE_URL,

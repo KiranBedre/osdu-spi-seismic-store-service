@@ -21,7 +21,7 @@ export interface IConfig {
 }
 
 export abstract class Config implements IConfig {
-    // Cloud provider name (anthos/aws/azure/google/ibm/...)
+    // Cloud provider name (anthos/aws/azure/google/...)
     public static CLOUD_PROVIDER: string;
 
     // Queue used for synchronizing v3 and v4 dataset

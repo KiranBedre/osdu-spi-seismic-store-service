@@ -17,6 +17,7 @@
 namespace Sidecar.Common.Service;
 
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks.Dataflow;
@@ -162,7 +163,7 @@ public class BulkDeletionWorker(
     private async Task DeleteBlobsInBulkAsync(IBlobClient blobClient, string containerName, string? virtualFolderName, BlobContainerClient containerClient, List<string> errors, CancellationToken ct)
     {
         var batchBlock = CreateBatchForBlobsDeletion(blobClient, errors, out var processItems, ct);
-        var blobs = containerClient.GetBlobsAsync(prefix: virtualFolderName + "/", cancellationToken: ct);
+        var blobs = containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, virtualFolderName + "/", ct);
 
         await foreach (var pages in blobs.AsPages().WithCancellation(ct))
         {

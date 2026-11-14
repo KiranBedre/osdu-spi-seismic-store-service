@@ -39,8 +39,10 @@ public class MetadataUpdaterTest
         _ = Assert.Single(args);
         Assert.True(args[0].ContainsKey("/data/computed_size"));
         Assert.True(args[0].ContainsKey("/data/computed_size_date"));
+        Assert.True(args[0].ContainsKey("/data/last_modified_date"));
         Assert.Equal(size, args[0]["/data/computed_size"]);
         Assert.Equal(updateDate, args[0]["/data/computed_size_date"]);
+        Assert.NotNull(args[0]["/data/last_modified_date"]);
     }
 
     [Fact]

@@ -9,3 +9,14 @@ cimpl-containerize-bootstrap-gitlab:
   extends: []
   rules:
     - when: never
+
+# The images are built and scanned per app (app/sdms: sdms_cimpl-container-scanning)
+cimpl-container-scanning:
+  needs: []
+  rules:
+    - when: never
+
+cimpl-bootstrap-container-scanning:
+  needs: []
+  rules:
+    - when: never

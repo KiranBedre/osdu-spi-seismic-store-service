@@ -31,7 +31,8 @@ import { Sku } from './sku';
 
 @StorageFactory.register('azure')
 export class AzureCloudStorage extends AbstractStorage {
-    private static readonly STORAGE_TIERS = ['Hot', 'Cool', 'Cold'];
+    private static readonly BASE_STORAGE_TIERS = ['Hot', 'Cool', 'Cold'] as const;
+    private static readonly SMART_STORAGE_TIER = 'Smart';
     private AZURE_CONTAINER_PREFIX = 'ss-' + Config.SERVICE_ENV;
     private blobServiceClient: BlobServiceClient;
     private blobBatchClient: BlobBatchClient;
@@ -192,7 +193,11 @@ export class AzureCloudStorage extends AbstractStorage {
     }
 
     public getStorageTiers(): string[] {
-        return AzureCloudStorage.STORAGE_TIERS;
+        const tiers: string[] = [...AzureCloudStorage.BASE_STORAGE_TIERS];
+        if (Config.FEATURE_FLAG_ENABLE_SMART_TIER) {
+            tiers.push(AzureCloudStorage.SMART_STORAGE_TIER);
+        }
+        return tiers;
     }
 
     public async getObjectSize(bucketName: string, prefix?: string): Promise<number> {

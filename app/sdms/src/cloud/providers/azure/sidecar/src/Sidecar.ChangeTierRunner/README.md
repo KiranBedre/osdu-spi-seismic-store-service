@@ -118,7 +118,7 @@ To facilitate this process, the following examples have been provided.
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "buildChangeTierOperationRunner",
-            "program": "${workspaceFolder}/src/Sidecar.ChangeTierRunner/bin/Debug/net6.0/Sidecar.ChangeTierRunner.dll",
+            "program": "${workspaceFolder}/src/Sidecar.ChangeTierRunner/bin/Debug/net10.0/Sidecar.ChangeTierRunner.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src",
             "envFile": "${workspaceFolder}/src/Sidecar.ChangeTierRunner/.env",

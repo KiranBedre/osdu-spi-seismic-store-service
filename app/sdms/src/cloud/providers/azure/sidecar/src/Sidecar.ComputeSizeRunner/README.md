@@ -23,6 +23,9 @@ The following diagram provides an overview for the flow of the Compute Size oper
 
 ## Developer Tips
 
+Use the .NET 10 SDK to build and test the sidecar solution. The container uses the .NET 10
+ASP.NET runtime on Ubuntu 24.04 (`10.0-noble`) and runs as non-root UID 5678.
+
 This project provides an [.env.example](.env.example) file that provides the base environment variables needed to run/debug the service.
 
 | Name                                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Example                                                                                                                                             |

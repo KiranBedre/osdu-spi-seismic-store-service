@@ -17,7 +17,6 @@
 namespace Sidecar.Common.Extensions;
 
 using Azure.Core;
-using Azure.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Sidecar.Common.Interface;
@@ -56,13 +55,13 @@ public static class RedisServiceExtensions
             {
                 // System-assigned managed identity
                 logger.LogInformation("Configuring system-assigned managed identity for Redis");
-                credential = new DefaultAzureCredential();
+                credential = AzureCredentialFactory.CreateDefault();
             }
             else
             {
                 // User-assigned managed identity - create a credential with the client ID
                 logger.LogInformation("Configuring user-assigned managed identity ({ClientId}) for Redis", msiOptions.RedisClientId);
-                credential = new ManagedIdentityCredential(msiOptions.RedisClientId);
+                credential = AzureCredentialFactory.CreateManagedIdentity(msiOptions.RedisClientId);
             }
 
             // register credential for dependency injection

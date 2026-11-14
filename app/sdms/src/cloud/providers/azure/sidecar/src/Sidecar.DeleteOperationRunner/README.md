@@ -131,7 +131,7 @@ To facilitate this process, the following examples have been provided.
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/net6.0/Sidecar.dll",
+            "program": "${workspaceFolder}/bin/Debug/net10.0/Sidecar.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -152,7 +152,7 @@ To facilitate this process, the following examples have been provided.
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "buildRedisDeleteOperationRunner",
-            "program": "${workspaceFolder}/src/Sidecar.DeleteOperationRunner/bin/Debug/net6.0/Sidecar.DeleteOperationRunner.dll",
+            "program": "${workspaceFolder}/src/Sidecar.DeleteOperationRunner/bin/Debug/net10.0/Sidecar.DeleteOperationRunner.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src",
             "envFile": "${workspaceFolder}/src/Sidecar.DeleteOperationRunner/.env",

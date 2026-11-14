@@ -40,7 +40,7 @@ export abstract class Config implements IConfig {
     // Apis base path
     public static APIS_BASE_PATH: string;
 
-    // Cloud provider name (anthos/aws/azure/google/ibm/...)
+    // Cloud provider name (anthos/aws/azure/google/...)
     public static CLOUD_PROVIDER: string;
 
     // Core Services

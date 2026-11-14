@@ -22,9 +22,18 @@ import { ListDatasetsParams, PaginatedDatasetList } from './model';
 
 export class DatasetDAO {
 
+    private static touchLastModified(dataset: DatasetModel): void {
+        dataset.last_modified_date = Utils.formatDatasetLastModifiedDate();
+    }
+
     public static async register(
         journalClient: IJournal, datasetEntity: { key: object, data: DatasetModel; }) {
         datasetEntity.data.ctag = Utils.makeID(16);
+        const now = Utils.formatDatasetLastModifiedDate();
+        if (!datasetEntity.data.created_date) {
+            datasetEntity.data.created_date = now;
+        }
+        datasetEntity.data.last_modified_date = now;
         await journalClient.save(datasetEntity);
     }
 
@@ -99,13 +108,17 @@ export class DatasetDAO {
 
     public static async update(
         journalClient: IJournal, dataset: DatasetModel, datasetKey: any) {
+        this.touchLastModified(dataset);
         dataset.ctag = Utils.makeID(16);
         await journalClient.save({ key: datasetKey, data: dataset });
     }
 
     public static async updateAll(
         journalClient: IJournal, datasets: { data: DatasetModel, key: any; }[]) {
-        datasets.forEach(dataset => { dataset.data.ctag = Utils.makeID(16); });
+        datasets.forEach(entity => {
+            this.touchLastModified(entity.data);
+            entity.data.ctag = Utils.makeID(16);
+        });
         await journalClient.save(datasets);
     }
 

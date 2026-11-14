@@ -182,12 +182,17 @@ def collect_statistics(subproject: cosmos.Subproject, datasets: list([cosmos.Dat
             executor.submit(collect_dataset_statistics,
                             dataset, container_name, prefix)
 
-def push_report(container):
+def _results_container_name() -> str:
+    name = STORAGE_CONTAINER_RESULTS
+    if 'EXT' in os.environ:
+        name += f"-{os.environ['EXT']}"
+        if name.endswith('-'):
+            name = name[:-1]
+    return name
+
+def push_report() -> bool:
+    container = _results_container_name()
     try:
-        if 'EXT' in os.environ:
-            container += f"-{os.environ['EXT']}"
-            if container.endswith('-'):
-                container = container[:-1]
         blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
         storage_container_client = blob_service_client.get_container_client(container)
         if storage_container_client.exists() == False:
@@ -196,19 +201,59 @@ def push_report(container):
         with open(report_name, "rb") as local_file:
             with storage_container_client.get_blob_client(name) as blob_client:
                 blob_client.upload_blob(local_file, overwrite=OVERWRITE)
-        local_file.close()
+        return True
     except Exception as e:
-        print(f'Error: {e.status_code} - {e.message}')
+        print(f'> [report] ERROR uploading report to "{container}/{name}": {e}; '
+              f'checkpoint will NOT be advanced — report will be retried next run')
+        return False
+
+def replicate_latest_report_to_today(subproject_name: str, today_blob_name: str) -> bool:
+    """
+    When incremental collection finds no changed datasets, publish today's report.csv by
+    copying the latest prior report for this subproject. seismic-storage-report lists
+    analytics blobs by date; without a blob for today it treats the run as deletion-only.
+    Reusing the last snapshot keeps the same consolidated outcome as carry-forward without
+    requiring downstream changes.
+    """
+    container = _results_container_name()
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
+        storage_container_client = blob_service_client.get_container_client(container)
+        if not storage_container_client.exists():
+            return False
+        latest_name = None
+        prefix = f'{subproject_name}/'
+        for blob in storage_container_client.list_blobs(name_starts_with=prefix):
+            name = blob.name
+            if not name.endswith('/report.csv') or name == today_blob_name:
+                continue
+            if latest_name is None or name > latest_name:
+                latest_name = name
+        if latest_name is None:
+            print(f'> [report] {subproject_name}: no prior report.csv to replicate for today')
+            return False
+        source_client = storage_container_client.get_blob_client(latest_name)
+        report_bytes = source_client.download_blob().readall()
+        dest_client = storage_container_client.get_blob_client(today_blob_name)
+        dest_client.upload_blob(report_bytes, overwrite=OVERWRITE)
+        print(f'> [report] {subproject_name}: replicated "{latest_name}" -> "{today_blob_name}" '
+              f'({len(report_bytes)} bytes) for unchanged incremental run')
+        return True
+    except Exception as e:
+        print(f'> [report] ERROR replicating prior report for "{subproject_name}": {e}')
+        return False
 
 STATE_BLOB_PATH = '{partition_id}/last_run_state.json'
+# Internal checkpoint only: { "<subproject>": "<iso8601>" }. Not read by seismic-storage-report.
 
 def load_last_run_state(storage_cs: str, partition_id: str) -> dict:
     # Reads last-run timestamps per subproject from blob storage ({} if first run)
+    container_name = _results_container_name()
     blob_name = STATE_BLOB_PATH.format(partition_id=partition_id)
-    state_uri = f'{STORAGE_CONTAINER_RESULTS}/{blob_name}'
+    state_uri = f'{container_name}/{blob_name}'
     try:
         blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
-        container = blob_service_client.get_container_client(STORAGE_CONTAINER_RESULTS)
+        container = blob_service_client.get_container_client(container_name)
         blob_client = container.get_blob_client(blob_name)
         data = blob_client.download_blob().readall()
         state = json.loads(data)
@@ -227,17 +272,19 @@ def load_last_run_state(storage_cs: str, partition_id: str) -> dict:
 
 def save_last_run_state(storage_cs: str, partition_id: str, state: dict) -> None:
     #Persists the updated per-subproject last-run timestamps back to blob storage
+    container_name = _results_container_name()
     blob_name = STATE_BLOB_PATH.format(partition_id=partition_id)
-    state_uri = f'{STORAGE_CONTAINER_RESULTS}/{blob_name}'
+    state_uri = f'{container_name}/{blob_name}'
     try:
         blob_service_client = BlobServiceClient.from_connection_string(storage_cs)
-        container = blob_service_client.get_container_client(STORAGE_CONTAINER_RESULTS)
+        container = blob_service_client.get_container_client(container_name)
         if not container.exists():
             container.create_container()
         blob_client = container.get_blob_client(blob_name)
-        blob_client.upload_blob(json.dumps(state, indent=2).encode('utf-8'), overwrite=True)
+        payload = utils.normalize_last_run_state(state)
+        blob_client.upload_blob(json.dumps(payload, indent=2).encode('utf-8'), overwrite=True)
         print(f'> [state] saved last_run_state to "{state_uri}" '
-              f'({len(state)} subproject(s) tracked)')
+              f'({len(payload)} subproject(s) tracked)')
     except Exception as e:
         print(f'> [state] WARNING: could not save last_run_state to "{state_uri}" '
               f'({type(e).__name__}: {e}); next run may re-scan this subproject fully')
@@ -246,13 +293,13 @@ def collect_subproject_jobs():
     try:
         return cosmos.get_subproject_jobs(cosmos_cs)
     except Exception as e:
-        print(f'Error: {e.message}')
+        print(f'Error: {e}')
 
 def collect_partition_jobs():
     try:
         return cosmos.get_partition_jobs(cosmos_cs)
     except Exception as e:
-        print(f'Error: {e.message}')
+        print(f'Error: {e}')
 
 def job_schedule_check(job:cosmos.Job) -> bool:
     midnight_utc = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
@@ -339,21 +386,23 @@ if __name__ == "__main__":
                         # list datasets in a subproject — incremental if last_run known, full scan otherwise
                         print(f'\n# list datasets in {subproject_name}\n')
                         sys.stdout.flush()
-                        last_run_ts = last_run.get(subproject_name)
+                        last_run_ts = utils.get_incremental_watermark(last_run, subproject_name)
                         scan_type = 'FULL' if not last_run_ts else 'INCREMENTAL'
                         scan_detail = f'since {last_run_ts}' if last_run_ts else 'no prior run recorded'
                         print(f'> [scan] {subproject_name}: {scan_type} ({scan_detail})')
                         sys.stdout.flush()
-                        datasets = cosmos.list_datasets(subproject_name, cosmos_cs, since=last_run_ts)
 
-                        print('\n# collect statistics from storage\n')
                         now = datetime.now(timezone.utc)
-
+                        run_at_iso = now.isoformat()
                         report_path = f'./results/{partition_id}/{subproject_name}/{now.year}/{"{:02d}".format(now.month)}/{"{:02d}".format(now.day)}'
                         if not os.path.exists(report_path):
                             os.makedirs(report_path)
-
                         report_name = f'{report_path}/report.csv'
+
+                        datasets, scan_summary = cosmos.list_datasets(
+                            subproject_name, cosmos_cs, since=last_run_ts)
+
+                        print('\n# collect statistics from storage\n')
 
                         file_out = FileWriter(report_name)
                         headers = 'name'
@@ -365,27 +414,32 @@ if __name__ == "__main__":
                         collect_statistics(subproject, datasets)
                         file_out.close()
 
+                        execution_time = time.time() - subproject_start_time
                         if utils.has_more_than_one_line(report_name):
                             print('\n# sort and push report to sdms')
                             utils.sort_csv_file(report_name)
-                            push_report(STORAGE_CONTAINER_RESULTS)
-                            # persist timestamp so next run only scans modified datasets
-                            previous_ts = last_run.get(subproject_name)
-                            last_run[subproject_name] = now.isoformat()
-                            print(f'> [state] {subproject_name}: advancing last_run '
-                                  f'{previous_ts or "(none)"} -> {now.isoformat()}')
-                            save_last_run_state(storage_cs, partition_id, last_run)
+                            # Only advance the incremental watermark when the upload succeeds.
+                            if push_report():
+                                previous_wm = utils.get_incremental_watermark(last_run, subproject_name)
+                                utils.set_incremental_watermark(last_run, subproject_name, run_at_iso)
+                                print(f'> [state] {subproject_name}: advancing last_run '
+                                      f'{previous_wm or "(none)"} -> {run_at_iso}')
+                                save_last_run_state(storage_cs, partition_id, last_run)
                         else:
-                            # no new/modified datasets this run — last_run is intentionally left unchanged
-                            print(f'> [state] {subproject_name}: no datasets collected, '
-                                  f'last_run left unchanged at {last_run.get(subproject_name) or "(none)"}')
+                            # No new rows — keep watermark; expose today's report.csv for downstream
+                            # analytics consumers (same CSV snapshot as last successful collection).
+                            previous_wm = utils.get_incremental_watermark(last_run, subproject_name)
+                            today_blob_name = str(report_name).split('/', 3)[-1]
+                            replicate_latest_report_to_today(subproject_name, today_blob_name)
+                            print(f'> [state] {subproject_name}: no datasets collected; '
+                                  f'last_run left unchanged at {previous_wm or "(none)"} '
+                                  f'(seen={scan_summary["seen"]}, kept={scan_summary["kept"]})')
 
                         if CLEANUP:
                             utils.clean_up_local(f'./results/{partition_id}/{subproject_name}/')
-
-                        execution_time = time.time() - subproject_start_time
                         formatted_execution_time = utils.format_execution_time(execution_time)
                         print(f"\n# Task execution completed in {formatted_execution_time}")
+                        sys.stdout.flush()
                 except Exception as e:
                     print(f'Error: {e}')
             if CLEANUP:

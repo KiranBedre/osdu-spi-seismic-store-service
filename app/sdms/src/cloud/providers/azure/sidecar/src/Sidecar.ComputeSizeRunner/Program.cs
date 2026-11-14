@@ -17,7 +17,6 @@
 namespace Sidecar.ComputeSizeRunner;
 
 using Azure.Core;
-using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Queues;
 using CommandLine;
@@ -74,7 +73,7 @@ public class Program
 
     private static async Task AttemptOptionsFromKeyVaultAsync(OptionsComputeSize opts)
     {
-        var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), new DefaultAzureCredential());
+        var secretClient = new SecretClient(new Uri(opts.KeyVaultUrl), AzureCredentialFactory.CreateDefault());
 
         _logger?.LogInformation("Checking KeyVault variables for options...");
         var secretResponses = await Task.WhenAll(
@@ -137,7 +136,7 @@ public class Program
         // such as Key Vault, CosmosDB, Storage accounts.
         // When deployed, there will be a pod identity with access to these dependencies.
         // DefaultAzureCredential works in both cases.
-        _ = services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+        _ = services.AddSingleton<TokenCredential>(AzureCredentialFactory.CreateDefault());
 
         _ = services.AddSingleton<HttpClient>();
 

@@ -1,4 +1,5 @@
 sdms_gc-deploy:
+  allow_failure: true
   extends:
     - .gc-variables
     - gc-deploy
