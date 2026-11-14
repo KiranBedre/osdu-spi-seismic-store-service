@@ -2,4 +2,3 @@
 .*/npm-shrinkwrap\.json
 devops\/scripts\/azure_jwt_client\.py
 devops\/scripts\/gc_jwt_client\.py
-devops\/scripts\/ibm_jwt_client\.py

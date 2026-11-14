@@ -50,6 +50,7 @@ export class TestAzureStorage {
             this.deleteFiles();
             this.deleteObjects();
             this.getStorageTiers();
+            this.getStorageTiersWithSmartTier();
         });
     }
 
@@ -109,12 +110,24 @@ export class TestAzureStorage {
     private static getStorageTiers() {
         Tx.sectionInit('getStorageTiers');
         Tx.test(() => {
+            this.sandbox.stub(Config, 'FEATURE_FLAG_ENABLE_SMART_TIER').value(false);
             const tiers = this.storage.getStorageTiers();
             expect(tiers).to.have.lengthOf(3);
             expect(tiers).to.include('Hot');
             expect(tiers).to.include('Cool');
             expect(tiers).to.include('Cold');
+            expect(tiers).to.not.include('Smart');
             expect(tiers).to.not.include('Archive');
+        });
+    }
+
+    private static getStorageTiersWithSmartTier() {
+        Tx.sectionInit('getStorageTiersWithSmartTier');
+        Tx.test(() => {
+            this.sandbox.stub(Config, 'FEATURE_FLAG_ENABLE_SMART_TIER').value(true);
+            const tiers = this.storage.getStorageTiers();
+            expect(tiers).to.have.lengthOf(4);
+            expect(tiers).to.include('Smart');
         });
     }
 

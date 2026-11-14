@@ -132,6 +132,12 @@ def list_datasets(subproject_name: str, cosmos_cs: str, since: str = None) -> li
                 Dataset(item['name'], item['path'], item['gcsurl'], item['created_by'], lmd))
         sys.stdout.flush()
     elapsed = time.time() - start_time
+    summary = {
+        'seen': total,
+        'kept': count,
+        'skipped': skipped_old if since_dt is not None else 0,
+        'missing_date': skipped_no_date if since_dt is not None else 0,
+    }
     if since_dt is not None:
         print(f'> [datasets] seen={total}, kept={count}, skipped={skipped_old}'
               + (f', missing_date={skipped_no_date}' if skipped_no_date else '')
@@ -139,7 +145,7 @@ def list_datasets(subproject_name: str, cosmos_cs: str, since: str = None) -> li
     else:
         print(f'> [datasets] seen={total}, kept={count} in {elapsed:.2f}s')
     sys.stdout.flush()
-    return results
+    return results, summary
 
 def get_subproject_jobs(cosmos_cs: str) -> list([Job]):
     client = CosmosClient.from_connection_string(cosmos_cs)

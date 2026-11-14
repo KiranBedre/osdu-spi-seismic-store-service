@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 
 using Interface;
 using Microsoft.Extensions.Logging;
+using Sidecar.Common.Utility;
 
 public class MetadataTierUpdater(
     ILogger<MetadataTierUpdater> logger,
@@ -46,6 +47,9 @@ public class MetadataTierUpdater(
                 var updates = new Dictionary<string, object> {
                     {
                         "/data/filemetadata/tier_class", tier
+                    },
+                    {
+                        "/data/last_modified_date", Utils.FormatDatasetLastModifiedDate(DateTime.UtcNow)
                     }
                 };
                 success = await _dataAccess.UpdateMetadataAsync(cs, id, updates);

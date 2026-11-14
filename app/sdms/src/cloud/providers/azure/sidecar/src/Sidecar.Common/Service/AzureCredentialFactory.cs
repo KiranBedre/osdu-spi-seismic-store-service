@@ -1,5 +1,5 @@
 // ============================================================================
-// Copyright 2017-2025, Schlumberger
+// Copyright 2017-2023, Microsoft
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,20 @@
 // limitations under the License.
 // ============================================================================
 
-import { AbstractTrace, TraceFactory } from '../../trace';
-import { logger } from './logger';
+namespace Sidecar.Common.Service;
 
-// [TODO] all logger.info looks more DEBUG message should not be executed in production code
-@TraceFactory.register('ibm')
-export class IbmTrace extends AbstractTrace {
+using Azure.Core;
+using Azure.Identity;
 
-    // [TODO] this method should start a call tracer using CSP SDK
-    public start() {
-        logger.info('in IbmTrace.start function. Not implemented. Returning..');
-        return;
-    }
+/// <summary>
+/// Centralizes construction of Azure credentials for sidecar hosts and Redis MSI.
+/// </summary>
+public static class AzureCredentialFactory
+{
+    public static TokenCredential CreateDefault() => new DefaultAzureCredential();
 
+    public static TokenCredential CreateManagedIdentity(string clientId) =>
+        new ManagedIdentityCredential(clientId);
+
+    public static TokenCredential CreateManagedIdentity() => new ManagedIdentityCredential();
 }

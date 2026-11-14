@@ -1,6 +1,6 @@
 ARG PASS
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS base
 
 WORKDIR /app
 
@@ -8,10 +8,11 @@ RUN apt-get update && apt-get install -y adduser
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
 # For more info, please refer to https://aka.ms/vscode-docker-dotnet-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+RUN groupadd --gid 5678 appuser && \
+    useradd --uid 5678 --gid 5678 --create-home appuser && chown -R appuser /app
 USER appuser
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0-noble AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 ARG PASS
 WORKDIR /src
 COPY "Sidecar.Common/Sidecar.Common.csproj" "Sidecar.Common/Sidecar.Common.csproj"
@@ -22,7 +23,6 @@ COPY . .
 RUN dotnet build "Sidecar.DeleteOperationRunner/Sidecar.DeleteOperationRunner.csproj" -c Release -o /app/build
 RUN mkdir -p ~/.aspnet/https
 RUN dotnet dev-certs https -ep ~/.aspnet/https/aspnetapp.pfx -p ${PASS}
-RUN dotnet dev-certs https --trust
 
 FROM build AS publish
 RUN dotnet publish "Sidecar.DeleteOperationRunner/Sidecar.DeleteOperationRunner.csproj" -c Release -o /app/publish /p:UseAppHost=false

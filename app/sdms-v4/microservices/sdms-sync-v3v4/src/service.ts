@@ -130,8 +130,8 @@ export class VersionSyncService {
                     const v3RecordId = Utils.generateV3Id({ path, name, tenant, subproject });
                     const data = {
                         ...msgContent.datasets[0].data,
-                        created_date: new Date().toISOString(),
-                        last_modified_date: new Date().toISOString(),
+                        created_date: new Date().toString(),
+                        last_modified_date: new Date().toString(),
                         gcsurl: containerId
                     }
                     const v3Record = { data, id: v3RecordId };

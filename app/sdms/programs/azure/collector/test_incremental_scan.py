@@ -123,7 +123,8 @@ class TestListDatasetsIncrementalFilter(unittest.TestCase):
         mock_client = _make_cosmos_mock(self.COSMOS_ITEMS)
         with patch.object(cosmos_module.CosmosClient, 'from_connection_string',
                           return_value=mock_client):
-            return cosmos_module.list_datasets('test-subproject', 'fake-cs', since=since)
+            results, _summary = cosmos_module.list_datasets('test-subproject', 'fake-cs', since=since)
+            return results
 
     #  full scan (no since)
     def test_full_scan_returns_all_datasets(self):
@@ -175,7 +176,7 @@ class TestListDatasetsIncrementalFilter(unittest.TestCase):
         mock_client = _make_cosmos_mock(items)
         with patch.object(cosmos_module.CosmosClient, 'from_connection_string',
                           return_value=mock_client):
-            results = cosmos_module.list_datasets('test-subproject', 'fake-cs', since=self.SINCE)
+            results, _summary = cosmos_module.list_datasets('test-subproject', 'fake-cs', since=self.SINCE)
         self.assertEqual(len(results), 0,
             "Dataset modified exactly at since should be excluded")
 

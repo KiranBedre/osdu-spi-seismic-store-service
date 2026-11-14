@@ -6,6 +6,21 @@ You can achieve cross partition queries with continuation token support by using
 
 ## Developer Tips
 
+All sidecar services and their shared library/tests target .NET 10. Install the .NET 10 SDK;
+the solution's `global.json` selects a stable .NET 10 feature band.
+From the sidecar solution directory, run:
+
+```sh
+dotnet build Sidecar.sln -c Release
+dotnet test Sidecar.sln -c Release --no-build
+```
+
+The service images use `mcr.microsoft.com/dotnet/sdk:10.0-noble` for builds and
+`mcr.microsoft.com/dotnet/aspnet:10.0-noble` at runtime (Ubuntu 24.04), retaining non-root
+UID/GID 5678. Existing configured ports and certificate settings are unchanged.
+Run the existing SDMS end-to-end collections against an isolated deployment of the upgraded
+images before rollout; the .NET test suite does not replace deployed integration tests.
+
 This project provides an [.env.example](.env.example) file that provides the base environment variables needed to run/debug the service.
 
 | Name                              | Description  |

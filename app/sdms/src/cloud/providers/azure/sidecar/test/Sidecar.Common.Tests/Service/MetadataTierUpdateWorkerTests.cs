@@ -36,10 +36,15 @@ public class MetadataTierUpdateWorkerTests
         var changeTierWorker = new MetadataTierUpdater(loggerMock.Object, dataAccessMock.Object, cosmosClientFactoryMock.Object);
 
         // Act
-        await changeTierWorker.UpdateTier(tenant, "metadataId", "");
+        await changeTierWorker.UpdateTier(tenant, "metadataId", "Hot");
 
         // Assert
-        dataAccessMock.Verify(d => d.UpdateMetadataAsync(cs, "metadataId", It.IsAny<Dictionary<string, object>>()), Times.Once);
+        var args = new List<Dictionary<string, object>>();
+        dataAccessMock.Verify(d => d.UpdateMetadataAsync(cs, "metadataId", Capture.In(args)), Times.Once);
+        _ = Assert.Single(args);
+        Assert.True(args[0].ContainsKey("/data/filemetadata/tier_class"));
+        Assert.True(args[0].ContainsKey("/data/last_modified_date"));
+        Assert.Equal("Hot", args[0]["/data/filemetadata/tier_class"]);
     }
 
     [Fact]

@@ -27,6 +27,13 @@ using System.Net;
 
 public class BulkChangeTierWorkerTests
 {
+    private static Mock<IOptionsChangeTier> CreateOptionsMock(bool enableSmartTier = false)
+    {
+        var mock = new Mock<IOptionsChangeTier>();
+        _ = mock.Setup(o => o.EnableSmartTier).Returns(enableSmartTier);
+        return mock;
+    }
+
     [Fact]
     public void ParseContainerAndFolderName_Should_Parse_Correctly()
     {
@@ -70,7 +77,8 @@ public class BulkChangeTierWorkerTests
             loggerMock.Object,
             statusStorageMock.Object,
             metadataChangeTierWorkerMock.Object,
-            blobClientMock.Object
+            blobClientMock.Object,
+            CreateOptionsMock().Object
         );
 
         var tenant = "someTenant";
@@ -85,7 +93,8 @@ public class BulkChangeTierWorkerTests
         var changeTierErrors = false;
 
         // Act
-        var foundErrors = await changeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
+        var foundErrors = await changeTierWorker.RunBulkChangeTierAsync(
+            tenant, operationId, "Hot", itemsToChangeTier, CancellationToken.None);
 
         // Assert
         Assert.True(foundErrors);
@@ -112,7 +121,8 @@ public class BulkChangeTierWorkerTests
             loggerMock.Object,
             statusStorageMock.Object,
             metadataChangeTierWorkerMock.Object,
-            blobClientMock.Object
+            blobClientMock.Object,
+            CreateOptionsMock().Object
         );
 
         var itemsToChangeTier = new List<ChangeTierItem> { };
@@ -123,7 +133,8 @@ public class BulkChangeTierWorkerTests
         var operationId = "123";
 
         // Act
-        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
+        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(
+            tenant, operationId, "Hot", itemsToChangeTier, CancellationToken.None);
 
         // Assert
         Assert.False(foundErrors);
@@ -131,6 +142,36 @@ public class BulkChangeTierWorkerTests
         statusStorageMock.Verify(
             x => x.IncrementCountAsync(operationId, It.IsAny<string>(), It.IsAny<CancellationToken>()),
            Times.Never);
+    }
+
+    [Fact]
+    public async Task RunBulkChangeTier_RejectsSmartTier_WhenDisabled()
+    {
+        var loggerMock = new Mock<ILogger<BulkChangeTierWorker>>();
+        var statusStorageMock = new Mock<IChangeTierTaskStatusStorage>();
+        var metadataChangeTierWorkerMock = new Mock<IMetadataTierUpdater>();
+        var blobClientFactoryMock = new Mock<IBlobClientFactory>();
+
+        var bulkChangeTierWorker = new BulkChangeTierWorker(
+            loggerMock.Object,
+            statusStorageMock.Object,
+            metadataChangeTierWorkerMock.Object,
+            blobClientFactoryMock.Object,
+            CreateOptionsMock(enableSmartTier: false).Object
+        );
+
+        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(
+            "tenant", "123", "Smart", new List<ChangeTierItem>(), CancellationToken.None);
+
+        Assert.True(foundErrors);
+        statusStorageMock.Verify(x => x.UpdateFieldStatusOperationAsync(
+            "123",
+            Constants.ChangeTierOperationStatus.STATUS,
+            Status.CompletedWithErrors.ToString(),
+            It.IsAny<CancellationToken>()), Times.Once);
+        blobClientFactoryMock.Verify(
+            x => x.GetBlobClientAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -153,7 +194,8 @@ public class BulkChangeTierWorkerTests
             loggerMock.Object,
             statusStorageMock.Object,
             metadataChangeTierWorkerMock.Object,
-            blobClientFactoryMock.Object
+            blobClientFactoryMock.Object,
+            CreateOptionsMock().Object
         );
 
         var itemsToChangeTier = new List<ChangeTierItem> {
@@ -205,7 +247,8 @@ public class BulkChangeTierWorkerTests
             .Returns(mockedBlobsPages);
 
         // Act
-        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
+        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(
+            tenant, operationId, "Hot", itemsToChangeTier, CancellationToken.None);
 
         // Assert
         Assert.False(foundErrors);
@@ -241,7 +284,8 @@ public class BulkChangeTierWorkerTests
             loggerMock.Object,
             statusStorageMock.Object,
             metadataChangeTierWorkerMock.Object,
-            blobClientFactoryMock.Object
+            blobClientFactoryMock.Object,
+            CreateOptionsMock().Object
         );
 
         var itemsToChangeTier = new List<ChangeTierItem> {
@@ -290,7 +334,8 @@ public class BulkChangeTierWorkerTests
               .ThrowsAsync(new CosmosException("Mocked exception", HttpStatusCode.NotFound, 123, "SomeActivityId", 0.0));
 
         // Act
-        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(tenant, operationId, "", itemsToChangeTier, CancellationToken.None);
+        var foundErrors = await bulkChangeTierWorker.RunBulkChangeTierAsync(
+            tenant, operationId, "Hot", itemsToChangeTier, CancellationToken.None);
 
         //Assert
         Assert.True(foundErrors);

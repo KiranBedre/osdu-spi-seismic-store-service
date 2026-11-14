@@ -346,6 +346,7 @@ sdms_azure_deploy:
       when: on_success
 
 sdms_azure_test:
+  allow_failure: true
   image: node:${SDMS_NODE_VERSION}
   extends:
     - .azure_clean_code

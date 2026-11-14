@@ -21,6 +21,15 @@ Postman collection with API requests that check the basic functionality of the s
 
 ## How to run the tests
 
+### Cross-subproject copy (utility cp command)
+
+The `utility cp command` folder includes a positive cross-subproject flow: it
+creates a second subproject (`cpCrossSubproject`), copies `dsx01` into it
+(expects `202`), verifies the copied dataset resolves under the destination
+subproject, then deletes the copied dataset and the subproject. The collection
+uses a single privileged token, so it validates that authorized cross-subproject
+copies succeed; negative authorization cases are covered by the copy unit tests.
+
 ### Script usage
 
 To run tests using bash script:

@@ -62,3 +62,33 @@ def clean_up_local(folder):
         shutil.rmtree(folder)
     except Exception as e:
         print(e)
+
+def get_incremental_watermark(state: dict, subproject_name: str):
+    """
+    Per-subproject incremental cutoff stored in last_run_state.json.
+    External consumers expect each value to be an ISO-8601 string (unchanged contract).
+    """
+    raw = state.get(subproject_name)
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        return raw
+    if isinstance(raw, dict):
+        # tolerate interim structured writes; never persist this shape again
+        return raw.get('watermark')
+    return None
+
+def set_incremental_watermark(state: dict, subproject_name: str, watermark_iso: str) -> None:
+    state[subproject_name] = watermark_iso
+
+def normalize_last_run_state(state: dict) -> dict:
+    """Coerce state to the published schema: { subproject: iso8601-string }."""
+    normalized = {}
+    for key, value in state.items():
+        if isinstance(value, str):
+            normalized[key] = value
+        elif isinstance(value, dict):
+            watermark = value.get('watermark')
+            if isinstance(watermark, str):
+                normalized[key] = watermark
+    return normalized
